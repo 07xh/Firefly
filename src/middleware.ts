@@ -108,7 +108,8 @@ function plainResponse(message: string, status: number): Response {
 			"x-content-type-options": "nosniff",
 			"referrer-policy": "no-referrer",
 			"x-frame-options": "DENY",
-			"content-security-policy": "frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+			"content-security-policy":
+				"frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
 			"permissions-policy": "camera=(), microphone=(), geolocation=()",
 			"cross-origin-opener-policy": "same-origin",
 		},
@@ -168,7 +169,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	const claims = decodeJson<AccessClaims>(token.split(".")[1]);
 	const email = claims.email?.trim().toLowerCase();
 	if (!email || !allowedEmails.includes(email)) {
-		return plainResponse("Forbidden: this user is not allowed to access the admin.", 403);
+		return plainResponse(
+			"Forbidden: this user is not allowed to access the admin.",
+			403,
+		);
 	}
 
 	const response = await next();
