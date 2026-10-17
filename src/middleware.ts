@@ -131,18 +131,38 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
 	// State-changing admin API requests must come from this exact origin.
 	// GET/HEAD/OPTIONS are not mutations; CORS alone is not an authorization check.
-	if (isAdminApi && !["GET", "HEAD", "OPTIONS"].includes(context.request.method)) {
+	if (
+		isAdminApi &&
+		!["GET", "HEAD", "OPTIONS"].includes(context.request.method)
+	) {
 		const origin = context.request.headers.get("Origin");
 		if (!origin || origin !== context.url.origin) {
-			return plainResponse("Forbidden: request origin is not allowed.", 403);
+			return plainResponse(
+				"Forbidden: request origin is not allowed.",
+				403,
+			);
 		}
-		const contentType = context.request.headers.get("Content-Type")?.split(";")[0].trim().toLowerCase();
+		const contentType = context.request.headers
+			.get("Content-Type")
+			?.split(";")[0]
+			.trim()
+			.toLowerCase();
 		if (contentType !== "application/json") {
-			return plainResponse("Unsupported Media Type: admin API writes require application/json.", 415);
+			return plainResponse(
+				"Unsupported Media Type: admin API writes require application/json.",
+				415,
+			);
 		}
 		const contentLength = context.request.headers.get("Content-Length");
-		if (contentLength !== null && (!/^\d+$/.test(contentLength) || Number(contentLength) > 1_048_576)) {
-			return plainResponse("Payload Too Large: admin API requests are limited to 1 MiB.", 413);
+		if (
+			contentLength !== null &&
+			(!/^\d+$/.test(contentLength) ||
+				Number(contentLength) > 1_048_576)
+		) {
+			return plainResponse(
+				"Payload Too Large: admin API requests are limited to 1 MiB.",
+				413,
+			);
 		}
 	}
 
