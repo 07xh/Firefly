@@ -1,4 +1,3 @@
-// biome-ignore-all format: retain current API formatting until full formatter pass
 import type { APIRoute } from "astro";
 
 type RuntimeEnv = {
