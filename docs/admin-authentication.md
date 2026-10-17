@@ -1,46 +1,50 @@
-# Firefly 后台身份认证部署说明
+# Firefly 后台独立登录配置
 
-Firefly 的 `/admin/*` 与 `/api/admin/*` 应通过 Cloudflare Access 身份认证，并由 Worker 中间件再次验证 Access JWT 的签名、签发方、应用 Audience 和有效期。未带有效身份的页面请求会跳转登录；API 请求会返回 401，避免把登录 HTML 当成 API 响应。认证配置缺失时后台会返回 503，验证失败返回 403；不会退化为前端口令或仅检查一个请求头。
+Firefly 后台已改为应用自己的密码登录，不依赖 Cloudflare Zero Trust / Access。后台页面和后台 API 由 Worker 中间件统一保护，登录后签发 HttpOnly、Secure、SameSite=Strict 的会话 Cookie；服务端会话记录保存在 Cloudflare Workers KV 中，8 小时后过期。登录失败会按来源 IP 限制尝试频率。
 
-## 1. 在 Cloudflare 创建 Access 应用
+## 部署前必须配置
 
-1. 登录 Cloudflare Zero Trust 控制台，进入 **Access → Applications → Add an application → Self-hosted**。
-2. 应用域名选择实际用于管理后台的站点，例如 `0701000.xyz`，路径覆盖 `/admin`、`/admin/*`、`/api/admin` 和 `/api/admin/*`。不要只保护登录页面。
-3. 建立 **Allow** 策略，仅允许你控制的邮箱地址或组织身份；不要配置对所有人的公开 Allow 规则。
-4. 保存应用，并复制该应用的 **Application Audience (AUD) Tag**。
-5. 如果你还有 GitHub Pages 域名，后台不应从该域名公开访问；本仓库的 Pages 工作流会在上传前移除 `dist/admin`。
+### 1. 设置管理员密码
 
-## 2. 设置 Worker 环境变量
+在 Cloudflare Dashboard 中打开 Workers & Pages → firefly → Settings → Variables and Secrets，在 Production 环境添加 Secret：
 
-在 Cloudflare Dashboard → Workers & Pages → `firefly` → Settings → Variables and Secrets，为生产环境设置：
+- 名称：FIREFLY_ADMIN_PASSWORD
+- 值：设置一个独立、随机且至少 16 个字符的管理员密码；建议使用密码管理器生成更长的密码。
 
-- `CF_ACCESS_TEAM_DOMAIN`：你的 Zero Trust 团队域名，例如 `example.cloudflareaccess.com`，不要带协议或路径。
-- `CF_ACCESS_AUD`：上一步复制的 Application Audience (AUD) Tag。
+不要把密码写入仓库、HTML、普通变量、截图或聊天记录。密码 Secret 需要在部署新代码前设置。
 
-这两个值需要来自你自己的 Cloudflare 账户，不能从仓库推断。保存后重新部署 Worker，使变量生效。也可在 wrangler 的环境变量设置中配置，但不要将账号密钥写进 Git。
+### 2. 配置会话 KV
 
-## 3. 验证
+wrangler.toml 和 wrangler.jsonc 都定义了 FIREFLY_SESSIONS 绑定。部署时 Wrangler 会按当前配置自动创建并绑定 KV 命名空间；第一次部署所用的 CLOUDFLARE_API_TOKEN 必须具有 Workers KV Storage Write 权限，以及原有的 Workers 部署权限。部署后可在 Worker 的 Settings → Bindings 中确认绑定存在。
 
-1. 用无痕窗口访问 `https://你的域名/admin/index.html`，应跳转到 Cloudflare Access 登录。
-2. 使用允许策略中的身份登录后，应能打开后台。
-3. 用未获允许的邮箱测试，应被 Access 拒绝。
-4. 直接访问 GitHub Pages 域名的 `/admin/index.html` 应返回 404（该部署不再包含后台文件）。
-5. 若变量未配置，Worker 后台返回 503；如果 JWT 无效或 AUD 不匹配，则返回 403。
+如果部署日志提示缺少 KV 权限，请给 GitHub Actions 使用的 Cloudflare API Token 补上 Workers KV Storage Write 权限，再重新运行部署工作流。
 
-## 安全边界
+### 3. 检查 GitHub 写入 Token
 
-- 中间件现在同时拦截 `/admin/*` 和 `/api/admin/*`，但这只是认证门禁，不代表文章写入 API 已经实现。新增 API 仍须校验请求方法、输入字段、文章路径、请求大小和并发更新，并且只能操作 `src/content/posts`。
-- 后台响应还会设置 `X-Frame-Options: DENY`、限制 iframe 嵌入的 CSP、`Permissions-Policy` 与 `Cross-Origin-Opener-Policy`；这些是纵深防御，不能替代 Cloudflare Access。
-- GitHub Token 只能存放在 Cloudflare Worker Secret 中。不得放进前端代码、HTML、浏览器存储、普通环境变量文件或 Git 提交。
-- 写入操作应在专用分支执行；提交审核时创建 Pull Request。禁止后台 API 直接向 `master` 写入或绕过审核发布。删除也必须通过 PR。
-- 对写请求校验 `Origin` 和内容类型，设置请求大小限制与速率限制；CORS 不是认证机制。错误响应不得泄露密钥或堆栈。
-- 在文章 API 实现并测试前，后台仍不能视为具备在线增删改能力。
-- Cloudflare Access 应用与 Allow 策略、Worker 环境变量属于账户级配置，需在你的 Cloudflare 账户中完成。代码提交或 CI 构建通过不等于生产身份认证已经生效。
+在线文章增删改由 Worker 服务端调用 GitHub API。继续在 Worker 的 Variables and Secrets 中设置：
 
+- Secret：GITHUB_CONTENTS_TOKEN
+- 可选变量：GITHUB_CONTENTS_REPO，默认 07xh/Firefly
+- 可选变量：GITHUB_CONTENTS_BRANCH，默认 master
 
-## 管理员邮箱白名单
+GitHub Token 不会发送到浏览器。请只授予目标仓库所需的内容读写权限。
 
-- Worker 必须设置 `CF_ACCESS_ALLOWED_EMAILS`，值为允许进入后台的邮箱地址，多个邮箱用英文逗号分隔，例如 `admin@example.com,editor@example.com`。请替换为真实的管理员邮箱，不要使用示例地址。
-- 中间件仅在 Cloudflare Access JWT 签名、签发方、Audience、有效期验证通过后，读取 JWT 中的 `email` 字段并与白名单进行不区分大小写的精确匹配。
-- 白名单缺失或为空时，后台会 fail-closed 返回 503；邮箱不在名单中时返回 403。应同时在 Cloudflare Access 策略中限制身份，白名单是第二道防线，不替代 Access 策略。
-- 不要把管理员邮箱写进前端配置；通过 Worker 环境变量设置，并在生产环境测试允许和拒绝的账号。
+## 登录地址与验收
+
+1. 部署完成后访问 https://你的域名/admin/login/。
+2. 使用刚才配置的管理员密码登录，应进入文章管理页面。
+3. 未登录直接访问 /admin/ 或 /api/admin/articles 时，页面应跳转登录或 API 返回 401。
+4. 登录后应能读取文章列表；新建、保存草稿、发布、编辑及删除都应经由后台 API 写入 GitHub。发布或删除产生的提交会触发仓库中已配置的部署工作流。
+5. 点击“退出登录”后，应清除会话，重新打开后台必须再次登录。
+6. 验证以上功能后，在 Cloudflare Zero Trust 中停用或移除原先覆盖这些后台路径的 Access 应用。否则 Access 仍可能在请求到达 Worker 之前拦截流量，外观上仍会依赖旧登录。
+
+## 安全行为
+
+- 会话 Cookie 使用 HttpOnly、Secure、SameSite=Strict，并设定 8 小时有效期。
+- Worker 校验服务端 KV 会话记录；会话记录只保存随机会话 token 的 SHA-256 键，不把原始 token 写入 KV。
+- 登录接口要求同源 JSON 请求，登录失败后按 IP 限制尝试次数。
+- 后台写请求要求 Origin 与当前站点完全一致、Content-Type 为 application/json，正文上限为 1 MiB。
+- 后台页面和 API 设置 no-store、nosniff、禁止 iframe 嵌入等安全响应头。
+- 认证缺失或会话存储不可用时采用 fail-closed 行为：后台返回 503，不会退化为公开访问或前端口令校验。
+
+首次部署前务必设置 FIREFLY_ADMIN_PASSWORD；如果 KV 绑定或密码未配置，后台会拒绝登录，而不会开放访问。
