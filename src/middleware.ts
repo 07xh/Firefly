@@ -42,7 +42,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		pathname === "/api/admin" || pathname.startsWith("/api/admin/");
 	if (!isAdminPage && !isAdminApi) return next();
 
-	// Public authentication endpoints validate their own request origin and inputs.
+	// Public auth endpoints validate their own request origin and inputs.
 	if (isPublicAuthRoute(pathname)) {
 		const response = await next();
 		const headers = new Headers(response.headers);
@@ -67,7 +67,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	}
 
 	// State-changing API requests must be same-origin JSON with a bounded body.
-	if (isAdminApi && !["GET", "HEAD", "OPTIONS"].includes(context.request.method)) {
+	if (
+		isAdminApi &&
+		!["GET", "HEAD", "OPTIONS"].includes(context.request.method)
+	) {
 		if (context.request.headers.get("Origin") !== context.url.origin) {
 			return plainResponse("Forbidden: request origin is not allowed.", 403);
 		}
