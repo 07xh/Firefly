@@ -40,6 +40,9 @@ jobs:
       - name: Build site
         run: pnpm run build
 
+      - name: Exclude private admin interface from GitHub Pages
+        run: rm -rf dist/admin
+
       - name: Create .nojekyll file
         run: touch dist/.nojekyll
       
