@@ -147,7 +147,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 		const slug = safeSlug(input.slug);
 		const extension = input.extension === "mdx" ? "mdx" : "md";
 		if (!slug) return json({ error: "slug 仅允许字母、数字、连字符和下划线" }, 400);
-		const path = ROOT + slug + "." + extension;
+		const path = `${ROOT}${slug}.${extension}`;
 		const content = makeMarkdown({ ...input, slug });
 		if (!content) return json({ error: "标题、发布日期或正文格式不合法" }, 400);
 		const response = await github(`contents/${path}`, config, {
