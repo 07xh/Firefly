@@ -123,7 +123,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		pathname === "/api/admin" || pathname.startsWith("/api/admin/");
 	if (!isAdminPage && !isAdminApi) return next();
 
-	const env = (context.locals as { runtime?: { env?: AccessEnv } }).runtime?.env;
+	const env = (context.locals as { runtime?: { env?: AccessEnv } }).runtime
+		?.env;
 	const teamDomain = env?.CF_ACCESS_TEAM_DOMAIN?.trim()
 		.replace(/^https?:\/\//, "")
 		.replace(/\/$/, "");
