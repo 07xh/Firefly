@@ -13,7 +13,8 @@ type LogoutEnv = {
 export const prerender = false;
 
 export const POST: APIRoute = async ({ request, locals }) => {
-	const env = (locals as unknown as { runtime?: { env?: LogoutEnv } }).runtime?.env;
+	const env = (locals as unknown as { runtime?: { env?: LogoutEnv } }).runtime
+		?.env;
 	const sessions = env?.FIREFLY_SESSIONS;
 	const token = getSessionToken(request);
 	try {
@@ -24,7 +25,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
 				"content-type": "application/json; charset=utf-8",
 				"cache-control": "no-store",
 				"set-cookie":
-					SESSION_COOKIE + "=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0",
+					SESSION_COOKIE +
+					"=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0",
 				"x-content-type-options": "nosniff",
 				"referrer-policy": "no-referrer",
 			},

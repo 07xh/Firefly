@@ -28,7 +28,11 @@ function securityHeaders(response: Response): Response {
 	});
 }
 
-function errorResponse(message: string, status: number, api: boolean): Response {
+function errorResponse(
+	message: string,
+	status: number,
+	api: boolean,
+): Response {
 	const headers = new Headers({
 		"cache-control": "no-store",
 		"x-content-type-options": "nosniff",
@@ -41,7 +45,10 @@ function errorResponse(message: string, status: number, api: boolean): Response 
 	});
 	if (api) {
 		headers.set("content-type", "application/json; charset=utf-8");
-		return new Response(JSON.stringify({ error: message }), { status, headers });
+		return new Response(JSON.stringify({ error: message }), {
+			status,
+			headers,
+		});
 	}
 	headers.set("content-type", "text/plain; charset=utf-8");
 	return new Response(message, { status, headers });
@@ -52,7 +59,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	const isAdminPage = pathname === "/admin" || pathname.startsWith("/admin/");
 	const isAdminApi =
 		pathname === "/api/admin" || pathname.startsWith("/api/admin/");
-	const isLoginPage = pathname === "/admin/login" || pathname === "/admin/login/";
+	const isLoginPage =
+		pathname === "/admin/login" || pathname === "/admin/login/";
 
 	if (!isAdminPage && !isAdminApi) return next();
 
@@ -60,7 +68,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	if (isLoginPage) return securityHeaders(await next());
 
 	// Enforce same-origin JSON requests and a conservative payload limit for writes.
-	if (isAdminApi && !["GET", "HEAD", "OPTIONS"].includes(context.request.method)) {
+	if (
+		isAdminApi &&
+		!["GET", "HEAD", "OPTIONS"].includes(context.request.method)
+	) {
 		const origin = context.request.headers.get("Origin");
 		if (!origin || origin !== context.url.origin) {
 			return errorResponse("请求来源不受允许。", 403, true);
@@ -71,7 +82,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
 			.trim()
 			.toLowerCase();
 		if (contentType !== "application/json") {
-			return errorResponse("后台写入请求必须使用 application/json。", 415, true);
+			return errorResponse(
+				"后台写入请求必须使用 application/json。",
+				415,
+				true,
+			);
 		}
 		const contentLength = context.request.headers.get("Content-Length");
 		if (
@@ -82,7 +97,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		}
 	}
 
-	const env = (context.locals as unknown as { runtime?: { env?: AdminEnv } }).runtime?.env;
+	const env = (context.locals as unknown as { runtime?: { env?: AdminEnv } })
+		.runtime?.env;
 	const sessions = env?.FIREFLY_SESSIONS;
 	if (!sessions) {
 		return errorResponse(
@@ -106,7 +122,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	try {
 		valid = await validateAdminSession(sessions, token);
 	} catch {
-		return errorResponse("后台会话服务暂时不可用，请稍后重试。", 503, isAdminApi);
+		return errorResponse(
+			"后台会话服务暂时不可用，请稍后重试。",
+			503,
+			isAdminApi,
+		);
 	}
 	if (!valid) {
 		if (isAdminApi) {

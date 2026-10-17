@@ -2,10 +2,10 @@ import type { APIRoute } from "astro";
 import {
 	createSessionToken,
 	hashText,
-	sessionCookie,
 	SESSION_TTL_SECONDS,
-	storeAdminSession,
 	type SessionKV,
+	sessionCookie,
+	storeAdminSession,
 } from "../../../lib/admin-session";
 
 type LoginEnv = {
@@ -28,7 +28,10 @@ function jsonResponse(
 	return new Response(JSON.stringify(data), { status, headers });
 }
 
-async function sameSecret(candidate: string, expected: string): Promise<boolean> {
+async function sameSecret(
+	candidate: string,
+	expected: string,
+): Promise<boolean> {
 	const [left, right] = await Promise.all([
 		crypto.subtle.digest("SHA-256", new TextEncoder().encode(candidate)),
 		crypto.subtle.digest("SHA-256", new TextEncoder().encode(expected)),
@@ -61,13 +64,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
 		return jsonResponse({ error: "登录请求过大。" }, 413);
 	}
 
-	const env = (locals as unknown as { runtime?: { env?: LoginEnv } }).runtime?.env;
+	const env = (locals as unknown as { runtime?: { env?: LoginEnv } }).runtime
+		?.env;
 	const password = env?.FIREFLY_ADMIN_PASSWORD;
 	const sessions = env?.FIREFLY_SESSIONS;
 	if (!password || password.length < 16 || !sessions) {
 		return jsonResponse(
 			{
-				error: "后台认证尚未配置。请检查 Worker 密码 Secret 与 FIRE​​FLY_SESSIONS KV 绑定。",
+				error:
+					"后台认证尚未配置。请检查 Worker 密码 Secret 与 FIRE​​FLY_SESSIONS KV 绑定。",
 			},
 			503,
 		);
@@ -100,13 +105,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
 		const previousText = await sessions.get(rateKey, "text");
 		const parsedAttempts = Number(previousText ?? "0");
 		const attempts =
-			Number.isInteger(parsedAttempts) && parsedAttempts >= 0 ? parsedAttempts : 0;
+			Number.isInteger(parsedAttempts) && parsedAttempts >= 0
+				? parsedAttempts
+				: 0;
 		if (attempts >= 5) {
-			return jsonResponse(
-				{ error: "尝试次数过多，请 15 分钟后再试。" },
-				429,
-				{ "retry-after": "900" },
-			);
+			return jsonResponse({ error: "尝试次数过多，请 15 分钟后再试。" }, 429, {
+				"retry-after": "900",
+			});
 		}
 
 		if (!(await sameSecret(candidate, password))) {
@@ -117,11 +122,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
 		await sessions.delete(rateKey);
 		const token = createSessionToken();
 		await storeAdminSession(sessions, token);
-		return jsonResponse(
-			{ ok: true, expiresIn: SESSION_TTL_SECONDS },
-			200,
-			{ "set-cookie": sessionCookie(token) },
-		);
+		return jsonResponse({ ok: true, expiresIn: SESSION_TTL_SECONDS }, 200, {
+			"set-cookie": sessionCookie(token),
+		});
 	} catch {
 		return jsonResponse({ error: "认证服务暂时不可用，请稍后重试。" }, 503);
 	}
