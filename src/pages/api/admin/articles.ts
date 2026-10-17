@@ -177,12 +177,12 @@ export const PUT: APIRoute = async ({ request, locals }) => {
 			return json({ error: "完整文章内容不合法或超过 500 KB" }, 400);
 		}
 		if (typeof input.draft === "boolean" && typeof input.rawContent === "string") {
-			const frontmatter = content.match(/^---\\r?\\n([\\s\\S]*?)\\r?\\n---/);
+			const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
 			if (!frontmatter) return json({ error: "未找到有效的 frontmatter，无法切换草稿/发布状态" }, 400);
-			const updatedFrontmatter = /^draft:\\s*(?:true|false)\\s*$/m.test(frontmatter[1])
-				? frontmatter[1].replace(/^draft:\\s*(?:true|false)\\s*$/m, `draft: ${input.draft}`)
-				: `${frontmatter[1]}\\ndraft: ${input.draft}`;
-			content = content.replace(frontmatter[0], `---\\n${updatedFrontmatter}\\n---`);
+			const updatedFrontmatter = /^draft:\s*(?:true|false)\s*$/m.test(frontmatter[1])
+				? frontmatter[1].replace(/^draft:\s*(?:true|false)\s*$/m, `draft: ${input.draft}`)
+				: `${frontmatter[1]}\ndraft: ${input.draft}`;
+			content = content.replace(frontmatter[0], `---\n${updatedFrontmatter}\n---`);
 		}
 		const response = await github(`contents/${path.split("/").map(encodeURIComponent).join("/")}`, config, {
 			method: "PUT",
