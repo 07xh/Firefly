@@ -12,15 +12,18 @@ import { Font } from "astro:assets";
 import { fontConfig } from "@/config";
 import { collectUsedFontCssVars } from "@/utils/fontHelper";
 
+// CI checks use system font fallbacks to avoid network-dependent font downloads.
+const fontsEnabled = fontConfig.enable && process.env.CI_SKIP_REMOTE_FONTS !== "1";
+
 // 使用共享的工具函数收集所有需要加载的 CSS 变量名（selected + 各区域字体，去重）
 // enable=false 时返回空集，不会加载任何字体
-const allCssVars = fontConfig.enable
+const allCssVars = fontsEnabled
 	? collectUsedFontCssVars(fontConfig)
 	: new Set<string>();
 
 // 统一解析 selected 为数组（用于后续 body font-family 和 preload 判断）
 const selectedIds: string[] =
-	fontConfig.enable && fontConfig.selected
+	fontsEnabled && fontConfig.selected
 		? Array.isArray(fontConfig.selected)
 			? fontConfig.selected
 			: [fontConfig.selected]
@@ -43,16 +46,16 @@ const bodyFontFamily =
 		: SYSTEM_FONT_STACK;
 
 // 各区域字体 CSS 变量值
-const bannerTitleFontVar = fontConfig.enable
+const bannerTitleFontVar = fontsEnabled
 	? fontConfig.bannerTitleFont || ""
 	: "";
-const bannerSubtitleFontVar = fontConfig.enable
+const bannerSubtitleFontVar = fontsEnabled
 	? fontConfig.bannerSubtitleFont || ""
 	: "";
-const navbarTitleFontVar = fontConfig.enable
+const navbarTitleFontVar = fontsEnabled
 	? fontConfig.navbarTitleFont || ""
 	: "";
-const codeFontVar = fontConfig.enable ? fontConfig.codeFont || "" : "";
+const codeFontVar = fontsEnabled ? fontConfig.codeFont || "" : "";
 // --font-code 由 fontConfig.codeFont 决定，行内代码和代码块统一引用它
 // 末尾始终带 MONO_FONT_STACK 保底，避免 codeFont 为空时 var() 解析失败导致字体回退到正文字体
 const codeFontFamily = codeFontVar
@@ -80,7 +83,7 @@ const codeFontFamily = codeFontVar
   }
 
   ${
-		fontConfig.enable &&
+		fontsEnabled &&
 		(bannerTitleFontVar ||
 			bannerSubtitleFontVar ||
 			navbarTitleFontVar ||
