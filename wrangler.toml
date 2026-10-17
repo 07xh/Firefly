@@ -1,5 +1,6 @@
 name = "firefly"
-compatibility_date = "2026-10-17" # 更为今日
+main = "./dist/_worker.js"
+compatibility_date = "2026-10-17"
 
 [assets]
 directory = "./dist"
