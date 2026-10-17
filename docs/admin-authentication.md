@@ -15,7 +15,9 @@ Firefly 后台已改为应用自己的密码登录，不依赖 Cloudflare Zero T
 
 ### 2. 配置会话 KV
 
-wrangler.toml 和 wrangler.jsonc 都定义了 FIREFLY_SESSIONS 绑定。部署时 Wrangler 会按当前配置自动创建并绑定 KV 命名空间；第一次部署所用的 CLOUDFLARE_API_TOKEN 必须具有 Workers KV Storage Write 权限，以及原有的 Workers 部署权限。部署后可在 Worker 的 Settings → Bindings 中确认绑定存在。
+wrangler.toml 和 wrangler.jsonc 都定义了 FIREFLY_SESSIONS 绑定。首次部署时 Wrangler 可以自动创建并绑定 KV 命名空间；GitHub Actions 使用的 CLOUDFLARE_API_TOKEN 必须具有 Workers KV Storage Write 权限，以及原有的 Workers 部署权限。
+
+首次部署成功后，打开 Cloudflare Dashboard → Workers & Pages → firefly → Settings → Bindings，找到 FIREFLY_SESSIONS 并复制其 KV Namespace ID。随后把这个 ID 写入仓库的 wrangler.toml 和 wrangler.jsonc 对应绑定的 id 字段，再提交这项配置，避免后续部署重新自动解析/创建命名空间。KV ID 是绑定标识，不是密码，不要将任何 Token 或 Secret 写进仓库。
 
 如果部署日志提示缺少 KV 权限，请给 GitHub Actions 使用的 Cloudflare API Token 补上 Workers KV Storage Write 权限，再重新运行部署工作流。
 
@@ -33,10 +35,10 @@ GitHub Token 不会发送到浏览器。请只授予目标仓库所需的内容�
 
 1. 部署完成后访问 https://你的域名/admin/login/。
 2. 使用刚才配置的管理员密码登录，应进入文章管理页面。
-3. 未登录直接访问 /admin/ 或 /api/admin/articles 时，页面应跳转登录或 API 返回 401。
-4. 登录后应能读取文章列表；新建、保存草稿、发布、编辑及删除都应经由后台 API 写入 GitHub。发布或删除产生的提交会触发仓库中已配置的部署工作流。
-5. 点击“退出登录”后，应清除会话，重新打开后台必须再次登录。
-6. 验证以上功能后，在 Cloudflare Zero Trust 中停用或移除原先覆盖这些后台路径的 Access 应用。否则 Access 仍可能在请求到达 Worker 之前拦截流量，外观上仍会依赖旧登录。
+3. 部署工作流成功后，在 Cloudflare Zero Trust 中停用或移除原先覆盖这些后台路径的 Access 应用，再测试应用自己的登录。旧 Access 应用通常也会拦截 /admin/login/，因此不移除就无法看到独立登录页面。
+4. 未登录直接访问 /admin/ 或 /api/admin/articles 时，页面应跳转登录或 API 返回 401。
+5. 登录后应能读取文章列表；新建、保存草稿、发布、编辑及删除都应经由后台 API 写入 GitHub。发布或删除产生的提交会触发仓库中已配置的部署工作流。
+6. 点击“退出登录”后，应清除会话，重新打开后台必须再次登录。
 
 ## 安全行为
 
