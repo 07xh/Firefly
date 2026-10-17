@@ -39,7 +39,7 @@ export const prerender = false;
     const message = document.getElementById("message");
     const params = new URLSearchParams(location.search);
     const candidate = params.get("next") || "/admin/";
-    const next = candidate.startsWith("/") && !candidate.startsWith("//") && !candidate.includes("\\\\") ? candidate : "/admin/";
+    const next = candidate.startsWith("/admin") && !candidate.startsWith("//") ? candidate : "/admin/";
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       button.disabled = true;
