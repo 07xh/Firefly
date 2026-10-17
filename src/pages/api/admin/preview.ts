@@ -19,13 +19,29 @@ export const POST: APIRoute = async ({ request }) => {
 		}
 
 		// Existing articles are loaded as complete source files, including frontmatter.
-		const source = input.markdown.replace(/^---\r?\n[\s\S]*?\r?\n---\s*(?:\r?\n|$)/, "").trim();
-		const rendered = source ? await marked.parse(source, { gfm: true }) : "<p>暂无内容</p>";
+		const source = input.markdown
+			.replace(/^---\r?\n[\s\S]*?\r?\n---\s*(?:\r?\n|$)/, "")
+			.trim();
+		const rendered = source
+			? await marked.parse(source, { gfm: true })
+			: "<p>暂无内容</p>";
 		const html = sanitizeHtml(rendered, {
 			allowedTags: [
 				...sanitizeHtml.defaults.allowedTags,
-				"img", "h1", "h2", "h3", "h4", "h5", "h6",
-				"table", "thead", "tbody", "tr", "th", "td", "del",
+				"img",
+				"h1",
+				"h2",
+				"h3",
+				"h4",
+				"h5",
+				"h6",
+				"table",
+				"thead",
+				"tbody",
+				"tr",
+				"th",
+				"td",
+				"del",
 			],
 			allowedAttributes: {
 				a: ["href", "name", "target", "rel"],
@@ -37,11 +53,17 @@ export const POST: APIRoute = async ({ request }) => {
 			},
 			allowedSchemes: ["http", "https", "mailto"],
 			transformTags: {
-				a: sanitizeHtml.simpleTransform("a", { rel: "noopener noreferrer", target: "_blank" }),
+				a: sanitizeHtml.simpleTransform("a", {
+					rel: "noopener noreferrer",
+					target: "_blank",
+				}),
 			},
 		});
 		return new Response(JSON.stringify({ html }), {
-			headers: { "content-type": "application/json; charset=utf-8", "cache-control": "private, no-store" },
+			headers: {
+				"content-type": "application/json; charset=utf-8",
+				"cache-control": "private, no-store",
+			},
 		});
 	} catch {
 		return new Response(JSON.stringify({ error: "生成 Markdown 预览失败" }), {
