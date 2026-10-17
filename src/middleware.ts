@@ -31,7 +31,9 @@ async function getAccessKeys(issuer: string): Promise<AccessJwk[]> {
 	if (cachedKeys && cachedKeys.expiresAt > Date.now()) return cachedKeys.keys;
 
 	const response = await fetch(`${issuer}/cdn-cgi/access/certs`);
-	if (!response.ok) throw new Error("Cloudflare Access public keys are unavailable");
+	if (!response.ok) {
+		throw new Error("Cloudflare Access public keys are unavailable");
+	}
 
 	const data = (await response.json()) as { keys?: AccessJwk[] };
 	if (!Array.isArray(data.keys) || data.keys.length === 0) {
@@ -68,7 +70,9 @@ async function verifyAccessJwt(
 		const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
 		if (!audiences.includes(audience)) return false;
 
-		const jwk = (await getAccessKeys(issuer)).find((key) => key.kid === header.kid);
+		const jwk = (await getAccessKeys(issuer)).find(
+			(key) => key.kid === header.kid,
+		);
 		if (!jwk) return false;
 
 		const publicKey = await crypto.subtle.importKey(
@@ -121,7 +125,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	// Fail closed: never serve the admin interface if Access is not configured.
 	if (!teamDomain || !audience) {
 		return plainResponse(
-			"Firefly admin is locked: configure CF_ACCESS_TEAM_DOMAIN and CF_ACCESS_AUD, and protect both /admin/* and /api/admin/* with Cloudflare Access.",
+			"Firefly admin is locked: configure CF_ACCESS_TEAM_DOMAIN and CF_ACCESS_AUD, " +
+				"and protect both /admin/* and /api/admin/* with Cloudflare Access.",
 			503,
 		);
 	}
