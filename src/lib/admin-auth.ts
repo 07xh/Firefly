@@ -151,7 +151,7 @@ export async function revokeSession(
 	try {
 		await store.delete(await sessionKey(token));
 	} catch {
-		// The cookie is still cleared by the response even if KV is temporarily unavailable.
+		// The cookie is cleared even if KV is temporarily unavailable.
 	}
 }
 
