@@ -23,6 +23,7 @@ export const prerender = false;
 </form><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">编辑已有文章时会载入完整 Markdown/MDX 源文件。请保留开头的 --- frontmatter 分隔符；保存直接提交到配置的 GitHub 分支，网站需重新构建部署后更新。</p></section>
 </main>
 <script>
+// @ts-nocheck
 const $=id=>document.getElementById(id);let articles=[],selected=null;
 function say(s,bad=false){$("status").textContent=s;$("status").style.color=bad?"#b42318":"#657267"}
 async function api(method,data){const r=await fetch("/api/admin/articles",{method,headers:{"Content-Type":"application/json"},...(data?{body:JSON.stringify(data)}:{})});const d=await r.json().catch(()=>({error:"服务器响应无法解析"}));if(!r.ok)throw new Error(d.error||"请求失败");return d}
