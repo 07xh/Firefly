@@ -2,7 +2,6 @@ import type { APIRoute } from "astro";
 import {
   clearAdminSession,
   getSessionToken,
-  sessionCookie,
   SESSION_COOKIE,
   type SessionKV,
 } from "../../../lib/admin-session";
