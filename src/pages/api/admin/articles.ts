@@ -129,7 +129,7 @@ export const GET: APIRoute = async ({ locals }) => {
 				const post = await readPost(file.path, config);
 				const match = post.content.match(/^title:\s*(?:"([^"]*)"|'([^']*)'|(.+))\s*$/m);
 				const date = post.content.match(/^published:\s*(\d{4}-\d{2}-\d{2})\s*$/m);
-				return { path: post.path, sha: post.sha, title: (match?.[1] ?? match?.[2] ?? match?.[3] ?? file.path.split("/").pop() ?? "").trim(), published: date?.[1] ?? "", draft: /^draft:\s*true\s*$/m.test(post.content) };
+				return { path: post.path, sha: post.sha, content: post.content, title: (match?.[1] ?? match?.[2] ?? match?.[3] ?? file.path.split("/").pop() ?? "").trim(), published: date?.[1] ?? "", draft: /^draft:\s*true\s*$/m.test(post.content) };
 			} catch {
 				return { path: file.path, sha: file.sha, title: file.path.split("/").pop() ?? file.path, published: "", draft: false };
 			}
@@ -171,8 +171,10 @@ export const PUT: APIRoute = async ({ request, locals }) => {
 		const current = await readPost(path, config);
 		if (typeof input.sha !== "string" || input.sha !== current.sha) return json({ error: "文章已被其他操作修改，请刷新后重试" }, 409);
 		const slug = path.split("/").pop()?.replace(/\.mdx?$/, "") ?? "";
-		const content = makeMarkdown({ ...input, slug });
-		if (!content) return json({ error: "标题、发布日期或正文格式不合法" }, 400);
+		const content = typeof input.rawContent === "string" ? input.rawContent : makeMarkdown({ ...input, slug });
+		if (!content || content.length > 500_000 || (typeof input.rawContent === "string" && !content.startsWith("---\n"))) {
+			return json({ error: "完整文章内容不合法或超过 500 KB" }, 400);
+		}
 		const response = await github(`contents/${path.split("/").map(encodeURIComponent).join("/")}`, config, {
 			method: "PUT",
 			body: JSON.stringify({ message: `Update article: ${slug}`, content: encodeBase64(content), sha: current.sha, branch: config.branch }),
