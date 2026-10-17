@@ -180,7 +180,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	// Fail closed: never serve the admin interface if Access is not configured.
 	if (!teamDomain || !audience || allowedEmails.length === 0) {
 		return plainResponse(
-			`Firefly admin is locked: configure Access team/audience and CF_ACCESS_ALLOWED_EMAILS.`,
+			"Firefly admin is locked: configure Access team/audience and CF_ACCESS_ALLOWED_EMAILS.",
 			503,
 		);
 	}
