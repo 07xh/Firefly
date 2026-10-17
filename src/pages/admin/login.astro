@@ -34,10 +34,14 @@ export const prerender = false;
 			<div class="foot">会话有效期为 8 小时。请勿在公共设备上保存密码。</div>
 		</main>
 		<script>
-			const form = document.getElementById("loginForm");
-			const password = document.getElementById("password");
-			const submit = document.getElementById("submit");
-			const status = document.getElementById("status");
+			const form = document.querySelector<HTMLFormElement>("#loginForm");
+			const password = document.querySelector<HTMLInputElement>("#password");
+			const submit = document.querySelector<HTMLButtonElement>("#submit");
+			const status = document.querySelector<HTMLParagraphElement>("#status");
+
+			if (!form || !password || !submit || !status) {
+				throw new Error("后台登录页面元素未正确加载。");
+			}
 
 			function destination() {
 				const requested =
