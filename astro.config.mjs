@@ -69,6 +69,9 @@ const adapter = process.env.CF_WORKERS || process.env.CI
 export default defineConfig({
 	site: siteConfig.site_url,
 
+	// The Cloudflare Worker must be emitted for admin/API routes when deploying to Workers.
+	output: process.env.CF_WORKERS ? "server" : "static",
+
 	base: "/",
 	trailingSlash: "always",
 
