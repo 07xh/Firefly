@@ -59,7 +59,7 @@ if (process.env.NODE_ENV === "development") {
 	setMaxListeners(20);
 }
 
-const adapter = process.env.CF_WORKERS
+const adapter = process.env.CF_WORKERS || process.env.CI
 	? cloudflare({
 			prerenderEnvironment: "node",
 		})
@@ -75,7 +75,8 @@ export default defineConfig({
 	// 字体配置 - 只加载实际使用的字体，跳过未引用的以加快构建
 	fonts: (() => {
 		// 禁用字体功能时直接返回空数组，跳过 Astro Font API 集成
-		if (!fontConfig.enable) return [];
+		// CI validation should not depend on third-party font CDN availability.
+		if (!fontConfig.enable || process.env.CI_SKIP_REMOTE_FONTS === "1") return [];
 
 		const used = collectUsedFontCssVars(fontConfig);
 		return fontsList

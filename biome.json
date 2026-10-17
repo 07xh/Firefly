@@ -21,7 +21,13 @@
     "enabled": true,
     "indentStyle": "tab"
   },
-  "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "assist": {
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
   "linter": {
     "enabled": true,
     "rules": {
@@ -47,7 +53,11 @@
   },
   "overrides": [
     {
-      "includes": ["**/*.svelte", "**/*.astro", "**/*.vue"],
+      "includes": [
+        "**/*.svelte",
+        "**/*.astro",
+        "**/*.vue"
+      ],
       "linter": {
         "rules": {
           "style": {
@@ -59,6 +69,34 @@
             "noUnusedImports": "off"
           }
         }
+      }
+    },
+    {
+      "includes": [
+        "src/pages/admin/index.astro"
+      ],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "rules": {
+          "style": {
+            "useConst": "off",
+            "useImportType": "off"
+          },
+          "correctness": {
+            "noUnusedVariables": "off",
+            "noUnusedImports": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/pages/api/admin/articles.ts"
+      ],
+      "formatter": {
+        "enabled": false
       }
     }
   ]

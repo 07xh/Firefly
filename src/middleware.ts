@@ -123,6 +123,45 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		pathname === "/api/admin" || pathname.startsWith("/api/admin/");
 	if (!isAdminPage && !isAdminApi) return next();
 
+	// Reject oversized identity headers before decoding or fetching signing keys.
+	const token = context.request.headers.get("CF-Access-Jwt-Assertion");
+	if (token && token.length > 16_384) {
+		return plainResponse("Forbidden: identity token is too large.", 403);
+	}
+
+	// State-changing admin API requests must come from this exact origin.
+	// Safe methods are excluded; CORS is not an authorization check.
+	if (
+		isAdminApi &&
+		!["GET", "HEAD", "OPTIONS"].includes(context.request.method)
+	) {
+		const origin = context.request.headers.get("Origin");
+		if (!origin || origin !== context.url.origin) {
+			return plainResponse("Forbidden: request origin is not allowed.", 403);
+		}
+		const contentType = context.request.headers
+			.get("Content-Type")
+			?.split(";")[0]
+			.trim()
+			.toLowerCase();
+		if (contentType !== "application/json") {
+			return plainResponse(
+				"Unsupported Media Type: admin API writes require application/json.",
+				415,
+			);
+		}
+		const contentLength = context.request.headers.get("Content-Length");
+		if (
+			contentLength !== null &&
+			(!/^\d+$/.test(contentLength) || Number(contentLength) > 1_048_576)
+		) {
+			return plainResponse(
+				"Payload Too Large: admin API requests are limited to 1 MiB.",
+				413,
+			);
+		}
+	}
+
 	const env = (context.locals as { runtime?: { env?: AccessEnv } }).runtime
 		?.env;
 	const teamDomain = env?.CF_ACCESS_TEAM_DOMAIN?.trim()
@@ -143,7 +182,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	}
 
 	const issuer = `https://${teamDomain}`;
-	const token = context.request.headers.get("CF-Access-Jwt-Assertion");
 	if (!token) {
 		if (isAdminApi) {
 			return plainResponse(
