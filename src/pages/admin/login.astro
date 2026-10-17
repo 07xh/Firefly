@@ -1,0 +1,77 @@
+---
+export const prerender = false;
+---
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>登录 · Firefly 管理后台</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#1d2b22;background:#f3f7f4;color-scheme:light}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:20px}
+    .card{width:min(100%,410px);background:#fff;border:1px solid #e0e9e2;border-radius:20px;padding:28px;box-shadow:0 18px 60px #153c2510}
+    .mark{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:#16834e;color:#fff;font-size:25px;margin-bottom:18px}
+    h1{font-size:23px;margin:0 0 7px;letter-spacing:-.5px}.sub{font-size:13px;color:#718076;margin:0 0 25px;line-height:1.7}
+    label{display:block;font-size:12px;font-weight:700;margin-bottom:8px}input{width:100%;border:1px solid #d9e3db;border-radius:10px;padding:13px;font:inherit;outline:none}
+    input:focus{border-color:#16834e;box-shadow:0 0 0 3px #16834e18}.btn{width:100%;border:0;border-radius:10px;padding:13px;background:#16834e;color:white;font:inherit;font-weight:700;margin-top:15px;cursor:pointer}
+    .btn:disabled{opacity:.6;cursor:wait}.message{min-height:22px;margin-top:13px;color:#b42318;font-size:12px;line-height:1.6}.foot{font-size:11px;color:#8a968e;margin-top:20px;text-align:center}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="mark">✳</div>
+    <h1>Firefly 管理后台</h1>
+    <p class="sub">登录后管理文章、保存草稿并发布到网站。请使用你在 Worker 中配置的后台密码。</p>
+    <form id="loginForm">
+      <label for="password">后台密码</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" minlength="12" maxlength="1024" required autofocus>
+      <button class="btn" id="submit" type="submit">安全登录</button>
+      <div class="message" id="message" role="status" aria-live="polite"></div>
+    </form>
+    <div class="foot">使用服务端 KV 会话 · HttpOnly Cookie · 8 小时后自动过期</div>
+  </main>
+  <script>
+    const formElement = document.getElementById("loginForm");
+    const buttonElement = document.getElementById("submit");
+    const messageElement = document.getElementById("message");
+    const passwordElement = document.getElementById("password");
+
+    if (!(formElement instanceof HTMLFormElement) ||
+        !(buttonElement instanceof HTMLButtonElement) ||
+        !(messageElement instanceof HTMLDivElement) ||
+        !(passwordElement instanceof HTMLInputElement)) {
+      throw new Error("登录界面初始化失败");
+    }
+
+    const form = formElement;
+    const button = buttonElement;
+    const message = messageElement;
+    const password = passwordElement;
+    const params = new URLSearchParams(location.search);
+    const candidate = params.get("next") || "/admin/";
+    const next = candidate === "/admin" || candidate.startsWith("/admin/") ? candidate : "/admin/";
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      button.disabled = true;
+      message.textContent = "正在验证…";
+      try {
+        const response = await fetch("/api/admin/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "same-origin",
+          body: JSON.stringify({ password: password.value }),
+        });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.error || "登录失败，请稍后重试");
+        location.replace(next);
+      } catch (error) {
+        message.textContent = error instanceof Error ? error.message : "登录失败";
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

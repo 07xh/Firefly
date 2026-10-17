@@ -1,46 +1,53 @@
-# Firefly 后台身份认证部署说明
+# Firefly 后台独立登录认证
 
-Firefly 的 `/admin/*` 与 `/api/admin/*` 应通过 Cloudflare Access 身份认证，并由 Worker 中间件再次验证 Access JWT 的签名、签发方、应用 Audience 和有效期。未带有效身份的页面请求会跳转登录；API 请求会返回 401，避免把登录 HTML 当成 API 响应。认证配置缺失时后台会返回 503，验证失败返回 403；不会退化为前端口令或仅检查一个请求头。
+Firefly 后台采用独立密码登录，不依赖 Cloudflare Zero Trust。Worker 中间件使用 `SESSION` KV 命名空间验证服务端会话；所有 `/admin/*` 页面和 `/api/admin/*` 内容/部署接口都需要有效会话。未登录页面会跳转至 `/admin/login/`，未登录 API 返回 401。认证配置缺失时后台 fail-closed 返回 503。
 
-## 1. 在 Cloudflare 创建 Access 应用
+## 1. Worker 配置
 
-1. 登录 Cloudflare Zero Trust 控制台，进入 **Access → Applications → Add an application → Self-hosted**。
-2. 应用域名选择实际用于管理后台的站点，例如 `0701000.xyz`，路径覆盖 `/admin`、`/admin/*`、`/api/admin` 和 `/api/admin/*`。不要只保护登录页面。
-3. 建立 **Allow** 策略，仅允许你控制的邮箱地址或组织身份；不要配置对所有人的公开 Allow 规则。
-4. 保存应用，并复制该应用的 **Application Audience (AUD) Tag**。
-5. 如果你还有 GitHub Pages 域名，后台不应从该域名公开访问；本仓库的 Pages 工作流会在上传前移除 `dist/admin`。
+进入 Cloudflare Dashboard → Workers 和 Pages → `firefly` → Settings → Variables and Secrets → Production。
 
-## 2. 设置 Worker 环境变量
+添加以下 **Secret**：
 
-在 Cloudflare Dashboard → Workers & Pages → `firefly` → Settings → Variables and Secrets，为生产环境设置：
+- `ADMIN_PASSWORD`：后台登录的唯一强密码，至少 12 个字符。建议使用密码管理器生成并保存；不要与网站或邮箱密码重复。
 
-- `CF_ACCESS_TEAM_DOMAIN`：你的 Zero Trust 团队域名，例如 `example.cloudflareaccess.com`，不要带协议或路径。
-- `CF_ACCESS_AUD`：上一步复制的 Application Audience (AUD) Tag。
+确认已有 **KV Namespace Binding**：
 
-这两个值需要来自你自己的 Cloudflare 账户，不能从仓库推断。保存后重新部署 Worker，使变量生效。也可在 wrangler 的环境变量设置中配置，但不要将账号密钥写进 Git。
+- Binding name：`SESSION`
+- KV namespace：你当前绑定的 `firefly-session`
 
-## 3. 验证
+此前 Worker 页面已经显示 `SESSION` 绑定。如果该绑定仍然存在，不必再创建一个 KV 命名空间。保存配置后重新部署 Worker。
 
-1. 用无痕窗口访问 `https://你的域名/admin/index.html`，应跳转到 Cloudflare Access 登录。
-2. 使用允许策略中的身份登录后，应能打开后台。
-3. 用未获允许的邮箱测试，应被 Access 拒绝。
-4. 直接访问 GitHub Pages 域名的 `/admin/index.html` 应返回 404（该部署不再包含后台文件）。
-5. 若变量未配置，Worker 后台返回 503；如果 JWT 无效或 AUD 不匹配，则返回 403。
+文章读写仍需现有的服务端 Secret：
 
-## 安全边界
+- `GITHUB_CONTENTS_TOKEN`：仅在 Worker 服务端使用的 GitHub Token。
+- `GITHUB_CONTENTS_REPO`（可选普通变量）：默认 `07xh/Firefly`。
+- `GITHUB_CONTENTS_BRANCH`（可选普通变量）：默认 `master`。
 
-- 中间件现在同时拦截 `/admin/*` 和 `/api/admin/*`，但这只是认证门禁，不代表文章写入 API 已经实现。新增 API 仍须校验请求方法、输入字段、文章路径、请求大小和并发更新，并且只能操作 `src/content/posts`。
-- 后台响应还会设置 `X-Frame-Options: DENY`、限制 iframe 嵌入的 CSP、`Permissions-Policy` 与 `Cross-Origin-Opener-Policy`；这些是纵深防御，不能替代 Cloudflare Access。
-- GitHub Token 只能存放在 Cloudflare Worker Secret 中。不得放进前端代码、HTML、浏览器存储、普通环境变量文件或 Git 提交。
-- 写入操作应在专用分支执行；提交审核时创建 Pull Request。禁止后台 API 直接向 `master` 写入或绕过审核发布。删除也必须通过 PR。
-- 对写请求校验 `Origin` 和内容类型，设置请求大小限制与速率限制；CORS 不是认证机制。错误响应不得泄露密钥或堆栈。
-- 在文章 API 实现并测试前，后台仍不能视为具备在线增删改能力。
-- Cloudflare Access 应用与 Allow 策略、Worker 环境变量属于账户级配置，需在你的 Cloudflare 账户中完成。代码提交或 CI 构建通过不等于生产身份认证已经生效。
+此实现不需要 `CF_ACCESS_TEAM_DOMAIN`、`CF_ACCESS_AUD`、`CF_ACCESS_ALLOWED_EMAILS` 或 `ADMIN_SESSION_SECRET`。不要把密码或 Token 写进 Git、HTML、前端脚本或浏览器存储。
 
+## 2. 服务端会话行为
 
-## 管理员邮箱白名单
+- 未登录访问 `https://你的域名/admin/` 时，会跳转至 `/admin/login/`。
+- 密码只发送至同源 `/api/admin/auth/login`，由 Worker 与 Secret 中的密码比较。
+- 登录成功时生成 256 位随机会话令牌；浏览器只获得 `HttpOnly; Secure; SameSite=Strict; Path=/` Cookie。
+- KV 中保存会话记录，键使用令牌的 SHA-256 摘要，不直接保存原始 Cookie 令牌。默认 8 小时过期，KV 项也设置过期 TTL。
+- 登出会从 KV 删除该会话记录并清除 Cookie。
+- 会话认证失效或 KV 无法读取时，后台受保护路由不应降级为匿名访问。
+- 内容写入 API 仍校验同源 Origin、JSON Content-Type、请求体大小和文章路径；GitHub Token 只在 Worker 服务端使用。
 
-- Worker 必须设置 `CF_ACCESS_ALLOWED_EMAILS`，值为允许进入后台的邮箱地址，多个邮箱用英文逗号分隔，例如 `admin@example.com,editor@example.com`。请替换为真实的管理员邮箱，不要使用示例地址。
-- 中间件仅在 Cloudflare Access JWT 签名、签发方、Audience、有效期验证通过后，读取 JWT 中的 `email` 字段并与白名单进行不区分大小写的精确匹配。
-- 白名单缺失或为空时，后台会 fail-closed 返回 503；邮箱不在名单中时返回 403。应同时在 Cloudflare Access 策略中限制身份，白名单是第二道防线，不替代 Access 策略。
-- 不要把管理员邮箱写进前端配置；通过 Worker 环境变量设置，并在生产环境测试允许和拒绝的账号。
+## 3. 验证清单
+
+1. 确认生产环境存在 `SESSION` KV 绑定，并设置 `ADMIN_PASSWORD` Secret。
+2. 重新部署后，用无痕窗口访问 `/admin/`，应跳转到登录页。
+3. 输入错误密码应被拒绝；正确密码应进入后台。
+4. 未登录时直接调用 `/api/admin/articles` 应返回 401，而不是文章数据。
+5. 登录后测试文章读取、新建、编辑、删除和部署状态查询。
+6. 点击“退出登录”，确认后台 API 再次返回 401。
+7. 如果删除或换绑 `SESSION`，所有已有会话会失效；这是预期的安全行为。
+
+## 安全边界与限制
+
+- 独立密码登录没有 Cloudflare Access 的组织身份和 MFA 能力。请使用高强度唯一密码，并在 Cloudflare 配置登录端点可用的速率限制。KV 不是强一致性数据库；它适合短期会话存储，但不应把基于 KV 的计数器当作完美的防暴力破解机制。
+- 生产环境必须通过 HTTPS 访问；会话 Cookie 使用 `Secure` 和 `__Host-` 前缀。
+- 当前文章 API 默认会向 `master` 写入。若需要强制审核，后续应改为专用分支和 Pull Request 流程；登录认证不等于内容审核。
+- CI 构建通过不等于生产环境配置已完成；必须在 Cloudflare Worker 中配置 Secret、确认 KV 绑定并重新部署后，再验证线上行为。
