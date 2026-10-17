@@ -3,6 +3,7 @@ import { defineMiddleware } from "astro:middleware";
 type AccessEnv = {
 	CF_ACCESS_TEAM_DOMAIN?: string;
 	CF_ACCESS_AUD?: string;
+	CF_ACCESS_ALLOWED_EMAILS?: string;
 };
 
 type AccessClaims = {
@@ -10,6 +11,7 @@ type AccessClaims = {
 	aud?: string | string[];
 	exp?: number;
 	nbf?: number;
+	email?: string;
 };
 
 type AccessJwk = JsonWebKey & { kid?: string; alg?: string };
@@ -125,12 +127,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		.replace(/^https?:\/\//, "")
 		.replace(/\/$/, "");
 	const audience = env?.CF_ACCESS_AUD?.trim();
+	const allowedEmails = (env?.CF_ACCESS_ALLOWED_EMAILS ?? "")
+		.split(",")
+		.map((email) => email.trim().toLowerCase())
+		.filter(Boolean);
 
 	// Fail closed: never serve the admin interface if Access is not configured.
-	if (!teamDomain || !audience) {
+	if (!teamDomain || !audience || allowedEmails.length === 0) {
 		return plainResponse(
-			"Firefly admin is locked: configure CF_ACCESS_TEAM_DOMAIN and CF_ACCESS_AUD, " +
-				"and protect both /admin/* and /api/admin/* with Cloudflare Access.",
+			"Firefly admin is locked: configure Access team/audience and CF_ACCESS_ALLOWED_EMAILS.",
 			503,
 		);
 	}
@@ -157,6 +162,13 @@ export const onRequest = defineMiddleware(async (context, next) => {
 			"Forbidden: a valid Cloudflare Access identity is required.",
 			403,
 		);
+	}
+
+	// Only allow explicitly listed email identities from a verified Access JWT.
+	const claims = decodeJson<AccessClaims>(token.split(".")[1]);
+	const email = claims.email?.trim().toLowerCase();
+	if (!email || !allowedEmails.includes(email)) {
+		return plainResponse("Forbidden: this user is not allowed to access the admin.", 403);
 	}
 
 	const response = await next();
