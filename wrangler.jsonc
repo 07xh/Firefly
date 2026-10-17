@@ -1,11 +1,6 @@
 {
   "name": "firefly",
-  "routes": [
-    {
-      "pattern": "0701000.xyz/*",
-      "zone_name": "0701000.xyz"
-    }
-  ],
+  "workers_dev": true,
   "compatibility_date": "2026-10-17",
   "compatibility_flags": [
     "nodejs_compat"

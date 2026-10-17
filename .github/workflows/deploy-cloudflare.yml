@@ -77,12 +77,22 @@ jobs:
             config.kv_namespaces = [...(config.kv_namespaces ?? []), { binding: "FIREFLY_SESSIONS", id }];
           }
           if (config.assets) config.assets.binding = config.assets.binding || "ASSETS";
+          if (process.env.ENABLE_CUSTOM_DOMAIN_ROUTE === "true") {
+            config.routes = [{ pattern: "0701000.xyz/*", zone_name: "0701000.xyz" }];
+            config.workers_dev = false;
+            console.log("Custom-domain route explicitly enabled by ENABLE_CUSTOM_DOMAIN_ROUTE.");
+          } else {
+            delete config.routes;
+            config.workers_dev = true;
+            console.log("Custom-domain route disabled by default; using workers.dev so deployment does not require Zone route permissions.");
+          }
           fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
           console.log("Injected FIREFLY_SESSIONS into the generated Worker config.");
           NODE
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ENABLE_CUSTOM_DOMAIN_ROUTE: ${{ secrets.ENABLE_CUSTOM_DOMAIN_ROUTE }}
       - name: Sync optional runtime secrets from GitHub Actions
         shell: bash
         env:
@@ -112,7 +122,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          export PUBLIC_BASE_URL="https://0701000.xyz"
+          export PUBLIC_BASE_URL="https://firefly.3267597860.workers.dev"
           node --input-type=module <<'NODE'
           import { setTimeout as delay } from "node:timers/promises";
           const base = process.env.PUBLIC_BASE_URL;
@@ -186,6 +196,33 @@ jobs:
             }
             return "unauthenticated preview API correctly returns HTTP 401";
           });
+          NODE
+      - name: Check custom domain binding (non-blocking diagnostic)
+        shell: bash
+        run: |
+          set -u
+          node --input-type=module <<'NODE'
+          const base = "https://0701000.xyz";
+          try {
+            const login = await fetch(base + "/admin/login/", { redirect: "manual" });
+            const body = await login.text();
+            const protectedPage = await fetch(base + "/admin/", { redirect: "manual" });
+            const protectedLocation = protectedPage.headers.get("location") || "";
+            const api = await fetch(base + "/api/admin/articles", { redirect: "manual" });
+            const apiType = api.headers.get("content-type") || "";
+            if (login.status === 200 && body.includes('id="loginForm"') &&
+                protectedPage.status === 302 && protectedLocation.includes("/admin/login/") &&
+                api.status === 401 && apiType.toLowerCase().includes("application/json")) {
+              console.log("PASS: 0701000.xyz routes to the protected Firefly Worker.");
+            } else {
+              console.log("::warning::0701000.xyz is not confirmed to route to the Firefly Worker. Login HTTP " +
+                login.status + ", protected page HTTP " + protectedPage.status +
+                ", admin API HTTP " + api.status + " (" + apiType +
+                "). Check Cloudflare Zone/Worker route permissions or set ENABLE_CUSTOM_DOMAIN_ROUTE after granting them.");
+            }
+          } catch (error) {
+            console.log("::warning::Unable to verify custom domain: " + (error?.message ?? String(error)));
+          }
           NODE
 
 # Deployment credentials are configured in repository Actions secrets; runtime secrets may also remain configured in the Cloudflare dashboard.
