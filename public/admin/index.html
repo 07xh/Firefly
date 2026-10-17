@@ -17,7 +17,7 @@
   <a class="brand" href="/admin/index.html" aria-label="Firefly 管理首页"><div class="brand-mark">✳</div><div><div class="brand-name">Firefly</div><div class="brand-sub">CONTENT STUDIO</div></div></a>
   <div><div class="nav-label">工作空间</div><nav class="nav" aria-label="管理导航">
     <button class="active" data-page="overview"><span class="ico">▦</span>工作概览</button>
-    <button data-page="articles"><span class="ico">▤</span>文章管理</button>
+    <a href="/admin/articles.html"><span class="ico">▤</span>全部文章管理</a>
     <button data-page="workflow"><span class="ico">◷</span>发布与审核</button>
     <button data-page="site"><span class="ico">◎</span>站点入口</button>
     <a href="/admin/settings.html"><span class="ico">⚙</span>后台设置</a>
@@ -31,7 +31,7 @@
   <div class="eyebrow">CONTENT WORKSPACE</div>
   <div class="heading-row"><div><h1>早上好，欢迎回来。</h1><p>这里是你的 Firefly 内容工作台。选择一个任务，继续管理网站内容。</p></div><a class="primary" href="/admin/cms.html">＋　新建 / 管理文章 <span>↗</span></a></div>
   <div class="grid">
-    <article class="card"><div class="card-head"><div class="card-icon">▤</div><span class="pill">内容</span></div><h3>文章管理</h3><p>像发布朋友圈一样编辑正文，实时预览并导出 Markdown 草稿。</p><a class="link" href="/admin/cms.html">进入文章管理 <span>→</span></a></article>
+    <article class="card"><div class="card-head"><div class="card-icon">▤</div><span class="pill">内容</span></div><h3>文章管理</h3><p>像发布朋友圈一样编辑正文，实时预览并导出 Markdown 草稿。</p><a class="link" href="/admin/articles.html">查看全部文章 <span>→</span></a></article>
     <article class="card"><div class="card-head"><div class="card-icon">◷</div><span class="pill">流程</span></div><h3>发布与审核</h3><p>当前项目配置了审核工作流。提交后请检查审核列表，并确认合并流程完成。</p><button class="link" data-page="workflow" style="border:0;background:none;padding:0">查看发布说明 <span>→</span></button></article>
     <article class="card"><div class="card-head"><div class="card-icon">◎</div><span class="pill">站点</span></div><h3>预览线上网站</h3><p>打开 Firefly 正式站点，检查已发布页面、导航和内容呈现是否正常。</p><a class="link" href="https://0701000.xyz/" target="_blank" rel="noopener noreferrer">打开网站 <span>↗</span></a></article>
   </div>
@@ -51,8 +51,8 @@
   <div class="notice"><span>ⓘ</span><div><strong>重要说明</strong><br>此页面是管理工作台，不会直接改写文章或绕过审核。文章编辑入口已改为朋友圈式界面；当前支持预览和草稿导出，在线保存、审核与自动部署尚未接入。</div></div>
 </section>
 <section class="page" id="page-articles">
-  <div class="eyebrow">CONTENT</div><div class="heading-row"><div><h1>文章管理</h1><p>使用朋友圈式编辑界面编写动态、实时预览并导出草稿。</p></div><a class="primary" href="/admin/cms.html">打开朋友圈式写作 ↗</a></div>
-  <div class="card"><div class="card-head"><div class="card-icon">▤</div><span class="pill">朋友圈式编辑</span></div><h3>朋友圈式写作</h3><p>通过朋友圈式编辑器编写内容并导出 Markdown 草稿。旧编辑器已从常规管理入口隐藏。</p><a class="primary" href="/admin/cms.html">开始写作 ↗</a></div>
+  <div class="eyebrow">CONTENT</div><div class="heading-row"><div><h1>文章管理</h1><p>使用朋友圈式编辑界面编写动态、实时预览并导出草稿。</p></div><a class="primary" href="/admin/articles.html">打开全部文章管理 ↗</a></div>
+  <div class="card"><div class="card-head"><div class="card-icon">▤</div><span class="pill">文章目录</span></div><h3>全部文章管理</h3><p>从 GitHub 实时读取文章文件，搜索和筛选全部文章，查看分类、草稿状态，批量导出所选 Markdown。</p><a class="primary" href="/admin/articles.html">进入文章管理 ↗</a></div>
   <div class="notice"><span>ⓘ</span><div>目前编辑器尚未接入在线保存和发布 API，导出草稿不等于发布成功。</div></div>
 </section>
 <section class="page" id="page-workflow">
