@@ -24,3 +24,4 @@ jobs:
           biome format ./src --write
           git status --short
           git diff --stat -- ./src
+          git diff -- ./src/components/features/FontSetup.astro ./src/middleware.ts
