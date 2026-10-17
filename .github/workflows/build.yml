@@ -65,3 +65,5 @@ jobs:
 
       - name: Run Astro Build
         run: pnpm astro build
+        env:
+          CI_SKIP_REMOTE_FONTS: "1"
