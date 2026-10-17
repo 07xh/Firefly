@@ -141,7 +141,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 			return plainResponse("Unsupported Media Type: admin API writes require application/json.", 415);
 		}
 		const contentLength = context.request.headers.get("Content-Length");
-		if (contentLength !== null && (!/^\\d+$/.test(contentLength) || Number(contentLength) > 1_048_576)) {
+		if (contentLength !== null && (!/^\d+$/.test(contentLength) || Number(contentLength) > 1_048_576)) {
 			return plainResponse("Payload Too Large: admin API requests are limited to 1 MiB.", 413);
 		}
 	}
