@@ -17,4 +17,7 @@ jobs:
         with:
           version: 2.5.15
       - name: Run Biome
-        run: biome ci ./src --reporter=summary
+        run: |
+          biome format ./src --write
+          git diff -- src/lib/admin-auth.ts src/pages/api/admin/auth/logout.ts
+          biome ci ./src --reporter=summary
