@@ -61,8 +61,9 @@ async function verifyAccessJwt(
 		) {
 			return false;
 		}
-			if (typeof claims.nbf === "number" && claims.nbf > Date.now() / 1000)
+		if (typeof claims.nbf === "number" && claims.nbf > Date.now() / 1000) {
 			return false;
+		}
 
 		const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
 		if (!audiences.includes(audience)) return false;
@@ -143,7 +144,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	}
 
 	if (!(await verifyAccessJwt(token, issuer, audience))) {
-		return plainResponse("Forbidden: a valid Cloudflare Access identity is required.", 403);
+		return plainResponse(
+			"Forbidden: a valid Cloudflare Access identity is required.",
+			403,
+		);
 	}
 
 	const response = await next();
