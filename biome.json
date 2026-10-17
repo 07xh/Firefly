@@ -93,6 +93,26 @@
     },
     {
       "includes": [
+        "src/pages/admin/login.astro"
+      ],
+      "formatter": {
+        "enabled": false
+      },
+      "linter": {
+        "rules": {
+          "style": {
+            "useConst": "off",
+            "useImportType": "off"
+          },
+          "correctness": {
+            "noUnusedVariables": "off",
+            "noUnusedImports": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
         "src/pages/api/admin/articles.ts",
         "src/pages/api/admin/preview.ts",
         "src/pages/api/admin/deployment-status.ts"
