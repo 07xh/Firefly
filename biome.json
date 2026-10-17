@@ -93,7 +93,9 @@
     },
     {
       "includes": [
-        "src/pages/api/admin/articles.ts"
+        "src/pages/api/admin/articles.ts",
+        "src/pages/api/admin/preview.ts",
+        "src/pages/api/admin/deployment-status.ts"
       ],
       "formatter": {
         "enabled": false
