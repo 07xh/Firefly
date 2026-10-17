@@ -1,20 +1,31 @@
 const COOKIE_NAME = "__Host-firefly_admin";
 const SESSION_TTL_SECONDS = 8 * 60 * 60;
+const SESSION_KEY_PREFIX = "firefly-admin-session:";
+
+export type AdminSessionStore = {
+	get(key: string): Promise<string | null>;
+	put(
+		key: string,
+		value: string,
+		options?: { expirationTtl?: number },
+	): Promise<void>;
+	delete(key: string): Promise<void>;
+};
 
 export type AdminAuthEnv = {
 	ADMIN_PASSWORD?: string;
-	ADMIN_SESSION_SECRET?: string;
+	SESSION?: AdminSessionStore;
 };
 
 type ReadyAdminAuthEnv = AdminAuthEnv & {
 	ADMIN_PASSWORD: string;
-	ADMIN_SESSION_SECRET: string;
+	SESSION: AdminSessionStore;
 };
 
-type SessionPayload = {
+type SessionRecord = {
 	sub: "admin";
-	iat: number;
-	exp: number;
+	createdAt: number;
+	expiresAt: number;
 };
 
 function base64UrlEncode(bytes: Uint8Array): string {
@@ -28,33 +39,28 @@ function base64UrlEncode(bytes: Uint8Array): string {
 		.replace(/\//g, "_");
 }
 
-function base64UrlDecode(value: string): Uint8Array {
-	const base64 = value.replace(/-/g, "+").replace(/_/g, "/");
-	const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
-	const binary = atob(padded);
-	return Uint8Array.from(binary, (character) => character.charCodeAt(0));
-}
-
-function getCookie(request: Request): string | null {
+function getCookieToken(request: Request): string | null {
 	const cookieHeader = request.headers.get("Cookie") ?? "";
 	for (const item of cookieHeader.split(";")) {
 		const separator = item.indexOf("=");
 		if (separator < 0) continue;
 		if (item.slice(0, separator).trim() === COOKIE_NAME) {
-			return item.slice(separator + 1).trim();
+			const token = item.slice(separator + 1).trim();
+			return /^[A-Za-z0-9_-]{43}$/.test(token) ? token : null;
 		}
 	}
 	return null;
 }
 
-async function hmacKey(secret: string): Promise<CryptoKey> {
-	return crypto.subtle.importKey(
-		"raw",
-		new TextEncoder().encode(secret),
-		{ name: "HMAC", hash: "SHA-256" },
-		false,
-		["sign", "verify"],
+async function sessionKey(token: string): Promise<string> {
+	const digest = await crypto.subtle.digest(
+		"SHA-256",
+		new TextEncoder().encode(token),
 	);
+	const hex = Array.from(new Uint8Array(digest), (byte) =>
+		byte.toString(16).padStart(2, "0"),
+	).join("");
+	return SESSION_KEY_PREFIX + hex;
 }
 
 export function getAdminAuthEnv(locals: unknown): AdminAuthEnv {
@@ -67,8 +73,9 @@ export function authConfigReady(
 	return (
 		typeof env.ADMIN_PASSWORD === "string" &&
 		env.ADMIN_PASSWORD.length >= 12 &&
-		typeof env.ADMIN_SESSION_SECRET === "string" &&
-		new TextEncoder().encode(env.ADMIN_SESSION_SECRET).length >= 32
+		typeof env.SESSION?.get === "function" &&
+		typeof env.SESSION.put === "function" &&
+		typeof env.SESSION.delete === "function"
 	);
 }
 
@@ -91,65 +98,61 @@ export async function passwordMatches(
 	return difference === 0;
 }
 
-export async function createSessionToken(
-	secret: string,
+export async function createSessionCookie(
+	store: AdminSessionStore,
 	nowSeconds = Math.floor(Date.now() / 1000),
 ): Promise<string> {
-	const payload: SessionPayload = {
+	const random = crypto.getRandomValues(new Uint8Array(32));
+	const token = base64UrlEncode(random);
+	const record: SessionRecord = {
 		sub: "admin",
-		iat: nowSeconds,
-		exp: nowSeconds + SESSION_TTL_SECONDS,
+		createdAt: nowSeconds,
+		expiresAt: nowSeconds + SESSION_TTL_SECONDS,
 	};
-	const encodedPayload = base64UrlEncode(
-		new TextEncoder().encode(JSON.stringify(payload)),
+	await store.put(
+		await sessionKey(token),
+		JSON.stringify(record),
+		{ expirationTtl: SESSION_TTL_SECONDS },
 	);
-	const signature = await crypto.subtle.sign(
-		"HMAC",
-		await hmacKey(secret),
-		new TextEncoder().encode(encodedPayload),
-	);
-	return `${encodedPayload}.${base64UrlEncode(new Uint8Array(signature))}`;
+	return `${COOKIE_NAME}=${token}; Path=/; Max-Age=${SESSION_TTL_SECONDS}; HttpOnly; Secure; SameSite=Strict`;
 }
 
 export async function isValidSession(
 	request: Request,
-	secret: string,
+	store: AdminSessionStore,
 	nowSeconds = Math.floor(Date.now() / 1000),
 ): Promise<boolean> {
-	const token = getCookie(request);
-	if (!token || token.length > 2048) return false;
-	const parts = token.split(".");
-	if (parts.length !== 2) return false;
+	const token = getCookieToken(request);
+	if (!token) return false;
+
 	try {
-		const signature = base64UrlDecode(parts[1]);
-		const signatureBuffer = new ArrayBuffer(signature.byteLength);
-		new Uint8Array(signatureBuffer).set(signature);
-		const validSignature = await crypto.subtle.verify(
-			"HMAC",
-			await hmacKey(secret),
-			signatureBuffer,
-			new TextEncoder().encode(parts[0]),
-		);
-		if (!validSignature) return false;
-		const payload = JSON.parse(
-			new TextDecoder().decode(base64UrlDecode(parts[0])),
-		) as Partial<SessionPayload>;
+		const recordText = await store.get(await sessionKey(token));
+		if (!recordText) return false;
+		const record = JSON.parse(recordText) as Partial<SessionRecord>;
 		return (
-			payload.sub === "admin" &&
-			typeof payload.iat === "number" &&
-			typeof payload.exp === "number" &&
-			payload.iat <= nowSeconds + 60 &&
-			payload.exp > nowSeconds &&
-			payload.exp - payload.iat === SESSION_TTL_SECONDS
+			record.sub === "admin" &&
+			typeof record.createdAt === "number" &&
+			typeof record.expiresAt === "number" &&
+			record.createdAt <= nowSeconds + 60 &&
+			record.expiresAt > nowSeconds &&
+			record.expiresAt - record.createdAt === SESSION_TTL_SECONDS
 		);
 	} catch {
 		return false;
 	}
 }
 
-export async function sessionCookie(secret: string): Promise<string> {
-	const token = await createSessionToken(secret);
-	return `${COOKIE_NAME}=${token}; Path=/; Max-Age=${SESSION_TTL_SECONDS}; HttpOnly; Secure; SameSite=Strict`;
+export async function revokeSession(
+	request: Request,
+	store: AdminSessionStore,
+): Promise<void> {
+	const token = getCookieToken(request);
+	if (!token) return;
+	try {
+		await store.delete(await sessionKey(token));
+	} catch {
+		// The cookie is still cleared by the response even if KV is temporarily unavailable.
+	}
 }
 
 export function clearSessionCookie(): string {
