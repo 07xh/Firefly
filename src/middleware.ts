@@ -105,6 +105,10 @@ function plainResponse(message: string, status: number): Response {
 			"cache-control": "no-store",
 			"x-content-type-options": "nosniff",
 			"referrer-policy": "no-referrer",
+			"x-frame-options": "DENY",
+			"content-security-policy": "frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+			"permissions-policy": "camera=(), microphone=(), geolocation=()",
+			"cross-origin-opener-policy": "same-origin",
 		},
 	});
 }
@@ -161,6 +165,12 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	headers.set("x-content-type-options", "nosniff");
 	headers.set("referrer-policy", "no-referrer");
 	headers.set("x-frame-options", "DENY");
+	headers.set(
+		"content-security-policy",
+		"frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+	);
+	headers.set("permissions-policy", "camera=(), microphone=(), geolocation=()");
+	headers.set("cross-origin-opener-policy", "same-origin");
 	return new Response(response.body, {
 		status: response.status,
 		statusText: response.statusText,
