@@ -36,3 +36,11 @@ Firefly 的 `/admin/*` 与 `/api/admin/*` 应通过 Cloudflare Access 身份认�
 - 对写请求校验 `Origin` 和内容类型，设置请求大小限制与速率限制；CORS 不是认证机制。错误响应不得泄露密钥或堆栈。
 - 在文章 API 实现并测试前，后台仍不能视为具备在线增删改能力。
 - Cloudflare Access 应用与 Allow 策略、Worker 环境变量属于账户级配置，需在你的 Cloudflare 账户中完成。代码提交或 CI 构建通过不等于生产身份认证已经生效。
+
+
+## 管理员邮箱白名单
+
+- Worker 必须设置 `CF_ACCESS_ALLOWED_EMAILS`，值为允许进入后台的邮箱地址，多个邮箱用英文逗号分隔，例如 `admin@example.com,editor@example.com`。请替换为真实的管理员邮箱，不要使用示例地址。
+- 中间件仅在 Cloudflare Access JWT 签名、签发方、Audience、有效期验证通过后，读取 JWT 中的 `email` 字段并与白名单进行不区分大小写的精确匹配。
+- 白名单缺失或为空时，后台会 fail-closed 返回 503；邮箱不在名单中时返回 403。应同时在 Cloudflare Access 策略中限制身份，白名单是第二道防线，不替代 Access 策略。
+- 不要把管理员邮箱写进前端配置；通过 Worker 环境变量设置，并在生产环境测试允许和拒绝的账号。
