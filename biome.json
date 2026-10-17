@@ -90,6 +90,14 @@
           }
         }
       }
+    },
+    {
+      "includes": [
+        "src/pages/api/admin/articles.ts"
+      ],
+      "formatter": {
+        "enabled": false
+      }
     }
   ]
 }
