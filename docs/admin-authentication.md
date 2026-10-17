@@ -15,11 +15,9 @@ Firefly 后台已改为应用自己的密码登录，不依赖 Cloudflare Zero T
 
 ### 2. 配置会话 KV
 
-wrangler.toml 和 wrangler.jsonc 都定义了 FIREFLY_SESSIONS 绑定。首次部署时 Wrangler 可以自动创建并绑定 KV 命名空间；GitHub Actions 使用的 CLOUDFLARE_API_TOKEN 必须具有 Workers KV Storage Write 权限，以及原有的 Workers 部署权限。
+wrangler.toml 和 wrangler.jsonc 都定义了 FIREFLY_SESSIONS 绑定。Cloudflare 部署工作流会先查找标题为 `FIREFLY_SESSIONS` 的 KV 命名空间；如果不存在，则创建一个，并在部署任务运行时将其 ID 写入两份配置。该 ID 不包含密码，但无需手动提交到仓库。
 
-首次部署成功后，打开 Cloudflare Dashboard → Workers & Pages → firefly → Settings → Bindings，找到 FIREFLY_SESSIONS 并复制其 KV Namespace ID。随后把这个 ID 写入仓库的 wrangler.toml 和 wrangler.jsonc 对应绑定的 id 字段，再提交这项配置，避免后续部署重新自动解析/创建命名空间。KV ID 是绑定标识，不是密码，不要将任何 Token 或 Secret 写进仓库。
-
-如果部署日志提示缺少 KV 权限，请给 GitHub Actions 使用的 Cloudflare API Token 补上 Workers KV Storage Write 权限，再重新运行部署工作流。
+GitHub Actions 使用的 `CLOUDFLARE_API_TOKEN` 必须具有 Workers 部署权限及 Workers KV Storage Read、Write 权限。若命名空间创建或查询失败，部署会停止，不会继续发布缺少会话存储的 Worker。
 
 ### 3. 检查 GitHub 写入 Token
 
