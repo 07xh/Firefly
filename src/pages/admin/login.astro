@@ -81,7 +81,7 @@ export const prerender = false;
 					});
 					const data = await response
 						.json()
-						.catch(() => ({ error: "服务器返回了无法识别的响应。" }));
+						.catch(() => ({ error: "服务器响应无法解析（HTTP " + response.status + "）。请检查后台 API 路由和 Worker 部署。" }));
 					if (!response.ok) throw new Error(data.error || "登录失败。");
 					location.assign(destination());
 				} catch (error) {
