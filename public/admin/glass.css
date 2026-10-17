@@ -1,19 +1,19 @@
 
-/* Firefly CMS — Soft Glass UI v1 */
+/* Firefly CMS — Soft Green Glass UI */
 
 :root {
   color-scheme: light;
-  --ff-text: #253047;
-  --ff-muted: #78849a;
-  --ff-accent: #6878e8;
-  --ff-border: rgba(133, 151, 183, 0.22);
-  --ff-glass: rgba(255, 255, 255, 0.76);
-  --ff-shadow: 0 12px 34px rgba(56, 72, 112, 0.09);
+  --ff-text: #263b37;
+  --ff-muted: #718580;
+  --ff-accent: #299b7c;
+  --ff-border: rgba(67, 119, 104, 0.17);
+  --ff-glass: rgba(255, 255, 255, 0.82);
+  --ff-shadow: 0 12px 34px rgba(42, 91, 76, 0.08);
 }
 
 html {
   min-height: 100%;
-  background: #f2f5fb;
+  background: #f1f7f4;
 }
 
 body {
@@ -25,35 +25,46 @@ body {
   background:
     radial-gradient(
       ellipse at 8% 0%,
-      rgba(176, 194, 255, 0.30),
+      rgba(111, 202, 177, 0.22),
       transparent 42%
     ),
     radial-gradient(
       ellipse at 95% 12%,
-      rgba(218, 195, 255, 0.27),
+      rgba(185, 226, 210, 0.24),
       transparent 38%
     ),
-    linear-gradient(145deg, #f7f9fd, #edf1f9) fixed;
+    linear-gradient(145deg, #f8fbf9, #edf5f1) fixed;
 }
 
 /* Top navigation */
 header,
 [class*="appHeader"],
 [class*="AppHeader"] {
+  background: rgba(255, 255, 255, 0.82);
+  border-bottom: 1px solid var(--ff-border);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
 }
 
 /* Common CMS panels */
 [class*="collectionPage"],
+[class*="CollectionPage"],
 [class*="entryEditor"],
+[class*="EntryEditor"],
 [class*="controlPane"],
 [class*="previewPane"],
 [class*="sidebar"],
+[class*="Sidebar"],
 .Pane,
 .ui.segment,
 .ui.card {
   border-color: var(--ff-border);
+}
+
+.ui.segment,
+.ui.card {
+  border-radius: 14px;
+  box-shadow: var(--ff-shadow);
 }
 
 /* Softer form controls */
@@ -64,9 +75,9 @@ select,
   max-width: 100%;
   border: 1px solid var(--ff-border) !important;
   border-radius: 11px !important;
-  background: rgba(255, 255, 255, 0.82) !important;
+  background: rgba(255, 255, 255, 0.90) !important;
   color: var(--ff-text);
-  box-shadow: inset 0 1px 2px rgba(45, 60, 90, 0.025);
+  box-shadow: inset 0 1px 2px rgba(45, 75, 65, 0.025);
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease;
@@ -76,8 +87,8 @@ input:focus,
 textarea:focus,
 select:focus,
 .ui.input > input:focus {
-  border-color: rgba(104, 120, 232, 0.72) !important;
-  box-shadow: 0 0 0 3px rgba(104, 120, 232, 0.12) !important;
+  border-color: rgba(41, 155, 124, 0.78) !important;
+  box-shadow: 0 0 0 3px rgba(41, 155, 124, 0.13) !important;
   outline: none;
 }
 
@@ -93,7 +104,18 @@ button,
 }
 
 .ui.button:not(.basic):not(.inverted) {
-  box-shadow: 0 3px 10px rgba(54, 70, 115, 0.07);
+  box-shadow: 0 3px 10px rgba(42, 91, 76, 0.07);
+}
+
+.ui.primary.button,
+button.primary {
+  background-color: var(--ff-accent);
+  color: #fff;
+}
+
+.ui.primary.button:hover,
+button.primary:hover {
+  background-color: #217e65;
 }
 
 button:focus-visible,
@@ -102,10 +124,13 @@ button:focus-visible,
   outline-offset: 3px;
 }
 
+/* Links */
+a {
+  color: var(--ff-accent);
+}
+
 /* Cards and lists */
 .ui.card {
-  border-radius: 14px;
-  box-shadow: var(--ff-shadow);
   overflow: hidden;
 }
 
@@ -116,7 +141,7 @@ button:focus-visible,
 
 .ui.table thead th {
   color: var(--ff-muted);
-  background: rgba(244, 247, 253, 0.82);
+  background: rgba(233, 244, 239, 0.86);
 }
 
 /* Tablet touch targets */
@@ -150,5 +175,371 @@ button:focus-visible,
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+
+
+/* Admin editor refinements — this file is only loaded by /admin/. */
+:root {
+  --ff-radius: 14px;
+  --ff-focus: 0 0 0 3px rgba(41, 155, 124, 0.14);
+}
+
+/* CMS workspace */
+#nc-root {
+  min-height: 100vh;
+}
+
+[class*="AppMain"],
+[class*="appMain"],
+[class*="EditorPage"],
+[class*="editorPage"] {
+  background: transparent;
+}
+
+[class*="collection"],
+[class*="Collection"],
+[class*="entry"],
+[class*="Entry"] {
+  scrollbar-color: rgba(41, 155, 124, 0.32) transparent;
+}
+
+/* Make field groups read as calm, separated cards. */
+[class*="ControlPane"],
+[class*="controlPane"],
+[class*="FieldWrapper"],
+[class*="fieldWrapper"],
+[class*="ObjectControl"],
+[class*="objectControl"] {
+  border-color: var(--ff-border);
+}
+
+label {
+  color: var(--ff-text);
+  font-weight: 600;
+}
+
+input,
+textarea,
+select,
+[contenteditable="true"] {
+  accent-color: var(--ff-accent);
+}
+
+textarea,
+[contenteditable="true"] {
+  line-height: 1.75;
+}
+
+/* Split-pane preview layout, when the CMS exposes both panes. */
+.SplitPane {
+  background: transparent;
+}
+
+.SplitPane.horizontal {
+  display: flex;
+  flex-direction: row;
+}
+
+.SplitPane.horizontal > .Pane1,
+.SplitPane.horizontal > .Pane2 {
+  min-width: 0;
+}
+
+.SplitPane.horizontal > .Pane1 {
+  border-right: 1px solid var(--ff-border);
+}
+
+.Resizer {
+  background: rgba(41, 155, 124, 0.12);
+  opacity: 1;
+  z-index: 5;
+}
+
+.Resizer:hover,
+.Resizer:focus {
+  background: rgba(41, 155, 124, 0.48);
+}
+
+[class*="Toolbar"],
+[class*="toolbar"] {
+  border-color: var(--ff-border);
+}
+
+button,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (min-width: 1000px) {
+  [class*="EditorPage"],
+  [class*="editorPage"] {
+    padding: 18px;
+  }
+
+  [class*="ControlPane"],
+  [class*="controlPane"],
+  [class*="PreviewPane"],
+  [class*="previewPane"] {
+    border-radius: 14px;
+  }
+}
+
+@media (max-width: 760px) {
+  .SplitPane.horizontal {
+    display: block;
+  }
+
+  .SplitPane.horizontal > .Pane1,
+  .SplitPane.horizontal > .Pane2 {
+    width: 100% !important;
+  }
+}
+
+
+/* Final polish: align Decap CMS controls with Firefly's calm green theme. */
+:root {
+  --ff-text: #243b35;
+  --ff-muted: #6c817a;
+  --ff-accent: #278b70;
+  --ff-border: #dce9e3;
+  --ff-glass: rgba(255, 255, 255, 0.94);
+  --ff-shadow: 0 8px 24px rgba(36, 75, 61, 0.06);
+}
+
+/* Keep the workspace quiet and consistent instead of layering competing gradients. */
+#nc-root,
+#nc-root [class*="AppMain"],
+#nc-root [class*="appMain"],
+#nc-root [class*="CollectionPage"],
+#nc-root [class*="collectionPage"],
+#nc-root [class*="EditorPage"],
+#nc-root [class*="editorPage"] {
+  color: var(--ff-text);
+}
+
+#nc-root [class*="AppHeader"],
+#nc-root [class*="appHeader"],
+#nc-root [class*="Toolbar"],
+#nc-root [class*="toolbar"] {
+  background: rgba(255, 255, 255, 0.94);
+  border-color: var(--ff-border);
+  box-shadow: 0 1px 0 rgba(36, 75, 61, 0.03);
+}
+
+/* Sidebar and editor surfaces share one radius, border, and restrained shadow. */
+#nc-root [class*="Sidebar"],
+#nc-root [class*="sidebar"],
+#nc-root [class*="ControlPane"],
+#nc-root [class*="controlPane"],
+#nc-root [class*="PreviewPane"],
+#nc-root [class*="previewPane"],
+#nc-root .ui.segment,
+#nc-root .ui.card {
+  border-color: var(--ff-border);
+  box-shadow: var(--ff-shadow);
+}
+
+#nc-root .ui.segment,
+#nc-root .ui.card {
+  border-radius: 12px;
+}
+
+#nc-root .ui.menu,
+#nc-root .ui.secondary.menu {
+  border-color: var(--ff-border);
+  box-shadow: none;
+}
+
+#nc-root .ui.menu .item,
+#nc-root .ui.secondary.menu .item {
+  border-radius: 8px;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+#nc-root .ui.menu .active.item,
+#nc-root .ui.secondary.menu .active.item {
+  color: #216b55;
+  background: #e8f5ef;
+  font-weight: 650;
+}
+
+#nc-root .ui.label {
+  border-radius: 7px;
+  font-weight: 600;
+}
+
+#nc-root .ui.divider {
+  border-top-color: var(--ff-border);
+}
+
+/* Make fields feel like a unified form, with clearer focus and comfortable spacing. */
+#nc-root .field > label,
+#nc-root label {
+  color: var(--ff-text);
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+#nc-root .field {
+  margin-bottom: 1.15rem;
+}
+
+#nc-root input:not([type="checkbox"]):not([type="radio"]),
+#nc-root textarea,
+#nc-root select,
+#nc-root .ui.input > input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid #d6e5dd !important;
+  border-radius: 9px !important;
+  background: #fff !important;
+  color: var(--ff-text);
+  box-shadow: none !important;
+}
+
+#nc-root textarea {
+  min-height: 140px;
+  line-height: 1.7;
+  resize: vertical;
+}
+
+#nc-root input:focus,
+#nc-root textarea:focus,
+#nc-root select:focus,
+#nc-root .ui.input > input:focus {
+  border-color: var(--ff-accent) !important;
+  box-shadow: 0 0 0 3px rgba(39, 139, 112, 0.12) !important;
+}
+
+/* Buttons: one clear primary action; secondary actions remain quiet. */
+#nc-root .ui.button,
+#nc-root button,
+#nc-root [role="button"] {
+  min-height: 38px;
+  border-radius: 9px;
+  font-weight: 600;
+}
+
+#nc-root .ui.primary.button,
+#nc-root button.primary {
+  background: var(--ff-accent);
+  color: #fff;
+  box-shadow: 0 3px 8px rgba(39, 139, 112, 0.15);
+}
+
+#nc-root .ui.primary.button:hover,
+#nc-root button.primary:hover {
+  background: #216f59;
+}
+
+#nc-root .ui.basic.button,
+#nc-root .ui.button:not(.primary):not(.positive):not(.negative) {
+  box-shadow: none;
+}
+
+#nc-root .ui.table {
+  border-radius: 10px;
+  border-color: var(--ff-border);
+}
+
+#nc-root .ui.table thead th {
+  background: #f0f7f3;
+  color: var(--ff-muted);
+  font-weight: 650;
+}
+
+#nc-root .ui.message {
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+/* Mobile/tablet: preserve usable controls without forcing a desktop split pane. */
+@media (max-width: 760px) {
+  #nc-root .field {
+    margin-bottom: 1rem;
+  }
+
+  #nc-root input:not([type="checkbox"]):not([type="radio"]),
+  #nc-root textarea,
+  #nc-root select,
+  #nc-root .ui.button,
+  #nc-root button {
+    font-size: 16px;
+  }
+}
+
+
+/* Writing-first editor: reduce CMS chrome and keep the writing surface in focus. */
+#nc-root [class*="AppHeader-logo"],
+#nc-root [class*="appHeader-logo"],
+#nc-root [class*="AppHeaderLogo"],
+#nc-root [class*="appHeaderLogo"] {
+  display: none !important;
+}
+
+#nc-root [class*="AppHeader"],
+#nc-root [class*="appHeader"] {
+  min-height: 54px;
+  padding-inline: clamp(12px, 2.5vw, 28px);
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid #e3ece7;
+  box-shadow: none;
+}
+
+#nc-root [class*="EditorPage"],
+#nc-root [class*="editorPage"],
+#nc-root [class*="EntryEditor"],
+#nc-root [class*="entryEditor"] {
+  background: transparent;
+}
+
+#nc-root [class*="ControlPane"],
+#nc-root [class*="controlPane"] {
+  background: #fff;
+  border: 1px solid #e1ebe5;
+  border-radius: 14px;
+  box-shadow: 0 8px 24px rgba(36, 75, 61, 0.045);
+}
+
+#nc-root [class*="PreviewPane"],
+#nc-root [class*="previewPane"] {
+  background: #f7faf8;
+  border-left: 1px solid #e1ebe5;
+}
+
+#nc-root [class*="MarkdownControl"],
+#nc-root [class*="markdownControl"],
+#nc-root [class*="EditorToolbar"],
+#nc-root [class*="editorToolbar"] {
+  border-color: #e1ebe5;
+  box-shadow: none;
+}
+
+#nc-root [contenteditable="true"] {
+  min-height: 52vh;
+  padding: 1.2rem 1.3rem;
+  border-radius: 10px;
+  background: #fff;
+  font-size: 16px;
+  line-height: 1.9;
+}
+
+#nc-root [contenteditable="true"]:focus {
+  outline: 2px solid rgba(39, 139, 112, 0.16);
+  outline-offset: 1px;
+}
+
+#nc-root [class*="EditorPage"] h1,
+#nc-root [class*="editorPage"] h1 {
+  letter-spacing: -0.025em;
+}
+
+@media (min-width: 1100px) {
+  #nc-root [class*="ControlPane"],
+  #nc-root [class*="controlPane"] {
+    padding: 18px;
   }
 }
