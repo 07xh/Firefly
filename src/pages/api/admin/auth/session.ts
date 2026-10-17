@@ -15,9 +15,6 @@ export const GET: APIRoute = async ({ request, locals }) => {
 		);
 	}
 
-	const authenticated = await isValidSession(
-		request,
-		env.ADMIN_SESSION_SECRET,
-	);
+	const authenticated = await isValidSession(request, env.SESSION);
 	return jsonResponse({ authenticated }, authenticated ? 200 : 401);
 };
