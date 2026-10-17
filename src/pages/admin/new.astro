@@ -1,0 +1,49 @@
+---
+export const prerender = false;
+---
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>新建文章 · Firefly</title>
+<style>
+:root{font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#202820;background:#f3f6f3}*{box-sizing:border-box}body{margin:0}header{padding:15px max(18px,calc((100vw - 980px)/2));background:white;border-bottom:1px solid #e1e8e1;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}h1{font-size:19px;margin:0}.wrap{max-width:980px;margin:24px auto;padding:0 16px}.panel{background:white;border:1px solid #e0e7e0;border-radius:14px;padding:20px;min-width:0}.field{display:grid;gap:6px;margin-bottom:14px}.field label{font-size:12px;color:#59675d;font-weight:650}.field input,.field textarea{width:100%;border:1px solid #d8e1d8;border-radius:8px;padding:10px;font:inherit;background:white;color:#202820}.field textarea{min-height:300px;resize:vertical;font-family:ui-monospace,monospace;line-height:1.65}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.btn{border:1px solid #d5dfd5;border-radius:8px;background:white;color:#263329;padding:9px 13px;cursor:pointer;font:inherit}.primary{background:#12884f;color:white;border-color:#12884f}.btn:disabled{opacity:.6;cursor:wait}.tabs,.actions{display:flex;gap:8px;flex-wrap:wrap}.tabs{margin:4px 0 9px}.active{background:#eaf6ee;border-color:#b6dbc3;color:#127947}.preview{min-height:300px;border:1px solid #d8e1d8;border-radius:8px;padding:14px;line-height:1.75;overflow-wrap:anywhere}.preview h1,.preview h2,.preview h3{line-height:1.35}.preview pre{overflow:auto;background:#f3f6f3;padding:12px;border-radius:8px}.preview code{font-family:ui-monospace,monospace;background:#f3f6f3;padding:2px 4px;border-radius:4px}.preview pre code{padding:0}.preview img{max-width:100%;height:auto}.preview table{border-collapse:collapse;max-width:100%;display:block;overflow:auto}.preview th,.preview td{border:1px solid #d8e1d8;padding:6px 9px}.status{min-height:24px;margin:12px 0;color:#657267;font-size:13px;overflow-wrap:anywhere}.danger-text{color:#b42318}.muted{color:#718075;font-size:12px}.deploy-link{display:inline-block;margin-top:6px;color:#12884f;font-size:13px}@media(max-width:650px){.grid{grid-template-columns:1fr}.wrap{margin-top:12px}.panel{padding:15px}header{padding:13px 15px}}
+</style>
+</head>
+<body>
+<header><h1>✦ 新建文章</h1><nav><a href="/admin/" style="color:#12884f;margin-right:14px">返回文章管理</a><button class="btn" id="logout" type="button">退出登录</button></nav></header>
+<main class="wrap">
+<section class="panel">
+<p class="muted">提交后会通过 GitHub API 写入仓库，并由 Cloudflare Worker 工作流自动构建、部署。草稿不会出现在公开文章列表。</p>
+<form id="editor">
+<div class="field"><label for="title">标题 *</label><input id="title" required maxlength="200" autocomplete="off"></div>
+<div class="grid"><div class="field"><label for="slug">文章文件名 *</label><input id="slug" required pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,79}" placeholder="my-first-post" autocomplete="off"><span class="muted">仅允许英文、数字、连字符和下划线。</span></div><div class="field"><label for="published">发布日期 *</label><input id="published" type="date" required></div></div>
+<div class="grid"><div class="field"><label for="category">分类</label><input id="category" maxlength="100"></div><div class="field"><label for="tags">标签（逗号分隔）</label><input id="tags" placeholder="技术, 随笔"></div></div>
+<div class="field"><label for="description">摘要</label><input id="description" maxlength="500"></div>
+<div class="field"><label for="body">正文 Markdown *</label><div class="tabs"><button class="btn active" id="editTab" type="button">编辑</button><button class="btn" id="previewTab" type="button">Markdown 预览</button></div><textarea id="body" required maxlength="500000" spellcheck="false" placeholder="# 文章标题&#10;&#10;在这里编写 Markdown 正文。"></textarea><div id="preview" class="preview" hidden><p class="muted">点击“Markdown 预览”生成排版效果。</p></div></div>
+<div class="actions"><button class="btn" id="saveDraft" type="submit" value="draft">保存草稿</button><button class="btn primary" id="publish" type="submit" value="publish">发布文章</button><button class="btn" id="clear" type="button">清空表单</button></div>
+</form>
+<div class="status" id="status" role="status" aria-live="polite"></div>
+<a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看 Cloudflare 部署日志 ↗</a>
+</section>
+</main>
+<script>
+// @ts-nocheck
+const $=id=>document.getElementById(id);
+function say(message,bad=false){$("status").textContent=message;$("status").classList.toggle("danger-text",bad)}
+function localDate(){const now=new Date();return new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10)}
+function showEdit(){$("body").hidden=false;$("preview").hidden=true;$("editTab").classList.add("active");$("previewTab").classList.remove("active")}
+function showPreview(){$("body").hidden=true;$("preview").hidden=false;$("editTab").classList.remove("active");$("previewTab").classList.add("active")}
+async function previewMarkdown(){showPreview();$("preview").textContent="正在生成预览…";try{const response=await fetch("/api/admin/preview",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({markdown:$("body").value})});const data=await response.json().catch(()=>({error:"预览响应无法解析（HTTP "+response.status+"）"}));if(response.status===401){location.assign("/admin/login/?next="+encodeURIComponent(location.pathname+location.search));return}if(!response.ok)throw new Error(data.error||"Markdown 预览失败");$("preview").innerHTML=data.html||"<p>暂无内容</p>"}catch(error){$("preview").textContent=error instanceof Error?error.message:"Markdown 预览失败"}}
+async function api(method,data){const response=await fetch("/api/admin/articles",{method,credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(data)});const result=await response.json().catch(()=>({error:"服务器响应无法解析（HTTP "+response.status+"）"}));if(response.status===401){location.assign("/admin/login/?next="+encodeURIComponent(location.pathname+location.search));throw new Error("登录状态失效，正在跳转登录页")}if(!response.ok)throw new Error(result.error||"请求失败");return result}
+async function watchDeployment(sha,mode,attempt=0){try{const response=await fetch("/api/admin/deployment-status?sha="+encodeURIComponent(sha),{credentials:"same-origin",cache:"no-store"});const data=await response.json().catch(()=>({error:"无法读取部署状态（HTTP "+response.status+"）"}));if(response.status===401){location.assign("/admin/login/?next="+encodeURIComponent(location.pathname+location.search));return}if(!response.ok)throw new Error(data.error||"部署状态查询失败");if(data.url){$("deployLink").href=data.url;$("deployLink").hidden=false}if(data.status==="success"){say(mode==="publish"?"发布成功：GitHub 已写入，Cloudflare 构建和部署已成功。":"草稿已保存：GitHub 写入成功，Cloudflare 构建和部署已成功；草稿不会公开显示。");return}if(data.status==="failure"){say("文章已写入 GitHub，但 Cloudflare 部署失败。请打开部署日志检查。",true);return}if(attempt>=24){say("文章已写入 GitHub，但尚未确认部署完成；请打开工作流日志检查。",true);return}say(data.status==="running"?"GitHub 写入成功，Cloudflare 正在构建/部署…":"GitHub 写入成功，正在等待 Cloudflare 工作流启动…");setTimeout(()=>watchDeployment(sha,mode,attempt+1),10000)}catch(error){if(attempt>=24){say("文章已写入 GitHub，但部署状态无法确认："+(error instanceof Error?error.message:"未知错误"),true);return}say("正在查询 Cloudflare 部署状态…");setTimeout(()=>watchDeployment(sha,mode,attempt+1),10000)}}
+$("editTab").onclick=showEdit;$("previewTab").onclick=previewMarkdown;$("body").addEventListener("input",()=>{if(!$("preview").hidden)previewMarkdown()});
+$("clear").onclick=()=>{$("editor").reset();$("published").value=localDate();showEdit();$("deployLink").hidden=true;$("deployLink").removeAttribute("href");say("表单已清空")};
+$("logout").onclick=async()=>{try{const response=await fetch("/api/admin/auth",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:"{}"});if(!response.ok)throw new Error("退出登录失败（HTTP "+response.status+"）");location.assign("/admin/login/")}catch(error){say(error instanceof Error?error.message:"退出登录失败",true)}};
+$("editor").addEventListener("submit",async event=>{event.preventDefault();const mode=event.submitter&&event.submitter.value==="publish"?"publish":"draft";if(mode==="publish"&&!confirm("确认发布文章？这会把文章写入 GitHub 并触发正式网站部署。"))return;const slug=$("slug").value.trim();if(!/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(slug)){say("文件名格式不正确。",true);$("slug").focus();return}const buttons=[$("saveDraft"),$("publish")];buttons.forEach(button=>button.disabled=true);$("deployLink").hidden=true;try{const result=await api("POST",{title:$("title").value,slug:slug,published:$("published").value,category:$("category").value,description:$("description").value,tags:$("tags").value.split(",").map(tag=>tag.trim()).filter(Boolean),draft:mode==="draft",body:$("body").value});say("已提交到 GitHub（"+result.path+"），等待部署状态…");if(result.commitSha){watchDeployment(result.commitSha,mode)}else{say("文章已写入 GitHub，但接口未返回提交 SHA，无法自动确认部署。",true)}}catch(error){say(error instanceof Error?error.message:"提交失败，请重试。",true)}finally{buttons.forEach(button=>button.disabled=false)}});
+$("published").value=localDate();
+</script>
+</body>
+</html>
