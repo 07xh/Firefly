@@ -18,10 +18,3 @@ jobs:
           version: 2.5.15
       - name: Run Biome
         run: biome ci ./src --reporter=github
-      - name: Diagnose formatter differences
-        if: failure()
-        run: |
-          biome format ./src --write
-          git status --short
-          git diff --stat -- ./src
-          git diff -- ./src/components/features/FontSetup.astro ./src/middleware.ts
