@@ -1,46 +1,45 @@
-# Firefly 后台身份认证部署说明
+# Firefly 后台独立登录认证
 
-Firefly 的 `/admin/*` 与 `/api/admin/*` 应通过 Cloudflare Access 身份认证，并由 Worker 中间件再次验证 Access JWT 的签名、签发方、应用 Audience 和有效期。未带有效身份的页面请求会跳转登录；API 请求会返回 401，避免把登录 HTML 当成 API 响应。认证配置缺失时后台会返回 503，验证失败返回 403；不会退化为前端口令或仅检查一个请求头。
+Firefly 后台使用独立密码登录，不依赖 Cloudflare Zero Trust。所有 `/admin/*` 页面和 `/api/admin/*` 文章/部署接口均由 Worker 中间件校验签名会话；只有登录、登出和会话状态接口允许匿名访问。未登录的页面请求跳转到 `/admin/login/`，未登录 API 请求返回 401。
 
-## 1. 在 Cloudflare 创建 Access 应用
+## 1. 配置 Cloudflare Worker Secrets
 
-1. 登录 Cloudflare Zero Trust 控制台，进入 **Access → Applications → Add an application → Self-hosted**。
-2. 应用域名选择实际用于管理后台的站点，例如 `0701000.xyz`，路径覆盖 `/admin`、`/admin/*`、`/api/admin` 和 `/api/admin/*`。不要只保护登录页面。
-3. 建立 **Allow** 策略，仅允许你控制的邮箱地址或组织身份；不要配置对所有人的公开 Allow 规则。
-4. 保存应用，并复制该应用的 **Application Audience (AUD) Tag**。
-5. 如果你还有 GitHub Pages 域名，后台不应从该域名公开访问；本仓库的 Pages 工作流会在上传前移除 `dist/admin`。
+进入 Cloudflare Dashboard → Workers & Pages → `firefly` → Settings → Variables and Secrets → Production，添加以下 **Secrets（机密）**：
 
-## 2. 设置 Worker 环境变量
+- `ADMIN_PASSWORD`：后台登录密码，至少 12 个字符。建议使用密码管理器生成的长随机密码；不要与网站、邮箱或 GitHub 密码重复。
+- `ADMIN_SESSION_SECRET`：至少 32 字节的随机秘密，用于 HMAC-SHA-256 签名会话。使用密码管理器生成随机值，或在可信终端运行 `openssl rand -base64 32` 生成。不要将生成值发到聊天、提交到 Git 或放进前端文件。
 
-在 Cloudflare Dashboard → Workers & Pages → `firefly` → Settings → Variables and Secrets，为生产环境设置：
+文章写入仍需要以下 Worker Secret：
 
-- `CF_ACCESS_TEAM_DOMAIN`：你的 Zero Trust 团队域名，例如 `example.cloudflareaccess.com`，不要带协议或路径。
-- `CF_ACCESS_AUD`：上一步复制的 Application Audience (AUD) Tag。
+- `GITHUB_CONTENTS_TOKEN`：只授予 Firefly 仓库必要内容读写权限的 GitHub Token。
+- `GITHUB_CONTENTS_REPO`（可选普通变量）：例如 `07xh/Firefly`。
+- `GITHUB_CONTENTS_BRANCH`（可选普通变量）：当前 API 默认 `master`；如果你配置为其他分支，请确保部署工作流与分支策略一致。
 
-这两个值需要来自你自己的 Cloudflare 账户，不能从仓库推断。保存后重新部署 Worker，使变量生效。也可在 wrangler 的环境变量设置中配置，但不要将账号密钥写进 Git。
+保存后重新部署 Worker，使新 Secrets 生效。请勿再配置或依赖 `CF_ACCESS_TEAM_DOMAIN`、`CF_ACCESS_AUD`、`CF_ACCESS_ALLOWED_EMAILS`；独立登录流程不使用这些变量。
 
-## 3. 验证
+## 2. 登录与会话行为
 
-1. 用无痕窗口访问 `https://你的域名/admin/index.html`，应跳转到 Cloudflare Access 登录。
-2. 使用允许策略中的身份登录后，应能打开后台。
-3. 用未获允许的邮箱测试，应被 Access 拒绝。
-4. 直接访问 GitHub Pages 域名的 `/admin/index.html` 应返回 404（该部署不再包含后台文件）。
-5. 若变量未配置，Worker 后台返回 503；如果 JWT 无效或 AUD 不匹配，则返回 403。
+- 访问 `https://你的域名/admin/` 会在未登录时跳转到 `/admin/login/`。
+- 登录密码仅发送至同源的 `/api/admin/auth/login`，由 Worker 与 Secret 中的密码比较；前端不保存密码。
+- 成功登录后，服务端设置 `HttpOnly; Secure; SameSite=Strict; Path=/` 的 `__Host-firefly_admin` Cookie。
+- Cookie 内容是 HMAC-SHA-256 签名的短期会话，默认 8 小时过期；会话秘密缺失时拒绝所有后台访问。
+- 登出接口会清除会话 Cookie。清除浏览器 Cookie 也可结束本地会话。
+- 后台 API 继续校验同源 Origin、JSON Content-Type、请求体大小及文章路径；GitHub Token 仅在 Worker 服务端使用。
+- 所有后台页面响应都设置禁止缓存、禁止 iframe 嵌入等安全响应头。
 
-## 安全边界
+## 3. 验证清单
 
-- 中间件现在同时拦截 `/admin/*` 和 `/api/admin/*`，但这只是认证门禁，不代表文章写入 API 已经实现。新增 API 仍须校验请求方法、输入字段、文章路径、请求大小和并发更新，并且只能操作 `src/content/posts`。
-- 后台响应还会设置 `X-Frame-Options: DENY`、限制 iframe 嵌入的 CSP、`Permissions-Policy` 与 `Cross-Origin-Opener-Policy`；这些是纵深防御，不能替代 Cloudflare Access。
-- GitHub Token 只能存放在 Cloudflare Worker Secret 中。不得放进前端代码、HTML、浏览器存储、普通环境变量文件或 Git 提交。
-- 写入操作应在专用分支执行；提交审核时创建 Pull Request。禁止后台 API 直接向 `master` 写入或绕过审核发布。删除也必须通过 PR。
-- 对写请求校验 `Origin` 和内容类型，设置请求大小限制与速率限制；CORS 不是认证机制。错误响应不得泄露密钥或堆栈。
-- 在文章 API 实现并测试前，后台仍不能视为具备在线增删改能力。
-- Cloudflare Access 应用与 Allow 策略、Worker 环境变量属于账户级配置，需在你的 Cloudflare 账户中完成。代码提交或 CI 构建通过不等于生产身份认证已经生效。
+1. 配置上述 Worker Secrets 并重新部署。
+2. 使用无痕窗口访问 `/admin/`，应跳转到登录页。
+3. 输入正确密码后应进入文章编辑页；错误密码应被拒绝。
+4. 未登录直接请求 `/api/admin/articles` 应返回 401，而不是文章数据。
+5. 登录后测试读取、新建、编辑、删除和部署状态查询。
+6. 测试结束后点击登出（如果当前页面尚无登出按钮，可清除该站点 Cookie），再确认后台 API 返回 401。
 
+## 安全边界与限制
 
-## 管理员邮箱白名单
-
-- Worker 必须设置 `CF_ACCESS_ALLOWED_EMAILS`，值为允许进入后台的邮箱地址，多个邮箱用英文逗号分隔，例如 `admin@example.com,editor@example.com`。请替换为真实的管理员邮箱，不要使用示例地址。
-- 中间件仅在 Cloudflare Access JWT 签名、签发方、Audience、有效期验证通过后，读取 JWT 中的 `email` 字段并与白名单进行不区分大小写的精确匹配。
-- 白名单缺失或为空时，后台会 fail-closed 返回 503；邮箱不在名单中时返回 403。应同时在 Cloudflare Access 策略中限制身份，白名单是第二道防线，不替代 Access 策略。
-- 不要把管理员邮箱写进前端配置；通过 Worker 环境变量设置，并在生产环境测试允许和拒绝的账号。
+- 密码登录没有 Cloudflare Access 的组织身份、MFA 或集中策略能力。请使用高强度唯一密码，并在 Cloudflare 为登录端点配置可用的速率限制规则；Worker 内存限流不适合作为跨全球边缘的可靠防暴力破解机制。
+- HMAC 会话是无状态会话，无法在过期前逐个服务端撤销；登出通过删除浏览器 Cookie 结束该浏览器的会话。如怀疑会话密钥泄露，请轮换 `ADMIN_SESSION_SECRET` 并重新部署，这会使旧会话全部失效。
+- 此实现不会把密码或会话密钥存进仓库，也不使用浏览器 localStorage 存储登录凭据。
+- 当前文章 API 仍根据 `GITHUB_CONTENTS_BRANCH` 默认向 `master` 写入。若需要强制审核，后续应改为专用分支和 Pull Request 流程；登录认证本身不等于内容审核。
+- 生产环境必须通过 HTTPS 访问；会话 Cookie 带有 `Secure` 和 `__Host-` 前缀。
