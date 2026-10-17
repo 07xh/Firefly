@@ -1,7 +1,9 @@
 {
   "name": "firefly",
   "compatibility_date": "2026-10-17",
-  "compatibility_flags": ["nodejs_compat"],
+  "compatibility_flags": [
+    "nodejs_compat"
+  ],
   "assets": {
     "directory": "./dist",
     "run_worker_first": [
@@ -10,12 +12,14 @@
       "/api/admin",
       "/api/admin/*",
       "/api/auth/*"
-    ]
+    ],
+    "binding": "ASSETS"
   },
   "kv_namespaces": [
     {
       "binding": "FIREFLY_SESSIONS"
     }
   ],
-  "previews": {}
+  "previews": {},
+  "main": "./dist/_worker.js/index.js"
 }
