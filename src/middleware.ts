@@ -61,7 +61,7 @@ async function verifyAccessJwt(
 		) {
 			return false;
 		}
-		if (typeof claims.nbf === "number" && claims.nbf > Date.now() / 1000)
+			if (typeof claims.nbf === "number" && claims.nbf > Date.now() / 1000)
 			return false;
 
 		const audiences = Array.isArray(claims.aud) ? claims.aud : [claims.aud];
@@ -107,7 +107,8 @@ function plainResponse(message: string, status: number): Response {
 export const onRequest = defineMiddleware(async (context, next) => {
 	const pathname = context.url.pathname;
 	const isAdminPage = pathname === "/admin" || pathname.startsWith("/admin/");
-	const isAdminApi = pathname === "/api/admin" || pathname.startsWith("/api/admin/");
+	const isAdminApi =
+		pathname === "/api/admin" || pathname.startsWith("/api/admin/");
 	if (!isAdminPage && !isAdminApi) return next();
 
 	const env = (context.locals as { runtime?: { env?: AccessEnv } }).runtime?.env;
@@ -128,7 +129,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
 	const token = context.request.headers.get("CF-Access-Jwt-Assertion");
 	if (!token) {
 		if (isAdminApi) {
-			return plainResponse("Unauthorized: Cloudflare Access identity is required.", 401);
+			return plainResponse(
+				"Unauthorized: Cloudflare Access identity is required.",
+				401,
+			);
 		}
 		const login = new URL(
 			`/cdn-cgi/access/login/${encodeURIComponent(audience)}`,
