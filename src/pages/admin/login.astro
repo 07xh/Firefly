@@ -31,7 +31,7 @@ export const prerender = false;
       <button class="btn" id="submit" type="submit">安全登录</button>
       <div class="message" id="message" role="status" aria-live="polite"></div>
     </form>
-    <div class="foot">使用加密签名的 HttpOnly 会话 · 8 小时后自动过期</div>
+    <div class="foot">使用服务端 KV 会话 · HttpOnly Cookie · 8 小时后自动过期</div>
   </main>
   <script>
     const formElement = document.getElementById("loginForm");
@@ -52,7 +52,7 @@ export const prerender = false;
     const password = passwordElement;
     const params = new URLSearchParams(location.search);
     const candidate = params.get("next") || "/admin/";
-    const next = candidate.startsWith("/admin") && !candidate.startsWith("//") ? candidate : "/admin/";
+    const next = candidate === "/admin" || candidate.startsWith("/admin/") ? candidate : "/admin/";
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       button.disabled = true;
