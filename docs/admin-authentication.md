@@ -30,6 +30,7 @@ Firefly 的 `/admin/*` 与 `/api/admin/*` 应通过 Cloudflare Access 身份认�
 ## 安全边界
 
 - 中间件现在同时拦截 `/admin/*` 和 `/api/admin/*`，但这只是认证门禁，不代表文章写入 API 已经实现。新增 API 仍须校验请求方法、输入字段、文章路径、请求大小和并发更新，并且只能操作 `src/content/posts`。
+- 后台响应还会设置 `X-Frame-Options: DENY`、限制 iframe 嵌入的 CSP、`Permissions-Policy` 与 `Cross-Origin-Opener-Policy`；这些是纵深防御，不能替代 Cloudflare Access。
 - GitHub Token 只能存放在 Cloudflare Worker Secret 中。不得放进前端代码、HTML、浏览器存储、普通环境变量文件或 Git 提交。
 - 写入操作应在专用分支执行；提交审核时创建 Pull Request。禁止后台 API 直接向 `master` 写入或绕过审核发布。删除也必须通过 PR。
 - 对写请求校验 `Origin` 和内容类型，设置请求大小限制与速率限制；CORS 不是认证机制。错误响应不得泄露密钥或堆栈。
