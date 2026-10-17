@@ -97,7 +97,9 @@ function plainResponse(message: string, status: number): Response {
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const pathname = context.url.pathname;
-  if (pathname !== "/admin" && !pathname.startsWith("/admin/")) return next();
+  const isAdminPage = pathname === "/admin" || pathname.startsWith("/admin/");
+  const isAdminApi = pathname === "/api/admin" || pathname.startsWith("/api/admin/");
+  if (!isAdminPage && !isAdminApi) return next();
 
   const env = (context.locals as { runtime?: { env?: AccessEnv } }).runtime?.env;
   const teamDomain = env?.CF_ACCESS_TEAM_DOMAIN?.trim().replace(/^https?:\/\//, "").replace(/\/$/, "");
@@ -106,7 +108,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // Fail closed: never serve the admin interface if Access is not configured.
   if (!teamDomain || !audience) {
     return plainResponse(
-      "Firefly admin is locked: configure CF_ACCESS_TEAM_DOMAIN and CF_ACCESS_AUD, then enable a Cloudflare Access application for /admin/*.",
+      "Firefly admin is locked: configure CF_ACCESS_TEAM_DOMAIN and CF_ACCESS_AUD, and protect both /admin/* and /api/admin/* with Cloudflare Access.",
       503,
     );
   }
@@ -114,6 +116,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const issuer = `https://${teamDomain}`;
   const token = context.request.headers.get("CF-Access-Jwt-Assertion");
   if (!token) {
+    if (isAdminApi) {
+      return plainResponse("Unauthorized: Cloudflare Access identity is required.", 401);
+    }
     const login = new URL(`/cdn-cgi/access/login/${encodeURIComponent(audience)}`, context.url.origin);
     login.searchParams.set("redirect_url", context.url.href);
     return Response.redirect(login.toString(), 302);
