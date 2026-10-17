@@ -159,8 +159,11 @@ jobs:
           await check("protected admin page", async () => {
             const response = await fetch(base + "/admin/", { redirect: "manual" });
             const location = response.headers.get("location") || "";
+            const body = await response.text();
             if (response.status !== 302 || !location.includes("/admin/login/")) {
-              throw new Error("expected 302 redirect to login, got HTTP " + response.status + " location=" + location);
+              throw new Error("expected 302 redirect to login, got HTTP " + response.status +
+                " location=" + location + " content-type=" + (response.headers.get("content-type") || "") +
+                " body=" + body.slice(0, 800));
             }
             return "HTTP 302 to login";
           });
