@@ -1,11 +1,11 @@
 import type { APIRoute } from "astro";
 import {
 	authConfigReady,
+	createSessionCookie,
 	getAdminAuthEnv,
 	isSameOriginRequest,
 	jsonResponse,
 	passwordMatches,
-	sessionCookie,
 } from "../../../../lib/admin-auth";
 
 export const POST: APIRoute = async ({ request, url, locals }) => {
@@ -35,7 +35,7 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
 		return jsonResponse(
 			{
 				error:
-					"后台登录尚未配置。请在 Worker Secrets 中设置 ADMIN_PASSWORD（至少 12 位）和 ADMIN_SESSION_SECRET（至少 32 字节）。",
+					"后台登录尚未配置。请设置 ADMIN_PASSWORD，并确认 SESSION KV 绑定已存在。",
 			},
 			503,
 		);
@@ -61,13 +61,9 @@ export const POST: APIRoute = async ({ request, url, locals }) => {
 	}
 
 	if (!(await passwordMatches(input.password, env.ADMIN_PASSWORD))) {
-		// Keep the message generic so the endpoint does not reveal configuration details.
 		return jsonResponse({ error: "密码不正确" }, 401);
 	}
 
-	return jsonResponse(
-		{ ok: true },
-		200,
-		{ "set-cookie": await sessionCookie(env.ADMIN_SESSION_SECRET) },
-	);
+	const cookie = await createSessionCookie(env.SESSION);
+	return jsonResponse({ ok: true }, 200, { "set-cookie": cookie });
 };
