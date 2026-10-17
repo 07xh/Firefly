@@ -156,7 +156,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
 		});
 		if (response.status === 422) return json({ error: "同名文章已存在" }, 409);
 		if (!response.ok) return json({ error: `GitHub 写入失败 (${response.status})` }, 502);
-		return json({ ok: true, path }, 201);
+		const written = (await response.json()) as { commit?: { sha?: string; html_url?: string } };
+		return json({ ok: true, path, commitSha: written.commit?.sha, commitUrl: written.commit?.html_url }, 201);
 	} catch (error) {
 		return json({ error: error instanceof Error ? error.message : "Internal error" }, 503);
 	}
@@ -171,16 +172,25 @@ export const PUT: APIRoute = async ({ request, locals }) => {
 		const current = await readPost(path, config);
 		if (typeof input.sha !== "string" || input.sha !== current.sha) return json({ error: "文章已被其他操作修改，请刷新后重试" }, 409);
 		const slug = path.split("/").pop()?.replace(/\.mdx?$/, "") ?? "";
-		const content = typeof input.rawContent === "string" ? input.rawContent : makeMarkdown({ ...input, slug });
+		let content = typeof input.rawContent === "string" ? input.rawContent : makeMarkdown({ ...input, slug });
 		if (!content || content.length > 500_000 || (typeof input.rawContent === "string" && !content.startsWith("---\n"))) {
 			return json({ error: "完整文章内容不合法或超过 500 KB" }, 400);
+		}
+		if (typeof input.draft === "boolean" && typeof input.rawContent === "string") {
+			const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+			if (!frontmatter) return json({ error: "未找到有效的 frontmatter，无法切换草稿/发布状态" }, 400);
+			const updatedFrontmatter = /^draft:\s*(?:true|false)\s*$/m.test(frontmatter[1])
+				? frontmatter[1].replace(/^draft:\s*(?:true|false)\s*$/m, `draft: ${input.draft}`)
+				: `${frontmatter[1]}\ndraft: ${input.draft}`;
+			content = content.replace(frontmatter[0], `---\n${updatedFrontmatter}\n---`);
 		}
 		const response = await github(`contents/${path.split("/").map(encodeURIComponent).join("/")}`, config, {
 			method: "PUT",
 			body: JSON.stringify({ message: `Update article: ${slug}`, content: encodeBase64(content), sha: current.sha, branch: config.branch }),
 		});
 		if (!response.ok) return json({ error: `GitHub 更新失败 (${response.status})` }, 502);
-		return json({ ok: true, path });
+		const written = (await response.json()) as { commit?: { sha?: string; html_url?: string } };
+		return json({ ok: true, path, commitSha: written.commit?.sha, commitUrl: written.commit?.html_url });
 	} catch (error) {
 		return json({ error: error instanceof Error ? error.message : "Internal error" }, 503);
 	}
