@@ -16,7 +16,28 @@ const customBannerTitle = siteSettings.bannerTitle.trim();
 const customBannerSubtitle = siteSettings.bannerSubtitle.trim();
 const displayBannerTitle = customBannerTitle || homeText?.title;
 const displayBannerSubtitle = customBannerSubtitle || initialRandomSubtitle;
-const homeTextLinks = homeText?.links;
+const homeTextLinks = (homeText?.links ?? [])
+    .filter((link) => {
+        const name = link.name.toLowerCase();
+        if (name.includes("github")) return siteSettings.showGithub;
+        if (link.url.startsWith("mailto:") || name.includes("email")) {
+            return siteSettings.showEmail;
+        }
+        return true;
+    })
+    .map((link) => {
+        const name = link.name.toLowerCase();
+        if (name.includes("github") && siteSettings.githubUrl.trim()) {
+            return { ...link, url: siteSettings.githubUrl.trim() };
+        }
+        if (
+            (link.url.startsWith("mailto:") || name.includes("email")) &&
+            siteSettings.email.trim()
+        ) {
+            return { ...link, url: `mailto:${siteSettings.email.trim()}` };
+        }
+        return link;
+    });
 const homeTextLinksEnable = homeText?.linksEnable !== false;
 ---
 {homeText?.enable && (
