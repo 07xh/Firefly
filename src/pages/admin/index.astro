@@ -481,7 +481,7 @@ export const prerender = false;
 </div>
 <div class="editor-tabs" role="tablist" aria-label="文章编辑模式">
 <button class="btn active" type="button" id="visualTab" role="tab" aria-selected="true" disabled>可视化编辑器加载中…</button>
-<button class="btn" type="button" id="editorTab" role="tab" aria-selected="false">Markdown 源码</button>
+<button class="btn" type="button" id="editorTab" role="tab" aria-selected="false" title="高级编辑：仅在需要修改特殊内容原文时使用">高级模式</button>
 <button class="btn" type="button" id="previewTab" role="tab" aria-selected="false">预览</button>
 </div>
 <div class="editor-reading-controls" id="editorReadingControls" aria-label="阅读字号设置">
@@ -534,10 +534,10 @@ export const prerender = false;
   </div>
   <div id="wysiwygNotice" class="rich-editor-notice" hidden></div>
   <div id="wysiwygEditor" class="rich-editor-canvas"></div>
-  <div class="rich-editor-help">直接输入中文并按回车分段。选中文字后使用工具栏格式化；支持图片粘贴/拖入；点击图片可放大预览，键盘聚焦后按 Enter 或空格也可预览。还支持链接、列表、引用、代码块和表格。包含无法无损转换的 MDX/HTML 特殊语法时，会自动切换回源码模式保护原文。</div>
+  <div class="rich-editor-help">直接输入文字并按回车分段。选中文字后，用工具栏设置标题、加粗、列表、链接、引用、图片和表格。公式、特殊版式等内容会以说明卡片显示并完整保留；普通正文可继续编辑，通常不需要查看原始语法。</div>
 </div>
-<div id="wysiwygFallback" hidden>可视化编辑器加载失败，正文将保持原样。你仍可在 Markdown 源码模式下继续编辑。</div>
-<textarea id="body" spellcheck="false" hidden placeholder="在此编辑 Markdown / MDX 源文件。含特殊组件的文章会默认使用源码模式。"></textarea>
+<div id="wysiwygFallback" hidden>可视化编辑器暂时无法加载，文章原文没有被修改。你可以使用“高级模式”继续编辑。</div>
+<textarea id="body" spellcheck="false" hidden placeholder="高级模式：这里直接编辑文章原文。日常写作请返回“可视化编辑”。"></textarea>
 <div id="markdownPreview" class="markdown-preview" hidden><p class="muted">点击“预览”查看当前正文。</p></div>
 </div>
 <label class="check"><input id="draft" type="checkbox" checked> 草稿箱状态（勾选后保存为草稿；取消勾选可保存已发布文章）</label>
@@ -900,7 +900,7 @@ function showVisualTab(){
  window.dispatchEvent(new CustomEvent("firefly:mode",{detail:{mode:"visual"}}));
  if(window.FireflyRichEditor?.hasUnsupportedSyntax()){
   showEditorTab();
-  say("当前文章包含 MDX/HTML 特殊语法，已保留源码编辑以避免内容损坏。");
+  say("当前文章包含特殊内容，可视化编辑暂不可用。已切换到“高级模式”，原文未被修改。");
  }
 }
 function showEditorTab(){
@@ -1496,4 +1496,4 @@ reset();refresh();loadSettings();
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=20261018-editor-reading-controls"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=20261018-natural-language"></script></body></html>
