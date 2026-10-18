@@ -108,15 +108,19 @@ function frontmatterText(content: string, key: string): string {
 }
 
 function frontmatterTags(content: string): string[] {
-	const raw = content.match(/^tags:\\s*(.*?)\\s*$/m)?.[1]?.trim() ?? "";
+	const match = content.match(/^tags:\s*(.*?)\s*$/m);
+	if (!match) return [];
+	const raw = match[1].trim();
 	if (!raw) return [];
 	try {
 		const parsed = JSON.parse(raw) as unknown;
-		if (Array.isArray(parsed)) return parsed.filter((tag): tag is string => typeof tag === "string");
+		if (Array.isArray(parsed)) {
+			return [...new Set(parsed.filter((tag): tag is string => typeof tag === "string").map((tag) => tag.trim()).filter(Boolean))];
+		}
 	} catch {
-		// Existing posts may use standard YAML's unquoted bracket-list syntax.
+		// Also support common YAML list forms such as [tech, notes].
 	}
-	return raw.replace(/^\\[|\\]$/g, "").split(",").map((tag) => tag.trim().replace(/^['"]|['"]$/g, "")).filter(Boolean);
+	return [...new Set(raw.replace(/^\[|\]$/g, "").split(",").map((tag) => tag.trim().replace(/^['"]|['"]$/g, "")).filter(Boolean))];
 }
 
 function validDate(value: unknown): value is string {
