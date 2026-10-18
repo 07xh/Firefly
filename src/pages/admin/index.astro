@@ -924,7 +924,7 @@ async function renderMarkdownPreview(){
   const r=await fetch("/api/admin/preview/",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({markdown})});
   if(r.status===401){goLogin();return}
   const d=await r.json().catch(()=>({error:"预览响应无法解析"}));
-  if(!r.ok)throw new Error(d.error||"Markdown 预览失败");
+  if(!r.ok)throw new Error(d.error||"文章预览失败");
   $("markdownPreview").innerHTML=d.html||"<p class=muted>暂无内容</p>";
  }catch(e){$("markdownPreview").textContent=e.message}
 }
@@ -934,7 +934,7 @@ async function checkGitHubPermission(){
  button.disabled=true;
  const originalText=button.textContent;
  button.textContent="检测中…";
- say("正在用 Worker 当前配置的 Token 检查 GitHub 权限，不会创建文章…");
+ say("正在检查后台能否正常保存文章，不会创建或修改文章…");
  try{
   const response=await fetch("/api/admin/github-check/",{cache:"no-store"});
   const data=await response.json().catch(()=>({message:"诊断接口返回了无法解析的响应"}));
@@ -948,7 +948,7 @@ async function checkGitHubPermission(){
   ].filter(Boolean);
   say(pieces.join("；"),Boolean(!data.ok));
  }catch(error){
-  say("无法运行 GitHub 权限诊断："+(error instanceof Error?error.message:String(error)),true);
+  say("暂时无法检查文章保存权限："+(error instanceof Error?error.message:String(error)),true);
  }finally{
   button.disabled=false;
   button.textContent=originalText;
@@ -1127,7 +1127,7 @@ $("settingsForm").addEventListener("submit",async event=>{
   }
  };
  if(values.backgroundColor&&!/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(values.backgroundColor)){status.textContent="背景颜色只支持 #RGB 或 #RRGGBB；留空可恢复主题默认颜色。";status.style.color="#b42318";$("backgroundColor").focus();return}
- for(const [key,label] of [["backgroundImage","背景图片"],["avatar","头像"],["githubUrl","GitHub 链接"],["backgroundMusic","背景音乐"],["sourceGithubUrl","GitHub 原文/源码链接"],["donationQrCode","打赏二维码图片"]]){
+ for(const [key,label] of [["backgroundImage","背景图片"],["avatar","头像"],["githubUrl","GitHub 链接"],["backgroundMusic","背景音乐"],["sourceGithubUrl","文章原文链接"],["donationQrCode","打赏二维码图片"]]){
   if(values[key]&&!checkedExternalUrl(values[key])){status.textContent=label+"请填写完整的 HTTP/HTTPS 链接。";status.style.color="#b42318";$(key).focus();return}
  }
  if(values.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)){status.textContent="请填写有效的邮箱地址。";status.style.color="#b42318";$("email").focus();return}
@@ -1266,7 +1266,7 @@ reset();refresh();loadSettings();
       const result = await api("DELETE", { path: article.path, sha: article.sha });
       window.dispatchEvent(new CustomEvent("firefly:clear-recovery", { detail: { path: article.path } }));
       if (selected?.path === article.path) reset();
-      say("阶段 2/4：删除已提交到 GitHub。" + (result.commitSha ? " Commit SHA：" + result.commitSha : ""));
+      say("文章已删除，正在更新网站…");
       await refresh();
       if (result.commitSha) watchDeployment(result.commitSha, 0, false);
     } catch (error) {
@@ -1307,7 +1307,7 @@ reset();refresh();loadSettings();
       if (!field.value.includes(marker)) throw new Error("图片已上传，但占位符不见了。请手动插入：" + data.imageUrl);
       field.value = field.value.replace(marker, markdown);
       field.dispatchEvent(new Event("input", { bubbles: true }));
-      say("图片上传成功并已插入 Markdown。图片 Commit SHA：" + (data.commitSha || "未返回"));
+      say("图片已上传并插入正文。保存文章后，网站就会显示这张图片。");
     } catch (error) {
       const field = $("body");
       if (field.value.includes(marker)) {
@@ -1338,7 +1338,7 @@ reset();refresh();loadSettings();
   // Four-stage deployment status, with explicit commit and site verification links.
   const links = document.createElement("div");
   links.className = "mt-2 flex flex-wrap gap-3";
-  links.innerHTML = '<a id="enhancedCommitLink" class="deploy-link" target="_blank" rel="noopener noreferrer" hidden>查看 GitHub Commit ↗</a><a id="enhancedSiteLink" class="deploy-link" target="_blank" rel="noopener noreferrer" hidden>打开线上网站验证 ↗</a>';
+  links.innerHTML = '<a id="enhancedCommitLink" class="deploy-link" target="_blank" rel="noopener noreferrer" hidden>查看本次保存记录 ↗</a><a id="enhancedSiteLink" class="deploy-link" target="_blank" rel="noopener noreferrer" hidden>打开网站检查效果 ↗</a>';
   $("deployLink")?.insertAdjacentElement("afterend", links);
   watchDeployment = async function(sha, attempt = 0, isDraft = false, isScheduled = false) {
     try {
@@ -1358,19 +1358,19 @@ reset();refresh();loadSettings();
           $("enhancedSiteLink").hidden = false;
         }
         say(isDraft
-          ? "阶段 4/4：Cloudflare 构建与部署成功；文章仍为草稿，普通访客不可见。"
+          ? "草稿已保存，网站构建成功；文章暂不对访客公开。"
           : isScheduled
-            ? "阶段 4/4：定时配置部署成功；当前部署不会提前公开文章，到期后由定时工作流触发再次构建。"
-            : "阶段 4/4：Cloudflare 构建与部署成功。请打开线上网站验证最终展示。");
+            ? "定时发布已设置成功。文章会在指定时间更新，不会提前公开。"
+            : "文章发布成功，网站已更新。请打开网站检查最终显示。");
         return;
       }
-      if (data.status === "failure") { say("阶段 3/4：Cloudflare 构建/部署失败，请打开部署日志检查。", true); return; }
-      if (attempt >= 24) { say("阶段 3/4：GitHub 已写入，但部署仍未确认；请查看工作流日志。"); return; }
-      say("阶段 3/4：" + (data.status === "running" ? "Cloudflare 正在构建/部署…" : "正在等待 Cloudflare 构建启动…") + " Commit SHA：" + sha);
+      if (data.status === "failure") { say("网站更新失败，请打开“查看网站更新记录”查看原因。", true); return; }
+      if (attempt >= 24) { say("文章已保存，但网站是否更新暂未确认。可以查看网站更新记录。"); return; }
+      say(data.status === "running" ? "文章已保存，网站正在更新…" : "文章已保存，正在等待网站更新开始…");
       setTimeout(() => watchDeployment(sha, attempt + 1, isDraft, isScheduled), 12000);
     } catch (error) {
-      if (attempt >= 24) { say("阶段 3/4：已写入 GitHub，但无法确认部署状态：" + (error?.message || "未知错误"), true); return; }
-      say("阶段 3/4：正在查询 Cloudflare 部署状态…");
+      if (attempt >= 24) { say("文章已保存，但暂时无法确认网站是否更新：" + (error?.message || "暂时无法读取更新状态"), true); return; }
+      say("正在确认网站是否更新…");
       setTimeout(() => watchDeployment(sha, attempt + 1, isDraft, isScheduled), 12000);
     }
   };
@@ -1387,20 +1387,20 @@ reset();refresh();loadSettings();
     const published = $("published").value;
     const rawSchedule = $("date").value.trim();
     let date = mode === "publish" ? "" : fromBeijingDateTimeLocal(rawSchedule);
-    if (!title || title.length > 200) { say("阶段 1/4：标题不能为空且最多 200 个字符。", true); $("title").focus(); return; }
-    if (!selected && !/^[\p{L}\p{N}][\p{L}\p{N}_-]{0,79}$/u.test(slug)) { say("阶段 1/4：文件名须以字母或数字开头，且仅包含字母、数字、连字符或下划线；支持中文。", true); $("slug").focus(); return; }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(published) || Number.isNaN(Date.parse(published + "T00:00:00Z"))) { say("阶段 1/4：请选择有效的发布日期。", true); $("published").focus(); return; }
-    if (rawSchedule && mode !== "publish" && !date) { say("阶段 1/4：定时发布时间无效，请重新选择。", true); $("date").focus(); return; }
-    if ($("body").value.length > 500000) { say("阶段 1/4：正文超过 500 KB 限制。", true); return; }
+    if (!title || title.length > 200) { say("请填写标题，最多 200 个字符。", true); $("title").focus(); return; }
+    if (!selected && !/^[\p{L}\p{N}][\p{L}\p{N}_-]{0,79}$/u.test(slug)) { say("文件名请以字母、数字或中文开头；可以使用字母、数字、连字符和下划线。", true); $("slug").focus(); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(published) || Number.isNaN(Date.parse(published + "T00:00:00Z"))) { say("请选择有效的发布日期。", true); $("published").focus(); return; }
+    if (rawSchedule && mode !== "publish" && !date) { say("定时发布时间无效，请重新选择。", true); $("date").focus(); return; }
+    if ($("body").value.length > 500000) { say("正文内容超过 500 KB，请删减后再保存。", true); return; }
     if (mode === "publish" && !window.confirm("直接发布会立即公开文章，并清除定时发布时间。确定继续吗？")) return;
     if (mode === "publish") $("date").value = "";
     const isDraft = mode === "publish" ? false : $("draft").checked;
     $("draft").checked = isDraft;
     const password = $("articlePassword").value;
     const passwordHint = $("passwordHint").value;
-    if (password.length > 200 || passwordHint.length > 120) { say("阶段 1/4：密码最多 200 个字符，密码提示最多 120 个字符。", true); return; }
+    if (password.length > 200 || passwordHint.length > 120) { say("访问密码最多 200 个字符，密码提示最多 120 个字符。", true); return; }
     if (date && Date.parse(date) <= Date.now() && !isDraft && mode !== "publish") {
-      say("阶段 1/4：所选发布时间已到，请直接发布或选择未来时间。", true); $("date").focus(); return;
+      say("所选发布时间已经过去，请直接发布或重新选择未来时间。", true); $("date").focus(); return;
     }
     const metadata = {
       title, published, date, password, passwordHint,
@@ -1412,10 +1412,10 @@ reset();refresh();loadSettings();
       : { ...metadata, slug, body: $("body").value };
     const buttons = [$("saveDraft"), $("publish")];
     buttons.forEach(button => button.disabled = true);
-    say("阶段 1/4：本地表单校验通过，正在准备 GitHub 写入…");
+    say("填写内容已检查，正在保存文章…");
     try {
       const result = await api(selected ? "PUT" : "POST", data);
-      if (!result.commitSha) throw new Error("GitHub 已响应，但未返回 Commit SHA，无法跟踪部署。请刷新列表确认写入结果。");
+      if (!result.commitSha) throw new Error("保存请求已提交，但系统未返回保存记录。请刷新文章列表确认是否保存成功。");
       const scheduled = !isDraft && Boolean(date && Date.parse(date) > Date.now());
       const savedPath = selected?.path || ("src/content/posts/" + slug + ".md");
       window.dispatchEvent(new CustomEvent("firefly:save-complete", { detail: { path: savedPath, slug } }));
@@ -1424,9 +1424,9 @@ reset();refresh();loadSettings();
       const commit = $("enhancedCommitLink");
       commit.href = result.commitUrl || ("https://github.com/07xh/Firefly/commit/" + encodeURIComponent(result.commitSha));
       commit.hidden = false;
-      if (isDraft) say("阶段 2/4：已成功写入 GitHub，文章保留在草稿箱。Commit SHA：" + result.commitSha);
-      else if (scheduled) say("阶段 2/4：定时文章已写入 GitHub，等待指定时间到达后自动重建。Commit SHA：" + result.commitSha);
-      else say("阶段 2/4：已成功写入 GitHub。Commit SHA：" + result.commitSha);
+      if (isDraft) say("文章已保存到草稿箱，正在确认网站状态…");
+      else if (scheduled) say("文章已保存，系统会在指定时间自动更新网站。");
+      else say("文章已保存，正在更新网站…");
       watchDeployment(result.commitSha, 0, isDraft, scheduled);
     } catch (error) {
       say(error instanceof Error ? error.message : "保存文章失败。", true);
