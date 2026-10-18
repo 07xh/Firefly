@@ -95,83 +95,159 @@ function getProtectedRanges(source) {
   const lines = masked.split("\n");
   const ranges = [];
   const add = (start, end, reason, strategy = "line") => {
-    ranges.push({ start, end, reason, strategy });
+    ranges.push({
+      start: Math.max(0, start),
+      end: Math.min(lines.length - 1, Math.max(start, end)),
+      reason,
+      strategy,
+    });
   };
+
+  // Treat each directive as a single opaque source block.
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i] || "";
+    if (!/^[ \t]*:{3,}/.test(line) || /^[ \t]*:{3,}[ \t]*$/.test(line)) continue;
+    let depth = 1;
+    let close = i + 1;
+    for (; close < lines.length; close += 1) {
+      const candidate = lines[close] || "";
+      if (/^[ \t]*:{3,}[ \t]*$/.test(candidate)) {
+        depth -= 1;
+        if (depth === 0) break;
+      } else if (/^[ \t]*:{3,}[ \t]*\S/.test(candidate)) {
+        depth += 1;
+      }
+    }
+    const end = close < lines.length ? close : lines.length - 1;
+    add(i, end, "Theme directive", "block");
+    i = end;
+  }
+
+  // Keep paired display-math delimiters and the source between them.
+  for (let i = 0; i < lines.length; i += 1) {
+    if (!/^[ \t]*\$\$[ \t]*\r?$/.test(lines[i] || "")) continue;
+    let close = i + 1;
+    while (close < lines.length && !/^[ \t]*\$\$[ \t]*\r?$/.test(lines[close] || "")) close += 1;
+    const end = close < lines.length ? close : lines.length - 1;
+    add(i, end, "LaTeX display math", "block");
+    i = end;
+  }
+
+  // Preserve complete module declarations, including multiline imports/exports.
+  for (let i = 0; i < lines.length; i += 1) {
+    const line = lines[i] || "";
+    if (/^[ \t]*import\b/.test(line)) {
+      let end = i;
+      while (end + 1 < lines.length && !blank(lines[end + 1])) {
+        end += 1;
+        const declaration = lines.slice(i, end + 1).join("\n");
+        if (/\bfrom[ \t]+["'][^"']+["']/.test(declaration)) break;
+      }
+      const declaration = lines.slice(i, end + 1).join("\n");
+      const realImport = /^[ \t]*import[ \t]+[\s\S]*?\bfrom[ \t]+["'][^"']+["']/.test(declaration)
+        || /^[ \t]*import[ \t]+["'][^"']+["']/.test(declaration);
+      if (realImport) {
+        add(i, end, "MDX import/export", "block");
+        i = end;
+        continue;
+      }
+    }
+    if (/^[ \t]*export[ \t]+(?:default\b|\*|\{|const\b|let\b|var\b|function\b|class\b|async\b)/.test(line)) {
+      let end = i;
+      while (end + 1 < lines.length && !blank(lines[end + 1])) end += 1;
+      add(i, end, "MDX import/export", "block");
+      i = end;
+    }
+  }
+
+  const lineStarts = [0];
+  for (let i = 0; i < masked.length; i += 1) if (masked[i] === "\n") lineStarts.push(i + 1);
+  const lineAt = (offset) => {
+    let low = 0;
+    let high = lineStarts.length - 1;
+    while (low <= high) {
+      const mid = Math.floor((low + high) / 2);
+      if (lineStarts[mid] <= offset) low = mid + 1;
+      else high = mid - 1;
+    }
+    return Math.max(0, high);
+  };
+
+  // Recognize complete HTML/MDX elements, including nested instances of the same tag.
+  const tagRegex = /<(\/)?([A-Za-z][A-Za-z0-9_.:-]*)\b([^>]*?)>/gs;
+  const tags = [];
+  for (const match of masked.matchAll(tagRegex)) {
+    tags.push({
+      closing: Boolean(match[1]),
+      name: match[2],
+      nameLower: match[2].toLowerCase(),
+      selfClosing: !match[1] && /\/[ \t]*$/.test(match[3] || ""),
+      startOffset: match.index,
+      endOffset: match.index + match[0].length,
+      text: match[0],
+    });
+  }
+  const pairedClosing = new Set();
+  const voidTags = new Set(["area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"]);
+  const protectedHtmlTags = new Set(["script","style","iframe","video","audio","div","section","details","summary","table","kbd","sup","sub","span","u","figure","figcaption"]);
+  for (let i = 0; i < tags.length; i += 1) {
+    const tag = tags[i];
+    const protectedTag = /^[A-Z]/.test(tag.name) || protectedHtmlTags.has(tag.nameLower);
+    if (!protectedTag) continue;
+
+    if (tag.closing) {
+      if (pairedClosing.has(i)) continue;
+      const startLine = lineAt(tag.startOffset);
+      const endLine = lineAt(tag.endOffset - 1);
+      const inline = startLine === endLine && !markupOnly((originalLines[startLine] || "").trim());
+      add(startLine, endLine, /^[A-Z]/.test(tag.name) ? "MDX component" : "HTML or theme tag", inline ? "paragraph" : "block");
+      continue;
+    }
+
+    let matchedClose = -1;
+    if (!tag.selfClosing && !voidTags.has(tag.nameLower)) {
+      let depth = 1;
+      for (let j = i + 1; j < tags.length; j += 1) {
+        if (tags[j].nameLower !== tag.nameLower) continue;
+        if (tags[j].closing) depth -= 1;
+        else if (!tags[j].selfClosing) depth += 1;
+        if (depth === 0) {
+          matchedClose = j;
+          pairedClosing.add(j);
+          break;
+        }
+      }
+    }
+
+    const endTag = matchedClose >= 0 ? tags[matchedClose] : tag;
+    const startLine = lineAt(tag.startOffset);
+    const endLine = lineAt(endTag.endOffset - 1);
+    const inline = startLine === endLine && !markupOnly((originalLines[startLine] || "").trim());
+    const reason = /^[A-Z]/.test(tag.name) ? "MDX component" : "HTML or theme tag";
+    add(startLine, endLine, reason, inline ? "paragraph" : "block");
+  }
 
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i] || "";
     if (blank(line)) continue;
-
-    if (/^[ \t]*\$\$[ \t]*\r?$/.test(line)) {
-      let close = i + 1;
-      while (close < lines.length && !/^[ \t]*\$\$[ \t]*\r?$/.test(lines[close] || "")) close += 1;
-      add(i, Math.min(close, lines.length - 1), "LaTeX display math", "block");
-      i = Math.min(close, lines.length - 1);
-      continue;
-    }
-
-    // Keep module declarations only when they look like real module syntax.
-    if (/^[ \t]*import\b/.test(line) && (/\bfrom\b/.test(line) || /["'][^"']+["']/.test(line))) {
-      let end = i;
-      if (!/["'][^"']+["']/.test(line)) {
-        while (end + 1 < lines.length && !blank(lines[end + 1])) {
-          end += 1;
-          if (/\bfrom\b/.test(lines[end]) && /["'][^"']+["']/.test(lines[end])) break;
-        }
-      }
-      add(i, end, "MDX import/export", "block");
-      i = end;
-      continue;
-    }
-    if (/^[ \t]*export[ \t]+(?:default\b|\*|\{|const\b|let\b|var\b|function\b|class\b|async\b)/.test(line)) {
-      add(i, i, "MDX import/export", "block");
-      continue;
-    }
-
-    if (/^[ \t]*:{3,}/.test(line)) {
-      add(i, i, "Theme directive", "block");
-      continue;
-    }
-
-    if (/^[ \t]*(?:[-+*]|\d+\.)[ \t]+\[[ xX]\][ \t]+/.test(line)) {
+    if (/^[ \t]*(?:[-+*]|\d+[.)])[ \t]+\[[ xX]\][ \t]+/.test(line)) {
       add(i, i, "Task list", "list");
       continue;
     }
-
     if (/^[ \t]*\[\^[^\]]+\]:/.test(line)) {
       add(i, i, "Footnote definition", "paragraph");
       continue;
     }
-
     if (/\$[^$\n]*(?:\\[a-zA-Z]+|[=+*/^_<>≤≥±×÷])[^$\n]*\$/.test(line)) {
       add(i, i, "LaTeX inline math", "paragraph");
       continue;
     }
-
     if (/\[\[[^\]\n]+\]\]/.test(line)) {
       add(i, i, "Wiki link", "paragraph");
       continue;
     }
-
     if (/\{\s*(?:\/\*|[A-Za-z_$][\w$.]*\s*(?:\(|\?\.|\.|\[))/.test(line)) {
       add(i, i, "MDX expression", "paragraph");
-      continue;
-    }
-
-    const hasComponent = /<\/?[A-Z][A-Za-z0-9_.:-]*(?:\s|\/?>)/.test(line);
-    const hasHtml = /<\/?(?:script|style|iframe|video|audio|div|section|details|summary|table|kbd|sup|sub|span|u|figure|figcaption)\b/i.test(line);
-    if (hasComponent || hasHtml) {
-      const trimmed = (originalLines[i] || "").trim();
-      if (markupOnly(trimmed)) {
-        let end = i;
-        if (trimmed.startsWith("<") && !trimmed.includes(">")) {
-          while (end + 1 < lines.length && !(originalLines[end] || "").includes(">")) end += 1;
-        }
-        add(i, end, hasComponent ? "MDX component" : "HTML or theme tag", "block");
-        i = end;
-      } else {
-        add(i, i, hasComponent ? "MDX component" : "HTML or theme tag", "paragraph");
-      }
     }
   }
 
