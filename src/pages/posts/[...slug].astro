@@ -33,6 +33,7 @@ import { licenseConfig } from "@/config/licenseConfig";
 import { profileConfig } from "@/config/profileConfig";
 import { siteConfig } from "@/config/siteConfig";
 import { sponsorConfig } from "@/config/sponsorConfig";
+import siteSettings from "@/data/settings.json";
 import { formatDateToYYYYMMDD } from "@/utils/date-utils";
 import { getApiUrlList, processCoverImageSync } from "@/utils/image-utils";
 import {
@@ -52,7 +53,9 @@ export const prerender = true;
 
 const showSponsorButton =
 	sponsorConfig.showButtonInPost && siteConfig.pages.sponsor;
-const showPostActionCard = siteConfig.post.share || showSponsorButton;
+const showPostActionCard =
+	siteSettings.showSupportAndShare &&
+	(siteConfig.post.share || showSponsorButton);
 
 export async function getStaticPaths() {
 	const blogEntries = await getSortedPosts();
