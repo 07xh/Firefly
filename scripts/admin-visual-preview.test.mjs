@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList } from "../public/admin-visual-preview.js";
+import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "../public/admin-visual-preview.js";
 
 test("Firefly Badge component renders as a safe visual preview model", () => {
   const model = inspectProtectedMarkdown('前言 <Badge type="tip">新功能</Badge> 后记', "MDX component");
@@ -298,4 +298,46 @@ test("task list serializer rejects formatting, empty values, and more than 100 i
   assert.throws(() => serializeEditableTaskList([{ text: "" }]), /纯文字/);
   assert.throws(() => serializeEditableTaskList([]), /1 到 100 项/);
   assert.throws(() => serializeEditableTaskList(Array.from({ length: 101 }, (_, i) => ({ text: "项目" + i }))), /1 到 100 项/);
+});
+
+
+test("simple details disclosure blocks expose structured title and body editing", () => {
+  const source = "<details>\n<summary>常见问题</summary>\n这里是纯文本答案。\n第二行补充说明。\n</details>";
+  const model = inspectProtectedMarkdown(source, "HTML details");
+  assert.equal(model.kind, "details");
+  assert.equal(model.editable, true);
+  assert.equal(model.title, "常见问题");
+  assert.equal(model.body, "这里是纯文本答案。\n第二行补充说明。");
+});
+
+test("details with attributes, nested components, or formatted bodies remain source-only", () => {
+  const cases = [
+    '<details open>\n<summary>标题</summary>\n正文。\n</details>',
+    "<details>\n<summary><Badge>标题</Badge></summary>\n正文。\n</details>",
+    "<details>\n<summary>标题</summary>\n**加粗正文**\n</details>",
+    "<details>\n<summary>标题</summary>\n- 列表项\n</details>",
+    "<details>\n<summary>标题</summary>\n第一段\n\n第二段\n</details>",
+  ];
+  for (const source of cases) {
+    const model = inspectProtectedMarkdown(source, "HTML details");
+    assert.notEqual(model.editable, true, source);
+  }
+});
+
+test("details serializer round-trips safe title and multiline text", () => {
+  const raw = serializeEditableDetails({
+    title: "安装说明",
+    body: "先打开设置页。\n再保存更改。",
+  });
+  assert.equal(raw, "<details>\n<summary>安装说明</summary>\n先打开设置页。\n再保存更改。\n</details>");
+  const model = inspectProtectedMarkdown(raw, "HTML details");
+  assert.equal(model.editable, true);
+  assert.equal(model.title, "安装说明");
+  assert.equal(model.body, "先打开设置页。\n再保存更改。");
+});
+
+test("details serializer validates title and body to protect Markdown/MDX", () => {
+  assert.throws(() => serializeEditableDetails({ title: "", body: "普通文字" }), /标题不能为空/);
+  assert.throws(() => serializeEditableDetails({ title: "标题", body: "**加粗**" }), /纯文本/);
+  assert.throws(() => serializeEditableDetails({ title: "标题", body: ":::tip nested" }), /纯文本/);
 });

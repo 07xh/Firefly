@@ -203,6 +203,21 @@ function isSafeTaskListText(value) {
   return text.length > 0 && text.length <= 500 && !/[<>{}\x60*_~$\[\]\r\n]/.test(text);
 }
 
+
+function isSafeDetailsTitle(value) {
+  const title = String(value ?? "").trim();
+  return title.length > 0 && title.length <= 120 && !/[<>{}\x60*_~$\[\]\r\n]/.test(title);
+}
+
+function isSafeDetailsBody(value, allowEmpty = true) {
+  const body = String(value ?? "").trim();
+  if (!allowEmpty && !body) return false;
+  if (body.length > 5000 || /[<>{}\x60*_~$\[\]]/.test(body)) return false;
+  const lines = body.split(/\r?\n/);
+  return lines.every(line => !/^\s*(?:#{1,6}\s|>{1}|[-*+]\s|\d+[.)]\s|:{3,}|!\[)/.test(line))
+    && !/\n\s*\n/.test(body);
+}
+
 /** Data-only preview parser. It never evaluates MDX or inserts source as HTML. */
 export function inspectProtectedMarkdown(raw, reason = "") {
   const source = typeof raw === "string" ? raw : "";
@@ -342,8 +357,23 @@ export function inspectProtectedMarkdown(raw, reason = "") {
   const details = source.match(/<details\b[^>]*>([\s\S]*?)<\/details\s*>/i);
   if (details) {
     const summary = details[1].match(/<summary\b[^>]*>([\s\S]*?)<\/summary\s*>/i);
-    const body = summary ? details[1].replace(summary[0], "") : details[1];
-    return { kind: "details", title: plainText(summary?.[1] || "可展开内容") || "可展开内容", text: plainText(body), label: "HTML 展开区块" };
+    const body = summary ? details[1].replace(summary[0], "").trim() : details[1].trim();
+    const strict = source === details[0]
+      && /^<details>\s*<summary>([\s\S]*?)<\/summary>([\s\S]*)<\/details>$/.test(source);
+    const exact = strict ? source.match(/^<details>\s*<summary>([\s\S]*?)<\/summary>([\s\S]*)<\/details>$/) : null;
+    const title = exact ? exact[1].trim() : plainText(summary?.[1] || "可展开内容");
+    const content = exact ? exact[2].trim() : body;
+    const editable = Boolean(exact)
+      && isSafeDetailsTitle(title)
+      && isSafeDetailsBody(content, true);
+    return {
+      kind: "details",
+      title: plainText(title || "可展开内容") || "可展开内容",
+      text: plainText(content),
+      body: content,
+      editable,
+      label: "HTML 展开区块",
+    };
   }
 
   const iframe = source.match(/<iframe\b([^>]*)>/i);
@@ -463,4 +493,14 @@ export function serializeEditableTaskList(values) {
     return "- [" + (item?.checked ? "x" : " ") + "] " + text;
   });
   return lines.join("\n");
+}
+
+
+/** Serializes only a plain-text disclosure block. */
+export function serializeEditableDetails(values) {
+  const title = String(values?.title ?? "").trim();
+  const body = String(values?.body ?? "").replace(/\r\n/g, "\n").trim();
+  if (!isSafeDetailsTitle(title)) throw new Error("折叠区标题不能为空，且不能包含 Markdown/MDX 格式符号。");
+  if (!isSafeDetailsBody(body, true)) throw new Error("正文需要是纯文本；格式化文本、列表、HTML、嵌套组件和空行请使用源码编辑。");
+  return "<details>\n<summary>" + title + "</summary>" + (body ? "\n" + body + "\n" : "\n") + "</details>";
 }
