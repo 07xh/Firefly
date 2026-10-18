@@ -92,6 +92,34 @@ function matchingComponentItems(body, name) {
 }
 
 
+
+function findTabGroupRoot(source) {
+  const text = String(source || "");
+  const opening = text.match(/^\s*<\s*TabGroup\b([^>]*)>/);
+  if (!opening) return null;
+  const afterOpening = text.slice(opening[0].length);
+  const lines = afterOpening.split("\n");
+  let offset = 0;
+  let fenceLength = 0;
+  for (const line of lines) {
+    if (fenceLength) {
+      const closingFence = new RegExp("^ {0,3}\\x60{" + fenceLength + ",}[ \\x09]*$");
+      if (closingFence.test(line)) fenceLength = 0;
+    } else {
+      const fence = line.match(/^ {0,3}(\x60{3,})/);
+      if (fence) {
+        fenceLength = fence[1].length;
+      } else if (/^\s*<\/\s*TabGroup\s*>\s*$/.test(line)) {
+        const body = afterOpening.slice(0, offset);
+        const full = text.slice(0, opening[0].length + offset + line.length);
+        return [full, "TabGroup", opening[1], body];
+      }
+    }
+    offset += line.length + 1;
+  }
+  return null;
+}
+
 function parseTabGroupLabels(attributeSource) {
   const attribute = String(attributeSource || "").match(/^\s*labels\s*=\s*\{\s*\[([\s\S]*?)\]\s*\}\s*$/);
   if (!attribute) return null;
@@ -135,7 +163,7 @@ function parseTabGroupCodeBlocks(body) {
     if (!opening) return null;
     const fence = opening[1];
     const language = opening[2] || "";
-    const closingPattern = new RegExp("^ {0,3}\\x60{" + fence.length + ",}[ \\\\t]*$");
+    const closingPattern = new RegExp("^ {0,3}\\x60{" + fence.length + ",}[ \\x09]*$");
     let closing = cursor + 1;
     while (closing < lines.length && !closingPattern.test(lines[closing])) closing += 1;
     if (closing >= lines.length) return null;
@@ -180,7 +208,8 @@ export function inspectProtectedMarkdown(raw, reason = "") {
     }
   }
 
-  const root = source.match(/<\s*(Steps|Timeline|TabGroup|StepItem|TimelineItem)\b([^>]*)>([\s\S]*?)<\/\s*\1\s*>/);
+  let root = source.match(/<\s*(Steps|Timeline|TabGroup|StepItem|TimelineItem)\b([^>]*)>([\s\S]*?)<\/\s*\1\s*>/);
+  if (root && root[1] === "TabGroup") root = findTabGroupRoot(source) || root;
   if (root) {
     const name = root[1];
     const attrs = readAttributes(root[2]);
