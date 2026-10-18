@@ -35,6 +35,179 @@ import { TableKit } from "https://cdn.jsdelivr.net/npm/@tiptap/extension-table@3
     return { prefix: match[0], body: source.slice(match[0].length), hasFrontmatter: true };
   }
 
+  const recoveryKey = "firefly:admin:recovery:v1:last";
+  const recoveryEnabledKey = "firefly:admin:recovery:v1:enabled";
+  let recoveryTimer = null;
+
+  function currentContext() {
+    return window.FireflyArticleContext || { path: "", sha: "" };
+  }
+
+  function readRecovery() {
+    try {
+      const raw = sessionStorage.getItem(recoveryKey);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  function isPasswordProtectedSource(source) {
+    const currentPassword = $("articlePassword")?.value?.trim() || "";
+    if (currentPassword) return true;
+    const prefix = splitFrontmatter(source).prefix;
+    const match = prefix.match(/^password:\s*(.*?)\s*$/m);
+    const raw = match?.[1]?.trim() || "";
+    return Boolean(raw && !/^(?:""|''|null)$/i.test(raw));
+  }
+
+  function setRecoveryStatus(message) {
+    const target = $("localRecoveryStatus");
+    if (target) target.textContent = message;
+  }
+
+  function refreshRecoveryAvailability() {
+    const toggle = $("localRecoveryCheck");
+    const button = $("restoreLocalRecovery");
+    if (!toggle || !button) return;
+
+    if (!toggle.checked) {
+      button.hidden = true;
+      button.disabled = true;
+      setRecoveryStatus("默认关闭。开启后，未加密文章只会在当前浏览器标签页保存恢复副本。");
+      return;
+    }
+
+    const snapshot = readRecovery();
+    if (!snapshot) {
+      button.hidden = true;
+      button.disabled = true;
+      setRecoveryStatus("已开启，正在等待可恢复的编辑内容。访问密码不会存入恢复副本。");
+      return;
+    }
+
+    const context = currentContext();
+    const sameArticle = snapshot.path
+      ? snapshot.path === context.path && snapshot.sha === context.sha
+      : !context.path;
+    button.hidden = false;
+    button.disabled = !sameArticle;
+    if (!sameArticle) {
+      button.textContent = "恢复其他文章的副本";
+      setRecoveryStatus(snapshot.path
+        ? "发现其他文章的恢复副本。请先选择该文章；若远端 SHA 已变化，为避免覆盖新版本，将禁止恢复。"
+        : "发现新文章恢复副本。请回到新建文章模式后再恢复。");
+      return;
+    }
+
+    button.textContent = snapshot.path ? "恢复本篇未保存内容" : "恢复新建文章副本";
+    const savedAt = snapshot.savedAt
+      ? new Date(snapshot.savedAt).toLocaleString("zh-CN", { hour12: false })
+      : "时间未知";
+    setRecoveryStatus("发现 " + savedAt + " 的本地恢复副本。恢复会覆盖当前表单内容并标记为未保存修改。");
+  }
+
+  function clearRecovery(detail = {}) {
+    const snapshot = readRecovery();
+    if (!snapshot) {
+      refreshRecoveryAvailability();
+      return;
+    }
+    const sameSavedArticle = detail.path && snapshot.path === detail.path;
+    const sameNewArticle = !snapshot.path && !detail.path && detail.slug && snapshot.slug === detail.slug;
+    if (sameSavedArticle || sameNewArticle) {
+      try { sessionStorage.removeItem(recoveryKey); } catch {}
+    }
+    refreshRecoveryAvailability();
+  }
+
+  function saveRecovery() {
+    if (!$("localRecoveryCheck")?.checked) return;
+    const source = sourceField.value || "";
+    if (isPasswordProtectedSource(source)) {
+      setRecoveryStatus("检测到文章启用了密码保护。为避免保存受保护正文，已跳过本次本地恢复。");
+      return;
+    }
+
+    const title = $("title")?.value?.trim() || "";
+    const slug = $("slug")?.value?.trim() || "";
+    const split = splitFrontmatter(source);
+    if (!title && !slug && !split.body.trim()) return;
+
+    const context = currentContext();
+    const snapshot = {
+      path: typeof context.path === "string" ? context.path : "",
+      sha: typeof context.sha === "string" ? context.sha : "",
+      title,
+      slug,
+      published: $("published")?.value || "",
+      date: $("date")?.value || "",
+      category: $("category")?.value || "",
+      tags: $("tags")?.value || "",
+      description: $("description")?.value || "",
+      body: source,
+      draft: Boolean($("draft")?.checked),
+      savedAt: Date.now()
+    };
+    try {
+      sessionStorage.setItem(recoveryKey, JSON.stringify(snapshot));
+      setRecoveryStatus("已在当前标签页保存恢复副本（" +
+        new Date(snapshot.savedAt).toLocaleTimeString("zh-CN", { hour12: false }) + "）。");
+      refreshRecoveryAvailability();
+    } catch {
+      setRecoveryStatus("浏览器无法保存本地恢复副本；当前内容仍在编辑器中，请及时保存到 GitHub。");
+    }
+  }
+
+  function queueRecovery() {
+    if (!$("localRecoveryCheck")?.checked) return;
+    if (recoveryTimer !== null) clearTimeout(recoveryTimer);
+    recoveryTimer = setTimeout(() => {
+      recoveryTimer = null;
+      saveRecovery();
+    }, 800);
+  }
+
+  function restoreRecovery() {
+    const snapshot = readRecovery();
+    if (!snapshot || $("restoreLocalRecovery")?.disabled) return;
+    if (!window.confirm("恢复本地副本会覆盖当前表单中尚未保存的内容，确定恢复吗？")) return;
+
+    const context = currentContext();
+    if (snapshot.path && (snapshot.path !== context.path || snapshot.sha !== context.sha)) {
+      setRecoveryStatus("恢复已取消：文章版本已变化，请重新载入并比较远端内容。");
+      return;
+    }
+    if (isPasswordProtectedSource(snapshot.body || "")) {
+      setRecoveryStatus("此副本包含密码保护文章，已禁止恢复。");
+      return;
+    }
+
+    const values = {
+      title: snapshot.title,
+      slug: snapshot.slug,
+      published: snapshot.published,
+      date: snapshot.date,
+      category: snapshot.category,
+      tags: snapshot.tags,
+      description: snapshot.description,
+      body: snapshot.body
+    };
+    for (const [id, value] of Object.entries(values)) {
+      const field = $(id);
+      if (field && typeof value === "string") {
+        field.value = value;
+        field.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+    }
+    $("draft").checked = snapshot.draft === true;
+    $("draft").dispatchEvent(new Event("change", { bubbles: true }));
+    window.dispatchEvent(new CustomEvent("firefly:source-loaded"));
+    window.dispatchEvent(new CustomEvent("firefly:mode", { detail: { mode: "visual" } }));
+    setRecoveryStatus("恢复完成。内容尚未写入 GitHub；请检查后手动保存。");
+  }
+
+
   function getUnsafeReason(markdown) {
     // Ignore fenced code: imports and angle-bracket examples inside code are safe text.
     const withoutFences = markdown
@@ -314,10 +487,42 @@ import { TableKit } from "https://cdn.jsdelivr.net/npm/@tiptap/extension-table@3
       reportUnsupported(getUnsafeReason(split.body));
     });
 
+    const recoveryToggle = $("localRecoveryCheck");
+    if (recoveryToggle) {
+      try {
+        recoveryToggle.checked = sessionStorage.getItem(recoveryEnabledKey) === "1";
+      } catch {
+        recoveryToggle.checked = false;
+      }
+      recoveryToggle.addEventListener("change", () => {
+        try {
+          if (recoveryToggle.checked) {
+            sessionStorage.setItem(recoveryEnabledKey, "1");
+            setRecoveryStatus("已开启本地恢复；带访问密码的文章不会保存到恢复区。");
+            queueRecovery();
+          } else {
+            sessionStorage.removeItem(recoveryEnabledKey);
+            sessionStorage.removeItem(recoveryKey);
+            setRecoveryStatus("已关闭，当前本地恢复副本已删除。");
+            refreshRecoveryAvailability();
+          }
+        } catch {
+          setRecoveryStatus("浏览器不允许使用 sessionStorage，无法启用本地恢复。");
+        }
+      });
+    }
+    $("restoreLocalRecovery")?.addEventListener("click", restoreRecovery);
+    $("editor")?.addEventListener("input", queueRecovery);
+    $("editor")?.addEventListener("change", queueRecovery);
+    window.addEventListener("firefly:source-loaded", refreshRecoveryAvailability);
+    window.addEventListener("firefly:clear-recovery", event => clearRecovery(event.detail || {}));
+    window.addEventListener("firefly:save-complete", event => clearRecovery(event.detail || {}));
+
     reportUnsupported(unsupportedReason);
     if (unsupportedReason) setMode("source");
     else setMode("visual");
     loadSourceIntoEditor();
+    refreshRecoveryAvailability();
 
     window.FireflyRichEditor = {
       isBusy: () => pendingUploads > 0,
