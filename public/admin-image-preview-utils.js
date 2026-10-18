@@ -1,16 +1,25 @@
 const POST_CONTENT_ROOT = ["src", "content", "posts"];
 const IMAGE_EXTENSIONS = new Set(["png", "jpg", "jpeg", "gif", "webp", "avif"]);
 
+function hasControlCharacters(value) {
+  for (const character of value) {
+    const code = character.charCodeAt(0);
+    if (code < 32 || code === 127) return true;
+  }
+  return false;
+}
+
 /**
  * Resolve a Markdown image path relative to the source article, not the admin URL.
  * Only repository-local images under src/content/posts are eligible for the private preview proxy.
  */
 export function resolveRepositoryImagePath(articlePath, imageSource) {
   if (typeof articlePath !== "string" || typeof imageSource !== "string") return null;
+
   const article = articlePath.trim();
   const source = imageSource.trim();
   if (!article || !source || source.startsWith("#") || source.startsWith("/") || source.startsWith("//")) return null;
-  if (/^[a-z][a-z0-9+.-]*:/i.test(source) || /[\\\x00-\x1f\x7f]/.test(source)) return null;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(source) || source.includes("\\") || hasControlCharacters(source)) return null;
 
   const sourcePath = source.split(/[?#]/, 1)[0];
   if (!sourcePath) return null;
@@ -21,10 +30,12 @@ export function resolveRepositoryImagePath(articlePath, imageSource) {
   } catch {
     return null;
   }
-  if (!decoded || decoded.startsWith("/") || decoded.startsWith("//") || decoded.includes("\\") || decoded.includes("//")) return null;
+  if (!decoded || decoded.startsWith("/") || decoded.startsWith("//")
+    || decoded.includes("\\") || decoded.includes("//") || hasControlCharacters(decoded)) return null;
 
   const articleParts = article.split("/");
-  if (articleParts.length < 4 || articleParts[0] !== "src" || articleParts[1] !== "content" || articleParts[2] !== "posts") return null;
+  if (articleParts.length < 4 || articleParts[0] !== "src" || articleParts[1] !== "content"
+    || articleParts[2] !== "posts") return null;
   const articleName = articleParts.pop();
   if (!articleName || articleName === "." || articleName === "..") return null;
 
@@ -36,11 +47,13 @@ export function resolveRepositoryImagePath(articlePath, imageSource) {
       resolved.pop();
       continue;
     }
-    if (/[\\\x00-\x1f\x7f]/.test(segment)) return null;
+    if (segment.includes("\\") || hasControlCharacters(segment)) return null;
     resolved.push(segment);
   }
 
-  if (resolved.length <= POST_CONTENT_ROOT.length || resolved.slice(0, POST_CONTENT_ROOT.length).join("/") !== POST_CONTENT_ROOT.join("/")) return null;
+  if (resolved.length <= POST_CONTENT_ROOT.length
+    || resolved.slice(0, POST_CONTENT_ROOT.length).join("/") !== POST_CONTENT_ROOT.join("/")) return null;
+
   const extension = resolved[resolved.length - 1].split(".").pop()?.toLowerCase();
   if (!extension || !IMAGE_EXTENSIONS.has(extension)) return null;
   return resolved.join("/");
