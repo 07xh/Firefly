@@ -91,6 +91,94 @@ function matchingComponentItems(body, name) {
   return result;
 }
 
+
+
+function findTabGroupRoot(source) {
+  const text = String(source || "");
+  const opening = text.match(/^\s*<\s*TabGroup\b([^>]*)>/);
+  if (!opening) return null;
+  const afterOpening = text.slice(opening[0].length);
+  const lines = afterOpening.split("\n");
+  let offset = 0;
+  let fenceLength = 0;
+  for (const line of lines) {
+    if (fenceLength) {
+      const closingFence = new RegExp("^ {0,3}\\x60{" + fenceLength + ",}[ \\x09]*$");
+      if (closingFence.test(line)) fenceLength = 0;
+    } else {
+      const fence = line.match(/^ {0,3}(\x60{3,})/);
+      if (fence) {
+        fenceLength = fence[1].length;
+      } else if (/^\s*<\/\s*TabGroup\s*>\s*$/.test(line)) {
+        const body = afterOpening.slice(0, offset);
+        const full = text.slice(0, opening[0].length + offset + line.length);
+        return [full, "TabGroup", opening[1], body];
+      }
+    }
+    offset += line.length + 1;
+  }
+  return null;
+}
+
+function parseTabGroupLabels(attributeSource) {
+  const attribute = String(attributeSource || "").match(/^\s*labels\s*=\s*\{\s*\[([\s\S]*?)\]\s*\}\s*$/);
+  if (!attribute) return null;
+  const source = attribute[1];
+  const labels = [];
+  let cursor = 0;
+  while (cursor < source.length) {
+    while (/\s/.test(source[cursor] || "")) cursor += 1;
+    if (cursor >= source.length) break;
+    const quote = source[cursor];
+    if (quote !== '"' && quote !== "'") return null;
+    cursor += 1;
+    const start = cursor;
+    while (cursor < source.length && source[cursor] !== quote) {
+      if (/['"\\<>{}\[\]\r\n\t]/.test(source[cursor])) return null;
+      cursor += 1;
+    }
+    if (cursor >= source.length) return null;
+    const label = source.slice(start, cursor).trim();
+    if (!label || label.length > 80) return null;
+    labels.push(label);
+    cursor += 1;
+    while (/\s/.test(source[cursor] || "")) cursor += 1;
+    if (cursor >= source.length) break;
+    if (source[cursor] !== ",") return null;
+    cursor += 1;
+    while (/\s/.test(source[cursor] || "")) cursor += 1;
+    if (cursor >= source.length) break;
+    if (source[cursor] !== '"' && source[cursor] !== "'") return null;
+  }
+  return labels.length ? labels : null;
+}
+
+function parseTabGroupCodeBlocks(body) {
+  const lines = String(body || "").replace(/\r\n/g, "\n").split("\n");
+  let cursor = 0;
+  while (cursor < lines.length && !lines[cursor].trim()) cursor += 1;
+  const blocks = [];
+  while (cursor < lines.length) {
+    const opening = lines[cursor].match(/^ {0,3}(\x60{3,})([A-Za-z0-9+#.-]{0,32})[ \t]*$/);
+    if (!opening) return null;
+    const fence = opening[1];
+    const language = opening[2] || "";
+    const closingPattern = new RegExp("^ {0,3}\\x60{" + fence.length + ",}[ \\x09]*$");
+    let closing = cursor + 1;
+    while (closing < lines.length && !closingPattern.test(lines[closing])) closing += 1;
+    if (closing >= lines.length) return null;
+    blocks.push({ language, text: lines.slice(cursor + 1, closing).join("\n") });
+    cursor = closing + 1;
+    while (cursor < lines.length && !lines[cursor].trim()) cursor += 1;
+  }
+  return blocks.length ? blocks : null;
+}
+
+function isSafeTabGroupLabel(value) {
+  const label = String(value ?? "").trim();
+  return label.length > 0 && label.length <= 80 && !/['"\\<>{}\[\]\r\n\t]/.test(label);
+}
+
 /** Data-only preview parser. It never evaluates MDX or inserts source as HTML. */
 export function inspectProtectedMarkdown(raw, reason = "") {
   const source = typeof raw === "string" ? raw : "";
@@ -120,7 +208,8 @@ export function inspectProtectedMarkdown(raw, reason = "") {
     }
   }
 
-  const root = source.match(/<\s*(Steps|Timeline|TabGroup|StepItem|TimelineItem)\b([^>]*)>([\s\S]*?)<\/\s*\1\s*>/);
+  let root = source.match(/<\s*(Steps|Timeline|TabGroup|StepItem|TimelineItem)\b([^>]*)>([\s\S]*?)<\/\s*\1\s*>/);
+  if (root && root[1] === "TabGroup") root = findTabGroupRoot(source) || root;
   if (root) {
     const name = root[1];
     const attrs = readAttributes(root[2]);
@@ -149,12 +238,30 @@ export function inspectProtectedMarkdown(raw, reason = "") {
       };
     }
     if (name === "TabGroup") {
-      const labelsAttr = root[2].match(/\blabels\s*=\s*\{\s*\[([\s\S]*?)\]\s*\}/);
-      const labels = labelsAttr ? [...labelsAttr[1].matchAll(/["']([^"']+)["']/g)].map(match => match[1]) : [];
-      const codeBlocks = [...root[3].matchAll(/\x60{3,}([^\n]*)\n([\s\S]*?)\x60{3,}/g)].map(match => ({ language: (match[1] || "").trim(), text: match[2].trim() }));
-      const panels = codeBlocks.length ? codeBlocks : root[3].split(/\n\s*\n/).filter(Boolean).map(text => ({ language: "", text: text.trim() }));
-      const items = panels.map((item, index) => ({ title: labels[index] || "内容 " + (index + 1), language: item.language, text: item.text }));
-      return { kind: "tabs", title: "标签页分组", label: "Firefly 组件 · TabGroup", items };
+      const labels = parseTabGroupLabels(root[2]);
+      const parsedCodeBlocks = parseTabGroupCodeBlocks(root[3]);
+      const fallbackLabelsAttr = root[2].match(/\blabels\s*=\s*\{\s*\[([\s\S]*?)\]\s*\}/);
+      const displayLabels = labels || (fallbackLabelsAttr
+        ? [...fallbackLabelsAttr[1].matchAll(/["']([^"']+)["']/g)].map(match => match[1])
+        : []);
+      const fallbackCodeBlocks = [...root[3].matchAll(/\x60{3,}([^\n]*)\n([\s\S]*?)\x60{3,}/g)]
+        .map(match => ({ language: (match[1] || "").trim(), text: match[2].trim() }));
+      const panels = parsedCodeBlocks || (fallbackCodeBlocks.length
+        ? fallbackCodeBlocks
+        : root[3].split(/\n\s*\n/).filter(Boolean).map(text => ({ language: "", text: text.trim() })));
+      const items = panels.map((item, index) => ({
+        title: displayLabels[index] || "内容 " + (index + 1),
+        language: item.language,
+        text: item.text,
+      }));
+      const editable = source.trim() === root[0].trim()
+        && Boolean(labels)
+        && Boolean(parsedCodeBlocks)
+        && labels.length === parsedCodeBlocks.length
+        && labels.length >= 1
+        && labels.length <= 20
+        && labels.every(isSafeTabGroupLabel);
+      return { kind: "tabs", title: "标签页分组", label: "Firefly 组件 · TabGroup", editable, items };
     }
     return { kind: "component", title: name, label: "Firefly 组件 · " + name, attributes: attrs, text: plainText(root[3]) };
   }
@@ -260,4 +367,31 @@ export function serializeEditableStepTimeline(model, values) {
   }
   lines.push("</" + componentName + ">");
   return lines.join("\n");
+}
+
+
+/** Serializes only literal-label TabGroup components whose content is fenced code. */
+export function serializeEditableTabGroup(model, values) {
+  if (model?.kind !== "tabs") throw new Error("只能保存标签页组件。");
+  const items = Array.isArray(values) ? values : [];
+  if (!items.length || items.length > 20) throw new Error("标签页数量必须为 1 到 20 项。");
+  const labels = [];
+  const blocks = [];
+  let totalLength = 0;
+  for (const item of items) {
+    const title = String(item.title ?? "").trim();
+    const language = String(item.language ?? "").trim();
+    const code = String(item.text ?? "").replace(/\r\n/g, "\n");
+    if (!isSafeTabGroupLabel(title)) throw new Error("标签名称不能为空，且不能包含引号、括号、标签或换行。");
+    if (!/^[A-Za-z0-9+#.-]{0,32}$/.test(language)) throw new Error("代码语言只允许字母、数字、+、#、点和连字符，最长 32 个字符。");
+    if (code.length > 50000 || code.includes("\0")) throw new Error("单个代码面板最多 50000 个字符，且不能包含空字符。");
+    totalLength += title.length + language.length + code.length;
+    if (totalLength > 150000) throw new Error("标签页内容总长度不能超过 150000 个字符。");
+    labels.push(title);
+    let longestFence = 0;
+    for (const run of code.matchAll(/\x60+/g)) longestFence = Math.max(longestFence, run[0].length);
+    const fence = "\x60".repeat(Math.max(3, longestFence + 1));
+    blocks.push(fence + language + "\n" + code + "\n" + fence);
+  }
+  return "<TabGroup labels={" + JSON.stringify(labels) + "}>\n" + blocks.join("\n") + "\n</TabGroup>";
 }
