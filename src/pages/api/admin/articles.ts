@@ -34,6 +34,20 @@ function getConfig(): { token: string; repo: string; branch: string } {
 	return { token, repo, branch };
 }
 
+
+async function githubFailure(response: Response, operation: string): Promise<string> {
+	let message = "";
+	try {
+		const payload = (await response.clone().json()) as { message?: unknown };
+		if (typeof payload.message === "string") {
+			message = payload.message.replace(/\s+/g, " ").trim().slice(0, 240);
+		}
+	} catch {
+		// GitHub may return a non-JSON error body; keep the HTTP status either way.
+	}
+	return `${operation} (${response.status})${message ? `：${message}` : ""}`;
+}
+
 function json(data: unknown, status = 200): Response {
 	return new Response(JSON.stringify(data), {
 		status,
@@ -103,7 +117,7 @@ async function github(path: string, config: ReturnType<typeof getConfig>, init?:
 
 async function findPostFiles(config: ReturnType<typeof getConfig>): Promise<GitHubEntry[]> {
 	const response = await github(`git/trees/${encodeURIComponent(config.branch)}?recursive=1`, config);
-	if (!response.ok) throw new Error(`GitHub tree request failed (${response.status})`);
+	if (!response.ok) throw new Error(await githubFailure(response, "读取 GitHub 文章列表失败"));
 	const data = (await response.json()) as { tree?: GitHubEntry[]; truncated?: boolean };
 	if (data.truncated) throw new Error("Repository tree is truncated; refusing an incomplete article list");
 	return (data.tree ?? []).filter((entry) =>
@@ -118,7 +132,7 @@ async function readPost(path: string, config: ReturnType<typeof getConfig>): Pro
 		throw new Error("Invalid article path");
 	}
 	const response = await github(`contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(config.branch)}`, config);
-	if (!response.ok) throw new Error(`Could not read article (${response.status})`);
+	if (!response.ok) throw new Error(await githubFailure(response, "读取 GitHub 文章失败"));
 	const file = (await response.json()) as { sha: string; content: string; encoding: string; path: string };
 	return { path: file.path, sha: file.sha, content: file.encoding === "base64" ? decodeBase64(file.content) : file.content };
 }
@@ -158,7 +172,7 @@ export const POST: APIRoute = async ({ request }) => {
 			body: JSON.stringify({ message: `Add article: ${slug}`, content: encodeBase64(content), branch: config.branch }),
 		});
 		if (response.status === 422) return json({ error: "同名文章已存在" }, 409);
-		if (!response.ok) return json({ error: `GitHub 写入失败 (${response.status})` }, 502);
+		if (!response.ok) return json({ error: await githubFailure(response, "GitHub 写入失败") }, 502);
 		const written = (await response.json()) as { commit?: { sha?: string; html_url?: string } };
 		return json({ ok: true, path, commitSha: written.commit?.sha, commitUrl: written.commit?.html_url }, 201);
 	} catch (error) {
@@ -191,7 +205,7 @@ export const PUT: APIRoute = async ({ request }) => {
 			method: "PUT",
 			body: JSON.stringify({ message: `Update article: ${slug}`, content: encodeBase64(content), sha: current.sha, branch: config.branch }),
 		});
-		if (!response.ok) return json({ error: `GitHub 更新失败 (${response.status})` }, 502);
+		if (!response.ok) return json({ error: await githubFailure(response, "GitHub 更新失败") }, 502);
 		const written = (await response.json()) as { commit?: { sha?: string; html_url?: string } };
 		return json({ ok: true, path, commitSha: written.commit?.sha, commitUrl: written.commit?.html_url });
 	} catch (error) {
@@ -211,7 +225,7 @@ export const DELETE: APIRoute = async ({ request }) => {
 			method: "DELETE",
 			body: JSON.stringify({ message: `Delete article: ${path.split("/").pop()}`, sha: current.sha, branch: config.branch }),
 		});
-		if (!response.ok) return json({ error: `GitHub 删除失败 (${response.status})` }, 502);
+		if (!response.ok) return json({ error: await githubFailure(response, "GitHub 删除失败") }, 502);
 		return json({ ok: true, path });
 	} catch (error) {
 		return json({ error: error instanceof Error ? error.message : "Internal error" }, 503);
