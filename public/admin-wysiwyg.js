@@ -3,23 +3,23 @@ let Editor, StarterKit, Markdown, Image, TableKit;
 async function loadTiptapModules() {
   const providers = [
     {
-      name: "jsDelivr",
-      urls: [
-        "https://cdn.jsdelivr.net/npm/@tiptap/core@3.31.3/+esm",
-        "https://cdn.jsdelivr.net/npm/@tiptap/starter-kit@3.31.3/+esm",
-        "https://cdn.jsdelivr.net/npm/@tiptap/markdown@3.31.3/+esm",
-        "https://cdn.jsdelivr.net/npm/@tiptap/extension-image@3.31.3/+esm",
-        "https://cdn.jsdelivr.net/npm/@tiptap/extension-table@3.31.3/+esm",
-      ],
-    },
-    {
-      name: "esm.sh",
+      name: "esm.sh（统一 ProseMirror 依赖）",
       urls: [
         "https://esm.sh/@tiptap/core@3.31.3?deps=@tiptap/core@3.31.3,@tiptap/pm@3.31.3",
         "https://esm.sh/@tiptap/starter-kit@3.31.3?deps=@tiptap/core@3.31.3,@tiptap/pm@3.31.3",
         "https://esm.sh/@tiptap/markdown@3.31.3?deps=@tiptap/core@3.31.3,@tiptap/pm@3.31.3",
         "https://esm.sh/@tiptap/extension-image@3.31.3?deps=@tiptap/core@3.31.3,@tiptap/pm@3.31.3",
         "https://esm.sh/@tiptap/extension-table@3.31.3?deps=@tiptap/core@3.31.3,@tiptap/pm@3.31.3",
+      ],
+    },
+    {
+      name: "jsDelivr（备用）",
+      urls: [
+        "https://cdn.jsdelivr.net/npm/@tiptap/core@3.31.3/+esm",
+        "https://cdn.jsdelivr.net/npm/@tiptap/starter-kit@3.31.3/+esm",
+        "https://cdn.jsdelivr.net/npm/@tiptap/markdown@3.31.3/+esm",
+        "https://cdn.jsdelivr.net/npm/@tiptap/extension-image@3.31.3/+esm",
+        "https://cdn.jsdelivr.net/npm/@tiptap/extension-table@3.31.3/+esm",
       ],
     },
   ];
@@ -42,7 +42,7 @@ async function loadTiptapModules() {
       failures.push(provider.name + ": " + (error instanceof Error ? error.message : String(error)));
     }
   }
-  throw new Error("Tiptap 模块无法从主/备用 CDN 加载。请检查网络或 CDN 拦截。 " + failures.join(" | "));
+  throw new Error("Tiptap 模块无法加载或导出不完整。请检查网络、CDN 拦截或依赖冲突。 " + failures.join(" | "));
 }
 
 (() => {
