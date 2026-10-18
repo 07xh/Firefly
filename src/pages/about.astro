@@ -1,5 +1,5 @@
 ---
-// biome-ignore-all assist/source/organizeImports: Astro frontmatter import order is intentionally preserved here.
+import { getEntry, render } from "astro:content";
 import { profileConfig } from "@/config/profileConfig";
 import { siteConfig } from "@/config/siteConfig";
 import siteSettings from "@/data/settings.json";
@@ -9,7 +9,6 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 import { getAuthorAvatarUrl } from "@/utils/schema-image";
 import { buildProfilePage } from "@/utils/schema-utils";
 import Markdown from "@components/common/Markdown.astro";
-import { getEntry, render } from "astro:content";
 import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
 
