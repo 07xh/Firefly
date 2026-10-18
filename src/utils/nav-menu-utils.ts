@@ -1,7 +1,7 @@
 import { navBarConfig, siteConfig } from "@/config";
+import siteSettings from "@/data/settings.json";
 import type { NavBarLink } from "@/types/navBarConfig";
 import { resolveNavbarLinks } from "@/utils/navbar-i18n";
-import siteSettings from "@/data/settings.json";
 
 /** 解析导航栏链接：按 siteConfig.pages 过滤 + i18n 名称解析。Navbar 与 NavMenuPanel 共用。 */
 export function resolveNavMenuLinks(): NavBarLink[] {
