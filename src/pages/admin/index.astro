@@ -469,7 +469,7 @@ export const prerender = false;
 <div class="grid"><div class="field"><label for="slug">文件名 *</label><input id="slug" required placeholder="my-post"></div><div class="field"><label for="published">展示发布日期 *</label><input id="published" type="date" required></div></div>
 <div class="grid"><div class="field"><label for="date">定时发布时间（北京时间）</label><input id="date" type="datetime-local" step="60"><small class="muted">留空表示立即生效；填写未来时间后，系统会自动安排重建。</small></div><div class="field"><label for="articlePassword">访问密码（可选）</label><input id="articlePassword" type="password" maxlength="200" autocomplete="new-password" placeholder="留空则不启用密码保护"><small class="muted">输入后，前台将显示密码解锁页面。</small></div></div>
 <div class="field"><label for="passwordHint">密码提示（可选）</label><input id="passwordHint" maxlength="120" placeholder="例如：课程名称"></div>
-<p class="muted" style="color:#b42318">安全提醒：当前 GitHub 仓库是公开的，Markdown 原文和 password 字段都可能被直接读取。现有密码保护只加密构建后的网页，不能保护公开仓库中的原文和密码；不要在此保存真正机密的内容。</p>
+<p class="muted" style="color:#b42318">安全提醒：当前文章仓库是公开的，文章原文和访问密码也可能被他人查看。页面密码不能隐藏仓库中的文件，请不要在这里保存真正机密的信息。</p>
 <div class="grid"><div class="field"><label for="category">分类</label><input id="category" maxlength="100"></div><div class="field"><label for="tags">标签（逗号分隔）</label><input id="tags" placeholder="技术, 随笔"></div></div>
 <div class="field"><label for="description">摘要</label><input id="description" maxlength="500"></div>
 <div class="field">
@@ -534,7 +534,7 @@ export const prerender = false;
   </div>
   <div id="wysiwygNotice" class="rich-editor-notice" hidden></div>
   <div id="wysiwygEditor" class="rich-editor-canvas"></div>
-  <div class="rich-editor-help">直接输入文字并按回车分段。选中文字后，用工具栏设置标题、加粗、列表、链接、引用、图片和表格。公式、特殊版式等内容会以说明卡片显示并完整保留；普通正文可继续编辑，通常不需要查看原始语法。</div>
+  <div class="rich-editor-help">直接输入文字并按回车分段。选中文字后，用工具栏调整标题、加粗、列表、链接、引用、图片和表格。公式与特殊版式会作为内容卡片显示并完整保留；平时只需编辑普通文字。</div>
 </div>
 <div id="wysiwygFallback" hidden>可视化编辑器暂时无法加载，文章原文没有被修改。你可以使用“高级模式”继续编辑。</div>
 <textarea id="body" spellcheck="false" hidden placeholder="高级模式：这里直接编辑文章原文。日常写作请返回“可视化编辑”。"></textarea>
@@ -542,12 +542,12 @@ export const prerender = false;
 </div>
 <label class="check"><input id="draft" type="checkbox" checked> 草稿箱状态（勾选后保存为草稿；取消勾选可保存已发布文章）</label>
 <div class="actions"><button class="btn" type="button" id="checkGitHub">检查 GitHub 写入权限</button><button class="btn" type="submit" id="saveDraft" value="save">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空表单</button></div>
-</form><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿会将文章写入 GitHub 并触发构建，但保持草稿状态；发布文章会将 draft 设为 false，提交到 GitHub，并跟踪 Cloudflare 部署结果。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看 Cloudflare 部署日志 ↗</a></section>
+</form><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿后，文章会保存在草稿箱，不会公开显示。发布文章后，网站会自动更新；页面会显示更新进度。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看 Cloudflare 部署日志 ↗</a></section>
 </div>
 <section id="appearanceTabPanel" role="tabpanel" aria-labelledby="tabAppearance" class="settings-panel min-w-0" hidden>
   <div class="mb-1 text-base font-semibold text-gray-800">全局外观配置</div>
   <p class="mb-5 text-sm leading-6 text-gray-500">
-    配置统一保存在仓库的 <code class="rounded bg-gray-100 px-1.5 py-0.5 text-xs">src/data/settings.json</code>。
+    网站外观设置会自动保存在后台配置中。
     保存后会提交到 GitHub，并触发 Cloudflare 构建与部署；原有文章管理和登录保护保持不变。
   </p>
   <form id="settingsForm" class="settings-cards">
@@ -615,7 +615,7 @@ export const prerender = false;
       <div class="settings-field">
         <label for="aboutContent">关于我页面正文</label>
         <textarea id="aboutContent" name="aboutContent" rows="12" maxlength="30000" placeholder="# 关于我 / About Me&#10;&#10;在这里填写个人介绍、关于本站、GitHub 开源地址等内容。" class="settings-control"></textarea>
-        <small>最多 30000 个字符。支持标题、列表、粗体、链接、引用、代码和普通 Markdown 表格；保存后随网站重新部署生效。</small>
+        <small>最多 30000 个字符。支持标题、列表、加粗、链接、引用和表格；保存后会自动更新到网站。</small>
       </div>
       <div class="settings-field mt-4">
         <label for="donationQrCode">打赏二维码图片链接</label>
@@ -625,7 +625,7 @@ export const prerender = false;
     </section>
 
 <section class="settings-card" aria-labelledby="articleSocialSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">05</span><div><h3 id="articleSocialSettingsTitle">文章页功能与源码链接</h3><p>管理社交入口、文章页支持与分享卡片、源码链接及背景音乐。</p></div></div>
+      <div class="settings-card-heading"><span class="settings-card-number">05</span><div><h3 id="articleSocialSettingsTitle">文章页面与分享设置</h3><p>管理社交入口、支持与分享卡片、文章原文链接及背景音乐。</p></div></div>
 <div class="settings-grid">
         <div class="settings-field"><label for="githubUrl">GitHub 链接</label><input id="githubUrl" name="githubUrl" type="url" maxlength="2048" placeholder="https://github.com/yourname" class="settings-control"></div>
         <div class="settings-field"><label for="email">邮箱地址</label><input id="email" name="email" type="email" maxlength="320" autocomplete="email" placeholder="you@example.com" class="settings-control"></div>
@@ -634,11 +634,11 @@ export const prerender = false;
       </div>
 <div class="settings-grid settings-grid-one">
         <div class="settings-field">
-          <label for="sourceGithubUrl">原文 / 源码 GitHub 地址</label>
+          <label for="sourceGithubUrl">文章原文链接</label>
           <input id="sourceGithubUrl" name="sourceGithubUrl" type="url" maxlength="2048" placeholder="https://github.com/用户名/仓库 或具体文件路径" class="settings-control">
-          <small>填写仓库、Markdown 原文或 GitHub 文件地址均可；必须是完整的 HTTP/HTTPS 链接。</small>
+          <small>可以填写整个仓库地址，也可以填写某篇文章的原文地址。请使用完整的网址。</small>
         </div>
-        <label class="settings-toggle"><input id="showSourceGithub" name="showSourceGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示 GitHub 原文 / 源码链接<small>开启后在网站页脚显示；关闭后隐藏，但不会清空上面的地址。</small></span></label>
+        <label class="settings-toggle"><input id="showSourceGithub" name="showSourceGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示文章原文链接<small>开启后，网站页脚会显示这条链接；关闭后只隐藏入口，不会清空地址。</small></span></label>
       </div>
 <div class="settings-grid settings-grid-one">
         <div class="settings-field">
@@ -652,7 +652,7 @@ export const prerender = false;
     </section>
 
 <section class="settings-card" aria-labelledby="layoutSettingsTitle">
-  <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="layoutSettingsTitle">布局管理与响应式显示</h3><p>配置保存到 settings.json，并由下一次 Cloudflare 构建应用到前台。</p></div></div>
+  <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="layoutSettingsTitle">布局管理与响应式显示</h3><p>保存后，网站会自动重新构建并应用这些设置。</p></div></div>
   <div class="settings-grid">
     <div class="settings-field"><label for="layoutSidebarPosition">桌面侧边栏布局</label><select id="layoutSidebarPosition" name="layoutSidebarPosition" class="settings-control"><option value="left">左侧边栏</option><option value="right">右侧边栏</option><option value="both">双侧边栏</option></select><small>单侧布局让正文更宽；双侧布局可同时展示左右辅助信息。</small></div>
     <div class="settings-field"><label for="layoutTabletSidebar">平板端侧边栏位置</label><select id="layoutTabletSidebar" name="layoutTabletSidebar" class="settings-control"><option value="left">平板显示左侧</option><option value="right">平板显示右侧</option></select><small>仅桌面选择“双侧边栏”时有效。</small></div>
