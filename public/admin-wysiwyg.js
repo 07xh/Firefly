@@ -769,14 +769,14 @@ async function loadTiptapModules() {
     const paragraph = (text, className = "firefly-visual-preview__text") => {
       if (text) preview.append(visualPreviewElement("div", className, text));
     };
-    const propertyList = attributes => {
+    const propertyList = (attributes, parent = preview) => {
       if (!attributes?.length) return;
       const wrap = visualPreviewElement("div", "firefly-visual-preview__props");
       for (const item of attributes) {
         const chip = visualPreviewElement("span", "firefly-visual-preview__prop", item.name + "=" + item.value);
         wrap.append(chip);
       }
-      preview.append(wrap);
+      parent.append(wrap);
     };
     const appendItems = (items, kind) => {
       if (!items?.length) {
@@ -873,7 +873,7 @@ async function loadTiptapModules() {
       const card = visualPreviewElement("div", "firefly-visual-preview__panel");
       card.append(visualPreviewElement("div", "firefly-visual-preview__panel-head", model.title || "MDX 组件"));
       if (model.text) card.append(visualPreviewElement("div", "firefly-visual-preview__text", model.text));
-      propertyList(model.attributes);
+      propertyList(model.attributes, card);
       preview.append(card);
     } else if (model.kind === "html") {
       heading(model.title);
