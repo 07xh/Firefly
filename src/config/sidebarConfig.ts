@@ -1,22 +1,33 @@
+import persistedSettings from "../data/settings.json";
 import type { SidebarLayoutConfig } from "../types/sidebarConfig";
+
+const adminLayoutSettings = (
+	persistedSettings as unknown as {
+		layoutSettings?: {
+			sidebarEnabled?: boolean;
+			sidebarPosition?: "left" | "right" | "both";
+			tabletSidebar?: "left" | "right";
+		};
+	}
+).layoutSettings ?? {};
 
 /**
  * 侧边栏布局配置
  */
 export const sidebarLayoutConfig: SidebarLayoutConfig = {
 	// 是否启用侧边栏功能
-	enable: true,
+	enable: adminLayoutSettings.sidebarEnabled ?? true,
 
 	// 侧边栏位置：
 	// left: 仅显示左侧边栏
 	// right: 仅显示右侧边栏
 	// both: 双侧边栏，1280px以上同时显示左右，769-1279px根据tabletSidebar配置显示其中一侧
-	position: "both",
+	position: adminLayoutSettings.sidebarPosition ?? "both",
 
 	// 平板端(769-1279px)显示哪侧侧边栏，仅position为both时生效
 	// left: 平板端显示左侧边栏
 	// right: 平板端显示右侧边栏
-	tabletSidebar: "left",
+	tabletSidebar: adminLayoutSettings.tabletSidebar ?? "left",
 
 	// 文章详情页隐藏侧边栏，设为 true 则只在首页等非文章页显示
 	hideSidebarOnPostPage: false,
