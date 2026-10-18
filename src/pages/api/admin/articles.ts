@@ -2,7 +2,7 @@ import { env as workerEnv } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 
 type RuntimeEnv = {
-	GITHUB_CONTENTS_TOKEN?: string;
+	FIREFLY_CONTENTS_TOKEN?: string;
 	GITHUB_CONTENTS_REPO?: string;
 	GITHUB_CONTENTS_BRANCH?: string;
 };
@@ -26,10 +26,10 @@ const headers = (token: string) => ({
 
 function getConfig(): { token: string; repo: string; branch: string } {
 	const env = workerEnv as unknown as RuntimeEnv;
-	const token = env?.GITHUB_CONTENTS_TOKEN?.trim();
+	const token = env?.FIREFLY_CONTENTS_TOKEN?.trim();
 	const repo = env?.GITHUB_CONTENTS_REPO?.trim() || "07xh/Firefly";
 	const branch = env?.GITHUB_CONTENTS_BRANCH?.trim() || "master";
-	if (!token) throw new Error("GITHUB_CONTENTS_TOKEN is not configured");
+	if (!token) throw new Error("FIREFLY_CONTENTS_TOKEN is not configured");
 	if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error("Invalid repository configuration");
 	return { token, repo, branch };
 }
