@@ -7,21 +7,8 @@ draft: false
 tags: ["资料"]
 slug: "my-post"
 ---
----
-title: 刘晓艳·四六级翻译写作保底技巧
-author: 萑澈
-pubDatetime: 2026-06-13T00:00:00+08:00
-featured: false
-draft: false
-printable: false
-tags:
-  - 英语
-  - 四六级
-  - 翻译
-  - 写作
-  - 刘晓艳
-  - 考前急救
-description: 刘晓艳四六级翻译写作保底技巧：单词正确、语法正确、逻辑关系词、被动语态、非谓语动词
+刘晓艳四六级翻译写作保底技巧：单词正确、语法正确、逻辑关系词、被动语态、非谓语动词
+
 ---
 
 > 来源：Bilibili《刘晓艳四六级考前急救翻译写翻蒙猜保底技巧》(BV1QFEy6dE3S)
@@ -49,19 +36,21 @@ description: 刘晓艳四六级翻译写作保底技巧：单词正确、语法�
 
 翻译中遇到不会写的词，**不要硬写，用你会的词解释出来**。
 
-| 原文 | 高配写法 | 低配写法（保底） |
-|------|----------|------------------|
-| 匠人 | craftsman | worker |
-| 旅游景点 | tourist attraction | a place |
-| 多元化的生活方式 | diversified lifestyle | different lifestyle |
-| 摇篮 | cradle | the start |
-| 民营企业 | private enterprise | private company |
-| 促进 | promote | make...develop fast |
-| 打造 | create/build | make |
-| 民俗文化 | folk culture | local culture |
-| 核心竞争力增强 | enhancement of core competitiveness | developing faster and faster |
-| 悄然兴起 | emerge quietly | become popular |
-| 欣赏 | appreciate | enjoy |
+
+| 原文       | 高配写法                                | 低配写法（保底）                     |
+| -------- | ----------------------------------- | ---------------------------- |
+| 匠人       | craftsman                           | worker                       |
+| 旅游景点     | tourist attraction                  | a place                      |
+| 多元化的生活方式 | diversified lifestyle               | different lifestyle          |
+| 摇篮       | cradle                              | the start                    |
+| 民营企业     | private enterprise                  | private company              |
+| 促进       | promote                             | make...develop fast          |
+| 打造       | create/build                        | make                         |
+| 民俗文化     | folk culture                        | local culture                |
+| 核心竞争力增强  | enhancement of core competitiveness | developing faster and faster |
+| 悄然兴起     | emerge quietly                      | become popular               |
+| 欣赏       | appreciate                          | enjoy                        |
+
 
 **黄金法则**：小词不会写，就「装作没看见」，用你会的词把意思解释清楚即可。保证翻译出来的句子**没有任何语法错误**才是第一位的。
 
@@ -72,6 +61,7 @@ description: 刘晓艳四六级翻译写作保底技巧：单词正确、语法�
 ### 问题诊断
 
 你写作文时最大的问题：总想「装」——
+
 - 总想写个**定语从句**（非限制性的）让老师表扬
 - 总想写个**虚拟语气**震撼灵魂
 - 总想写个**倒装**，结果倒得四不像
@@ -126,20 +116,24 @@ As a result, they supported Chinese economy's development a lot.
 
 **单词多变**：同一个单词不要反复使用。
 
-| 你常写的 | 替换一下 |
-|----------|----------|
-| think | argue / believe / hold the view that |
-| people | the young and old / citizens / individuals |
-| more and more | an increasing number of |
-| important | vital / essential / significant |
+
+| 你常写的          | 替换一下                                       |
+| ------------- | ------------------------------------------ |
+| think         | argue / believe / hold the view that       |
+| people        | the young and old / citizens / individuals |
+| more and more | an increasing number of                    |
+| important     | vital / essential / significant            |
+
 
 **语法多变**：一篇作文里要有——
 
-| 结构 | 你目前只有 | 应该还有 |
-|------|-----------|----------|
-| 句子类型 | 简单句 | + 并列句 + 复合句 |
-| 语序 | 正常语序 | + 倒装 |
-| 语态 | 主动 | + 被动 |
+
+| 结构   | 你目前只有 | 应该还有        |
+| ---- | ----- | ----------- |
+| 句子类型 | 简单句   | + 并列句 + 复合句 |
+| 语序   | 正常语序  | + 倒装        |
+| 语态   | 主动    | + 被动        |
+
 
 ### 2. 逻辑关系清晰
 
@@ -256,40 +250,50 @@ becoming a new travel trend.
 
 ### ① 表示原因（背2个）
 
-| 低级（别再用了） | 高级替换 |
-|-----------------|----------|
-| because | **in that** |
+
+| 低级（别再用了）   | 高级替换          |
+| ---------- | ------------- |
+| because    | **in that**   |
 | because of | **thanks to** |
+
 
 > 例：Thanks to your help, I passed CET-4.
 
 ### ② 表示结果（背2个）
 
-| 低级 | 高级替换 |
-|------|----------|
-| so | **thereby** / **consequently** / **in consequence** / **as a consequence** |
+
+| 低级  | 高级替换                                                                       |
+| --- | -------------------------------------------------------------------------- |
+| so  | **thereby** / **consequently** / **in consequence** / **as a consequence** |
+
 
 > 例：I was absent as a consequence.
 
 ### ③ 表示并列/递进（背2个）
 
-| 低级 | 高级替换 |
-|------|----------|
+
+| 低级  | 高级替换                                                                                                          |
+| --- | ------------------------------------------------------------------------------------------------------------- |
 | and | **likewise** / **similarly** / **equally** / **simultaneously** / **at the same time** / **in the meanwhile** |
+
 
 > 例：I love Liu Xiaoyan. Likewise, Liu Xiaoyan loves me.
 
 ### ④ 表示转折（背2个）
 
-| 低级 | 高级替换 |
-|------|----------|
+
+| 低级  | 高级替换                                                                           |
+| --- | ------------------------------------------------------------------------------ |
 | but | **by contrast** / **conversely** / **on the contrary** / **on the other hand** |
+
 
 ### ⑤ 表示递进（背1个）
 
-| 低级 | 高级替换 |
-|------|----------|
+
+| 低级   | 高级替换                                             |
+| ---- | ------------------------------------------------ |
 | then | **in addition** / **moreover** / **furthermore** |
+
 
 ### ⑥ 表示引出话题/对象（背1个）
 
@@ -301,9 +305,11 @@ becoming a new travel trend.
 
 ### ⑦ 表示总结（背1个）
 
-| 低级（别再用了） | 高级替换 |
-|-----------------|----------|
+
+| 低级（别再用了）   | 高级替换                                                                    |
+| ---------- | ----------------------------------------------------------------------- |
 | all in all | **on the whole** / **in summary** / **substantially** / **in any case** |
+
 
 > 关于 all in all：在它后面写个小括号，写个「吐」，然后呸——吐它一口。初高中用得太熟的词，改卷老师看了都恶心。
 
@@ -311,7 +317,7 @@ becoming a new travel trend.
 
 ## 九、总结速查卡
 
-### 翻译 & 写作保底三步
+### 翻译 &amp; 写作保底三步
 
 ```
 第1步：单词不会写 → 用简单词解释，保证不出错
@@ -329,16 +335,18 @@ becoming a new travel trend.
 
 ### 背诵清单
 
-| 类别 | 必背数量 | 具体词汇 |
-|------|---------|----------|
-| 因为 | 1个 | in that |
-| 多亏 | 1个 | thanks to |
-| 所以 | 2个 | thereby, consequently |
-| 并且 | 2个 | likewise, similarly |
-| 但是 | 2个 | by contrast, conversely |
-| 而且 | 1个 | moreover / furthermore |
-| 引出话题 | 1个 | with regard to |
-| 总之 | 1个 | on the whole |
+
+| 类别   | 必背数量 | 具体词汇                    |
+| ---- | ---- | ----------------------- |
+| 因为   | 1个   | in that                 |
+| 多亏   | 1个   | thanks to               |
+| 所以   | 2个   | thereby, consequently   |
+| 并且   | 2个   | likewise, similarly     |
+| 但是   | 2个   | by contrast, conversely |
+| 而且   | 1个   | moreover / furthermore  |
+| 引出话题 | 1个   | with regard to          |
+| 总之   | 1个   | on the whole            |
+
 
 **共计：11个词组，足以让写作翻译多考3～4分。**
 
@@ -347,3 +355,4 @@ becoming a new travel trend.
 > 即使你单词很简单，全是简单句，只要句子和句子之间用的逻辑关系词非常高端大气上档次，你的作文和翻译依然可以考很高的分数。
 >
 > 四六级考不过，只有一个原因——你不够努力。英语就是个语言，一个语言学不好的人，就是不够努力。
+
