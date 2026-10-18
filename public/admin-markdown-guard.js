@@ -214,11 +214,34 @@ function getProtectedRanges(source) {
       text: match[0],
     });
   }
+  // Plain-text Badge elements with only a literal supported type are handled
+  // by the dedicated inline editor node. Dynamic props, nested tags, expressions,
+  // and Markdown markup stay protected to avoid changing their meaning.
+  const editableBadgeRanges = [];
+  const editableBadgePattern = /<Badge\b([^>]*)>([^<>{}\r\n]*)<\/Badge\s*>/g;
+  const supportedBadgeTypes = new Set(["default", "tip", "note", "important", "warning", "caution"]);
+  for (const match of masked.matchAll(editableBadgePattern)) {
+    const attributes = String(match[1] || "").trim();
+    const label = String(match[2] || "");
+    let validAttributes = attributes === "";
+    const typeMatch = attributes.match(/^type\s*=\s*"(default|tip|note|important|warning|caution)"$|^type\s*=\s*'(default|tip|note|important|warning|caution)'$/);
+    if (typeMatch) validAttributes = supportedBadgeTypes.has(typeMatch[1] || typeMatch[2]);
+    if (!validAttributes || !label.trim() || /[\x60*_~\[\]$]/.test(label)) continue;
+    editableBadgeRanges.push({
+      startOffset: match.index,
+      endOffset: match.index + match[0].length,
+    });
+  }
+
   const pairedClosing = new Set();
   const voidTags = new Set(["area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"]);
   const protectedHtmlTags = new Set(["a","abbr","address","article","aside","audio","b","blockquote","body","br","button","canvas","caption","cite","code","col","colgroup","dd","del","details","dfn","div","dl","dt","em","fieldset","figcaption","figure","footer","form","h1","h2","h3","h4","h5","h6","head","header","hr","html","i","iframe","img","input","ins","kbd","label","legend","li","main","map","mark","menu","meter","nav","object","ol","optgroup","option","output","p","picture","pre","progress","q","s","samp","script","section","select","small","source","span","strong","style","sub","summary","sup","svg","path","circle","ellipse","line","polyline","polygon","rect","g","text","table","tbody","td","template","textarea","tfoot","th","thead","time","title","tr","track","u","ul","var","video","wbr"]);
   for (let i = 0; i < tags.length; i += 1) {
     const tag = tags[i];
+    const insideEditableBadge = tag.name === "Badge" && editableBadgeRanges.some(range =>
+      tag.startOffset >= range.startOffset && tag.endOffset <= range.endOffset
+    );
+    if (insideEditableBadge) continue;
     const protectedTag = /^[A-Z]/.test(tag.name) || tag.nameLower.includes("-") || protectedHtmlTags.has(tag.nameLower);
     if (!protectedTag) continue;
 
@@ -385,7 +408,14 @@ function getProtectedRanges(source) {
     const containsProtectedSyntax = ranges.some((range) =>
       range.start <= callout.end && range.end >= callout.start
     );
-    if (containsProtectedSyntax) {
+    // Even a normally editable static Badge remains covered by its surrounding
+    // callout, so marker replacement can never move it outside the container.
+    const containsInlineBadge = editableBadgeRanges.some((range) => {
+      const start = lineAt(range.startOffset);
+      const end = lineAt(Math.max(range.startOffset, range.endOffset - 1));
+      return start <= callout.end && end >= callout.start;
+    });
+    if (containsProtectedSyntax || containsInlineBadge) {
       add(callout.start, callout.end, "Callout with extended Markdown/MDX", "block");
     }
   }

@@ -1,4 +1,4 @@
-import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=20261018-callouts";
+import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=20261018-badge-node";
 import { inspectProtectedMarkdown } from "/admin-visual-preview.js?v=20261018-katex-tabs";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
@@ -474,6 +474,204 @@ async function loadTiptapModules() {
   function normalizeCalloutType(value) {
     const type = String(value || "").toLowerCase();
     return CALLOUT_TYPES.includes(type) ? type : "tip";
+  }
+
+  const BADGE_TYPES = ["default", "tip", "note", "important", "warning", "caution"];
+  const BADGE_TITLES = {
+    default: "主题色",
+    tip: "提示",
+    note: "笔记",
+    important: "重要",
+    warning: "注意",
+    caution: "谨慎",
+  };
+
+  function normalizeBadgeType(value) {
+    const type = String(value || "default").toLowerCase();
+    return BADGE_TYPES.includes(type) ? type : "default";
+  }
+
+  function isSafeBadgeLabel(value) {
+    const label = String(value ?? "");
+    return Boolean(label.trim()) && !/[<>{}\r\n\x60*_~\[\]$]/.test(label);
+  }
+
+  function ensureBadgeStyles() {
+    if (document.getElementById("firefly-badge-editor-styles")) return;
+    const style = document.createElement("style");
+    style.id = "firefly-badge-editor-styles";
+    style.textContent = [
+      ".firefly-mdx-badge{display:inline-flex;align-items:center;gap:5px;vertical-align:middle;margin:1px 3px;padding:3px 8px;border:1px solid #cce6d4;border-radius:999px;background:#eaf7ee;color:#177443;font:650 12px/1.4 system-ui,sans-serif;white-space:nowrap;max-width:100%;}",
+      ".firefly-mdx-badge--tip{background:#e6f6f5;color:#0e7490;border-color:#bfe8e4}.firefly-mdx-badge--note{background:#f0f3f5;color:#5b6570;border-color:#dce2e7}.firefly-mdx-badge--important{background:#f1eaff;color:#7041ac;border-color:#ded0f7}.firefly-mdx-badge--warning{background:#fff4dc;color:#925c05;border-color:#f1d8a0}.firefly-mdx-badge--caution{background:#ffeded;color:#a83232;border-color:#f2c4c4}",
+      ".firefly-mdx-badge__label{display:inline-block;min-width:4px;overflow-wrap:anywhere;white-space:normal;}",
+      ".firefly-mdx-badge__controls{display:inline-flex;align-items:center;gap:2px;opacity:.28;transition:opacity .15s;}",
+      ".firefly-mdx-badge:hover .firefly-mdx-badge__controls,.firefly-mdx-badge:focus-within .firefly-mdx-badge__controls{opacity:1;}",
+      ".firefly-mdx-badge__select{max-width:75px;border:1px solid #bdd9c4;border-radius:6px;padding:1px 3px;background:#fff;color:#33533d;font:11px system-ui,sans-serif;cursor:pointer;}",
+      ".firefly-mdx-badge__edit{border:1px solid #bdd9c4;border-radius:5px;padding:1px 4px;background:#fff;color:#33533d;font:11px system-ui,sans-serif;cursor:pointer;}",
+      ".firefly-mdx-badge.ProseMirror-selectednode{outline:2px solid #58a875;outline-offset:2px;}",
+      "@media(prefers-color-scheme:dark){.firefly-mdx-badge{background:#203b2b;color:#aee7bc;border-color:#3d6a49}.firefly-mdx-badge--tip{background:#18383a;color:#8de0db;border-color:#286469}.firefly-mdx-badge--note{background:#2b3036;color:#d2d8df;border-color:#4b5662}.firefly-mdx-badge--important{background:#302542;color:#d9c0ff;border-color:#59457b}.firefly-mdx-badge--warning{background:#3b301c;color:#f5d18e;border-color:#69522b}.firefly-mdx-badge--caution{background:#3e2525;color:#ffb0b0;border-color:#783f3f}.firefly-mdx-badge__select,.firefly-mdx-badge__edit{background:#202820;color:#e5ebe5;border-color:#506a55}}",
+    ].join("\n");
+    document.head.append(style);
+  }
+
+  function createMdxBadgeInline() {
+    return NodeExtension.create({
+      name: "fireflyBadge",
+      group: "inline",
+      inline: true,
+      atom: true,
+      selectable: true,
+      addAttributes() {
+        return {
+          type: { default: "default" },
+          label: { default: "" },
+        };
+      },
+      parseHTML() {
+        return [{ tag: "span[data-firefly-badge]" }];
+      },
+      renderHTML({ node }) {
+        const type = normalizeBadgeType(node.attrs.type);
+        return ["span", {
+          "data-firefly-badge": "true",
+          "data-type": type,
+          class: "firefly-mdx-badge firefly-mdx-badge--" + type,
+        }, String(node.attrs.label || "")];
+      },
+      markdownTokenizer: {
+        name: "fireflyBadge",
+        level: "inline",
+        start: source => source.indexOf("<Badge"),
+        tokenize(source) {
+          const match = /^<Badge\b([^>]*)>([^<>{}\r\n]*)<\/Badge\s*>/.exec(source);
+          if (!match) return undefined;
+          const attrSource = match[1].trim();
+          let type = "default";
+          if (attrSource) {
+            const typed = /^type\s*=\s*(?:"(default|tip|note|important|warning|caution)"|'(default|tip|note|important|warning|caution)')$/.exec(attrSource);
+            if (!typed) return undefined;
+            type = typed[1] || typed[2] || "default";
+          }
+          const label = match[2];
+          if (!isSafeBadgeLabel(label)) return undefined;
+          return {
+            type: "fireflyBadge",
+            raw: match[0],
+            badgeType: type,
+            badgeLabel: label,
+          };
+        },
+      },
+      parseMarkdown(token) {
+        return {
+          type: "fireflyBadge",
+          attrs: {
+            type: normalizeBadgeType(token.badgeType),
+            label: String(token.badgeLabel || ""),
+          },
+        };
+      },
+      renderMarkdown(node) {
+        const type = normalizeBadgeType(node.attrs?.type);
+        const label = String(node.attrs?.label || "");
+        return type === "default"
+          ? "<Badge>" + label + "</Badge>"
+          : '<Badge type="' + type + '">' + label + "</Badge>";
+      },
+      addNodeView() {
+        return ({ node, editor: activeEditor, getPos }) => {
+          const root = document.createElement("span");
+          root.contentEditable = "false";
+          root.setAttribute("data-firefly-badge", "true");
+          let currentNode = node;
+
+          const updateAttributes = patch => {
+            const position = getPos();
+            if (typeof position !== "number") return;
+            const current = activeEditor.state.doc.nodeAt(position);
+            if (!current || current.type.name !== "fireflyBadge") return;
+            activeEditor.view.dispatch(activeEditor.state.tr.setNodeMarkup(position, undefined, {
+              ...current.attrs,
+              ...patch,
+            }));
+          };
+
+          const render = () => {
+            const type = normalizeBadgeType(currentNode.attrs.type);
+            root.className = "firefly-mdx-badge firefly-mdx-badge--" + type;
+            root.replaceChildren();
+            const label = document.createElement("span");
+            label.className = "firefly-mdx-badge__label";
+            label.textContent = String(currentNode.attrs.label || "");
+            label.title = "双击徽章文字可编辑";
+            label.addEventListener("dblclick", event => {
+              event.preventDefault();
+              event.stopPropagation();
+              const next = window.prompt("徽章文字", String(currentNode.attrs.label || ""));
+              if (next === null) return;
+              if (!isSafeBadgeLabel(next)) {
+                status("徽章文字不能为空，也不能包含换行、MDX 标签或 Markdown 强调符号。", true);
+                return;
+              }
+              updateAttributes({ label: next });
+            });
+
+            const controls = document.createElement("span");
+            controls.className = "firefly-mdx-badge__controls";
+            const select = document.createElement("select");
+            select.className = "firefly-mdx-badge__select";
+            select.setAttribute("aria-label", "徽章类型");
+            select.title = "修改徽章类型";
+            for (const item of BADGE_TYPES) {
+              const option = document.createElement("option");
+              option.value = item;
+              option.textContent = BADGE_TITLES[item];
+              select.append(option);
+            }
+            select.value = type;
+            select.addEventListener("mousedown", event => event.stopPropagation());
+            select.addEventListener("change", () => updateAttributes({ type: normalizeBadgeType(select.value) }));
+
+            const edit = document.createElement("button");
+            edit.type = "button";
+            edit.className = "firefly-mdx-badge__edit";
+            edit.textContent = "编辑";
+            edit.title = "编辑徽章文字";
+            edit.addEventListener("mousedown", event => event.preventDefault());
+            edit.addEventListener("click", event => {
+              event.preventDefault();
+              event.stopPropagation();
+              const next = window.prompt("徽章文字", String(currentNode.attrs.label || ""));
+              if (next === null) return;
+              if (!isSafeBadgeLabel(next)) {
+                status("徽章文字不能为空，也不能包含换行、MDX 标签或 Markdown 强调符号。", true);
+                return;
+              }
+              updateAttributes({ label: next });
+            });
+            controls.append(select, edit);
+            root.append(label, controls);
+          };
+
+          render();
+          return {
+            dom: root,
+            update(nextNode) {
+              if (nextNode.type.name !== "fireflyBadge") return false;
+              currentNode = nextNode;
+              render();
+              return true;
+            },
+            stopEvent(event) {
+              return Boolean(event.target instanceof Element && event.target.closest("button,select"));
+            },
+            ignoreMutation() {
+              return true;
+            },
+          };
+        };
+      },
+    });
   }
 
   function ensureCalloutStyles() {
@@ -1174,6 +1372,13 @@ async function loadTiptapModules() {
     }
     const chain = editor.chain().focus();
     switch (action) {
+      case "badge": {
+        editor.chain().focus().insertContent({
+          type: "fireflyBadge",
+          attrs: { type: "tip", label: "新徽章" },
+        }).run();
+        break;
+      }
       case "callout": {
         editor.chain().focus().insertContent({
           type: "fireflyCallout",
@@ -1224,6 +1429,7 @@ async function loadTiptapModules() {
   async function init() {
     const providerName = await loadTiptapModules();
     ensureCalloutStyles();
+    ensureBadgeStyles();
     status("可视化编辑器模块加载成功（" + providerName + "）。");
     frontmatterPrefix = splitFrontmatter(sourceField.value).prefix;
 
@@ -1239,6 +1445,7 @@ async function loadTiptapModules() {
         Markdown.configure({ markedOptions: { gfm: true } }),
         Image.configure({ inline: false, allowBase64: false }),
         TableKit,
+        createMdxBadgeInline(),
         createCalloutBlock(),
         createProtectedMarkdownBlock(),
       ],
