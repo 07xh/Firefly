@@ -89,7 +89,7 @@ const jsonLd = buildProfilePage({
 			<Markdown class="mt-2">
 				{aboutContentHtml ? <div set:html={aboutContentHtml} /> : <Content />}
 			</Markdown>
-			{siteSettings.showNavAbout !== false &&
+			{Boolean(siteSettings.showNavAbout) &&
 				siteSettings.showAboutDonation &&
 					(donationQrCodeUrl || siteConfig.pages.sponsor) && (
 						<div class="mt-6 rounded-xl border border-(--line) bg-(--card-bg) p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
