@@ -279,7 +279,7 @@ function render(){
   del.className=[
    "mr-1 shrink-0 rounded-md px-2.5 py-2 text-xs font-medium text-rose-600 transition-colors",
    "hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40",
-   "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+   "opacity-100"
   ].join(" ");
 
   del.onclick=async event=>{
@@ -483,9 +483,9 @@ $("settingsForm").addEventListener("submit",async event=>{
 
 $("checkGitHub").onclick=checkGitHubPermission;
 $("logout").onclick=async()=>{try{const r=await fetch("/api/admin/auth/",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});if(!r.ok)throw new Error("退出登录失败，请刷新后重试");location.assign("/admin/login/")}catch(e){say(e.message,true)}};
-$("new").onclick=()=>{location.assign("/admin/new/")};$("reset").onclick=reset;$("refresh").onclick=refresh;$("search").oninput=render;$("statusFilter").onchange=render;
+$("new").onclick=()=>{setAdminTab("articles");reset();say("已进入新建文章模式");$("editor").scrollIntoView({behavior:"smooth",block:"start"});$("title").focus({preventScroll:true})};$("reset").onclick=reset;$("refresh").onclick=refresh;$("search").oninput=render;$("statusFilter").onchange=render;
 $("editorTab").onclick=showEditorTab;$("previewTab").onclick=renderMarkdownPreview;$("body").addEventListener("input",()=>{if(!$("markdownPreview").hidden)renderMarkdownPreview()});
 $("editor").onsubmit=async e=>{e.preventDefault();const mode=e.submitter?.value==="publish"?"publish":"draft";if(mode==="publish"&&!confirm("发布文章将写入 GitHub 并触发 Cloudflare 部署，确定发布吗？"))return;const isDraft=mode==="draft";$("draft").checked=isDraft;const metadata={title:$("title").value.trim(),published:$("published").value,category:$("category").value,description:$("description").value,tags:$("tags").value.split(",").map(x=>x.trim()).filter(Boolean),draft:isDraft};const data=selected?{path:selected.path,sha:selected.sha,rawContent:$("body").value,...metadata}:{...metadata,slug:$("slug").value,body:$("body").value};const buttons=[$("saveDraft"),$("publish")];buttons.forEach(b=>b.disabled=true);try{const result=await api(selected?"PUT":"POST",data);reset();await refresh();if(isDraft){say("草稿已写入 GitHub；它保持草稿状态。")}else if(result.commitSha){say("文章已写入 GitHub，正在跟踪 Cloudflare 部署…");watchDeployment(result.commitSha)}else{say("文章已写入 GitHub，但接口未返回提交号，无法自动确认部署。",true)}}catch(err){say(err.message,true)}finally{buttons.forEach(b=>b.disabled=false)}};
 $("delete").onclick=async()=>{if(!selected||!confirm("确定删除 "+selected.title+"？此操作会提交到 GitHub。"))return;$("delete").disabled=true;try{await api("DELETE",{path:selected.path,sha:selected.sha});say("文章已删除");reset();await refresh()}catch(e){say(e.message,true)}finally{$("delete").disabled=false}};
-reset();refresh();loadSettings();
+reset();const adminParams=new URLSearchParams(location.search);if(adminParams.get("tab")==="appearance")setAdminTab("appearance");if(adminParams.get("action")==="new"){setAdminTab("articles");reset();requestAnimationFrame(()=>{$("editor").scrollIntoView({behavior:"smooth",block:"start"});$("title").focus({preventScroll:true})})}refresh();loadSettings();
 </script></body></html>
