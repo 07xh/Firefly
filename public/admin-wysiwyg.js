@@ -303,8 +303,13 @@ async function loadTiptapModules() {
     unsupportedReason = reason;
     if (notice) {
       notice.hidden = !reason;
-      notice.textContent = reason || "";
+      notice.textContent = reason
+        ? "本篇文章暂不支持可视化编辑：" + reason + " 正文已保留，请切换到 Markdown 源码模式编辑。"
+        : "";
       notice.setAttribute("role", reason ? "status" : "none");
+    }
+    if (reason) {
+      status("本篇文章已安全切换到 Markdown 源码模式：" + reason, true);
     }
     if ($("visualTab")) {
       $("visualTab").setAttribute("aria-disabled", reason ? "true" : "false");
@@ -447,6 +452,9 @@ async function loadTiptapModules() {
       extensions: [
         StarterKit.configure({
           heading: { levels: [1, 2, 3, 4, 5, 6] },
+          // Avoid duplicate ProseMirror plugin$ keys seen with some CDN module graphs.
+          gapcursor: false,
+          dropcursor: false,
         }),
         Markdown.configure({ markedOptions: { gfm: true } }),
         Image.configure({ inline: false, allowBase64: false }),
