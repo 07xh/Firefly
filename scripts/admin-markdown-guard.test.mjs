@@ -178,3 +178,30 @@ test("常见原始 HTML 链接属性不会被 Markdown 往返改写", () => {
   assert.equal(result.records.length, 1);
   assert.equal(result.records[0].raw, "请访问 " + raw + " 查看说明。");
 });
+
+
+test("simple static Badge components remain available to the inline visual node", () => {
+  const source = '段落中的 <Badge>新功能</Badge> 与 <Badge type="tip">提示</Badge> 可以直接编辑。';
+  const result = prepareMarkdownForVisualEditing(source);
+  assert.equal(result.records.length, 0);
+  assert.equal(result.markdown, source);
+});
+
+test("Badge with dynamic props remains protected as MDX source", () => {
+  const source = '动态徽章 <Badge type={badgeType}>提示</Badge> 不应该被简化。';
+  const result = prepareMarkdownForVisualEditing(source);
+  assert.equal(result.records.length, 1);
+  assert.equal(result.records[0].raw, source);
+});
+
+test("Badge with unsupported class props or nested markup remains protected", () => {
+  for (const source of [
+    '<Badge class="custom">重要</Badge>',
+    '<Badge type="tip"><Icon name="check" />已完成</Badge>',
+    '<Badge type="tip">**强调文字**</Badge>',
+  ]) {
+    const result = prepareMarkdownForVisualEditing(source);
+    assert.equal(result.records.length, 1, source);
+    assert.equal(result.records[0].raw, source);
+  }
+});
