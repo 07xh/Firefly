@@ -1,5 +1,6 @@
 import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=20261018-badge-node";
 import { describeProtectedSyntax, inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261018-natural-language";
+import { normalizeEditorLinkAddress } from "/admin-link-utils.js?v=20261018-natural-links";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
@@ -2395,6 +2396,149 @@ async function loadTiptapModules() {
   }
 
 
+  function openLinkDialog() {
+    if (!editor || visualLoadFailed || document.getElementById("firefly-link-dialog")) {
+      return;
+    }
+
+    if (editor.state.selection.empty && editor.isActive("link")) {
+      editor.chain().focus().extendMarkRange("link").run();
+    }
+
+    const selection = editor.state.selection;
+    const selectedText = editor.state.doc.textBetween(selection.from, selection.to, "\n");
+    if (selectedText.includes("\n")) {
+      status("请一次选中一段文字，再添加链接；也可以先取消选中，直接插入链接。", true);
+      return;
+    }
+
+    const existingHref = editor.getAttributes("link").href || "";
+    const dialog = document.createElement("dialog");
+    dialog.id = "firefly-link-dialog";
+    dialog.setAttribute("aria-labelledby", "firefly-link-title");
+    const style = document.createElement("style");
+    style.textContent = [
+      "#firefly-link-dialog{width:min(480px,calc(100vw - 24px));max-width:none;border:1px solid #d6e4d8;border-radius:16px;padding:0;background:#fbfdfb;color:#243329;box-shadow:0 20px 70px #102e1b33}",
+      "#firefly-link-dialog::backdrop{background:#16231c88;backdrop-filter:blur(3px)}",
+      ".firefly-link-inner{padding:22px;display:grid;gap:14px}",
+      ".firefly-link-inner h2{margin:0;font-size:19px;line-height:1.4}",
+      ".firefly-link-hint{margin:0;color:#67766a;font-size:12px;line-height:1.65}",
+      ".firefly-link-field{display:grid;gap:6px}",
+      ".firefly-link-field label{font-size:12px;font-weight:700;color:#536457}",
+      ".firefly-link-field input{width:100%;box-sizing:border-box;border:1px solid #ceddce;border-radius:8px;padding:11px;background:#fff;color:#243329;font:inherit;font-size:14px}",
+      ".firefly-link-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}",
+      ".firefly-link-actions button{border:1px solid #cbd9ce;border-radius:8px;background:#fff;color:#314536;padding:9px 13px;font:inherit;font-size:13px;cursor:pointer}",
+      ".firefly-link-actions .primary{background:#177746;color:#fff;border-color:#177746;font-weight:750}",
+      ".firefly-link-error{margin:0;color:#b42323;font-size:12px;line-height:1.5}",
+      "@media(max-width:420px){.firefly-link-inner{padding:16px}.firefly-link-actions button{flex:1}}",
+      "@media(prefers-color-scheme:dark){#firefly-link-dialog{background:#1a231b;color:#e6eee7;border-color:#3f5844}.firefly-link-hint,.firefly-link-field label{color:#b8c9bb}.firefly-link-field input,.firefly-link-actions button{background:#202820;color:#e4ece5;border-color:#4c6551}.firefly-link-actions .primary{background:#26794a;color:#fff;border-color:#26794a}}",
+    ].join("\n");
+    document.head.append(style);
+
+    const inner = document.createElement("div");
+    inner.className = "firefly-link-inner";
+    const heading = document.createElement("h2");
+    heading.id = "firefly-link-title";
+    heading.textContent = existingHref ? "修改链接" : "添加链接";
+    const hint = document.createElement("p");
+    hint.className = "firefly-link-hint";
+    hint.textContent = "选中文字后，可以直接为它添加链接；没有选中文字时，填写显示文字即可插入一个新链接。";
+
+    const makeField = (labelText, id, value, placeholder, maxLength) => {
+      const wrap = document.createElement("div");
+      wrap.className = "firefly-link-field";
+      const label = document.createElement("label");
+      label.htmlFor = id;
+      label.textContent = labelText;
+      const input = document.createElement("input");
+      input.id = id;
+      input.type = "text";
+      input.value = value;
+      input.placeholder = placeholder;
+      input.maxLength = maxLength;
+      input.autocomplete = "off";
+      input.spellcheck = false;
+      wrap.append(label, input);
+      return input;
+    };
+
+    const textInput = makeField("显示文字", "firefly-link-text", selectedText, "例如：查看文章详情", 500);
+    const addressInput = makeField("链接地址", "firefly-link-address", existingHref, "粘贴网址或站内路径", 2048);
+    const error = document.createElement("p");
+    error.className = "firefly-link-error";
+    error.setAttribute("role", "alert");
+    error.hidden = true;
+
+    const actions = document.createElement("div");
+    actions.className = "firefly-link-actions";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = "取消";
+    const save = document.createElement("button");
+    save.type = "button";
+    save.className = "primary";
+    save.textContent = "应用链接";
+    actions.append(cancel, save);
+    inner.append(heading, hint, textInput.parentElement, addressInput.parentElement, error, actions);
+    dialog.append(inner);
+    document.body.append(dialog);
+
+    const close = () => {
+      if (dialog.open && typeof dialog.close === "function") dialog.close();
+      dialog.remove();
+      style.remove();
+    };
+    cancel.addEventListener("click", close);
+    dialog.addEventListener("cancel", event => {
+      event.preventDefault();
+      close();
+    });
+
+    save.addEventListener("click", () => {
+      const label = textInput.value.trim();
+      const href = normalizeEditorLinkAddress(addressInput.value);
+      if (!label) {
+        error.textContent = "请填写链接的显示文字。";
+        error.hidden = false;
+        textInput.focus();
+        return;
+      }
+      if (!href) {
+        error.textContent = "链接地址无效。请填写完整网址，或站内路径，例如 /posts/guide/。";
+        error.hidden = false;
+        addressInput.focus();
+        return;
+      }
+
+      const currentSelection = editor.state.selection;
+      const currentText = editor.state.doc.textBetween(currentSelection.from, currentSelection.to, "\n");
+      if (currentText.includes("\n")) {
+        error.textContent = "请一次选中一段文字，再添加链接。";
+        error.hidden = false;
+        return;
+      }
+
+      if (currentSelection.from !== currentSelection.to && label === currentText) {
+        editor.chain().focus().extendMarkRange("link").setLink({ href }).run();
+      } else {
+        editor.chain().focus().insertContent({
+          type: "text",
+          text: label,
+          marks: [{ type: "link", attrs: { href } }],
+        }).run();
+      }
+      close();
+      editor.commands.focus();
+      syncSourceFromEditor();
+      status("链接已添加到正文。保存文章后，网站才会显示更改。");
+    });
+
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+    (selectedText ? addressInput : textInput).focus();
+    (selectedText ? addressInput : textInput).select();
+  }
+
   function openTableInsertDialog() {
     if (!editor || visualLoadFailed || document.getElementById("firefly-table-insert-dialog")) return;
     const dialog = document.createElement("dialog");
@@ -2560,18 +2704,9 @@ async function loadTiptapModules() {
       case "deleteRow": if (typeof editor.commands.deleteRow === "function") editor.chain().focus().deleteRow().run(); else status("无法删除当前行，请先点入表格单元格。", true); break;
       case "deleteColumn": if (typeof editor.commands.deleteColumn === "function") editor.chain().focus().deleteColumn().run(); else status("无法删除当前列，请先点入表格单元格。", true); break;
       case "deleteTable": if (typeof editor.commands.deleteTable === "function") editor.chain().focus().deleteTable().run(); else status("无法删除表格，请先点入表格单元格。", true); break;
-      case "link": {
-        const existing = editor.getAttributes("link").href || "https://";
-        const href = window.prompt("输入链接地址（https://、http:// 或 mailto:）", existing);
-        if (href === null) return;
-        const trimmed = href.trim();
-        if (!/^(https?:\/\/|mailto:)/i.test(trimmed)) {
-          status("链接仅允许 http、https 或 mailto 地址。", true);
-          return;
-        }
-        if (trimmed) chain.extendMarkRange("link").setLink({ href: trimmed }).run();
-        break;
-      }
+      case "link":
+        openLinkDialog();
+        return;
       case "unlink": chain.unsetLink().run(); break;
       case "imagePicker": $("wysiwygFile")?.click(); break;
       default: break;
