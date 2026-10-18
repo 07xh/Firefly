@@ -2295,8 +2295,9 @@ async function loadTiptapModules() {
         for (const button of document.querySelectorAll("[data-editor-action]")) {
           const action = button.getAttribute("data-editor-action");
           if (!tableActions.has(action)) continue;
-          const command = activeEditor.can()[action];
-          button.disabled = !inTable || (typeof command === "function" && !command.call(activeEditor.can()));
+          const capabilities = activeEditor.can();
+          const command = capabilities[action];
+          button.disabled = !inTable || typeof command !== "function" || !command.call(capabilities);
         }
       },
     });
@@ -2310,6 +2311,9 @@ async function loadTiptapModules() {
       if (file) void uploadImage(file);
     });
     document.querySelectorAll("[data-editor-action]").forEach(button => {
+      button.addEventListener("mousedown", event => {
+        if (button.closest("#tableEditorTools")) event.preventDefault();
+      });
       button.addEventListener("click", () => runAction(button.getAttribute("data-editor-action")));
     });
 
