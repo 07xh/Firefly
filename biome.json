@@ -106,6 +106,15 @@
     },
     {
       "includes": [
+        "src/layouts/Layout.astro",
+        "src/components/layout/BannerHomeTextOverlay.astro"
+      ],
+      "formatter": {
+        "enabled": false
+      }
+    },
+    {
+      "includes": [
         "src/middleware.ts"
       ],
       "formatter": {
