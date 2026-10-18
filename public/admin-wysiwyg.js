@@ -15,11 +15,11 @@ async function loadTiptapModules() {
     {
       name: "esm.sh",
       urls: [
-        "https://esm.sh/@tiptap/core@3.31.3",
-        "https://esm.sh/@tiptap/starter-kit@3.31.3",
-        "https://esm.sh/@tiptap/markdown@3.31.3",
-        "https://esm.sh/@tiptap/extension-image@3.31.3",
-        "https://esm.sh/@tiptap/extension-table@3.31.3",
+        "https://esm.sh/@tiptap/core@3.31.3?deps=@tiptap/core@3.31.3,@tiptap/pm@3.31.3",
+        "https://esm.sh/@tiptap/starter-kit@3.31.3?deps=@tiptap/core@3.31.3,@tiptap/pm@3.31.3",
+        "https://esm.sh/@tiptap/markdown@3.31.3?deps=@tiptap/core@3.31.3,@tiptap/pm@3.31.3",
+        "https://esm.sh/@tiptap/extension-image@3.31.3?deps=@tiptap/core@3.31.3,@tiptap/pm@3.31.3",
+        "https://esm.sh/@tiptap/extension-table@3.31.3?deps=@tiptap/core@3.31.3,@tiptap/pm@3.31.3",
       ],
     },
   ];
@@ -587,7 +587,7 @@ async function loadTiptapModules() {
     const detail = error instanceof Error ? error.message : String(error);
     status("可视化编辑器加载失败，已回退到 Markdown 源码模式；正文内容未被修改。原因：" + detail, true);
     if ($("wysiwygFallback")) {
-      $("wysiwygFallback").textContent = "加载失败详情：" + detail + "。请检查当前网络是否能访问 jsDelivr 或 esm.sh；正文仍可在 Markdown 源码模式编辑。";
+      $("wysiwygFallback").textContent = "加载失败详情：" + detail + "。若错误包含 plugin$，通常是编辑器插件/依赖实例冲突，不一定是网络问题；正文仍可在 Markdown 源码模式编辑。";
     }
   });
 })();
