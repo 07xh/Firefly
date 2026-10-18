@@ -131,7 +131,10 @@ function decodeBase64(value: string): string {
 	return new TextDecoder().decode(bytes);
 }
 
-async function githubError(response: Response, operation: string): Promise<string> {
+async function githubError(
+	response: Response,
+	operation: string,
+): Promise<string> {
 	let message = "";
 	try {
 		const payload = (await response.clone().json()) as { message?: unknown };
@@ -141,7 +144,13 @@ async function githubError(response: Response, operation: string): Promise<strin
 	} catch {
 		// Keep the HTTP status if GitHub returned a non-JSON body.
 	}
-	return operation + "（HTTP " + response.status + "）" + (message ? "：" + message : "");
+	return (
+		operation +
+		"（HTTP " +
+		response.status +
+		"）" +
+		(message ? "：" + message : "")
+	);
 }
 
 function normalizeSettings(value: unknown): SettingsRecord {
@@ -163,10 +172,16 @@ function normalizeSettings(value: unknown): SettingsRecord {
 		"email",
 		"backgroundMusic",
 	] as const) {
-		result[key] = typeof merged[key] === "string" ? merged[key] : DEFAULT_SETTINGS[key];
+		result[key] =
+			typeof merged[key] === "string" ? merged[key] : DEFAULT_SETTINGS[key];
 	}
-	for (const key of ["showGithub", "showEmail", "showSupportAndShare"] as const) {
-		result[key] = typeof merged[key] === "boolean" ? merged[key] : DEFAULT_SETTINGS[key];
+	for (const key of [
+		"showGithub",
+		"showEmail",
+		"showSupportAndShare",
+	] as const) {
+		result[key] =
+			typeof merged[key] === "boolean" ? merged[key] : DEFAULT_SETTINGS[key];
 	}
 	return result as SettingsRecord;
 }
@@ -181,7 +196,9 @@ async function readSettings(
 		return { settings: { ...DEFAULT_SETTINGS }, sha: null };
 	}
 	if (!response.ok) {
-		throw new SettingsApiError(await githubError(response, "读取 settings.json 失败"));
+		throw new SettingsApiError(
+			await githubError(response, "读取 settings.json 失败"),
+		);
 	}
 	const file = (await response.json()) as GitHubFile;
 	if (!file.sha || typeof file.content !== "string") {
@@ -222,7 +239,11 @@ function validateMediaUrl(value: unknown, label: string): string {
 	return parsed.toString();
 }
 
-function validateText(value: unknown, label: string, maxLength: number): string {
+function validateText(
+	value: unknown,
+	label: string,
+	maxLength: number,
+): string {
 	if (typeof value !== "string") {
 		throw new SettingsApiError(label + "必须是字符串。", 400);
 	}
@@ -264,20 +285,53 @@ function applySubmittedSettings(
 	const next: Record<string, unknown> = { ...current };
 	const has = (key: SettingKey) => Object.hasOwn(input, key);
 
-	if (has("bannerTitle")) next.bannerTitle = validateText(input.bannerTitle, "顶部主标题", 200);
-	if (has("bannerSubtitle")) next.bannerSubtitle = validateText(input.bannerSubtitle, "顶部副标题", 500);
-	if (has("backgroundImage")) next.backgroundImage = validateMediaUrl(input.backgroundImage, "背景图片链接");
+	if (has("bannerTitle")) {
+		next.bannerTitle = validateText(
+			input.bannerTitle,
+			"顶部主标题",
+			200,
+		);
+	}
+	if (has("bannerSubtitle")) {
+		next.bannerSubtitle = validateText(
+			input.bannerSubtitle,
+			"顶部副标题",
+			500,
+		);
+	}
+	if (has("backgroundImage")) {
+		next.backgroundImage = validateMediaUrl(
+			input.backgroundImage,
+			"背景图片链接",
+		);
+	}
 	if (has("avatar")) next.avatar = validateMediaUrl(input.avatar, "头像链接");
 	if (has("nickname")) next.nickname = validateText(input.nickname, "昵称", 120);
 	if (has("bio")) next.bio = validateText(input.bio, "个人签名", 5000);
-	if (has("announcement")) next.announcement = validateAnnouncement(input.announcement);
-	if (has("githubUrl")) next.githubUrl = validateMediaUrl(input.githubUrl, "GitHub 链接");
-	if (has("showGithub")) next.showGithub = validateBoolean(input.showGithub, "showGithub");
+	if (has("announcement")) {
+		next.announcement = validateAnnouncement(input.announcement);
+	}
+	if (has("githubUrl")) {
+		next.githubUrl = validateMediaUrl(input.githubUrl, "GitHub 链接");
+	}
+	if (has("showGithub")) {
+		next.showGithub = validateBoolean(input.showGithub, "showGithub");
+	}
 	if (has("email")) next.email = validateEmail(input.email);
-	if (has("showEmail")) next.showEmail = validateBoolean(input.showEmail, "showEmail");
-	if (has("backgroundMusic")) next.backgroundMusic = validateMediaUrl(input.backgroundMusic, "背景音乐链接");
+	if (has("showEmail")) {
+		next.showEmail = validateBoolean(input.showEmail, "showEmail");
+	}
+	if (has("backgroundMusic")) {
+		next.backgroundMusic = validateMediaUrl(
+			input.backgroundMusic,
+			"背景音乐链接",
+		);
+	}
 	if (has("showSupportAndShare")) {
-		next.showSupportAndShare = validateBoolean(input.showSupportAndShare, "showSupportAndShare");
+		next.showSupportAndShare = validateBoolean(
+			input.showSupportAndShare,
+			"showSupportAndShare",
+		);
 	}
 
 	return normalizeSettings(next);
@@ -297,7 +351,10 @@ async function handleSave(request: Request): Promise<Response> {
 	try {
 		const config = getConfig();
 		const current = await readSettings(config);
-		const settings = applySubmittedSettings(current.settings, input as Record<string, unknown>);
+		const settings = applySubmittedSettings(
+			current.settings,
+			input as Record<string, unknown>,
+		);
 		const payload: Record<string, unknown> = {
 			message: "Update global site settings from Firefly Admin",
 			branch: config.branch,
@@ -311,8 +368,12 @@ async function handleSave(request: Request): Promise<Response> {
 			body: JSON.stringify(payload),
 		});
 		if (!response.ok) {
-			const status = response.status === 409 || response.status === 422 ? 409 : 502;
-			throw new SettingsApiError(await githubError(response, "写入 settings.json 失败"), status);
+			const status =
+				response.status === 409 || response.status === 422 ? 409 : 502;
+			throw new SettingsApiError(
+				await githubError(response, "写入 settings.json 失败"),
+				status,
+			);
 		}
 		const result = (await response.json()) as { commit?: { sha?: string } };
 		return json({ ok: true, settings, commitSha: result.commit?.sha ?? null });
