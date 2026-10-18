@@ -1015,7 +1015,7 @@ reset();refresh();loadSettings();
   links.className = "mt-2 flex flex-wrap gap-3";
   links.innerHTML = '<a id="enhancedCommitLink" class="deploy-link" target="_blank" rel="noopener noreferrer" hidden>查看 GitHub Commit ↗</a><a id="enhancedSiteLink" class="deploy-link" target="_blank" rel="noopener noreferrer" hidden>打开线上网站验证 ↗</a>';
   $("deployLink")?.insertAdjacentElement("afterend", links);
-  watchDeployment = async function(sha, attempt = 0, isDraft = false) {
+  watchDeployment = async function(sha, attempt = 0, isDraft = false, isScheduled = false) {
     try {
       const response = await fetch("/api/admin/deployment-status/?sha=" + encodeURIComponent(sha), { cache: "no-store" });
       if (response.status === 401) { goLogin(); return; }
@@ -1026,19 +1026,27 @@ reset();refresh();loadSettings();
       commit.hidden = false;
       if (data.url) { $("deployLink").href = data.url; $("deployLink").hidden = false; }
       if (data.status === "success") {
-        $("enhancedSiteLink").href = new URL("/", location.origin).href;
-        $("enhancedSiteLink").hidden = false;
-        say(isDraft ? "阶段 4/4：Cloudflare 构建与部署成功；文章仍为草稿，普通访客不可见。" : "阶段 4/4：Cloudflare 构建与部署成功。请打开线上网站验证最终展示。");
+        if (isDraft || isScheduled) {
+          $("enhancedSiteLink").hidden = true;
+        } else {
+          $("enhancedSiteLink").href = new URL("/", location.origin).href;
+          $("enhancedSiteLink").hidden = false;
+        }
+        say(isDraft
+          ? "阶段 4/4：Cloudflare 构建与部署成功；文章仍为草稿，普通访客不可见。"
+          : isScheduled
+            ? "阶段 4/4：定时配置部署成功；当前部署不会提前公开文章，到期后由定时工作流触发再次构建。"
+            : "阶段 4/4：Cloudflare 构建与部署成功。请打开线上网站验证最终展示。");
         return;
       }
       if (data.status === "failure") { say("阶段 3/4：Cloudflare 构建/部署失败，请打开部署日志检查。", true); return; }
       if (attempt >= 24) { say("阶段 3/4：GitHub 已写入，但部署仍未确认；请查看工作流日志。"); return; }
       say("阶段 3/4：" + (data.status === "running" ? "Cloudflare 正在构建/部署…" : "正在等待 Cloudflare 构建启动…") + " Commit SHA：" + sha);
-      setTimeout(() => watchDeployment(sha, attempt + 1, isDraft), 12000);
+      setTimeout(() => watchDeployment(sha, attempt + 1, isDraft, isScheduled), 12000);
     } catch (error) {
       if (attempt >= 24) { say("阶段 3/4：已写入 GitHub，但无法确认部署状态：" + (error?.message || "未知错误"), true); return; }
       say("阶段 3/4：正在查询 Cloudflare 部署状态…");
-      setTimeout(() => watchDeployment(sha, attempt + 1), 12000);
+      setTimeout(() => watchDeployment(sha, attempt + 1, isDraft, isScheduled), 12000);
     }
   };
 
@@ -1092,7 +1100,7 @@ reset();refresh();loadSettings();
       if (isDraft) say("阶段 2/4：已成功写入 GitHub，文章保留在草稿箱。Commit SHA：" + result.commitSha);
       else if (scheduled) say("阶段 2/4：定时文章已写入 GitHub，等待指定时间到达后自动重建。Commit SHA：" + result.commitSha);
       else say("阶段 2/4：已成功写入 GitHub。Commit SHA：" + result.commitSha);
-      watchDeployment(result.commitSha, 0, isDraft);
+      watchDeployment(result.commitSha, 0, isDraft, scheduled);
     } catch (error) {
       say(error instanceof Error ? error.message : "保存文章失败。", true);
     } finally {
@@ -1106,4 +1114,4 @@ reset();refresh();loadSettings();
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=4401103"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=cc09621"></script></body></html>
