@@ -2322,8 +2322,17 @@ async function loadTiptapModules() {
       case "table":
         if (typeof editor.commands.insertTable === "function") {
           editor.commands.insertTable({ rows: 3, cols: 3, withHeaderRow: true });
+          status("已插入 3 行 3 列的 Markdown 表格。输入单元格后，可使用“表格编辑工具”增删行列。");
         } else status("当前编辑器版本暂不支持插入表格。", true);
         break;
+      case "addRowBefore": if (typeof editor.commands.addRowBefore === "function") editor.chain().focus().addRowBefore().run(); else status("无法在当前位置插入行，请先点入表格单元格。", true); break;
+      case "addRowAfter": if (typeof editor.commands.addRowAfter === "function") editor.chain().focus().addRowAfter().run(); else status("无法在当前位置插入行，请先点入表格单元格。", true); break;
+      case "addColumnBefore": if (typeof editor.commands.addColumnBefore === "function") editor.chain().focus().addColumnBefore().run(); else status("无法在当前位置插入列，请先点入表格单元格。", true); break;
+      case "addColumnAfter": if (typeof editor.commands.addColumnAfter === "function") editor.chain().focus().addColumnAfter().run(); else status("无法在当前位置插入列，请先点入表格单元格。", true); break;
+      case "toggleHeaderRow": if (typeof editor.commands.toggleHeaderRow === "function") editor.chain().focus().toggleHeaderRow().run(); else status("当前编辑器版本暂不支持切换表头。", true); break;
+      case "deleteRow": if (typeof editor.commands.deleteRow === "function") editor.chain().focus().deleteRow().run(); else status("无法删除当前行，请先点入表格单元格。", true); break;
+      case "deleteColumn": if (typeof editor.commands.deleteColumn === "function") editor.chain().focus().deleteColumn().run(); else status("无法删除当前列，请先点入表格单元格。", true); break;
+      case "deleteTable": if (typeof editor.commands.deleteTable === "function") editor.chain().focus().deleteTable().run(); else status("无法删除表格，请先点入表格单元格。", true); break;
       case "link": {
         const existing = editor.getAttributes("link").href || "https://";
         const href = window.prompt("输入链接地址（https://、http:// 或 mailto:）", existing);
@@ -2408,9 +2417,22 @@ async function loadTiptapModules() {
             code: activeEditor.isActive("codeBlock"),
             link: activeEditor.isActive("link"),
           }[action];
-          button.classList.toggle("is-active", Boolean(state));
-          button.setAttribute("aria-pressed", String(Boolean(state)));
+          if (typeof state === "boolean") {
+            button.classList.toggle("is-active", state);
+            button.setAttribute("aria-pressed", String(state));
+          }
         });
+        const tableTools = $("tableEditorTools");
+        const inTable = activeEditor.isActive("table");
+        if (tableTools) tableTools.hidden = !inTable;
+        const tableActions = new Set(["addRowBefore", "addRowAfter", "addColumnBefore", "addColumnAfter", "toggleHeaderRow", "deleteRow", "deleteColumn", "deleteTable"]);
+        for (const button of document.querySelectorAll("[data-editor-action]")) {
+          const action = button.getAttribute("data-editor-action");
+          if (!tableActions.has(action)) continue;
+          const capabilities = activeEditor.can();
+          const command = capabilities[action];
+          button.disabled = !inTable || typeof command !== "function" || !command.call(capabilities);
+        }
       },
     });
 
@@ -2423,6 +2445,9 @@ async function loadTiptapModules() {
       if (file) void uploadImage(file);
     });
     document.querySelectorAll("[data-editor-action]").forEach(button => {
+      button.addEventListener("mousedown", event => {
+        if (button.closest("#tableEditorTools")) event.preventDefault();
+      });
       button.addEventListener("click", () => runAction(button.getAttribute("data-editor-action")));
     });
 
