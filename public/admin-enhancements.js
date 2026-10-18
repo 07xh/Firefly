@@ -42,8 +42,8 @@
     const category = $("categoryFilter"), tag = $("tagFilter");
     if (!category || !tag || !Array.isArray(articles)) return;
     const oldCategory = category.value, oldTag = tag.value;
-    const categories = [...new Set(articles.map(a => a.category || valueFrom(a.content, "category")).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"zh-CN"));
-    const tags = [...new Set(articles.flatMap(tagsFor))].sort((a,b)=>a.localeCompare(b,"zh-CN"));
+    const categories = [...new Set(articles.map(a => (a.category || valueFrom(a.content, "category")).trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"zh-CN"));
+    const tags = [...new Set(articles.flatMap(tagsFor).map(tag => String(tag).trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"zh-CN"));
     category.replaceChildren(new Option("全部分类", ""));
     categories.forEach(v => category.add(new Option(v, v)));
     tag.replaceChildren(new Option("全部标签", ""));
