@@ -215,7 +215,9 @@ function safeNavigationUrl(value: unknown): string {
 }
 
 function normalizeCustomNavLinks(value: unknown): CustomNavLink[] {
-	if (!Array.isArray(value)) return DEFAULT_SETTINGS.customNavLinks.map((item) => ({ ...item }));
+	if (!Array.isArray(value)) {
+		return DEFAULT_SETTINGS.customNavLinks.map((item) => ({ ...item }));
+	}
 	return value.slice(0, 12).flatMap((item) => {
 		if (!item || typeof item !== "object" || Array.isArray(item)) return [];
 		const record = item as Record<string, unknown>;
@@ -226,7 +228,12 @@ function normalizeCustomNavLinks(value: unknown): CustomNavLink[] {
 			? suppliedIcon
 			: "material-symbols:link";
 		if (!name || !url) return [];
-		return [{ name, url, icon, external: url.startsWith("http://") || url.startsWith("https://"),
+		return [{
+			name,
+			url,
+			icon,
+			external: url.startsWith("http://") || url.startsWith("https://"),
+		}];
 	});
 }
 
