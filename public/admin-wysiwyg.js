@@ -273,7 +273,7 @@ async function loadTiptapModules() {
     }
     // Detect block math, TeX commands, and mathematical operators; avoid treating every $word$ as math.
     if (/^\s*\$\$\s*$/m.test(withoutFences) ||
-        /\$[^$\n]*(?:\\\\[a-zA-Z]+|[=+*/^_<>≤≥±×÷])[^$\n]*\$/.test(withoutFences)) {
+        /\$[^$\n]*(?:\\[a-zA-Z]+|[=+*/^_<>≤≥±×÷])[^$\n]*\$/.test(withoutFences)) {
       return "正文包含数学公式语法。请使用源码模式，以保留 KaTeX/LaTeX 公式。";
     }
     if (/(^|\n)\s*(?:[-*+]|\d+\.)\s+\[[ xX]\]\s/m.test(withoutFences)) {
