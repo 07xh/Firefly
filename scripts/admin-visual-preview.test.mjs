@@ -58,7 +58,7 @@ test("extended callouts, task lists, math, and iframe have safe preview models",
 
 test("折叠内容可通过中文表单结构化编辑并保持原文格式", () => {
   const raw = serializeEditableDetails({ title: "更多信息", body: "这里是补充内容。" });
-  assert.equal(raw, "<details>\\n<summary>更多信息</summary>\\n这里是补充内容。\\n</details>");
+  assert.equal(raw, "<details>\n<summary>更多信息</summary>\n这里是补充内容。\n</details>");
   const model = inspectProtectedMarkdown(raw, "HTML or theme tag");
   assert.equal(model.kind, "details");
   assert.equal(model.title, "更多信息");
