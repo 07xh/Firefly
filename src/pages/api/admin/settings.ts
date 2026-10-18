@@ -5,15 +5,20 @@ export const prerender = false;
 
 const FILE_PATH = "src/data/settings.json";
 
+type CustomNavLink = { name: string; url: string; icon: string; external: boolean };
+
 type SettingsRecord = Record<string, unknown> & {
 	bannerTitle: string;
 	bannerSubtitle: string;
 	backgroundImage: string;
 	backgroundColor: string;
+	themeHue: number;
+	customNavLinks: CustomNavLink[];
 	avatar: string;
 	nickname: string;
 	bio: string;
 	announcement: string;
+	showAnnouncement: boolean;
 	githubUrl: string;
 	showGithub: boolean;
 	email: string;
@@ -37,10 +42,17 @@ const DEFAULT_SETTINGS: SettingsRecord = {
 	bannerSubtitle: "In Reddened Chrysalis, I Once Rest",
 	backgroundImage: "",
 	backgroundColor: "",
+	themeHue: 165,
+	customNavLinks: [
+		{ name: "GitHub", url: "https://github.com/CuteLeaf/Firefly", icon: "fa7-brands:github", external: true },
+		{ name: "Gitee", url: "https://gitee.com/CuteLeaf/Firefly", icon: "fa7-brands:gitee", external: true },
+		{ name: "Firefly文档", url: "https://docs-firefly.cuteleaf.cn", icon: "material-symbols:docs", external: true },
+	],
 	avatar: "",
 	nickname: "Xiaohuang",
 	bio: "Hello, I'm Xiaohuang",
 	announcement: "欢迎来到我的博客！这是一则示例公告。",
+	showAnnouncement: true,
 	githubUrl: "",
 	showGithub: false,
 	email: "",
@@ -64,10 +76,13 @@ const SETTING_KEYS = [
 	"bannerSubtitle",
 	"backgroundImage",
 	"backgroundColor",
+	"themeHue",
+	"customNavLinks",
 	"avatar",
 	"nickname",
 	"bio",
 	"announcement",
+	"showAnnouncement",
 	"githubUrl",
 	"showGithub",
 	"email",
@@ -186,6 +201,42 @@ async function githubError(
 	);
 }
 
+function safeNavigationUrl(value: unknown): string {
+	if (typeof value !== "string") return "";
+	const candidate = value.trim();
+	if (!candidate || candidate.length > 2048 || candidate.split("").some((character) => character.charCodeAt(0) <= 32 || character.charCodeAt(0) === 92)) return "";
+	if (candidate.startsWith("/") && !candidate.startsWith("//")) return candidate;
+	try {
+		const parsed = new URL(candidate);
+		return parsed.protocol === "http:" || parsed.protocol === "https:" ? parsed.href : "";
+	} catch {
+		return "";
+	}
+}
+
+function normalizeCustomNavLinks(value: unknown): CustomNavLink[] {
+	if (!Array.isArray(value)) {
+		return DEFAULT_SETTINGS.customNavLinks.map((item) => ({ ...item }));
+	}
+	return value.slice(0, 12).flatMap((item) => {
+		if (!item || typeof item !== "object" || Array.isArray(item)) return [];
+		const record = item as Record<string, unknown>;
+		const name = typeof record.name === "string" ? record.name.trim().slice(0, 60) : "";
+		const url = safeNavigationUrl(record.url);
+		const suppliedIcon = typeof record.icon === "string" ? record.icon.trim() : "";
+		const icon = suppliedIcon && /^[a-z0-9-]+:[a-z0-9-]+$/i.test(suppliedIcon)
+			? suppliedIcon
+			: "material-symbols:link";
+		if (!name || !url) return [];
+		return [{
+			name,
+			url,
+			icon,
+			external: url.startsWith("http://") || url.startsWith("https://"),
+		}];
+	});
+}
+
 function normalizeSettings(value: unknown): SettingsRecord {
 	if (!value || typeof value !== "object" || Array.isArray(value)) {
 		throw new SettingsApiError("settings.json 必须是 JSON 对象。", 500);
@@ -214,6 +265,7 @@ function normalizeSettings(value: unknown): SettingsRecord {
 	}
 	for (const key of [
 		"showGithub",
+		"showAnnouncement",
 		"showEmail",
 		"showSupportAndShare",
 		"showAbout",
@@ -227,6 +279,11 @@ function normalizeSettings(value: unknown): SettingsRecord {
 		result[key] =
 			typeof merged[key] === "boolean" ? merged[key] : DEFAULT_SETTINGS[key];
 	}
+	const hue = merged.themeHue;
+	result.themeHue = typeof hue === "number" && Number.isFinite(hue)
+		? Math.max(0, Math.min(360, Math.round(hue)))
+		: DEFAULT_SETTINGS.themeHue;
+	result.customNavLinks = normalizeCustomNavLinks(merged.customNavLinks);
 	return result as SettingsRecord;
 }
 
@@ -295,6 +352,46 @@ function validateText(
 		throw new SettingsApiError(label + "不能超过 " + maxLength + " 个字符。", 400);
 	}
 	return value.trim();
+}
+
+function validateThemeHue(value: unknown): number {
+	if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 360) {
+		throw new SettingsApiError("主题强调色色相必须是 0 到 360 之间的数字。", 400);
+	}
+	return Math.round(value);
+}
+
+function validateNavigationUrl(value: unknown, label: string): string {
+	const url = safeNavigationUrl(value);
+	if (!url) {
+		throw new SettingsApiError(label + "必须是以 / 开头的站内路径，或完整的 HTTP/HTTPS 链接。", 400);
+	}
+	return url;
+}
+
+function validateCustomNavLinks(value: unknown): CustomNavLink[] {
+	if (!Array.isArray(value)) throw new SettingsApiError("自定义导航链接必须是数组。", 400);
+	if (value.length > 12) throw new SettingsApiError("自定义导航链接最多添加 12 项。", 400);
+	return value.map((item, index) => {
+		if (!item || typeof item !== "object" || Array.isArray(item)) {
+			throw new SettingsApiError(`第 ${index + 1} 个导航链接格式不正确。`, 400);
+		}
+		const record = item as Record<string, unknown>;
+		const label = `第 ${index + 1} 个导航链接`;
+		const name = validateText(record.name, label + "名称", 60);
+		if (!name) throw new SettingsApiError(label + "名称不能为空。", 400);
+		const url = validateNavigationUrl(record.url, label + "地址");
+		const suppliedIcon = record.icon === undefined ? "" : validateText(record.icon, label + "图标", 100);
+		if (suppliedIcon && !/^[a-z0-9-]+:[a-z0-9-]+$/i.test(suppliedIcon)) {
+			throw new SettingsApiError(label + "图标格式应类似 material-symbols:link。", 400);
+		}
+		return {
+			name,
+			url,
+			icon: suppliedIcon || "material-symbols:link",
+			external: url.startsWith("http://") || url.startsWith("https://"),
+		};
+	});
 }
 
 function validateBackgroundColor(value: unknown): string {
@@ -377,11 +474,16 @@ function applySubmittedSettings(
 	if (has("backgroundColor")) {
 		next.backgroundColor = validateBackgroundColor(input.backgroundColor);
 	}
+	if (has("themeHue")) next.themeHue = validateThemeHue(input.themeHue);
+	if (has("customNavLinks")) next.customNavLinks = validateCustomNavLinks(input.customNavLinks);
 	if (has("avatar")) next.avatar = validateMediaUrl(input.avatar, "头像链接");
 	if (has("nickname")) next.nickname = validateText(input.nickname, "昵称", 120);
 	if (has("bio")) next.bio = validateText(input.bio, "个人签名", 5000);
 	if (has("announcement")) {
 		next.announcement = validateAnnouncement(input.announcement);
+	}
+	if (has("showAnnouncement")) {
+		next.showAnnouncement = validateBoolean(input.showAnnouncement, "showAnnouncement");
 	}
 	if (has("githubUrl")) {
 		next.githubUrl = validateMediaUrl(input.githubUrl, "GitHub 链接");
