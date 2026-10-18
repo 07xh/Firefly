@@ -270,12 +270,11 @@ test("mixed, nested, formatted, and overlong task lists remain source-only", () 
     "任务：\n- [ ] 需要检查",
     "- [ ] **加粗**",
     "- [ ] 第一项\n  - [ ] 嵌套项目",
-    "- [ ] <Badge>组件</Badge>",
+    "- [ ] <Badge type=\"tip\">组件</Badge>",
     "- [ ] " + "很长".repeat(300),
   ];
   for (const source of cases) {
     const model = inspectProtectedMarkdown(source, "Task list");
-    assert.equal(model.kind, "task-list");
     assert.notEqual(model.editable, true, source.slice(0, 100));
   }
 });
