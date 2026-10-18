@@ -66,6 +66,7 @@ async function loadTiptapModules() {
   let pendingUploads = 0;
   let activeMode = "visual";
   let lastLoadedSource = sourceField.value;
+  let protectedMarkerSequence = 0;
 
   function status(message, isError = false) {
     const target = $("status");
@@ -2333,6 +2334,23 @@ async function loadTiptapModules() {
     sourceField.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
+  function createNewProtectedMarker() {
+    let used = sourceField.value || "";
+    if (editor) {
+      editor.state.doc.descendants(node => {
+        if (node.type.name === "protectedMarkdownBlock") {
+          used += String(node.attrs.marker || "");
+        }
+      });
+    }
+    let marker = "";
+    do {
+      protectedMarkerSequence += 1;
+      marker = "FIREFLYRAWBLOCKNEW" + protectedMarkerSequence + "END";
+    } while (used.includes(marker));
+    return marker;
+  }
+
   function loadSourceIntoEditor() {
     if (!editor) return false;
     const current = sourceField.value || "";
@@ -2826,6 +2844,23 @@ async function loadTiptapModules() {
       case "rule": chain.setHorizontalRule().run(); break;
       case "undo": chain.undo().run(); break;
       case "redo": chain.redo().run(); break;
+      case "taskList": {
+        const raw = "- [ ] 待办事项";
+        const inserted = editor.chain().focus().insertContent({
+          type: "protectedMarkdownBlock",
+          attrs: {
+            marker: createNewProtectedMarker(),
+            raw,
+            reason: "Task list",
+          },
+        }).run();
+        if (!inserted) {
+          status("暂时无法插入待办清单，请把光标放在正文中再试。", true);
+          return;
+        }
+        status("已插入待办清单。点击内容卡片上的“修改待办清单”即可增删事项或修改勾选状态。");
+        break;
+      }
       case "table":
         openTableInsertDialog();
         break;
