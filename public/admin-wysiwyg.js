@@ -3095,10 +3095,13 @@ async function loadTiptapModules() {
             return false;
           }
           event.preventDefault();
+          let imagePosition = null;
+          try { imagePosition = editor.view.posAtDOM(target, 0); } catch {}
           openImagePreview(
             target.getAttribute("src") || "",
             target.getAttribute("alt") || "",
             target.getAttribute("title") || "",
+            Number.isInteger(imagePosition) ? { position: imagePosition } : null,
           );
           return true;
         },
