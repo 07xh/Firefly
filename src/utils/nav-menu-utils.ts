@@ -40,13 +40,19 @@ export function resolveNavMenuLinks(): NavBarLink[] {
 		}
 
 		if (!link.children) {
-			if (link.name === "关于我" && siteSettings.showAbout === false) return null;
+			if (link.name === "关于我" && siteSettings.showAbout === false) {
+				return null;
+			}
 			return isPageEnabled(link) ? link : null;
 		}
 
 		const filteredChildren = link.children.filter((child) => {
-			if (!isPageEnabled(child)) return false;
-			if (child.name === "关于我" && siteSettings.showAbout === false) return false;
+			if (!isPageEnabled(child)) {
+				return false;
+			}
+			if (child.name === "关于我" && siteSettings.showAbout === false) {
+				return false;
+			}
 			return true;
 		});
 
