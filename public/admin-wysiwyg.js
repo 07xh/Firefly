@@ -279,7 +279,13 @@ import { TableKit } from "https://cdn.jsdelivr.net/npm/@tiptap/extension-table@3
 
     window.addEventListener("firefly:source-loaded", () => loadSourceIntoEditor());
     window.addEventListener("firefly:mode", event => {
-      if (event.detail?.mode === "visual") loadSourceIntoEditor();
+      const mode = event.detail?.mode;
+      if (mode === "visual") {
+        activeMode = "visual";
+        loadSourceIntoEditor();
+      } else if (mode === "source" || mode === "preview") {
+        activeMode = mode;
+      }
     });
     sourceField.addEventListener("input", () => {
       if (activeMode !== "source") return;
