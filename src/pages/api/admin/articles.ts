@@ -94,6 +94,14 @@ function updateFrontmatterField(content: string, key: string, value: string): st
 	return content.replace(match[0], "---\n" + updated + "\n---");
 }
 
+function removeFrontmatterField(content: string, key: string): string {
+	const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+	if (!match) throw new Error("未找到有效的 frontmatter，无法保存文章元数据");
+	const field = new RegExp("^" + key + ":\\s*.*$", "m");
+	const updated = match[1].split(/\r?\n/).filter((line) => !field.test(line)).join("\n");
+	return content.replace(match[0], "---\n" + updated + "\n---");
+}
+
 
 function frontmatterText(content: string, key: string): string {
 	const match = content.match(new RegExp("^" + key + ":\\s*(.*?)\\s*$", "m"));
@@ -129,6 +137,13 @@ function validDate(value: unknown): value is string {
 	return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
+function validScheduleDate(value: unknown): value is string {
+	if (value === "" || value === undefined || value === null) return true;
+	if (typeof value !== "string" || value.length > 40) return false;
+	if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) return false;
+	return Number.isFinite(Date.parse(value));
+}
+
 function makeMarkdown(input: Record<string, unknown>): string | null {
 	const title = typeof input.title === "string" ? input.title.trim() : "";
 	const body = typeof input.body === "string" ? input.body : "";
@@ -139,6 +154,10 @@ function makeMarkdown(input: Record<string, unknown>): string | null {
 	const description = typeof input.description === "string" ? input.description.slice(0, 500) : "";
 	const category = typeof input.category === "string" ? input.category.slice(0, 100) : "";
 	const draft = input.draft === true;
+	const scheduleDate = typeof input.date === "string" ? input.date.trim() : "";
+	const password = typeof input.password === "string" ? input.password : "";
+	const passwordHint = typeof input.passwordHint === "string" ? input.passwordHint.slice(0, 120) : "";
+	if (!validScheduleDate(scheduleDate) || password.length > 200) return null;
 	const tags = Array.isArray(input.tags)
 		? input.tags.filter((tag): tag is string => typeof tag === "string").slice(0, 20).map((tag) => tag.slice(0, 50))
 		: [];
@@ -146,9 +165,12 @@ function makeMarkdown(input: Record<string, unknown>): string | null {
 		"---",
 		`title: ${scalar(title)}`,
 		`published: ${published}`,
+		...(scheduleDate ? [`date: ${scalar(scheduleDate)}`] : []),
 		`description: ${scalar(description)}`,
 		`category: ${scalar(category)}`,
 		`draft: ${draft}`,
+		...(password ? [`password: ${scalar(password)}`] : []),
+		...(passwordHint ? [`passwordHint: ${scalar(passwordHint)}`] : []),
 		`tags: ${JSON.stringify(tags)}`,
 		`slug: ${scalar(String(input.slug ?? ""))}`,
 		"---",
@@ -203,6 +225,7 @@ export const GET: APIRoute = async () => {
 					content: post.content,
 					title: (match?.[1] ?? match?.[2] ?? match?.[3] ?? file.path.split("/").pop() ?? "").trim(),
 					published: date?.[1] ?? "",
+					date: frontmatterText(post.content, "date"),
 					category: frontmatterText(post.content, "category"),
 					tags: frontmatterTags(post.content),
 					draft: /^draft:\s*true\s*$/m.test(post.content),
@@ -263,6 +286,11 @@ export const PUT: APIRoute = async ({ request }) => {
 			if (!validDate(input.published)) return json({ error: "发布日期格式不正确" }, 400);
 			const category = typeof input.category === "string" ? input.category.slice(0, 100) : "";
 			const description = typeof input.description === "string" ? input.description.slice(0, 500) : "";
+			const scheduleDate = typeof input.date === "string" ? input.date.trim() : "";
+			const password = typeof input.password === "string" ? input.password : "";
+			const passwordHint = typeof input.passwordHint === "string" ? input.passwordHint.slice(0, 120) : "";
+			if (!validScheduleDate(scheduleDate)) return json({ error: "定时发布时间必须包含时区，例如 2026-10-20T09:00:00+08:00" }, 400);
+			if (password.length > 200) return json({ error: "访问密码不能超过 200 个字符" }, 400);
 			const tags = Array.isArray(input.tags)
 				? input.tags.filter((tag): tag is string => typeof tag === "string").slice(0, 20).map((tag) => tag.trim().slice(0, 50)).filter(Boolean)
 				: [];
@@ -274,6 +302,15 @@ export const PUT: APIRoute = async ({ request }) => {
 			if (typeof input.draft === "boolean") {
 				content = updateFrontmatterField(content, "draft", String(input.draft));
 			}
+			content = scheduleDate
+				? updateFrontmatterField(content, "date", scalar(scheduleDate))
+				: removeFrontmatterField(content, "date");
+			content = password
+				? updateFrontmatterField(content, "password", scalar(password))
+				: removeFrontmatterField(content, "password");
+			content = passwordHint
+				? updateFrontmatterField(content, "passwordHint", scalar(passwordHint))
+				: removeFrontmatterField(content, "passwordHint");
 			if (content.length > 500_000) return json({ error: "完整文章内容不能超过 500 KB" }, 400);
 		}
 		const response = await github(`contents/${path.split("/").map(encodeURIComponent).join("/")}`, config, {
