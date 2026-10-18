@@ -189,10 +189,10 @@ function getProtectedRanges(source) {
   }
   const pairedClosing = new Set();
   const voidTags = new Set(["area","base","br","col","embed","hr","img","input","link","meta","param","source","track","wbr"]);
-  const protectedHtmlTags = new Set(["script","style","iframe","video","audio","div","section","details","summary","table","kbd","sup","sub","span","u","figure","figcaption"]);
+  const protectedHtmlTags = new Set(["a","abbr","address","article","aside","audio","b","blockquote","body","br","button","canvas","caption","cite","code","col","colgroup","dd","del","details","dfn","div","dl","dt","em","fieldset","figcaption","figure","footer","form","h1","h2","h3","h4","h5","h6","head","header","hr","html","i","iframe","img","input","ins","kbd","label","legend","li","main","map","mark","menu","meter","nav","object","ol","optgroup","option","output","p","picture","pre","progress","q","s","samp","script","section","select","small","source","span","strong","style","sub","summary","sup","svg","path","circle","ellipse","line","polyline","polygon","rect","g","text","table","tbody","td","template","textarea","tfoot","th","thead","time","title","tr","track","u","ul","var","video","wbr"]);
   for (let i = 0; i < tags.length; i += 1) {
     const tag = tags[i];
-    const protectedTag = /^[A-Z]/.test(tag.name) || protectedHtmlTags.has(tag.nameLower);
+    const protectedTag = /^[A-Z]/.test(tag.name) || tag.nameLower.includes("-") || protectedHtmlTags.has(tag.nameLower);
     if (!protectedTag) continue;
 
     if (tag.closing) {
@@ -246,9 +246,73 @@ function getProtectedRanges(source) {
       add(i, i, "Wiki link", "paragraph");
       continue;
     }
-    if (/\{\s*(?:\/\*|[A-Za-z_$][\w$.]*\s*(?:\(|\?\.|\.|\[))/.test(line)) {
-      add(i, i, "MDX expression", "paragraph");
+
+  }
+
+  // MDX evaluates curly-brace expressions even when they contain only a variable.
+  // Parse balanced braces outside common string/comment forms and preserve each
+  // expression instead of allowing the Markdown parser to interpret its contents.
+  for (let i = 0; i < masked.length; i += 1) {
+    if (masked[i] !== "{" || isEscapedAt(masked, i)) continue;
+    let depth = 1;
+    let quote = "";
+    let escaped = false;
+    let lineComment = false;
+    let blockComment = false;
+    let close = -1;
+
+    for (let j = i + 1; j < masked.length; j += 1) {
+      const ch = masked[j];
+      const next = masked[j + 1];
+
+      if (lineComment) {
+        if (ch === "\n") lineComment = false;
+        continue;
+      }
+      if (blockComment) {
+        if (ch === "*" && next === "/") {
+          blockComment = false;
+          j += 1;
+        }
+        continue;
+      }
+      if (quote) {
+        if (escaped) escaped = false;
+        else if (ch === "\\") escaped = true;
+        else if (ch === quote) quote = "";
+        continue;
+      }
+      if (ch === "/" && next === "/") {
+        lineComment = true;
+        j += 1;
+        continue;
+      }
+      if (ch === "/" && next === "*") {
+        blockComment = true;
+        j += 1;
+        continue;
+      }
+      if (ch === "'" || ch === '"' || ch === "\x60") {
+        quote = ch;
+        continue;
+      }
+      if (ch === "{") depth += 1;
+      else if (ch === "}") {
+        depth -= 1;
+        if (depth === 0) {
+          close = j;
+          break;
+        }
+      }
     }
+
+    if (close < 0) continue;
+    const expression = masked.slice(i + 1, close).trim();
+    if (!expression) continue;
+    const startLine = lineAt(i);
+    const endLine = lineAt(close);
+    add(startLine, endLine, "MDX expression", startLine === endLine ? "paragraph" : "block");
+    i = close;
   }
 
   function expandParagraph(start, end) {
