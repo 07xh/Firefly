@@ -2,6 +2,9 @@ name: Deploy Firefly to Cloudflare Workers
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - master
 
 permissions:
   contents: read
