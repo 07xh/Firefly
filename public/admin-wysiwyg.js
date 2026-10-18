@@ -1475,6 +1475,21 @@ async function loadTiptapModules() {
             });
             header.append(label, edit);
             const raw = typeof currentNode.attrs.raw === "string" ? currentNode.attrs.raw : "";
+            const model = inspectProtectedMarkdown(raw, currentNode.attrs.reason || "扩展 Markdown");
+            if ((model.kind === "steps" || model.kind === "timeline") && model.editable) {
+              const visualEdit = document.createElement("button");
+              visualEdit.type = "button";
+              visualEdit.className = "firefly-protected-markdown__edit";
+              visualEdit.textContent = "可视化编辑";
+              visualEdit.title = "修改项目、标题、正文和类型";
+              visualEdit.addEventListener("mousedown", event => event.preventDefault());
+              visualEdit.addEventListener("click", event => {
+                event.preventDefault();
+                event.stopPropagation();
+                openStructuredStepTimelineEditor(activeEditor, getPos, currentNode, model);
+              });
+              header.append(visualEdit);
+            }
             const preview = createProtectedVisualPreview(raw, currentNode.attrs.reason || "扩展 Markdown");
             root.append(header, preview);
           };
