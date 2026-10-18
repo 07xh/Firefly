@@ -6,12 +6,119 @@ export const prerender = false;
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>文章管理 · Firefly</title>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>管理后台 · Firefly</title>
 <style>
 :root{font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#202820;background:#f3f6f3}*{box-sizing:border-box}body{margin:0}header{padding:16px max(18px,calc((100vw - 1100px)/2));background:white;border-bottom:1px solid #e1e8e1;display:flex;justify-content:space-between;align-items:center}h1{font-size:19px;margin:0}.wrap{max-width:1100px;margin:18px auto 26px;padding:0 16px}.articles-grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px}.admin-tabs{max-width:1100px;margin:20px auto 0;padding:0 16px;display:flex;gap:8px;border-bottom:1px solid #e3eae4}.admin-tab{border:1px solid transparent;border-bottom:0;border-radius:10px 10px 0 0;padding:10px 14px;background:transparent;color:#718075;cursor:pointer;font:inherit;font-size:13px;transition:background .15s,color .15s,border-color .15s}.admin-tab:hover{background:#f7faf7;color:#16834c}.admin-tab[aria-selected=true]{border-color:#d8e9dd;background:white;color:#12884f;font-weight:650;box-shadow:0 -1px 0 #fff inset}#articlesTabPanel[hidden],#appearanceTabPanel[hidden]{display:none!important}.settings-panel{max-width:900px;margin:0 auto}.settings-cards{display:grid;gap:16px}.settings-card{background:#fff;border:1px solid #e2eae3;border-radius:16px;padding:20px;box-shadow:0 3px 12px #173c2510;min-width:0}.settings-card-heading{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}.settings-card-number{display:inline-flex;align-items:center;justify-content:center;flex:0 0 34px;height:34px;border-radius:11px;background:#eaf7ef;color:#16834c;font-size:12px;font-weight:800;letter-spacing:.04em}.settings-card-heading h3{margin:1px 0 4px;font-size:15px;font-weight:750;color:#26372b}.settings-card-heading p{margin:0;color:#79867c;font-size:12px;line-height:1.6}.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}.settings-grid-one{grid-template-columns:minmax(0,1fr)}.settings-field{display:grid;gap:7px;min-width:0;margin:0}.settings-field>label{font-size:13px;color:#334155;font-weight:650}.settings-field>small{color:#718075;font-size:12px;line-height:1.6}.settings-control{width:100%;min-width:0;border:1px solid #d8e1d8;border-radius:11px;padding:11px 13px;font:inherit;font-size:13px;background:#fff;color:#202820;transition:border-color .15s,box-shadow .15s}.settings-control:hover{border-color:#c2d3c5}.settings-control:focus{border-color:#10b981;outline:none;box-shadow:0 0 0 3px #10b98122}textarea.settings-control{resize:vertical;min-height:100px;line-height:1.7}#bio{min-height:100px}#announcement{min-height:120px}.settings-preview{display:flex;align-items:center;gap:12px;min-height:74px;padding:10px;border:1px solid #edf1ed;border-radius:12px;background:#f8faf8;overflow:hidden}.settings-preview img{width:100px;height:64px;object-fit:cover;border-radius:8px;background:#eef2ee;flex:0 0 auto}.settings-preview.is-avatar img{width:64px;height:64px;border-radius:50%;object-fit:cover}.settings-preview-note{font-size:12px;color:#8b968e;line-height:1.6}.settings-toggle{position:relative;display:flex;align-items:center;gap:10px;min-height:42px;padding:9px 12px;border:1px solid #e4ebe5;border-radius:11px;background:#fafcfa;cursor:pointer}.settings-toggle input{position:absolute;width:1px;height:1px;opacity:0}.settings-toggle-track{position:relative;display:inline-block;flex:0 0 36px;width:36px;height:21px;border-radius:999px;background:#cbd5ce;transition:background .18s}.settings-toggle-track:before{content:"";position:absolute;left:3px;top:3px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0002;transition:transform .18s}.settings-toggle input:checked+.settings-toggle-track{background:#16a064}.settings-toggle input:checked+.settings-toggle-track:before{transform:translateX(15px)}.settings-toggle input:focus-visible+.settings-toggle-track{outline:3px solid #10b98144;outline-offset:3px}.settings-toggle-label{font-size:12px;font-weight:650;color:#47574b}.settings-toggle small{display:block;font-size:11px;font-weight:400;color:#89958c;margin-top:2px}.settings-switch-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.settings-color-row{display:grid;grid-template-columns:54px minmax(0,1fr);gap:10px;align-items:center}.settings-color-picker{width:54px;height:44px;padding:4px;border:1px solid #d8e1d8;border-radius:11px;background:#fff;cursor:pointer}.settings-save-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px 2px 10px}.settings-save-button{border:0;border-radius:11px;background:linear-gradient(135deg,#15965a,#087a43);color:#fff;padding:12px 18px;font:inherit;font-size:13px;font-weight:750;box-shadow:0 5px 12px #0d894b26;cursor:pointer;transition:transform .15s,opacity .15s}.settings-save-button:hover{transform:translateY(-1px)}.settings-save-button:disabled{opacity:.6;cursor:wait;transform:none}.settings-status{font-size:12px;color:#657267;line-height:1.6;overflow-wrap:anywhere}.admin-tab:focus-visible{outline:2px solid #10b981;outline-offset:2px}.panel{background:white;border:1px solid #e0e7e0;border-radius:14px;padding:18px;min-width:0}.btn{border:1px solid #d5dfd5;border-radius:8px;background:white;color:#263329;padding:9px 12px;cursor:pointer}.primary{background:#12884f;color:white;border-color:#12884f}.danger{color:#b42318}.toolbar{display:flex;gap:8px;margin-bottom:12px}.toolbar input{min-width:0;flex:1}.toolbar select{max-width:100px;border:1px solid #d8e1d8;border-radius:8px;padding:8px 5px;background:white;color:#263329;font:inherit;font-size:12px}.field{display:grid;gap:6px;margin-bottom:13px}.field label{font-size:12px;color:#59675d;font-weight:650}.field input,.field textarea,.toolbar input{width:100%;border:1px solid #d8e1d8;border-radius:8px;padding:10px;font:inherit;background:white;color:#202820}.field textarea{min-height:240px;resize:vertical;font-family:ui-monospace,monospace;line-height:1.6}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.item{width:100%;display:block;text-align:left;background:white;border:1px solid #e3e9e3;border-radius:9px;padding:11px;margin-bottom:8px;cursor:pointer;color:inherit}.article-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-bottom:8px;align-items:stretch}.article-row .item{margin:0}.article-delete{border:1px solid #f1c6c3;border-radius:8px;background:#fff8f7;color:#b42318;padding:8px;cursor:pointer;min-width:48px}.article-delete:disabled{opacity:.55;cursor:wait}.item strong,.item small{display:block;overflow-wrap:anywhere}.item strong{font-size:13px}.item small,.muted{color:#718075;font-size:12px}.actions{display:flex;gap:8px;flex-wrap:wrap}.status{min-height:20px;font-size:12px;margin-top:12px;color:#657267;overflow-wrap:anywhere}.check{display:flex;gap:8px;align-items:center;font-size:13px;margin:12px 0}.empty{color:#758077;font-size:13px;line-height:1.7}.editor-tabs{display:flex;gap:8px;margin:2px 0 9px}.editor-tabs .active{background:#eaf6ee;border-color:#b6dbc3;color:#127947}.markdown-preview{min-height:240px;border:1px solid #d8e1d8;border-radius:8px;padding:14px;line-height:1.75;overflow-wrap:anywhere;color:#202820}.markdown-preview h1,.markdown-preview h2,.markdown-preview h3{line-height:1.35;margin:1.1em 0 .6em}.markdown-preview p,.markdown-preview ul,.markdown-preview ol,.markdown-preview blockquote{margin:.65em 0}.markdown-preview pre{overflow:auto;background:#f3f6f3;padding:12px;border-radius:8px}.markdown-preview code{font-family:ui-monospace,monospace;background:#f3f6f3;padding:2px 4px;border-radius:4px}.markdown-preview pre code{padding:0}.markdown-preview img{max-width:100%;height:auto}.markdown-preview table{border-collapse:collapse;max-width:100%;display:block;overflow:auto}.markdown-preview th,.markdown-preview td{border:1px solid #d8e1d8;padding:6px 9px}.markdown-preview blockquote{border-left:3px solid #b6dbc3;padding-left:12px;color:#59675d}.deploy-link{display:inline-block;margin-top:7px;color:#12884f;font-size:12px}.actions .btn{min-width:100px}@media(max-width:720px){.wrap{margin-top:12px}.articles-grid{grid-template-columns:1fr}.admin-tabs{margin-top:12px;padding:0 12px}.admin-tab{padding:10px 9px;font-size:12px}.settings-panel{padding:16px}.grid{grid-template-columns:1fr}.list{max-height:260px;overflow:auto}header{padding:13px 15px}}
+
+/* Responsive, safe editing controls added during the admin UX pass. */
+.settings-save-row {
+  position: sticky;
+  bottom: 8px;
+  z-index: 20;
+  gap: 10px;
+  margin-top: 6px;
+  padding: 12px;
+  border: 1px solid #dce8de;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 -6px 24px rgba(22, 64, 35, 0.09);
+  backdrop-filter: blur(14px);
+}
+.settings-dirty-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #edf7ef;
+  color: #167848;
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+.settings-dirty-state::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  flex: 0 0 7px;
+  border-radius: 50%;
+  background: #16a064;
+}
+.settings-dirty-state[data-dirty="true"] {
+  background: #fff5e6;
+  color: #925400;
+}
+.settings-dirty-state[data-dirty="true"]::before {
+  background: #d97706;
+}
+#discardSettings {
+  white-space: nowrap;
+}
+#discardSettings:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+#saveSettings:focus-visible, #discardSettings:focus-visible {
+  outline: 3px solid #10b98155;
+  outline-offset: 3px;
+}
+@media (max-width: 900px) {
+  .settings-switch-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 720px) {
+  .settings-grid, .settings-switch-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .settings-card {
+    padding: 16px;
+    border-radius: 14px;
+  }
+  .settings-card-heading {
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .settings-save-row {
+    bottom: 6px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px;
+  }
+  .settings-save-row .settings-save-button, #discardSettings {
+    width: 100%;
+    min-height: 44px;
+  }
+  .settings-status {
+    overflow-wrap: anywhere;
+  }
+  header {
+    gap: 10px;
+  }
+  header > div {
+    gap: 8px !important;
+  }
+}
+@media (max-width: 390px) {
+  .settings-color-row {
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 8px;
+  }
+  .settings-color-picker {
+    width: 44px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .settings-save-button, .settings-control, .settings-toggle-track,
+  .settings-toggle-track::before, .admin-tab {
+    transition: none !important;
+  }
+}
+
 </style></head>
 <body>
-<header><h1>✦ Firefly 文章管理</h1><div style="display:flex;gap:12px;align-items:center"><a href="/" style="color:#16864f;font-size:13px">返回网站 ↗</a><button class="btn" id="logout" type="button">退出登录</button></div></header>
+<header><h1>✦ Firefly 管理后台</h1><div style="display:flex;gap:12px;align-items:center"><a href="/" style="color:#16864f;font-size:13px">返回网站 ↗</a><button class="btn" id="logout" type="button">退出登录</button></div></header>
 <nav class="admin-tabs" role="tablist" aria-label="后台管理模块">
   <button id="tabArticles" class="admin-tab" type="button" role="tab" aria-selected="true" aria-controls="articlesTabPanel">📝 文章管理</button>
   <button id="tabAppearance" class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="appearanceTabPanel" tabindex="-1">🎨 全局外观配置</button>
@@ -187,8 +294,10 @@ export const prerender = false;
       </div>
     </section>
 
-<div class="settings-save-row">
-      <button id="saveSettings" type="submit" class="settings-save-button">保存全局配置</button>
+<div class="settings-save-row" aria-label="全局配置保存操作">
+      <button id="saveSettings" type="submit" class="settings-save-button" disabled>保存全局配置</button>
+      <button id="discardSettings" type="button" class="btn" disabled>放弃未保存修改</button>
+      <span id="settingsDirtyState" class="settings-dirty-state" data-dirty="false" role="status" aria-live="polite">正在读取配置…</span>
       <span id="settingsStatus" class="settings-status" role="status" aria-live="polite"></span>
     </div>
   </form>
@@ -196,8 +305,63 @@ export const prerender = false;
 </main>
 <script>
 // @ts-nocheck
-const $=id=>document.getElementById(id);let articles=[],selected=null;
-function goLogin(){location.assign("/admin/login/?next="+encodeURIComponent(location.pathname+location.search))}
+const $ = id => document.getElementById(id);
+let articles = [], selected = null;
+let settingsReady = false;
+let settingsSaving = false;
+let savedSettingsSnapshot = "";
+let articleBaseline = "";
+let allowAdminNavigation = false;
+
+function currentSettingsSnapshot() {
+  return JSON.stringify(Array.from($("settingsForm").querySelectorAll("input[name], textarea[name], select[name]"))
+    .map(field => [field.name, field.type === "checkbox" ? field.checked : field.value]));
+}
+function isSettingsDirty() {
+  return settingsReady && currentSettingsSnapshot() !== savedSettingsSnapshot;
+}
+function updateSettingsDirtyState() {
+  const dirty = isSettingsDirty();
+  const state = $("settingsDirtyState");
+  state.dataset.dirty = String(dirty);
+  state.textContent = !settingsReady ? "配置尚未加载" : dirty ? "有未保存的修改" : "所有修改均已保存";
+  $("discardSettings").disabled = !dirty || settingsSaving;
+  $("saveSettings").disabled = !settingsReady || settingsSaving;
+  return dirty;
+}
+function markSettingsSaved() {
+  savedSettingsSnapshot = currentSettingsSnapshot();
+  settingsReady = true;
+  updateSettingsDirtyState();
+}
+function currentArticleSnapshot() {
+  return JSON.stringify(["title", "slug", "published", "category", "tags", "description", "body"]
+    .map(id => [id, $(id).value]).concat([["draft", $("draft").checked]]));
+}
+function isArticleDirty() {
+  return articleBaseline !== "" && currentArticleSnapshot() !== articleBaseline;
+}
+function updateArticleDirtyState() {
+  const dirty = isArticleDirty();
+  $("formTitle").textContent = selected
+    ? (dirty ? "编辑文章 · 未保存修改" : "编辑文章")
+    : (dirty ? "新建文章 · 未保存修改" : "新建文章");
+  return dirty;
+}
+function hasUnsavedChanges() {
+  return isArticleDirty() || isSettingsDirty();
+}
+function goLogin() {
+  allowAdminNavigation = true;
+  location.assign("/admin/login/?next=" + encodeURIComponent(location.pathname + location.search));
+}
+window.addEventListener("beforeunload", event => {
+  if (!allowAdminNavigation && hasUnsavedChanges()) {
+    event.preventDefault();
+    event.returnValue = "";
+  }
+});
+
 function say(s,bad=false){$("status").textContent=s;$("status").style.color=bad?"#b42318":"#657267"}
 function frontmatterValue(source,key){const match=source.match(new RegExp("^"+key+":\\s*(.*?)\\s*$","m"));if(!match)return "";const raw=match[1].trim();try{const parsed=JSON.parse(raw);if(Array.isArray(parsed))return parsed.map(String).join(", ");if(typeof parsed==="string")return parsed;if(parsed===null)return ""}catch{}if(raw.startsWith("'")&&raw.endsWith("'"))return raw.slice(1,-1).replace(/''/g,"'");return raw}
 async function api(method,data){const r=await fetch("/api/admin/articles/",{method,headers:{"Content-Type":"application/json"},...(data?{body:JSON.stringify(data)}:{})});if(r.status===401){goLogin();throw new Error("登录已过期，正在跳转登录页…")}const d=await r.json().catch(()=>({error:"服务器响应无法解析"}));if(!r.ok)throw new Error(d.error||"请求失败");return d}
@@ -248,6 +412,7 @@ function render(){
   item.append(titleRow,pathRow);
 
   item.onclick=()=>{
+   if(isArticleDirty()&&!confirm("当前文章有未保存修改，切换文章会丢失这些内容。是否继续？"))return;
    selected=a;
    $("formTitle").textContent="编辑文章";
    $("slug").value=a.path.split("/").pop().replace(/\.mdx?$/,"");
@@ -259,6 +424,8 @@ function render(){
    $("description").value=frontmatterValue(a.content||"","description");
    $("tags").value=frontmatterValue(a.content||"","tags");
    $("draft").checked=a.draft;
+   articleBaseline=currentArticleSnapshot();
+   updateArticleDirtyState();
    $("saveDraft").textContent=a.draft?"保存草稿修改":"转为草稿";
    $("publish").textContent=a.draft?"发布这篇文章":"保存修改并发布";
    $("delete").disabled=false;
@@ -303,7 +470,7 @@ function render(){
  }
 }
 async function refresh(){try{say("正在读取 GitHub…");articles=await api("GET");render();say("已读取 "+articles.length+" 篇文章")}catch(e){say(e.message,true);$("list").textContent="读取失败，请确认服务端令牌和仓库权限已配置。"}}
-function reset(){selected=null;for(const id of ["title","slug","published","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?new Date().toISOString().slice(0,10):""} $("draft").checked=false;$("slug").disabled=false;$("formTitle").textContent="新建文章";$("saveDraft").textContent="保存草稿";$("publish").textContent="发布文章";$("delete").disabled=true;showEditorTab();$("deployLink").hidden=true;$("deployLink").removeAttribute("href")}
+function reset(){selected=null;for(const id of ["title","slug","published","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?new Date().toISOString().slice(0,10):""} $("draft").checked=false;$("slug").disabled=false;$("formTitle").textContent="新建文章";$("saveDraft").textContent="保存草稿";$("publish").textContent="发布文章";$("delete").disabled=true;showEditorTab();$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
 function showEditorTab(){$("body").hidden=false;$("markdownPreview").hidden=true;$("editorTab").classList.add("active");$("previewTab").classList.remove("active")}
 function showPreviewTab(){$("body").hidden=true;$("markdownPreview").hidden=false;$("editorTab").classList.remove("active");$("previewTab").classList.add("active")}
 async function renderMarkdownPreview(){showPreviewTab();$("markdownPreview").innerHTML="<p class=muted>正在生成预览…</p>";try{const r=await fetch("/api/admin/preview/",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({markdown:$("body").value})});if(r.status===401){goLogin();return}const d=await r.json().catch(()=>({error:"预览响应无法解析"}));if(!r.ok)throw new Error(d.error||"Markdown 预览失败");$("markdownPreview").innerHTML=d.html||"<p class=muted>暂无内容</p>"}catch(e){$("markdownPreview").textContent=e.message}}
@@ -391,7 +558,10 @@ function updateMusicPreview(){
 $("backgroundMusic").addEventListener("input",updateMusicPreview);
 
 async function loadSettings(){
- const status=$("settingsStatus");status.textContent="正在读取全局配置…";status.style.color="#657267";
+ const status=$("settingsStatus");
+ $("settingsForm").inert = true;
+ updateSettingsDirtyState();
+ status.textContent="正在读取全局配置…";status.style.color="#657267";
  try{
   const response=await fetch("/api/admin/settings/",{credentials:"same-origin",cache:"no-store"});
   if(response.status===401){goLogin();return}
@@ -412,9 +582,13 @@ async function loadSettings(){
   $("showNavLinks").checked=data.showNavLinks!==false;
   $("showNavAbout").checked=data.showNavAbout!==false;
   updateImagePreview();updateAvatarPreview();updateMusicPreview();
+  $("settingsForm").inert = false;
+  markSettingsSaved();
   status.textContent="已加载仓库中的配置。";
  }catch(error){
+  $("settingsForm").inert = !settingsReady;
   status.textContent=error instanceof Error?error.message:"读取全局配置失败。";status.style.color="#b42318";
+  updateSettingsDirtyState();
  }
 }
 async function watchSettingsDeployment(sha,attempt=0){
@@ -433,9 +607,19 @@ async function watchSettingsDeployment(sha,attempt=0){
   setTimeout(()=>watchSettingsDeployment(sha,attempt+1),12000);
  }
 }
+$("settingsForm").addEventListener("input", updateSettingsDirtyState);
+$("settingsForm").addEventListener("change", updateSettingsDirtyState);
+$("editor").addEventListener("input", updateArticleDirtyState);
+$("editor").addEventListener("change", updateArticleDirtyState);
+$("discardSettings").onclick=async()=>{
+ if(!isSettingsDirty())return;
+ if(!confirm("放弃未保存的全局配置修改，并重新读取 GitHub 中已保存的配置吗？"))return;
+ await loadSettings();
+};
 $("settingsForm").addEventListener("submit",async event=>{
  event.preventDefault();
- const button=$("saveSettings");const status=$("settingsStatus");
+ const status=$("settingsStatus");
+ if(!settingsReady||settingsSaving){status.textContent="配置尚未成功读取，已阻止保存，避免覆盖仓库中的现有设置。";status.style.color="#b42318";return}
  const values={
   bannerTitle:$("bannerTitle").value,
   bannerSubtitle:$("bannerSubtitle").value,
@@ -467,23 +651,33 @@ $("settingsForm").addEventListener("submit",async event=>{
   if(values[key]&&!checkedExternalUrl(values[key])){status.textContent=label+"请填写完整的 HTTP/HTTPS 链接。";status.style.color="#b42318";$(key).focus();return}
  }
  if(values.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)){status.textContent="请填写有效的邮箱地址。";status.style.color="#b42318";$("email").focus();return}
- button.disabled=true;status.style.color="#657267";status.textContent="正在保存到 GitHub…";
+ settingsSaving=true;updateSettingsDirtyState();status.style.color="#657267";status.textContent="正在保存到 GitHub…";
  try{
   const response=await fetch("/api/admin/settings/",{method:"PUT",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(values)});
   if(response.status===401){goLogin();return}
   const data=await response.json().catch(()=>({error:"保存接口返回无法解析的响应"}));
   if(!response.ok)throw new Error(data.error||"保存全局配置失败");
+  markSettingsSaved();
   status.textContent="配置已写入 GitHub，正在触发部署…";
   if(data.commitSha)watchSettingsDeployment(data.commitSha);
   else status.textContent="配置已保存，但接口未返回提交号，暂时无法跟踪部署。";
  }catch(error){
   status.textContent=error instanceof Error?error.message:"保存全局配置失败。";status.style.color="#b42318";
- }finally{button.disabled=false}
+ }finally{settingsSaving=false;updateSettingsDirtyState()}
 });
 
 $("checkGitHub").onclick=checkGitHubPermission;
-$("logout").onclick=async()=>{try{const r=await fetch("/api/admin/auth/",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});if(!r.ok)throw new Error("退出登录失败，请刷新后重试");location.assign("/admin/login/")}catch(e){say(e.message,true)}};
-$("new").onclick=()=>{location.assign("/admin/new/")};$("reset").onclick=reset;$("refresh").onclick=refresh;$("search").oninput=render;$("statusFilter").onchange=render;
+$("logout").onclick=async()=>{
+ if(hasUnsavedChanges()&&!confirm("当前有未保存修改，继续退出会丢失这些内容。是否退出？"))return;
+ try{const r=await fetch("/api/admin/auth/",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});if(!r.ok)throw new Error("退出登录失败，请刷新后重试");allowAdminNavigation=true;location.assign("/admin/login/")}catch(e){say(e.message,true)}
+};
+$("new").onclick=()=>{
+ if(isArticleDirty()&&!confirm("当前文章有未保存修改，进入新建文章会清空这些内容。是否继续？"))return;
+ reset();setAdminTab("articles");say("已进入新建文章模式，请填写标题、文件名和正文。");
+ $("editor").scrollIntoView({behavior:"smooth",block:"start"});$("title").focus({preventScroll:true});
+};
+$("reset").onclick=()=>{if(isArticleDirty()&&!confirm("清空当前文章表单？未保存的修改将丢失。"))return;reset();say("文章表单已清空。")};
+$("refresh").onclick=refresh;$("search").oninput=render;$("statusFilter").onchange=render;
 $("editorTab").onclick=showEditorTab;$("previewTab").onclick=renderMarkdownPreview;$("body").addEventListener("input",()=>{if(!$("markdownPreview").hidden)renderMarkdownPreview()});
 $("editor").onsubmit=async e=>{e.preventDefault();const mode=e.submitter?.value==="publish"?"publish":"draft";if(mode==="publish"&&!confirm("发布文章将写入 GitHub 并触发 Cloudflare 部署，确定发布吗？"))return;const isDraft=mode==="draft";$("draft").checked=isDraft;const metadata={title:$("title").value.trim(),published:$("published").value,category:$("category").value,description:$("description").value,tags:$("tags").value.split(",").map(x=>x.trim()).filter(Boolean),draft:isDraft};const data=selected?{path:selected.path,sha:selected.sha,rawContent:$("body").value,...metadata}:{...metadata,slug:$("slug").value,body:$("body").value};const buttons=[$("saveDraft"),$("publish")];buttons.forEach(b=>b.disabled=true);try{const result=await api(selected?"PUT":"POST",data);reset();await refresh();if(isDraft){say("草稿已写入 GitHub；它保持草稿状态。")}else if(result.commitSha){say("文章已写入 GitHub，正在跟踪 Cloudflare 部署…");watchDeployment(result.commitSha)}else{say("文章已写入 GitHub，但接口未返回提交号，无法自动确认部署。",true)}}catch(err){say(err.message,true)}finally{buttons.forEach(b=>b.disabled=false)}};
 $("delete").onclick=async()=>{if(!selected||!confirm("确定删除 "+selected.title+"？此操作会提交到 GitHub。"))return;$("delete").disabled=true;try{await api("DELETE",{path:selected.path,sha:selected.sha});say("文章已删除");reset();await refresh()}catch(e){say(e.message,true)}finally{$("delete").disabled=false}};
