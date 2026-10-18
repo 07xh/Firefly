@@ -94,19 +94,29 @@ export const onRequest = defineMiddleware(async (context, next) => {
 				?.split(";")[0]
 				.trim()
 				.toLowerCase();
-			if (contentType !== "application/json") {
+			const isImageUpload =
+				(pathname === "/api/admin/upload" || pathname === "/api/admin/upload/") &&
+				context.request.method === "POST";
+			if (contentType !== "application/json" && !(isImageUpload && contentType === "multipart/form-data")) {
 				return errorResponse(
-					"后台写入请求必须使用 application/json。",
+					isImageUpload
+						? "后台写入请求必须使用 application/json 或 multipart/form-data。"
+						: "后台写入请求必须使用 application/json。",
 					415,
 					true,
 				);
 			}
 			const contentLength = context.request.headers.get("Content-Length");
+			const maxBodyBytes = isImageUpload ? 5 * 1024 * 1024 : 1_048_576;
 			if (
 				contentLength !== null &&
-				(!/^\d+$/.test(contentLength) || Number(contentLength) > 1_048_576)
+				(!/^\\d+$/.test(contentLength) || Number(contentLength) > maxBodyBytes)
 			) {
-				return errorResponse("请求正文超过 1 MiB 限制。", 413, true);
+				return errorResponse(
+					isImageUpload ? "图片上传请求超过 5 MiB 限制。" : "请求正文超过 1 MiB 限制。",
+					413,
+					true,
+				);
 			}
 		}
 
