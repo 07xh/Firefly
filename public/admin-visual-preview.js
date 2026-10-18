@@ -238,7 +238,7 @@ export function serializeEditableStepTimeline(model, values) {
   const attribute = (name, value) => {
     const text = String(value ?? "").trim();
     if (!text) return "";
-    if (text.length > 160 || /[<>{}"'\r\n]/.test(text)) throw new Error(name + " 不能包含标签、表达式、引号或换行。");
+    if (text.length > 160 || /[<>{}"\r\n]/.test(text)) throw new Error(name + " 不能包含标签、表达式、引号或换行。");
     return " " + name + '="' + text.replace(/&/g, "&amp;") + '"';
   };
   const lines = ["<" + componentName + ">"];
