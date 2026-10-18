@@ -1,12 +1,11 @@
 ---
-
 import { getEntry, render } from "astro:content";
 import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
-import siteSettings from "@/data/settings.json";
 import Markdown from "@components/common/Markdown.astro";
 import { profileConfig } from "@/config/profileConfig";
 import { siteConfig } from "@/config/siteConfig";
+import siteSettings from "@/data/settings.json";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
@@ -16,7 +15,7 @@ import { buildProfilePage } from "@/utils/schema-utils";
 export const prerender = false;
 
 if (siteSettings.showAbout === false || siteSettings.showNavAbout === false) {
-    return Astro.redirect("/");
+	return Astro.redirect("/");
 }
 
 const aboutPost = await getEntry("spec", "about");
@@ -27,30 +26,47 @@ if (!aboutPost) {
 
 const { Content } = await render(aboutPost);
 const donationQrCodeUrl = (() => {
-    const value = typeof siteSettings.donationQrCode === "string" ? siteSettings.donationQrCode.trim() : "";
-    if (!value) return "";
-    try {
-        const parsed = new URL(value);
-        return parsed.protocol === "https:" || parsed.protocol === "http:" ? parsed.href : "";
-    } catch {
-        return "";
-    }
+	const value =
+		typeof siteSettings.donationQrCode === "string"
+			? siteSettings.donationQrCode.trim()
+			: "";
+	if (!value) return "";
+	try {
+		const parsed = new URL(value);
+		return parsed.protocol === "https:" || parsed.protocol === "http:"
+			? parsed.href
+			: "";
+	} catch {
+		return "";
+	}
 })();
 const aboutContentHtml = siteSettings.aboutContent.trim()
-    ? sanitizeHtml(await marked.parse(siteSettings.aboutContent), {
-        allowedTags: [...sanitizeHtml.defaults.allowedTags, "img", "table", "thead", "tbody", "tr", "th", "td", "del", "details", "summary"],
-        allowedAttributes: {
-            a: ["href", "name", "target", "rel", "title"],
-            img: ["src", "alt", "title", "width", "height", "loading"],
-            code: ["class"],
-            pre: ["class"],
-            th: ["align"],
-            td: ["align"],
-            "*": ["class"],
-        },
-        allowedSchemes: ["http", "https", "mailto"],
-    })
-    : "";
+	? sanitizeHtml(await marked.parse(siteSettings.aboutContent), {
+			allowedTags: [
+				...sanitizeHtml.defaults.allowedTags,
+				"img",
+				"table",
+				"thead",
+				"tbody",
+				"tr",
+				"th",
+				"td",
+				"del",
+				"details",
+				"summary",
+			],
+			allowedAttributes: {
+				a: ["href", "name", "target", "rel", "title"],
+				img: ["src", "alt", "title", "width", "height", "loading"],
+				code: ["class"],
+				pre: ["class"],
+				th: ["align"],
+				td: ["align"],
+				"*": ["class"],
+			},
+			allowedSchemes: ["http", "https", "mailto"],
+		})
+	: "";
 
 const avatarUrl = await getAuthorAvatarUrl();
 const jsonLd = buildProfilePage({
@@ -62,31 +78,44 @@ const jsonLd = buildProfilePage({
 });
 ---
 <MainGridLayout title={i18n(I18nKey.about)} description={i18n(I18nKey.about)}>
-    <script is:inline slot="head" type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
-    <div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
-        <div class="card-base z-10 px-9 py-6 relative w-full ">
-            <Markdown class="mt-2">
-                {aboutContentHtml ? <div set:html={aboutContentHtml} /> : <Content />}
-            </Markdown>
-            {siteSettings.showNavAbout !== false && siteSettings.showAboutDonation && (donationQrCodeUrl || siteConfig.pages.sponsor) && (
-                <div class="mt-6 rounded-xl border border-(--line) bg-(--card-bg) p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div class="flex items-center gap-4">
-                        {donationQrCodeUrl && (
-                            <img
-                                src={donationQrCodeUrl}
-                                alt="打赏二维码"
-                                loading="lazy"
-                                class="h-28 w-28 rounded-lg border border-black/10 object-contain bg-white p-1 dark:border-white/15"
-                            />
-                        )}
-                        <div>
-                            <h2 class="text-lg font-bold">喜欢这里的内容？</h2>
-                            <p class="mt-1 text-sm opacity-75">如果本站对你有所帮助，欢迎支持后续维护与创作。</p>
-                        </div>
-                    </div>
-                    {siteConfig.pages.sponsor && <a href="/sponsor/" class="btn-regular whitespace-nowrap">♥ 支持作者</a>}
-                </div>
-            )}
-        </div>
-    </div>
+	<script
+		is:inline
+		slot="head"
+		type="application/ld+json"
+		set:html={JSON.stringify(jsonLd)}
+	/>
+	<div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
+		<div class="card-base z-10 px-9 py-6 relative w-full">
+			<Markdown class="mt-2">
+				{aboutContentHtml ? <div set:html={aboutContentHtml} /> : <Content />}
+			</Markdown>
+			{siteSettings.showNavAbout !== false &&
+				siteSettings.showAboutDonation &&
+					(donationQrCodeUrl || siteConfig.pages.sponsor) && (
+						<div class="mt-6 rounded-xl border border-(--line) bg-(--card-bg) p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+							<div class="flex items-center gap-4">
+								{donationQrCodeUrl && (
+									<img
+										src={donationQrCodeUrl}
+										alt="打赏二维码"
+										loading="lazy"
+										class="h-28 w-28 rounded-lg border border-black/10 object-contain bg-white p-1 dark:border-white/15"
+									/>
+								)}
+								<div>
+									<h2 class="text-lg font-bold">喜欢这里的内容？</h2>
+									<p class="mt-1 text-sm opacity-75">
+										如果本站对你有所帮助，欢迎支持后续维护与创作。
+									</p>
+								</div>
+							</div>
+							{siteConfig.pages.sponsor && (
+								<a href="/sponsor/" class="btn-regular whitespace-nowrap">
+									♥ 支持作者
+								</a>
+							)}
+						</div>
+					)}
+		</div>
+	</div>
 </MainGridLayout>
