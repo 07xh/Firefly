@@ -2900,6 +2900,10 @@ async function loadTiptapModules() {
   }
 
   async function init() {
+    const compactToolbar = window.matchMedia("(max-width: 640px)").matches;
+    document.querySelectorAll(".rich-editor-toolbar-group").forEach(group => {
+      if (compactToolbar) group.open = false;
+    });
     await loadTiptapModules();
     ensureCalloutStyles();
     ensureBadgeStyles();
