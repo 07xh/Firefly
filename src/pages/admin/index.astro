@@ -151,7 +151,7 @@ export const prerender = false;
   margin-inline:auto;
   outline:none;
   color:#28352c;
-  font-size:16px;
+  font-size:var(--firefly-reading-size,16px);
   line-height:1.92;
   overflow-wrap:anywhere;
   word-break:normal;
@@ -204,7 +204,7 @@ export const prerender = false;
   border-radius:10px;
   background:#f5f8f5;
   overflow:auto;
-  font:13px/1.75 ui-monospace,SFMono-Regular,monospace;
+  font:var(--firefly-reading-code-size,13px)/1.75 ui-monospace,SFMono-Regular,monospace;
   tab-size:2;
 }
 .firefly-prosemirror-content code {
@@ -274,7 +274,7 @@ export const prerender = false;
   border-radius:10px;
   background:#fff;
   color:#28352c;
-  font-size:16px;
+  font-size:var(--firefly-reading-size,16px);
   line-height:1.92;
   overflow-wrap:anywhere;
 }
@@ -300,7 +300,7 @@ export const prerender = false;
 .markdown-preview li { margin:.28em 0; }
 .markdown-preview blockquote { border-left:3px solid #8fcaa0; margin:1.1em 0; padding:.6em 1em; color:#526257; background:#f6faf6; border-radius:0 8px 8px 0; }
 .markdown-preview hr { border:0; border-top:1px solid #dfe8e0; margin:1.6em 0; }
-.markdown-preview pre { overflow:auto; background:#f5f8f5; border:1px solid #e3ebe4; padding:14px 16px; border-radius:10px; font:13px/1.75 ui-monospace,SFMono-Regular,monospace; tab-size:2; }
+.markdown-preview pre { overflow:auto; background:#f5f8f5; border:1px solid #e3ebe4; padding:14px 16px; border-radius:10px; font:var(--firefly-reading-code-size,13px)/1.75 ui-monospace,SFMono-Regular,monospace; tab-size:2; }
 .markdown-preview code { font:.9em ui-monospace,SFMono-Regular,monospace; background:#f1f5f2; border:1px solid #e8eee9; padding:2px 5px; border-radius:5px; overflow-wrap:anywhere; }
 .markdown-preview pre code { padding:0; border:0; background:transparent; overflow-wrap:normal; }
 .markdown-preview img { display:block; max-width:100%; max-height:520px; height:auto; object-fit:contain; margin:1.1em auto; border-radius:9px; background:#f6f8f6; cursor:zoom-in; }
@@ -315,7 +315,7 @@ export const prerender = false;
   border-color:#cbd9ce;
   background:#fbfdfb;
   color:#28352c;
-  font:14px/1.85 ui-monospace,SFMono-Regular,monospace;
+  font:var(--firefly-reading-source-size,14px)/1.85 ui-monospace,SFMono-Regular,monospace;
   tab-size:2;
   overflow-wrap:normal;
   white-space:pre;
@@ -326,21 +326,82 @@ export const prerender = false;
 }
 @media(max-width:720px) {
  .rich-editor-canvas { min-height:280px; max-height:none; padding:10px; scroll-behavior:auto; }
- .firefly-prosemirror-content { min-height:250px; max-width:100%; font-size:16px; line-height:1.9; }
+ .firefly-prosemirror-content { min-height:250px; max-width:100%; font-size:var(--firefly-reading-size,16px); line-height:1.9; }
  .firefly-prosemirror-content h1,.markdown-preview h1 { font-size:1.65em; }
  .firefly-prosemirror-content h2,.markdown-preview h2 { font-size:1.4em; }
  .firefly-prosemirror-content img,.markdown-preview img { max-height:360px; }
  .rich-editor-toolbar { gap:5px; padding:7px; }
  .rich-editor-toolbar button { min-height:42px; min-width:42px; padding:6px 8px; }
  .rich-editor-help { font-size:12px; }
- .markdown-preview { padding:16px; font-size:16px; }
- .field #body:not([hidden]) { min-height:300px; padding:12px; font-size:13px; }
+ .markdown-preview { padding:16px; font-size:var(--firefly-reading-size,16px); }
+ .field #body:not([hidden]) { min-height:300px; padding:12px; font-size:var(--firefly-reading-source-size,14px); }
 }
 @media(prefers-reduced-motion:reduce) {
  .rich-editor-canvas { scroll-behavior:auto; }
  .firefly-prosemirror-content img { transition:none; }
 }
 
+
+.editor-reading-controls {
+  display:flex;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:7px;
+  margin:0 0 9px;
+  padding:8px 10px;
+  border:1px solid #e1e9e2;
+  border-radius:10px;
+  background:#f9fcf9;
+}
+.editor-reading-controls__label {
+  color:#526257;
+  font-size:12px;
+  font-weight:700;
+  margin-right:2px;
+}
+.editor-reading-controls button {
+  min-width:38px;
+  min-height:34px;
+  padding:5px 9px;
+  border:1px solid #d5e2d7;
+  border-radius:8px;
+  background:#fff;
+  color:#285237;
+  font:inherit;
+  font-size:13px;
+  font-weight:650;
+  cursor:pointer;
+}
+.editor-reading-controls button:hover:not(:disabled) {
+  border-color:#8fcaa0;
+  background:#edf8f0;
+}
+.editor-reading-controls button:focus-visible {
+  outline:2px solid #16834c;
+  outline-offset:2px;
+}
+.editor-reading-controls button:disabled {
+  opacity:.4;
+  cursor:default;
+}
+.editor-reading-controls output {
+  min-width:44px;
+  text-align:center;
+  color:#344d3b;
+  font-size:12px;
+  font-variant-numeric:tabular-nums;
+}
+.editor-reading-controls__hint {
+  margin-left:auto;
+  color:#738276;
+  font-size:11px;
+  line-height:1.5;
+}
+@media(max-width:640px) {
+  .editor-reading-controls { gap:6px; padding:8px; }
+  .editor-reading-controls__hint { flex:1 0 100%; margin-left:0; }
+  .editor-reading-controls button { min-height:40px; min-width:40px; }
+}
 </style></head>
 <body>
 <header><h1>✦ Firefly 管理后台</h1><div style="display:flex;gap:12px;align-items:center"><a href="/" style="color:#16864f;font-size:13px">返回网站 ↗</a><button class="btn" id="logout" type="button">退出登录</button></div></header>
@@ -422,6 +483,14 @@ export const prerender = false;
 <button class="btn active" type="button" id="visualTab" role="tab" aria-selected="true" disabled>可视化编辑器加载中…</button>
 <button class="btn" type="button" id="editorTab" role="tab" aria-selected="false">Markdown 源码</button>
 <button class="btn" type="button" id="previewTab" role="tab" aria-selected="false">预览</button>
+</div>
+<div class="editor-reading-controls" id="editorReadingControls" aria-label="阅读字号设置">
+  <span class="editor-reading-controls__label">阅读字号</span>
+  <button type="button" id="editorReadingSmaller" aria-label="缩小阅读字号" title="缩小字号">A−</button>
+  <output id="editorReadingSizeValue" aria-live="polite">16 px</output>
+  <button type="button" id="editorReadingLarger" aria-label="放大阅读字号" title="放大字号">A+</button>
+  <button type="button" id="editorReadingReset" title="恢复默认字号">默认</button>
+  <span class="editor-reading-controls__hint">只影响当前标签页的显示，不会修改文章内容</span>
 </div>
 <div id="wysiwygPane" class="rich-editor-shell">
   <div class="rich-editor-toolbar" role="toolbar" aria-label="文章格式工具栏">
@@ -1366,10 +1435,65 @@ reset();refresh();loadSettings();
     }
   }, true);
 
+  // Readability controls affect only this browser tab and never edit Markdown content.
+  const readingControls = $("editorReadingControls");
+  if (readingControls) {
+    const minReadingSize = 14;
+    const maxReadingSize = 22;
+    const readingStep = 2;
+    const defaultReadingSize = 16;
+    const readingStorageKey = "firefly-admin-reading-size";
+    const smallerButton = $("editorReadingSmaller");
+    const largerButton = $("editorReadingLarger");
+    const resetButton = $("editorReadingReset");
+    const sizeOutput = $("editorReadingSizeValue");
+    let readingSize = defaultReadingSize;
+
+    const applyReadingSize = (requestedSize, persist = true) => {
+      const numericSize = Number(requestedSize);
+      const normalized = Number.isFinite(numericSize) ? numericSize : defaultReadingSize;
+      readingSize = Math.max(minReadingSize, Math.min(maxReadingSize, normalized));
+      document.documentElement.style.setProperty("--firefly-reading-size", readingSize + "px");
+      document.documentElement.style.setProperty(
+        "--firefly-reading-source-size",
+        Math.max(13, Math.min(18, readingSize - 2)) + "px",
+      );
+      document.documentElement.style.setProperty(
+        "--firefly-reading-code-size",
+        Math.max(12, Math.min(16, readingSize - 3)) + "px",
+      );
+      if (sizeOutput) sizeOutput.textContent = readingSize + " px";
+      if (smallerButton) smallerButton.disabled = readingSize <= minReadingSize;
+      if (largerButton) largerButton.disabled = readingSize >= maxReadingSize;
+      if (persist) {
+        try {
+          sessionStorage.setItem(readingStorageKey, String(readingSize));
+        } catch {
+          // The default readable size still works when storage is unavailable.
+        }
+      }
+    };
+
+    smallerButton?.addEventListener("click", () => applyReadingSize(readingSize - readingStep));
+    largerButton?.addEventListener("click", () => applyReadingSize(readingSize + readingStep));
+    resetButton?.addEventListener("click", () => applyReadingSize(defaultReadingSize));
+
+    let initialReadingSize = defaultReadingSize;
+    try {
+      const savedSize = Number(sessionStorage.getItem(readingStorageKey));
+      if (Number.isFinite(savedSize) && savedSize >= minReadingSize && savedSize <= maxReadingSize) {
+        initialReadingSize = savedSize;
+      }
+    } catch {
+      // Ignore blocked storage and use the default size.
+    }
+    applyReadingSize(initialReadingSize, false);
+  }
+
   // Refresh the filter options after the initial asynchronous article fetch.
   const initialRefresh = refresh;
   refresh = async function() { await initialRefresh(); populateFilters(); render(); };
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=20261018-editor-reading-comfort"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=20261018-editor-reading-controls"></script></body></html>
