@@ -1,15 +1,15 @@
 {
-  "bannerTitle": "Lovely firefly!",
-  "bannerSubtitle": "In Reddened Chrysalis, I Once Rest",
-  "backgroundImage": "",
-  "avatar": "",
-  "nickname": "XiaYe",
-  "bio": "Hello, I'm Xiaohuang",
-  "announcement": "",
-  "githubUrl": "",
-  "showGithub": true,
-  "email": "",
-  "showEmail": true,
-  "backgroundMusic": "",
-  "showSupportAndShare": true
+	"bannerTitle": "Lovely firefly!",
+	"bannerSubtitle": "In Reddened Chrysalis, I Once Rest",
+	"backgroundImage": "",
+	"avatar": "",
+	"nickname": "XiaYe",
+	"bio": "Hello, I'm Xiaohuang",
+	"announcement": "",
+	"githubUrl": "",
+	"showGithub": true,
+	"email": "",
+	"showEmail": true,
+	"backgroundMusic": "",
+	"showSupportAndShare": true
 }
