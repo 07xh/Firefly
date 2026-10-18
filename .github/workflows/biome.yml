@@ -17,4 +17,4 @@ jobs:
         with:
           version: 2.5.15
       - name: Run Biome
-        run: biome ci ./src --reporter=github
+        run: biome ci --config-path=biome.json ./src --reporter=summary
