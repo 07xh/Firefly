@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "../public/admin-visual-preview.js";
+import { describeProtectedSyntax, inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "../public/admin-visual-preview.js";
 
 test("Firefly Badge component renders as a safe visual preview model", () => {
   const model = inspectProtectedMarkdown('前言 <Badge type="tip">新功能</Badge> 后记', "MDX component");
@@ -340,4 +340,16 @@ test("details serializer validates title and body to protect Markdown/MDX", () =
   assert.throws(() => serializeEditableDetails({ title: "", body: "普通文字" }), /标题不能为空/);
   assert.throws(() => serializeEditableDetails({ title: "标题", body: "**加粗**" }), /纯文本/);
   assert.throws(() => serializeEditableDetails({ title: "标题", body: ":::tip nested" }), /纯文本/);
+});
+
+
+test("internal syntax reasons are shown to writers as plain Chinese", () => {
+  assert.equal(describeProtectedSyntax("LaTeX display math"), "数学公式");
+  assert.equal(describeProtectedSyntax("LaTeX inline math"), "含公式的正文");
+  assert.equal(describeProtectedSyntax("Callout with extended Markdown/MDX"), "提示卡片");
+  assert.equal(describeProtectedSyntax("Task list"), "待办清单");
+  assert.equal(describeProtectedSyntax("MDX component"), "特殊内容组件");
+  assert.equal(describeProtectedSyntax("HTML or theme tag"), "特殊版式内容");
+  assert.equal(describeProtectedSyntax("MDX import/export"), "组件引用设置");
+  assert.equal(describeProtectedSyntax("unrecognized internal label"), "特殊内容");
 });
