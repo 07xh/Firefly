@@ -4,6 +4,7 @@ import Comment from "@components/comment/index.astro";
 import Markdown from "@components/common/Markdown.astro";
 import EncryptedPost from "@components/features/EncryptedPost.astro";
 import KatexManager from "@components/features/KatexManager.astro";
+import * as mdxComponents from "@components/firefly-mdx";
 import License from "@components/misc/License.astro";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
@@ -435,7 +436,7 @@ const seriesData = await getSeriesPosts(entry);
       {entry.data.password ? (
         <EncryptedPost password={entry.data.password} slug={entry.id} hint={entry.data.passwordHint}>
           <Markdown class="mb-6 markdown-content onload-animation">
-            <Content />
+            <Content components={mdxComponents} />
           </Markdown>
 
           {/* 打赏按钮 & 分享按钮 */}
@@ -525,7 +526,7 @@ const seriesData = await getSeriesPosts(entry);
       ) : (
         <>
           <Markdown class="mb-6 markdown-content onload-animation">
-            <Content />
+            <Content components={mdxComponents} />
           </Markdown>
 
           {/* 打赏按钮 & 分享按钮 */}

@@ -53,12 +53,12 @@ test("块级公式从开始分隔符到结束分隔符整体保留", () => {
   assert.match(result.markdown, /结束/);
 });
 
-test("MDX 标签、主题提示块保留原始语法，普通正文仍可编辑", () => {
+test("基础提示容器进入可视化解析，MDX 组件仍作为无损保留块", () => {
   const source = [
     "开头正文。",
     "",
     ":::tip",
-    "这段正文仍可编辑。",
+    "这段正文 **可直接编辑**。",
     ":::",
     "",
     "<TabGroup labels={items}>",
@@ -69,13 +69,35 @@ test("MDX 标签、主题提示块保留原始语法，普通正文仍可编辑"
   ].join("\n");
 
   const result = prepareMarkdownForVisualEditing(source);
-  assert.equal(result.records.length, 2);
-  assert.ok(result.records.some(record => record.raw === ":::tip\n这段正文仍可编辑。\n:::"));
+  assert.equal(result.records.length, 1);
   assert.ok(result.records.some(record => record.raw === "<TabGroup labels={items}>\n组件内部文字。\n</TabGroup>"));
-  assert.doesNotMatch(result.markdown, /这段正文仍可编辑/);
+  assert.match(result.markdown, /:::tip\n这段正文 \*\*可直接编辑\*\*。\n:::/);
   assert.doesNotMatch(result.markdown, /组件内部文字/);
   assert.match(result.markdown, /开头正文/);
   assert.match(result.markdown, /结尾正文/);
+});
+
+test("不支持的自定义 directive 仍以原始语法保护，不会被误当作 callout", () => {
+  const raw = ":::spoiler\n秘密内容\n:::";
+  const result = prepareMarkdownForVisualEditing("开头\n\n" + raw + "\n\n结尾");
+  assert.equal(result.records.length, 1);
+  assert.equal(result.records[0].raw, raw);
+  assert.match(result.markdown, /开头/);
+  assert.match(result.markdown, /结尾/);
+});
+
+test("容器内包含 MDX 标签时整体保留，避免 marker 移出容器", () => {
+  const raw = [
+    ":::tip",
+    "说明文字。",
+    '<Badge type="tip">新</Badge>',
+    ":::",
+  ].join("\n");
+  const result = prepareMarkdownForVisualEditing("前言\n\n" + raw + "\n\n后记");
+  assert.equal(result.records.length, 1);
+  assert.equal(result.records[0].raw, raw);
+  assert.match(result.markdown, /前言/);
+  assert.match(result.markdown, /后记/);
 });
 
 test("任务清单整体保护，避免复选框在编辑器往返中丢失", () => {
