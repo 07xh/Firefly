@@ -2242,6 +2242,20 @@ async function loadTiptapModules() {
     }
   }
 
+  function ensureImagePreviewTriggerStyles() {
+    if (document.querySelector("style[data-firefly-image-preview-trigger]")) return;
+    const style = document.createElement("style");
+    style.dataset.fireflyImagePreviewTrigger = "true";
+    style.textContent = [
+      '.firefly-prosemirror-content img[data-firefly-image-preview="true"]{cursor:zoom-in;outline:2px solid transparent;outline-offset:3px;border-radius:4px;transition:outline-color .15s ease,box-shadow .15s ease}',
+      '.firefly-prosemirror-content img[data-firefly-image-preview="true"]:hover{outline-color:#9bd6ae;box-shadow:0 0 0 4px #16834c14}',
+      '.firefly-prosemirror-content img[data-firefly-image-preview="true"]:focus-visible{outline-color:#16834c;box-shadow:0 0 0 4px #16834c22}',
+      '@media(prefers-color-scheme:dark){.firefly-prosemirror-content img[data-firefly-image-preview="true"]:hover{outline-color:#78c992}.firefly-prosemirror-content img[data-firefly-image-preview="true"]:focus-visible{outline-color:#8be0a5}}',
+      '@media(prefers-reduced-motion:reduce){.firefly-prosemirror-content img[data-firefly-image-preview="true"]{transition:none}}',
+    ].join("\n");
+    document.head.append(style);
+  }
+
   function openImagePreview(src, alt = "", title = "") {
     const imageSrc = typeof src === "string" ? src.trim() : "";
     if (!imageSrc) return;
@@ -2565,6 +2579,7 @@ async function loadTiptapModules() {
     const providerName = await loadTiptapModules();
     ensureCalloutStyles();
     ensureBadgeStyles();
+    ensureImagePreviewTriggerStyles();
     status("可视化编辑器模块加载成功（" + providerName + "）。");
     frontmatterPrefix = splitFrontmatter(sourceField.value).prefix;
 
@@ -2578,7 +2593,17 @@ async function loadTiptapModules() {
           dropcursor: false,
         }),
         Markdown.configure({ markedOptions: { gfm: true } }),
-        Image.configure({ inline: false, allowBase64: false }),
+        Image.configure({
+          inline: false,
+          allowBase64: false,
+          // Make editor images discoverable and keyboard-accessible without changing Markdown serialization.
+          HTMLAttributes: {
+            class: "firefly-image-preview-trigger",
+            tabindex: "0",
+            role: "button",
+            "data-firefly-image-preview": "true",
+          },
+        }),
         TableKit,
         createMdxBadgeInline(),
         createCalloutBlock(),
@@ -2598,6 +2623,22 @@ async function loadTiptapModules() {
           if (node.type.name !== "image" || event.button !== 0) return false;
           event.preventDefault();
           openImagePreview(node.attrs.src, node.attrs.alt, node.attrs.title);
+          return true;
+        },
+        handleKeyDown(_view, event) {
+          if (event.key !== "Enter" && event.key !== " ") return false;
+          const target = event.target;
+          if (!(target instanceof HTMLImageElement)
+            || !editorElement.contains(target)
+            || target.getAttribute("data-firefly-image-preview") !== "true") {
+            return false;
+          }
+          event.preventDefault();
+          openImagePreview(
+            target.getAttribute("src") || "",
+            target.getAttribute("alt") || "",
+            target.getAttribute("title") || "",
+          );
           return true;
         },
         handlePaste(_view, event) {
