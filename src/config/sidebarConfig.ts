@@ -1,10 +1,14 @@
-import type { SidebarLayoutConfig } from "../types/sidebarConfig";
 import persistedSettings from "../data/settings.json";
+import type { SidebarLayoutConfig } from "../types/sidebarConfig";
 
 const adminLayoutSettings = (
-  persistedSettings as unknown as {
-    layoutSettings?: { sidebarEnabled?: boolean; sidebarPosition?: "left" | "right" | "both"; tabletSidebar?: "left" | "right" };
-  }
+	persistedSettings as unknown as {
+		layoutSettings?: {
+			sidebarEnabled?: boolean;
+			sidebarPosition?: "left" | "right" | "both";
+			tabletSidebar?: "left" | "right";
+		};
+	}
 ).layoutSettings ?? {};
 
 /**
