@@ -1,5 +1,7 @@
 import type { APIRoute } from "astro";
 
+export const prerender = false;
+
 type WorkflowRun = {
 	head_sha?: string;
 	status?: string;

@@ -2,6 +2,8 @@ import type { APIRoute } from "astro";
 import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
 
+export const prerender = false;
+
 export const POST: APIRoute = async ({ request }) => {
 	try {
 		const input = (await request.json()) as { markdown?: unknown };
