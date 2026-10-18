@@ -76,7 +76,12 @@ jobs:
           } else {
             config.kv_namespaces = [...(config.kv_namespaces ?? []), { binding: "FIREFLY_SESSIONS", id }];
           }
-          if (config.assets) config.assets.binding = config.assets.binding || "ASSETS";
+          if (config.assets) {
+            config.assets.binding = config.assets.binding || "ASSETS";
+            // Authentication middleware must run before static-asset routing on
+            // every URL; the Astro server will fall back to ASSETS for static files.
+            config.assets.run_worker_first = true;
+          }
           if (process.env.ENABLE_CUSTOM_DOMAIN_ROUTE === "true") {
             config.routes = [{ pattern: "0701000.xyz/*", zone_name: "0701000.xyz" }];
             config.workers_dev = false;
