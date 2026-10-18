@@ -541,14 +541,14 @@ export const prerender = false;
 <div id="markdownPreview" class="markdown-preview" hidden><p class="muted">点击“预览”查看当前正文。</p></div>
 </div>
 <label class="check"><input id="draft" type="checkbox" checked> 草稿箱状态（勾选后保存为草稿；取消勾选可保存已发布文章）</label>
-<div class="actions"><button class="btn" type="button" id="checkGitHub">检查 GitHub 写入权限</button><button class="btn" type="submit" id="saveDraft" value="save">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空表单</button></div>
+<div class="actions"><button class="btn" type="button" id="checkGitHub">检查文章保存权限</button><button class="btn" type="submit" id="saveDraft" value="save">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空表单</button></div>
 </form><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿后，文章会保存在草稿箱，不会公开显示。发布文章后，网站会自动更新；页面会显示更新进度。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看 Cloudflare 部署日志 ↗</a></section>
 </div>
 <section id="appearanceTabPanel" role="tabpanel" aria-labelledby="tabAppearance" class="settings-panel min-w-0" hidden>
   <div class="mb-1 text-base font-semibold text-gray-800">全局外观配置</div>
   <p class="mb-5 text-sm leading-6 text-gray-500">
     网站外观设置会自动保存在后台配置中。
-    保存后会提交到 GitHub，并触发 Cloudflare 构建与部署；原有文章管理和登录保护保持不变。
+    保存后，网站会自动更新；原有文章管理和登录保护保持不变。
   </p>
   <form id="settingsForm" class="settings-cards">
 <section class="settings-card" aria-labelledby="appearanceBannerTitle">
@@ -873,7 +873,7 @@ function render(){
 
   del.onclick=async event=>{
    event.stopPropagation();
-   if(!confirm("确定删除“"+a.title+"”？此操作会提交到 GitHub 并触发部署。"))return;
+   if(!confirm("确定删除“"+a.title+"”？删除后文章会从网站移除，网站也会自动更新。"))return;
    del.disabled=true;
    try{
     await api("DELETE",{path:a.path,sha:a.sha});
@@ -891,7 +891,7 @@ function render(){
   list.append(row);
  }
 }
-async function refresh(){try{say("正在读取 GitHub…");articles=await api("GET");render();say("已读取 "+articles.length+" 篇文章")}catch(e){say(e.message,true);$("list").textContent="读取失败，请确认服务端令牌和仓库权限已配置。"}}
+async function refresh(){try{say("正在读取文章列表…");articles=await api("GET");render();say("已读取 "+articles.length+" 篇文章")}catch(e){say("暂时无法读取文章列表，请刷新页面重试。",true);$("list").textContent="读取失败，请刷新页面后重试。"}}
 function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
 function showVisualTab(){
  $("body").hidden=true;$("wysiwygPane").hidden=false;$("markdownPreview").hidden=true;
@@ -1015,12 +1015,12 @@ async function loadSettings(){
  const status=$("settingsStatus");
  $("settingsForm").inert = true;
  updateSettingsDirtyState();
- status.textContent="正在读取全局配置…";status.style.color="#657267";
+ status.textContent="正在读取网站设置…";status.style.color="#657267";
  try{
   const response=await fetch("/api/admin/settings/",{credentials:"same-origin",cache:"no-store"});
   if(response.status===401){goLogin();return}
   const data=await response.json().catch(()=>({error:"配置接口返回无法解析的响应"}));
-  if(!response.ok)throw new Error(data.error||"读取全局配置失败");
+  if(!response.ok)throw new Error("读取网站设置失败，请刷新页面后重试。");
   for(const id of ["bannerTitle","bannerSubtitle","backgroundImage","backgroundColor","avatar","nickname","bio","announcement","githubUrl","email","backgroundMusic","aboutContent","sourceGithubUrl","donationQrCode"]){
    $(id).value=typeof data[id]==="string"?data[id]:"";
   }
@@ -1048,10 +1048,10 @@ async function loadSettings(){
   updateImagePreview();updateAvatarPreview();updateMusicPreview();
   $("settingsForm").inert = false;
   markSettingsSaved();
-  status.textContent="已加载仓库中的配置。";
+  status.textContent="网站设置已加载。";
  }catch(error){
   $("settingsForm").inert = !settingsReady;
-  status.textContent=error instanceof Error?error.message:"读取全局配置失败。";status.style.color="#b42318";
+  status.textContent="读取网站设置失败，请刷新页面后重试。";status.style.color="#b42318";
   updateSettingsDirtyState();
  }
 }
@@ -1060,14 +1060,14 @@ async function watchSettingsDeployment(sha,attempt=0){
   const response=await fetch("/api/admin/deployment-status/?sha="+encodeURIComponent(sha),{credentials:"same-origin",cache:"no-store"});
   if(response.status===401){goLogin();return}
   const data=await response.json().catch(()=>({error:"无法读取部署状态"}));
-  if(!response.ok)throw new Error(data.error||"无法查询部署状态");
-  if(data.status==="success"){$("settingsStatus").textContent="配置已保存，正式网站部署成功。";$("settingsStatus").style.color="#12884f";return}
-  if(data.status==="failure"){$("settingsStatus").textContent="配置已写入 GitHub，但部署失败，请查看工作流日志。";$("settingsStatus").style.color="#b42318";return}
-  if(attempt>=20){$("settingsStatus").textContent="配置已保存到 GitHub，部署仍未确认；可稍后检查 Actions。";return}
-  $("settingsStatus").textContent="配置已保存，正在等待正式网站构建与部署…";
+  if(!response.ok)throw new Error("暂时无法确认网站是否更新。");
+  if(data.status==="success"){$("settingsStatus").textContent="网站设置已保存并生效。";$("settingsStatus").style.color="#12884f";return}
+  if(data.status==="failure"){$("settingsStatus").textContent="网站设置已保存，但网站更新失败。请查看更新记录。";$("settingsStatus").style.color="#b42318";return}
+  if(attempt>=20){$("settingsStatus").textContent="设置已保存，但网站是否更新暂未确认。可以查看更新记录。";return}
+  $("settingsStatus").textContent="网站设置已保存，正在更新网站…";
   setTimeout(()=>watchSettingsDeployment(sha,attempt+1),12000);
  }catch(error){
-  if(attempt>=20){$("settingsStatus").textContent="配置已保存，但暂时无法确认部署状态："+(error instanceof Error?error.message:"未知错误");return}
+  if(attempt>=20){$("settingsStatus").textContent="网站设置已保存，但暂时无法确认网站是否更新。";return}
   setTimeout(()=>watchSettingsDeployment(sha,attempt+1),12000);
  }
 }
@@ -1082,13 +1082,13 @@ $("date").addEventListener("change", () => {
 });
 $("discardSettings").onclick=async()=>{
  if(!isSettingsDirty())return;
- if(!confirm("放弃未保存的全局配置修改，并重新读取 GitHub 中已保存的配置吗？"))return;
+ if(!confirm("放弃尚未保存的网站设置，并重新读取上次保存的内容吗？"))return;
  await loadSettings();
 };
 $("settingsForm").addEventListener("submit",async event=>{
  event.preventDefault();
  const status=$("settingsStatus");
- if(!settingsReady||settingsSaving){status.textContent="配置尚未成功读取，已阻止保存，避免覆盖仓库中的现有设置。";status.style.color="#b42318";return}
+ if(!settingsReady||settingsSaving){status.textContent="网站设置还没有成功加载，因此暂时不能保存，以免覆盖现有内容。";status.style.color="#b42318";return}
  const values={
   bannerTitle:$("bannerTitle").value,
   bannerSubtitle:$("bannerSubtitle").value,
@@ -1126,21 +1126,21 @@ $("settingsForm").addEventListener("submit",async event=>{
    gridCoverFullWidth:$("layoutGridCoverFullWidth").checked
   }
  };
- if(values.backgroundColor&&!/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(values.backgroundColor)){status.textContent="背景颜色只支持 #RGB 或 #RRGGBB；留空可恢复主题默认颜色。";status.style.color="#b42318";$("backgroundColor").focus();return}
+ if(values.backgroundColor&&!/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(values.backgroundColor)){status.textContent="颜色格式不正确。请重新选择颜色，或清空后恢复主题默认颜色。";status.style.color="#b42318";$("backgroundColor").focus();return}
  for(const [key,label] of [["backgroundImage","背景图片"],["avatar","头像"],["githubUrl","GitHub 链接"],["backgroundMusic","背景音乐"],["sourceGithubUrl","文章原文链接"],["donationQrCode","打赏二维码图片"]]){
   if(values[key]&&!checkedExternalUrl(values[key])){status.textContent=label+"请填写完整的 HTTP/HTTPS 链接。";status.style.color="#b42318";$(key).focus();return}
  }
  if(values.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)){status.textContent="请填写有效的邮箱地址。";status.style.color="#b42318";$("email").focus();return}
- settingsSaving=true;updateSettingsDirtyState();status.style.color="#657267";status.textContent="正在保存到 GitHub…";
+ settingsSaving=true;updateSettingsDirtyState();status.style.color="#657267";status.textContent="正在保存网站设置…";
  try{
   const response=await fetch("/api/admin/settings/",{method:"PUT",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(values)});
   if(response.status===401){goLogin();return}
   const data=await response.json().catch(()=>({error:"保存接口返回无法解析的响应"}));
   if(!response.ok)throw new Error(data.error||"保存全局配置失败");
   markSettingsSaved();
-  status.textContent="配置已写入 GitHub，正在触发部署…";
+  status.textContent="网站设置已保存，正在更新网站…";
   if(data.commitSha)watchSettingsDeployment(data.commitSha);
-  else status.textContent="配置已保存，但接口未返回提交号，暂时无法跟踪部署。";
+  else status.textContent="设置已保存，但暂时无法确认网站是否更新。";
  }catch(error){
   status.textContent=error instanceof Error?error.message:"保存全局配置失败。";status.style.color="#b42318";
  }finally{settingsSaving=false;updateSettingsDirtyState()}
@@ -1162,7 +1162,7 @@ $("visualTab").onclick=showVisualTab;$("editorTab").onclick=showEditorTab;$("pre
 // Save is handled by the single four-stage handler below. Keeping one submit
 // listener prevents duplicate GitHub writes from competing event handlers.
 
-$("delete").onclick=async()=>{if(!selected||!confirm("确定删除 "+selected.title+"？此操作会提交到 GitHub。"))return;$("delete").disabled=true;try{await api("DELETE",{path:selected.path,sha:selected.sha});say("文章已删除");reset();await refresh()}catch(e){say(e.message,true)}finally{$("delete").disabled=false}};
+$("delete").onclick=async()=>{if(!selected||!confirm("确定删除“"+selected.title+"”？删除后文章会从网站移除。"))return;$("delete").disabled=true;try{await api("DELETE",{path:selected.path,sha:selected.sha});say("文章已删除");reset();await refresh()}catch(e){say(e.message,true)}finally{$("delete").disabled=false}};
 reset();refresh();loadSettings();
 /* Firefly admin editor enhancements: image paste/drop, filters, accessible delete modal, deployment stages. */
 (() => {
