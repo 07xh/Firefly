@@ -14,6 +14,8 @@ type GitHubEntry = {
 	url?: string;
 };
 
+export const prerender = false;
+
 const ROOT = "src/content/posts/";
 const headers = (token: string) => ({
 	Accept: "application/vnd.github+json",
