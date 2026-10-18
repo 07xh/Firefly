@@ -1,5 +1,4 @@
 import { defineMiddleware } from "astro:middleware";
-import { env as workerEnv } from "cloudflare:workers";
 import {
 	getSessionToken,
 	type SessionKV,
@@ -121,6 +120,9 @@ export const onRequest = defineMiddleware(async (context, next) => {
 			return redirectToLogin(context);
 		}
 
+		// Load Cloudflare bindings only when a protected request needs session validation.
+		// A top-level cloudflare:workers import breaks Astro prerendering.
+		const { env: workerEnv } = await import("cloudflare:workers");
 		const sessions = (workerEnv as unknown as { FIREFLY_SESSIONS?: SessionKV })
 			.FIREFLY_SESSIONS;
 		if (!sessions) {
