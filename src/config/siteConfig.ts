@@ -1,6 +1,20 @@
 import type { SiteConfig } from "@/types/siteConfig";
+import persistedSettings from "../data/settings.json";
 import { resolvePageToggles } from "../utils/page-toggle-utils";
 import { resolveSiteLang } from "../utils/site-config-utils";
+
+const adminLayoutSettings = (
+	persistedSettings as unknown as {
+		layoutSettings?: {
+			postListMode?: "list" | "grid";
+			mobilePostListMode?: "list" | "grid";
+			coverPosition?: "left" | "right";
+			gridMasonry?: boolean;
+			gridColumnWidth?: number;
+			gridCoverFullWidth?: boolean;
+		};
+	}
+).layoutSettings ?? {};
 
 // 定义站点语言
 // 语言代码，例如：'zh_CN', 'zh_TW', 'en', 'ja', 'ru', 'ko'。
@@ -159,12 +173,12 @@ export const siteConfig: SiteConfig = {
 	// ── 文章列表布局配置 ──────────────────────────────────
 	postListLayout: {
 		// 默认布局模式："list" 列表模式（单列布局），"grid" 网格模式（多列布局）
-		defaultMode: "list",
+		defaultMode: adminLayoutSettings.postListMode ?? "list",
 		// 移动端默认布局模式，不设置则跟随 defaultMode
-		mobileDefaultMode: "grid",
+		mobileDefaultMode: adminLayoutSettings.mobilePostListMode ?? "grid",
 		// 列表模式下封面图显示在哪一侧："right" 右侧，"left" 左侧
 		// 网格模式的封面固定在卡片顶部，不受此项影响
-		coverPosition: "right",
+		coverPosition: adminLayoutSettings.coverPosition ?? "right",
 		// 文章简介显示行数，设为 0 则不截断
 		descriptionLines: 2,
 		// 文章卡片底部统计和发布日期是否显示图标
@@ -205,13 +219,13 @@ export const siteConfig: SiteConfig = {
 		// 网格布局配置，仅在 defaultMode 为 "grid" 或允许切换布局时生效
 		grid: {
 			// 是否开启瀑布流布局，同时有封面图和无封面图的混合文章推荐开启
-			masonry: false,
+			masonry: adminLayoutSettings.gridMasonry ?? false,
 			// 网格模式卡片最小宽度(px)，浏览器根据容器宽度自动计算列数
-			columnWidth: 320,
+			columnWidth: adminLayoutSettings.gridColumnWidth ?? 320,
 			// 网格模式封面是否撑满卡片贴边
 			// true：封面顶到卡片左右和上边缘，只有上面两角是圆角
 			// false：封面按卡片内边距内缩，上、左、右留出间距，四角都是圆角
-			coverFullWidth: false,
+			coverFullWidth: adminLayoutSettings.gridCoverFullWidth ?? false,
 		},
 	},
 
