@@ -3,7 +3,9 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { getCategoryUrl } from "@utils/url-utils";
 
-function scheduledTimestamp(value: Date | string | undefined): number | undefined {
+function scheduledTimestamp(
+	value: Date | string | undefined,
+): number | undefined {
 	if (value === undefined) return undefined;
 	const timestamp = value instanceof Date ? value.getTime() : Date.parse(value);
 	return Number.isFinite(timestamp) ? timestamp : undefined;
@@ -14,7 +16,8 @@ function scheduledTimestamp(value: Date | string | undefined): number | undefine
 async function getRawSortedPosts() {
 	const now = Date.now();
 	const allBlogPosts = await getCollection("posts", ({ data }) => {
-		if (!import.meta.env.PROD) return true; // Development is a preview environment.
+		// Development is a preview environment.
+		if (!import.meta.env.PROD) return true;
 		if (data.draft === true) return false;
 		if (data.date === undefined) return true;
 		const scheduledAt = scheduledTimestamp(data.date);
