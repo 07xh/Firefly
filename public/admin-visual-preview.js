@@ -62,6 +62,7 @@ export function inspectProtectedMarkdown(raw, reason = "") {
 
   const badgePattern = /<Badge\b([^>]*)>([\s\S]*?)<\/Badge\s*>/g;
   if (badgePattern.test(source)) {
+    badgePattern.lastIndex = 0;
     const segments = [];
     let cursor = 0;
     for (const match of source.matchAll(badgePattern)) {
