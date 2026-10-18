@@ -724,10 +724,16 @@ $("editorTab").onclick=showEditorTab;$("previewTab").onclick=renderMarkdownPrevi
 $("editor").onsubmit=async e=>{
  e.preventDefault();
  const mode=e.submitter?.value==="publish"?"publish":"save";
- const date=fromBeijingDateTimeLocal($("date").value);
- if($("date").value&&!date){say("定时发布时间格式无效，请重新选择。",true);return}
+ const selectedDate=$("date").value;
+ const parsedDate=fromBeijingDateTimeLocal(selectedDate);
+ if(selectedDate&&!parsedDate){say("定时发布时间格式无效，请重新选择。",true);return}
+ if(mode==="publish"&&!confirm("直接发布会立即公开文章并清除定时发布时间，确定继续吗？"))return;
+ if(mode==="publish"&&selectedDate){
+  $("date").value="";
+  $("published").value=todayInBeijing();
+ }
+ const date=mode==="publish"?"":parsedDate;
  const isDraft=mode==="publish"?false:$("draft").checked;
- if(mode==="publish"&&!confirm("直接发布将写入 GitHub 并触发 Cloudflare 部署，确定继续吗？"))return;
  if(mode==="save"&&!isDraft&&(!selected||selected.draft)&&!confirm("当前草稿开关已关闭，保存后文章可能公开显示。确定继续吗？"))return;
  $("draft").checked=isDraft;
  const metadata={title:$("title").value.trim(),published:$("published").value,date,password:$("articlePassword").value,passwordHint:$("passwordHint").value,category:$("category").value,description:$("description").value,tags:$("tags").value.split(",").map(x=>x.trim()).filter(Boolean),draft:isDraft};
