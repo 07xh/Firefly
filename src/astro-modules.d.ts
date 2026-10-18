@@ -9,3 +9,7 @@ declare module "*.astro" {
 	const component: AstroComponentFactory;
 	export default component;
 }
+
+declare module "cloudflare:workers" {
+	export const env: Record<string, unknown>;
+}
