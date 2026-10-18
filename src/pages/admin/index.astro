@@ -131,6 +131,13 @@ export const prerender = false;
 .rich-editor-toolbar button:hover,.rich-editor-toolbar button.is-active { background:#e7f7ed; border-color:#8dc9a1; color:#087a43; }
 .rich-editor-toolbar button:disabled { opacity:.55; cursor:wait; }
 .rich-editor-toolbar .toolbar-divider { width:1px; height:25px; background:#dce5dd; margin:0 2px; }
+.rich-editor-toolbar-group { display:flex; flex:1 1 auto; flex-wrap:wrap; align-items:center; gap:5px; max-width:100%; border:1px solid #dce5dd; border-radius:10px; background:#f0f7f1; padding:3px; }
+.rich-editor-toolbar-group > summary { display:inline-flex; align-items:center; gap:6px; min-height:36px; padding:6px 10px; border:1px solid #dce5dd; border-radius:8px; background:#fff; color:#35443a; font-size:12px; font-weight:650; cursor:pointer; list-style:none; }
+.rich-editor-toolbar-group > summary::-webkit-details-marker { display:none; }
+.rich-editor-toolbar-group > summary::after { content:"＋"; font-size:11px; color:#63816b; }
+.rich-editor-toolbar-group[open] > summary::after { content:"−"; }
+.rich-editor-toolbar-group > summary:focus-visible { outline:2px solid #16834c; outline-offset:2px; }
+.rich-editor-toolbar-group[open] > summary { background:#e7f7ed; border-color:#8dc9a1; }
 .table-editor-tools { display:flex; flex-wrap:wrap; align-items:center; gap:5px; padding:3px 5px; border:1px solid #dce7de; border-radius:10px; background:#f0f7f1; }
 .table-editor-tools[hidden] { display:none!important; }
 .table-editor-tools button { min-height:32px; padding:5px 8px; font-size:11px; }
@@ -333,14 +340,8 @@ export const prerender = false;
  .firefly-prosemirror-content img,.markdown-preview img { max-height:360px; }
  .rich-editor-toolbar { gap:5px; padding:7px; }
  .rich-editor-toolbar button { min-height:42px; min-width:42px; padding:6px 8px; }
- .rich-editor-toolbar-group { display:flex; flex:0 0 auto; flex-wrap:wrap; align-items:center; gap:5px; max-width:100%; border:1px solid #dce5dd; border-radius:10px; background:#f0f7f1; padding:3px; }
- .rich-editor-toolbar-group > summary { display:inline-flex; align-items:center; gap:6px; min-height:42px; padding:6px 10px; border:1px solid #dce5dd; border-radius:8px; background:#fff; color:#35443a; font-size:12px; font-weight:650; cursor:pointer; list-style:none; }
- .rich-editor-toolbar-group > summary::-webkit-details-marker { display:none; }
- .rich-editor-toolbar-group > summary::after { content:"＋"; font-size:11px; color:#63816b; }
- .rich-editor-toolbar-group[open] > summary::after { content:"−"; }
- .rich-editor-toolbar-group > summary:focus-visible { outline:2px solid #16834c; outline-offset:2px; }
+ .rich-editor-toolbar-group > summary { min-height:42px; }
  .rich-editor-toolbar-group[open] { flex:1 1 100%; }
- .rich-editor-toolbar-group[open] > summary { background:#e7f7ed; border-color:#8dc9a1; }
  .table-editor-tools { flex:1 1 100%; }
  .rich-editor-help { font-size:12px; }
  .markdown-preview { padding:16px; font-size:var(--firefly-reading-size,16px); }
