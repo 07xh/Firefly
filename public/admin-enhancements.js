@@ -90,7 +90,7 @@
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
-    const row = button.closest(".article-row");
+    const row = button.closest(".group");
     const path = row?.querySelectorAll("span")?.[1]?.textContent?.trim();
     const article = button.id === "delete" ? selected : articles.find(a => a.path === path);
     if (!article || !await confirmDelete((article.title || "未命名文章") + " · " + article.path)) return;
