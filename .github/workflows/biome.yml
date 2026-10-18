@@ -18,8 +18,3 @@ jobs:
           version: 2.5.15
       - name: Run Biome
         run: biome ci --config-path=biome.json ./src --reporter=summary
-      - name: Temporary formatter output for upload handler
-        if: always()
-        run: |
-          biome format --config-path=biome.json --write ./src/pages/api/admin/upload.ts
-          node -e "const fs=require('node:fs'); console.log('UPLOAD_BIOME_FORMATTED_B64='+Buffer.from(fs.readFileSync('./src/pages/api/admin/upload.ts')).toString('base64'))"
