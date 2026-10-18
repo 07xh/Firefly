@@ -131,6 +131,14 @@ export const prerender = false;
 .rich-editor-toolbar button:hover,.rich-editor-toolbar button.is-active { background:#e7f7ed; border-color:#8dc9a1; color:#087a43; }
 .rich-editor-toolbar button:disabled { opacity:.55; cursor:wait; }
 .rich-editor-toolbar .toolbar-divider { width:1px; height:25px; background:#dce5dd; margin:0 2px; }
+.table-editor-tools { display:flex; flex-wrap:wrap; align-items:center; gap:5px; padding:3px 5px; border:1px solid #dce7de; border-radius:10px; background:#f0f7f1; }
+.table-editor-tools[hidden] { display:none!important; }
+.table-editor-tools button { min-height:32px; padding:5px 8px; font-size:11px; }
+.table-editor-tools button[data-editor-action="deleteRow"],.table-editor-tools button[data-editor-action="deleteColumn"],.table-editor-tools button[data-editor-action="deleteTable"] { color:#9e2f2f; border-color:#ead0d0; }
+@media(max-width:640px){.rich-editor-toolbar{gap:5px;padding:7px}.table-editor-tools{flex:1 1 100%;order:8}.table-editor-tools .toolbar-divider{display:none}.table-editor-tools button{flex:1 1 auto;min-width:72px}}
+.firefly-prosemirror-content .tableWrapper { max-width:100%; overflow-x:auto; margin:1em 0; }
+.firefly-prosemirror-content table { width:100%; min-width:420px; border-collapse:collapse; table-layout:fixed; }
+.firefly-prosemirror-content th,.firefly-prosemirror-content td { min-width:90px; overflow-wrap:anywhere; }
 .rich-editor-canvas { min-height:360px; max-height:72vh; overflow:auto; padding:18px; color:#202820; }
 .firefly-prosemirror-content { min-height:320px; outline:none; font-size:15px; line-height:1.85; overflow-wrap:anywhere; }
 .firefly-prosemirror-content > * { margin:0 0 .85em; }
@@ -266,7 +274,18 @@ export const prerender = false;
     <button type="button" data-editor-action="unlink" title="移除链接">取消链接</button>
     <button type="button" id="wysiwygUpload" title="上传图片">图片</button>
     <input type="file" id="wysiwygFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
-    <button type="button" data-editor-action="table" title="插入三行三列表格">表格</button>
+    <button type="button" data-editor-action="table" title="插入三行三列表格">插入表格</button>
+    <div id="tableEditorTools" class="table-editor-tools" role="group" aria-label="表格编辑工具" hidden>
+      <span class="toolbar-divider" aria-hidden="true"></span>
+      <button type="button" data-editor-action="addRowBefore" title="在当前行上方插入一行">上方加行</button>
+      <button type="button" data-editor-action="addRowAfter" title="在当前行下方插入一行">下方加行</button>
+      <button type="button" data-editor-action="addColumnBefore" title="在当前列左侧插入一列">左侧加列</button>
+      <button type="button" data-editor-action="addColumnAfter" title="在当前列右侧插入一列">右侧加列</button>
+      <button type="button" data-editor-action="toggleHeaderRow" title="将第一行切换为表头或普通行">切换表头</button>
+      <button type="button" data-editor-action="deleteRow" title="删除当前所在行">删除当前行</button>
+      <button type="button" data-editor-action="deleteColumn" title="删除当前所在列">删除当前列</button>
+      <button type="button" data-editor-action="deleteTable" title="删除整张表格">删除表格</button>
+    </div>
     <span class="toolbar-divider" aria-hidden="true"></span>
     <button type="button" data-editor-action="undo" title="撤销">撤销</button>
     <button type="button" data-editor-action="redo" title="重做">重做</button>
@@ -1180,4 +1199,4 @@ reset();refresh();loadSettings();
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=20261018-details-editor"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=20261018-table-editing-toolbar"></script></body></html>
