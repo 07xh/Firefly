@@ -127,7 +127,9 @@ export const GET: APIRoute = async ({ url }) => {
 		}
 
 		const extension = path.split("/").at(-1)?.split(".").pop()?.toLowerCase() || "";
-		return new Response(bytes, {
+		const body = new ArrayBuffer(bytes.byteLength);
+		new Uint8Array(body).set(bytes);
+		return new Response(body, {
 			status: 200,
 			headers: {
 				"content-type": IMAGE_TYPES[extension],
