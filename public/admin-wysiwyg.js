@@ -2844,6 +2844,23 @@ async function loadTiptapModules() {
       case "rule": chain.setHorizontalRule().run(); break;
       case "undo": chain.undo().run(); break;
       case "redo": chain.redo().run(); break;
+      case "details": {
+        const raw = "<details>\n<summary>更多信息</summary>\n在这里填写补充内容。\n</details>";
+        const inserted = editor.chain().focus().insertContent({
+          type: "protectedMarkdownBlock",
+          attrs: {
+            marker: createNewProtectedMarker(),
+            raw,
+            reason: "HTML details",
+          },
+        }).run();
+        if (!inserted) {
+          status("暂时无法插入折叠内容，请把光标放在正文中再试。", true);
+          return;
+        }
+        status("已插入折叠内容。点击内容卡片上的“修改可展开内容”可以编辑标题和正文。");
+        break;
+      }
       case "taskList": {
         const raw = "- [ ] 待办事项";
         const inserted = editor.chain().focus().insertContent({
