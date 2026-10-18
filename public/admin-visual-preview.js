@@ -433,13 +433,13 @@ export function serializeEditableStepTimeline(model, values) {
   const componentName = model?.kind === "timeline" ? "Timeline" : "Steps";
   const childName = componentName === "Timeline" ? "TimelineItem" : "StepItem";
   const items = Array.isArray(values) ? values : [];
-  if (!items.length || items.length > 30) throw new Error("流程项目数量必须为 1 到 30 项。");
+  if (!items.length || items.length > 30) throw new Error("请保留 1 到 30 个步骤或时间点。");
   const allowedTypes = new Set(["default", "tip", "note", "important", "warning", "caution"]);
   const allowedIcons = new Set(["", "star", "rocket", "git", "flag", "book", "heart", "zap", "bug", "tag", "calendar", "code", "edit"]);
   const attribute = (name, value) => {
     const text = String(value ?? "").trim();
     if (!text) return "";
-    if (text.length > 160 || /[<>{}"\r\n]/.test(text)) throw new Error(name + " 不能包含标签、表达式、引号或换行。");
+    if (text.length > 160 || /[<>{}"\r\n]/.test(text)) throw new Error(name + "请使用简短的普通文字，不要加入特殊符号或换行。");
     return " " + name + '="' + text.replace(/&/g, "&amp;") + '"';
   };
   const lines = ["<" + componentName + ">"];
@@ -448,10 +448,10 @@ export function serializeEditableStepTimeline(model, values) {
     const text = String(item.text || "").trim();
     const type = String(item.type || "default");
     const icon = String(item.icon || "");
-    if (!isSafeStructuredText(title, 160)) throw new Error("每一项都需要安全的纯文字标题。");
-    if (!isSafeStructuredText(text, 500)) throw new Error("正文不能为空，且暂不支持嵌套 Markdown/MDX 符号。");
-    if (!allowedTypes.has(type)) throw new Error("不支持的项目颜色类型。");
-    if (!allowedIcons.has(icon)) throw new Error("不支持的图标名称。");
+    if (!isSafeStructuredText(title, 160)) throw new Error("请为每一项填写标题，使用普通文字即可。");
+    if (!isSafeStructuredText(text, 500)) throw new Error("正文不能为空；复杂排版请到高级模式修改，以免格式丢失。");
+    if (!allowedTypes.has(type)) throw new Error("请选择一种可用的颜色样式。");
+    if (!allowedIcons.has(icon)) throw new Error("图标名称不在可选范围内，请选择其他图标。");
     let attrs = "";
     if (componentName === "Timeline") attrs += attribute("date", item.date);
     attrs += attribute("title", title);
@@ -466,9 +466,9 @@ export function serializeEditableStepTimeline(model, values) {
 
 /** Serializes only literal-label TabGroup components whose content is fenced code. */
 export function serializeEditableTabGroup(model, values) {
-  if (model?.kind !== "tabs") throw new Error("只能保存标签页组件。");
+  if (model?.kind !== "tabs") throw new Error("当前内容不是可编辑的分组，请重新选择。");
   const items = Array.isArray(values) ? values : [];
-  if (!items.length || items.length > 20) throw new Error("标签页数量必须为 1 到 20 项。");
+  if (!items.length || items.length > 20) throw new Error("分组数量请保持在 1 到 20 个之间。");
   const labels = [];
   const blocks = [];
   let totalLength = 0;
@@ -476,11 +476,11 @@ export function serializeEditableTabGroup(model, values) {
     const title = String(item.title ?? "").trim();
     const language = String(item.language ?? "").trim();
     const code = String(item.text ?? "").replace(/\r\n/g, "\n");
-    if (!isSafeTabGroupLabel(title)) throw new Error("标签名称不能为空，且不能包含引号、括号、标签或换行。");
-    if (!/^[A-Za-z0-9+#.-]{0,32}$/.test(language)) throw new Error("代码语言只允许字母、数字、+、#、点和连字符，最长 32 个字符。");
-    if (code.length > 50000 || code.includes("\0")) throw new Error("单个代码面板最多 50000 个字符，且不能包含空字符。");
+    if (!isSafeTabGroupLabel(title)) throw new Error("标签名称不能为空；请避免使用引号或换行。");
+    if (!/^[A-Za-z0-9+#.-]{0,32}$/.test(language)) throw new Error("代码语言请使用字母、数字或常见符号，最多 32 个字符。");
+    if (code.length > 50000 || code.includes("\0")) throw new Error("单个示例内容最多 50000 个字符。");
     totalLength += title.length + language.length + code.length;
-    if (totalLength > 150000) throw new Error("标签页内容总长度不能超过 150000 个字符。");
+    if (totalLength > 150000) throw new Error("所有分组内容合计不能超过 150000 个字符。");
     labels.push(title);
     let longestFence = 0;
     for (const run of code.matchAll(/\x60+/g)) longestFence = Math.max(longestFence, run[0].length);
@@ -493,26 +493,26 @@ export function serializeEditableTabGroup(model, values) {
 
 /** Serializes only simple text callouts; formatted or nested bodies remain protected. */
 export function serializeEditableCallout(model, values) {
-  if (model?.kind !== "callout") throw new Error("只能保存提示容器。");
+  if (model?.kind !== "callout") throw new Error("当前内容不能按提示卡片保存，请重新选择。");
   const type = String(values?.type ?? model.type ?? "").toLowerCase();
   const title = String(values?.title ?? "").trim();
   const body = String(values?.body ?? "").replace(/\r\n/g, "\n").trim();
-  if (!SAFE_CALLOUT_TYPES.has(type)) throw new Error("请选择有效的提示容器类型。");
-  if (!isSafeCalloutTitle(title, true)) throw new Error("标题不能包含 Markdown 强调、标签、表达式或换行。");
-  if (!isSafeCalloutBody(body)) throw new Error("正文必须是纯文本；列表、标题、Markdown 格式和嵌套组件仍需使用源码编辑。");
+  if (!SAFE_CALLOUT_TYPES.has(type)) throw new Error("请选择有效的提示样式。");
+  if (!isSafeCalloutTitle(title, true)) throw new Error("标题请使用一行普通文字，不要加入特殊格式符号。");
+  if (!isSafeCalloutBody(body)) throw new Error("正文必须是纯文本；复杂排版请到高级模式修改，以免格式丢失。");
   return ":::" + type + (title ? "[" + title + "]" : "") + "\n" + body + "\n:::";
 }
 
 
 export function serializeEditableTaskList(values) {
   const items = Array.isArray(values) ? values : [];
-  if (!items.length || items.length > 100) throw new Error("待办项目数量必须为 1 到 100 项。");
+  if (!items.length || items.length > 100) throw new Error("待办事项数量请保持在 1 到 100 项之间。");
   let totalLength = 0;
   const lines = items.map(item => {
     const text = String(item?.text ?? "").trim();
-    if (!isSafeTaskListText(text)) throw new Error("每一项都需要安全的纯文字，不能包含 Markdown/MDX 格式符号或换行。");
+    if (!isSafeTaskListText(text)) throw new Error("每一项都需要填写一行纯文字；复杂排版请到高级模式修改。");
     totalLength += text.length;
-    if (totalLength > 50000) throw new Error("待办清单总长度不能超过 50000 个字符。");
+    if (totalLength > 50000) throw new Error("整份待办清单不能超过 50000 个字符。");
     return "- [" + (item?.checked ? "x" : " ") + "] " + text;
   });
   return lines.join("\n");
@@ -523,7 +523,7 @@ export function serializeEditableTaskList(values) {
 export function serializeEditableDetails(values) {
   const title = String(values?.title ?? "").trim();
   const body = String(values?.body ?? "").replace(/\r\n/g, "\n").trim();
-  if (!isSafeDetailsTitle(title)) throw new Error("折叠区标题不能为空，且不能包含 Markdown/MDX 格式符号。");
-  if (!isSafeDetailsBody(body, true)) throw new Error("正文需要是纯文本；格式化文本、列表、HTML、嵌套组件和空行请使用源码编辑。");
+  if (!isSafeDetailsTitle(title)) throw new Error("折叠区标题不能为空，请使用普通文字。");
+  if (!isSafeDetailsBody(body, true)) throw new Error("正文需要是纯文本；复杂排版或分段请到高级模式修改，以免格式丢失。");
   return "<details>\n<summary>" + title + "</summary>" + (body ? "\n" + body + "\n" : "\n") + "</details>";
 }
