@@ -1,5 +1,4 @@
 ---
-export const prerender = true;
 import { render } from "astro:content";
 import Markdown from "@components/common/Markdown.astro";
 import { Icon } from "astro-icon/components";
@@ -21,6 +20,8 @@ import {
 	removeFileExtension,
 	url,
 } from "@/utils/url-utils";
+
+export const prerender = true;
 
 // 检查页面是否启用
 if (!siteConfig.pages.projects) {
