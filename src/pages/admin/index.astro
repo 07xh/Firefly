@@ -232,7 +232,7 @@ export const prerender = false;
 </section>
 <section class="min-w-0 rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm"><h2 id="formTitle" style="font-size:16px;margin:0 0 16px">新建文章</h2><form id="editor">
 <div class="field"><label for="title">标题 *</label><input id="title" required maxlength="200"></div>
-<div class="grid"><div class="field"><label for="slug">文件名 *</label><input id="slug" required pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,79}" placeholder="my-post"></div><div class="field"><label for="published">展示发布日期 *</label><input id="published" type="date" required></div></div>
+<div class="grid"><div class="field"><label for="slug">文件名 *</label><input id="slug" required placeholder="my-post"></div><div class="field"><label for="published">展示发布日期 *</label><input id="published" type="date" required></div></div>
 <div class="grid"><div class="field"><label for="date">定时发布时间（北京时间）</label><input id="date" type="datetime-local" step="60"><small class="muted">留空表示立即生效；填写未来时间后，系统会自动安排重建。</small></div><div class="field"><label for="articlePassword">访问密码（可选）</label><input id="articlePassword" type="password" maxlength="200" autocomplete="new-password" placeholder="留空则不启用密码保护"><small class="muted">输入后，前台将显示密码解锁页面。</small></div></div>
 <div class="field"><label for="passwordHint">密码提示（可选）</label><input id="passwordHint" maxlength="120" placeholder="例如：课程名称"></div>
 <p class="muted" style="color:#b42318">安全提醒：当前 GitHub 仓库是公开的，Markdown 原文和 password 字段都可能被直接读取。现有密码保护只加密构建后的网页，不能保护公开仓库中的原文和密码；不要在此保存真正机密的内容。</p>
@@ -1146,7 +1146,7 @@ reset();refresh();loadSettings();
     const rawSchedule = $("date").value.trim();
     let date = mode === "publish" ? "" : fromBeijingDateTimeLocal(rawSchedule);
     if (!title || title.length > 200) { say("阶段 1/4：标题不能为空且最多 200 个字符。", true); $("title").focus(); return; }
-    if (!selected && !/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(slug)) { say("阶段 1/4：文件名格式不正确。", true); $("slug").focus(); return; }
+    if (!selected && !/^[\p{L}\p{N}][\p{L}\p{N}_-]{0,79}$/u.test(slug)) { say("阶段 1/4：文件名须以字母或数字开头，且仅包含字母、数字、连字符或下划线；支持中文。", true); $("slug").focus(); return; }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(published) || Number.isNaN(Date.parse(published + "T00:00:00Z"))) { say("阶段 1/4：请选择有效的发布日期。", true); $("published").focus(); return; }
     if (rawSchedule && mode !== "publish" && !date) { say("阶段 1/4：定时发布时间无效，请重新选择。", true); $("date").focus(); return; }
     if ($("body").value.length > 500000) { say("阶段 1/4：正文超过 500 KB 限制。", true); return; }
