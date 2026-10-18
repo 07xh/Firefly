@@ -64,6 +64,10 @@ export const POST: APIRoute = async ({ request }) => {
     if (!token) return json({ error: "FIREFLY_CONTENTS_TOKEN 尚未配置。" }, 503);
     if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) return json({ error: "仓库配置不合法。" }, 503);
 
+    const contentLength = request.headers.get("Content-Length");
+    if (contentLength && (!/^\\d+$/.test(contentLength) || Number(contentLength) > 5 * 1024 * 1024)) {
+      return json({ error: "上传请求超过 5 MiB 限制。" }, 413);
+    }
     const form = await request.formData();
     const value = form.get("file");
     if (!(value instanceof File)) return json({ error: "请求中没有图片文件。" }, 400);
