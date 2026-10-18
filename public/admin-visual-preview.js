@@ -54,10 +54,23 @@ export function inspectProtectedMarkdown(raw, reason = "") {
   }
 
   if (/latex.*display math/i.test(detail) || /^\s*\$\$[\s\S]*\$\$\s*$/.test(source)) {
-    return { kind: "math", title: "数学公式", text: source.replace(/^\s*\$\$?|\$\$?\s*$/g, "").trim(), display: true, label: "公式预览" };
+    const text = source.replace(/^\s*\$\$\s*/, "").replace(/\s*\$\$\s*$/, "").trim();
+    return { kind: "math", title: "数学公式", text, display: true, label: "公式预览" };
   }
-  if (/latex.*inline math/i.test(detail) || /^\s*[^$\n]*\$[^$\n]+\$[^$\n]*\s*$/.test(source)) {
-    return { kind: "math", title: "行内公式", text: source.trim(), display: false, label: "公式预览" };
+  if (/latex.*inline math/i.test(detail)) {
+    const segments = [];
+    const expression = /(?<!\\)\$([^$\n]+)(?<!\\)\$/g;
+    let cursor = 0;
+    for (const match of source.matchAll(expression)) {
+      const start = match.index ?? 0;
+      if (start > cursor) segments.push({ kind: "text", text: plainText(source.slice(cursor, start)) });
+      segments.push({ kind: "math", text: match[1].trim() });
+      cursor = start + match[0].length;
+    }
+    if (cursor < source.length) segments.push({ kind: "text", text: plainText(source.slice(cursor)) });
+    if (segments.some(segment => segment.kind === "math")) {
+      return { kind: "inline-math", title: "含公式的正文", segments, label: "公式预览" };
+    }
   }
 
   const badgePattern = /<Badge\b([^>]*)>([\s\S]*?)<\/Badge\s*>/g;
