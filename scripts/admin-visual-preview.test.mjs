@@ -251,7 +251,7 @@ test("callout serializer round-trips type, title, and multiline plain text", () 
 });
 
 test("callout serializer rejects unsupported types and Markdown/MDX bodies", () => {
-  assert.throws(() => serializeEditableCallout({ kind: "callout" }, { type: "script", title: "", body: "普通文字" }), /有效的提示容器类型/);
+  assert.throws(() => serializeEditableCallout({ kind: "callout" }, { type: "script", title: "", body: "普通文字" }), /有效的提示样式/);
   assert.throws(() => serializeEditableCallout({ kind: "callout" }, { type: "tip", title: "标题", body: "**加粗**" }), /纯文本/);
   assert.throws(() => serializeEditableCallout({ kind: "callout" }, { type: "tip", title: "", body: "::: nested" }), /纯文本/);
 });
@@ -352,4 +352,24 @@ test("internal syntax reasons are shown to writers as plain Chinese", () => {
   assert.equal(describeProtectedSyntax("HTML or theme tag"), "特殊版式内容");
   assert.equal(describeProtectedSyntax("MDX import/export"), "组件引用设置");
   assert.equal(describeProtectedSyntax("unrecognized internal label"), "特殊内容");
+});
+
+
+test("structured editor validation messages use plain Chinese rather than syntax jargon", () => {
+  assert.throws(
+    () => serializeEditableStepTimeline({ kind: "steps" }, [{ title: "示例", text: "{runCode()}" }]),
+    error => error instanceof Error && /正文不能为空/.test(error.message) && !/Markdown|MDX/.test(error.message),
+  );
+  assert.throws(
+    () => serializeEditableCallout({ kind: "callout" }, { type: "tip", title: "提示", body: "**加粗**" }),
+    error => error instanceof Error && /纯文本/.test(error.message) && !/Markdown|MDX|源码/.test(error.message),
+  );
+  assert.throws(
+    () => serializeEditableTaskList([{ checked: false, text: "**加粗**" }]),
+    error => error instanceof Error && /纯文字/.test(error.message) && !/Markdown|MDX/.test(error.message),
+  );
+  assert.throws(
+    () => serializeEditableDetails({ title: "标题", body: "**加粗**" }),
+    error => error instanceof Error && /纯文本/.test(error.message) && !/Markdown|MDX|源码/.test(error.message),
+  );
 });
