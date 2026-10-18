@@ -2350,6 +2350,16 @@ async function loadTiptapModules() {
     }
   }
 
+  const markdownPreviewElement = $("markdownPreview");
+  if (markdownPreviewElement) {
+    markdownPreviewElement.addEventListener("click", event => {
+      const target = event.target;
+      if (!(target instanceof HTMLImageElement)) return;
+      event.preventDefault();
+      openImagePreview(target.currentSrc || target.src, target.alt || "", target.title || "");
+    });
+  }
+
   async function uploadImage(file) {
     if (!file || !file.type) return;
     if (!allowedImageTypes.has(file.type.toLowerCase())) {
