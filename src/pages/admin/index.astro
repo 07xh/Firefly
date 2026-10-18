@@ -274,7 +274,7 @@ export const prerender = false;
     <button type="button" data-editor-action="unlink" title="移除链接">取消链接</button>
     <button type="button" id="wysiwygUpload" title="上传图片">图片</button>
     <input type="file" id="wysiwygFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
-    <button type="button" data-editor-action="table" title="插入三行三列表格">插入表格</button>
+    <button type="button" data-editor-action="table" title="选择行数、列数和表头后插入表格">插入表格</button>
     <div id="tableEditorTools" class="table-editor-tools" role="group" aria-label="表格编辑工具" hidden>
       <span class="toolbar-divider" aria-hidden="true"></span>
       <button type="button" data-editor-action="addRowBefore" title="在当前行上方插入一行">上方加行</button>
@@ -1199,4 +1199,4 @@ reset();refresh();loadSettings();
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=20261018-table-editing-toolbar"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=20261018-custom-table-insertion"></script></body></html>

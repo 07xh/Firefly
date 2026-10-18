@@ -2282,6 +2282,124 @@ async function loadTiptapModules() {
     }
   }
 
+
+  function openTableInsertDialog() {
+    if (!editor || visualLoadFailed || document.getElementById("firefly-table-insert-dialog")) return;
+    const dialog = document.createElement("dialog");
+    dialog.id = "firefly-table-insert-dialog";
+    dialog.setAttribute("aria-labelledby", "firefly-table-insert-title");
+    const style = document.createElement("style");
+    style.textContent = [
+      "#firefly-table-insert-dialog{width:min(480px,calc(100vw - 24px));max-width:none;border:1px solid #d6e4d8;border-radius:16px;padding:0;background:#fbfdfb;color:#243329;box-shadow:0 20px 70px #102e1b33}",
+      "#firefly-table-insert-dialog::backdrop{background:#16231c88;backdrop-filter:blur(3px)}",
+      ".firefly-table-insert-inner{padding:22px;display:grid;gap:15px}",
+      ".firefly-table-insert-inner h2{margin:0;font-size:19px;line-height:1.4}",
+      ".firefly-table-insert-hint{margin:0;color:#67766a;font-size:12px;line-height:1.6}",
+      ".firefly-table-insert-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}",
+      ".firefly-table-insert-field{display:grid;gap:6px;min-width:0}",
+      ".firefly-table-insert-field label{font-size:12px;font-weight:700;color:#536457}",
+      ".firefly-table-insert-field input{width:100%;box-sizing:border-box;border:1px solid #ceddce;border-radius:8px;padding:10px;background:#fff;color:#243329;font:inherit;font-size:14px}",
+      ".firefly-table-insert-check{display:flex;align-items:center;gap:9px;font-size:13px}",
+      ".firefly-table-insert-check input{width:17px;height:17px;accent-color:#177746}",
+      ".firefly-table-insert-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}",
+      ".firefly-table-insert-actions button{border:1px solid #cbd9ce;border-radius:8px;background:#fff;color:#314536;padding:9px 13px;font:inherit;font-size:13px;cursor:pointer}",
+      ".firefly-table-insert-actions .primary{background:#177746;color:#fff;border-color:#177746;font-weight:750}",
+      ".firefly-table-insert-error{margin:0;color:#b42323;font-size:12px;line-height:1.5}",
+      "@media(max-width:420px){.firefly-table-insert-inner{padding:16px}.firefly-table-insert-actions button{flex:1}}",
+      "@media(prefers-color-scheme:dark){#firefly-table-insert-dialog{background:#1a231b;color:#e6eee7;border-color:#3f5844}.firefly-table-insert-hint,.firefly-table-insert-field label{color:#b8c9bb}.firefly-table-insert-field input,.firefly-table-insert-actions button{background:#202820;color:#e4ece5;border-color:#4c6551}.firefly-table-insert-actions .primary{background:#26794a;color:#fff;border-color:#26794a}}",
+    ].join("\n");
+    document.head.append(style);
+    const inner = document.createElement("div");
+    inner.className = "firefly-table-insert-inner";
+    const heading = document.createElement("h2");
+    heading.id = "firefly-table-insert-title";
+    heading.textContent = "插入 Markdown 表格";
+    const hint = document.createElement("p");
+    hint.className = "firefly-table-insert-hint";
+    hint.textContent = "选择表格大小。插入后可以在单元格中直接编辑，再通过表格工具添加或删除行列。";
+    const fields = document.createElement("div");
+    fields.className = "firefly-table-insert-fields";
+    const makeNumberField = (labelText, id, value, max) => {
+      const wrap = document.createElement("div");
+      wrap.className = "firefly-table-insert-field";
+      const label = document.createElement("label");
+      label.htmlFor = id;
+      label.textContent = labelText;
+      const input = document.createElement("input");
+      input.id = id;
+      input.type = "number";
+      input.min = "1";
+      input.max = String(max);
+      input.step = "1";
+      input.required = true;
+      input.value = String(value);
+      wrap.append(label, input);
+      return input;
+    };
+    const rowsInput = makeNumberField("行数（1–30）", "firefly-table-insert-rows", 3, 30);
+    const colsInput = makeNumberField("列数（1–12）", "firefly-table-insert-cols", 3, 12);
+    fields.append(rowsInput.parentElement, colsInput.parentElement);
+    const checkLabel = document.createElement("label");
+    checkLabel.className = "firefly-table-insert-check";
+    const headerCheck = document.createElement("input");
+    headerCheck.type = "checkbox";
+    headerCheck.checked = true;
+    const checkText = document.createElement("span");
+    checkText.textContent = "第一行作为表头";
+    checkLabel.append(headerCheck, checkText);
+    const error = document.createElement("p");
+    error.className = "firefly-table-insert-error";
+    error.setAttribute("role", "alert");
+    error.hidden = true;
+    const actions = document.createElement("div");
+    actions.className = "firefly-table-insert-actions";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = "取消";
+    const insert = document.createElement("button");
+    insert.type = "button";
+    insert.className = "primary";
+    insert.textContent = "插入表格";
+    actions.append(cancel, insert);
+    inner.append(heading, hint, fields, checkLabel, error, actions);
+    dialog.append(inner);
+    document.body.append(dialog);
+
+    const close = () => {
+      if (dialog.open && typeof dialog.close === "function") dialog.close();
+      dialog.remove();
+      style.remove();
+    };
+    cancel.addEventListener("click", close);
+    dialog.addEventListener("cancel", event => {
+      event.preventDefault();
+      close();
+    });
+    insert.addEventListener("click", () => {
+      const rows = Number(rowsInput.value);
+      const cols = Number(colsInput.value);
+      const validRows = Number.isInteger(rows) && rows >= 1 && rows <= 30;
+      const validCols = Number.isInteger(cols) && cols >= 1 && cols <= 12;
+      if (!validRows || !validCols) {
+        error.textContent = "行数请填写 1–30 的整数，列数请填写 1–12 的整数。";
+        error.hidden = false;
+        return;
+      }
+      if (typeof editor.commands.insertTable !== "function") {
+        error.textContent = "当前编辑器不支持插入表格，请刷新后台后重试。";
+        error.hidden = false;
+        return;
+      }
+      editor.chain().focus().insertTable({ rows, cols, withHeaderRow: headerCheck.checked }).run();
+      status("已插入 " + rows + " 行 " + cols + " 列的 Markdown 表格" + (headerCheck.checked ? "（含表头）。" : "。") + "可以直接填写单元格。");
+      close();
+    });
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+    rowsInput.focus();
+    rowsInput.select();
+  }
+
   function runAction(action) {
     if (!editor || visualLoadFailed) {
       status("当前文档未能安全载入可视化编辑器，请先使用源码模式。", true);
@@ -2320,10 +2438,7 @@ async function loadTiptapModules() {
       case "undo": chain.undo().run(); break;
       case "redo": chain.redo().run(); break;
       case "table":
-        if (typeof editor.commands.insertTable === "function") {
-          editor.commands.insertTable({ rows: 3, cols: 3, withHeaderRow: true });
-          status("已插入 3 行 3 列的 Markdown 表格。输入单元格后，可使用“表格编辑工具”增删行列。");
-        } else status("当前编辑器版本暂不支持插入表格。", true);
+        openTableInsertDialog();
         break;
       case "addRowBefore": if (typeof editor.commands.addRowBefore === "function") editor.chain().focus().addRowBefore().run(); else status("无法在当前位置插入行，请先点入表格单元格。", true); break;
       case "addRowAfter": if (typeof editor.commands.addRowAfter === "function") editor.chain().focus().addRowAfter().run(); else status("无法在当前位置插入行，请先点入表格单元格。", true); break;
