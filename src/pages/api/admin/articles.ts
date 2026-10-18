@@ -311,7 +311,8 @@ export const DELETE: APIRoute = async ({ request }) => {
 			}
 			return json({ error: message }, 502);
 		}
-		return json({ ok: true, path });
+		const written = (await response.json()) as { commit?: { sha?: string; html_url?: string } };
+		return json({ ok: true, path, commitSha: written.commit?.sha, commitUrl: written.commit?.html_url });
 	} catch (error) {
 		return json({ error: error instanceof Error ? error.message : "Internal error" }, 503);
 	}
