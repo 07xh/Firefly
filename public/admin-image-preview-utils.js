@@ -10,7 +10,7 @@ export function resolveRepositoryImagePath(articlePath, imageSource) {
   const article = articlePath.trim();
   const source = imageSource.trim();
   if (!article || !source || source.startsWith("#") || source.startsWith("/") || source.startsWith("//")) return null;
-  if (/^[a-z][a-z0-9+.-]*:/i.test(source) || /[\\\\\x00-\x1f\x7f]/.test(source)) return null;
+  if (/^[a-z][a-z0-9+.-]*:/i.test(source) || /[\\\x00-\x1f\x7f]/.test(source)) return null;
 
   const sourcePath = source.split(/[?#]/, 1)[0];
   if (!sourcePath) return null;
@@ -21,7 +21,7 @@ export function resolveRepositoryImagePath(articlePath, imageSource) {
   } catch {
     return null;
   }
-  if (!decoded || decoded.startsWith("/") || decoded.startsWith("//") || decoded.includes("\\\\")) return null;
+  if (!decoded || decoded.startsWith("/") || decoded.startsWith("//") || decoded.includes("\\")) return null;
 
   const articleParts = article.split("/");
   if (articleParts.length < 4 || articleParts[0] !== "src" || articleParts[1] !== "content" || articleParts[2] !== "posts") return null;
@@ -36,7 +36,7 @@ export function resolveRepositoryImagePath(articlePath, imageSource) {
       resolved.pop();
       continue;
     }
-    if (/[\\\\\x00-\x1f\x7f]/.test(segment)) return null;
+    if (/[\\\x00-\x1f\x7f]/.test(segment)) return null;
     resolved.push(segment);
   }
 
