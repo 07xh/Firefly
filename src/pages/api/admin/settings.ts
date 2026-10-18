@@ -47,8 +47,14 @@ function getConfig(): GitHubConfig {
 	const token = env?.FIREFLY_CONTENTS_TOKEN?.trim() ?? "";
 	const repo = env?.GITHUB_CONTENTS_REPO?.trim() || "07xh/Firefly";
 	const branch = env?.GITHUB_CONTENTS_BRANCH?.trim() || "master";
-	if (!token) throw new SettingsApiError("Worker 未配置 FIREFLY_CONTENTS_TOKEN。", 503);
-	if (repo.split("/").length !== 2 || repo.split("/").some((part) => !/^[A-Za-z0-9_.-]+$/.test(part)) || branch.split("/").some((part) => !/^[A-Za-z0-9_.-]+$/.test(part))) {
+	if (!token) {
+		throw new SettingsApiError("Worker 未配置 FIREFLY_CONTENTS_TOKEN。", 503);
+	}
+	if (
+		repo.split("/").length !== 2 ||
+		repo.split("/").some((part) => !/^[A-Za-z0-9_.-]+$/.test(part)) ||
+		branch.split("/").some((part) => !/^[A-Za-z0-9_.-]+$/.test(part))
+	) {
 		throw new SettingsApiError("GitHub 仓库或分支配置格式不合法。", 503);
 	}
 	return { token, repo, branch };
@@ -85,7 +91,10 @@ function decodeBase64(value: string): string {
 	return new TextDecoder().decode(bytes);
 }
 
-async function githubError(response: Response, operation: string): Promise<string> {
+async function githubError(
+	response: Response,
+	operation: string,
+): Promise<string> {
 	let message = "";
 	try {
 		const payload = (await response.clone().json()) as { message?: unknown };
@@ -95,7 +104,13 @@ async function githubError(response: Response, operation: string): Promise<strin
 	} catch {
 		// Keep the status if GitHub returned a non-JSON body.
 	}
-	return operation + "（HTTP " + response.status + "）" + (message ? "：" + message : "");
+	return (
+		operation +
+		"（HTTP " +
+		response.status +
+		"）" +
+		(message ? "：" + message : "")
+	);
 }
 
 function normalizeSettings(value: unknown): SettingsRecord {
@@ -106,8 +121,10 @@ function normalizeSettings(value: unknown): SettingsRecord {
 	return {
 		...DEFAULT_SETTINGS,
 		...raw,
-		backgroundImage: typeof raw.backgroundImage === "string" ? raw.backgroundImage : "",
-		backgroundMusic: typeof raw.backgroundMusic === "string" ? raw.backgroundMusic : "",
+		backgroundImage:
+			typeof raw.backgroundImage === "string" ? raw.backgroundImage : "",
+		backgroundMusic:
+			typeof raw.backgroundMusic === "string" ? raw.backgroundMusic : "",
 		bio: typeof raw.bio === "string" ? raw.bio : DEFAULT_SETTINGS.bio,
 	};
 }
@@ -115,16 +132,23 @@ function normalizeSettings(value: unknown): SettingsRecord {
 async function readSettings(
 	config: GitHubConfig,
 ): Promise<{ settings: SettingsRecord; sha: string | null }> {
-	const response = await fetch(fileUrl(config), { headers: requestHeaders(config) });
-	if (response.status === 404) return { settings: { ...DEFAULT_SETTINGS }, sha: null };
+	const response = await fetch(fileUrl(config), {
+		headers: requestHeaders(config),
+	});
+	if (response.status === 404) {
+		return { settings: { ...DEFAULT_SETTINGS }, sha: null };
+	}
 	if (!response.ok) {
-		throw new SettingsApiError(await githubError(response, "读取 settings.json 失败"));
+		throw new SettingsApiError(
+			await githubError(response, "读取 settings.json 失败"),
+		);
 	}
 	const file = (await response.json()) as GitHubFile;
 	if (!file.sha || typeof file.content !== "string") {
 		throw new SettingsApiError("GitHub 返回的 settings.json 文件数据不完整。");
 	}
-	const rawContent = file.encoding === "base64" ? decodeBase64(file.content) : file.content;
+	const rawContent =
+		file.encoding === "base64" ? decodeBase64(file.content) : file.content;
 	let parsed: unknown;
 	try {
 		parsed = JSON.parse(rawContent);
@@ -135,9 +159,13 @@ async function readSettings(
 }
 
 function validateMediaUrl(value: unknown, label: string): string {
-	if (typeof value !== "string") throw new SettingsApiError(label + "必须是字符串。", 400);
+	if (typeof value !== "string") {
+		throw new SettingsApiError(label + "必须是字符串。", 400);
+	}
 	const trimmed = value.trim();
-	if (trimmed.length > 2048) throw new SettingsApiError(label + "不能超过 2048 个字符。", 400);
+	if (trimmed.length > 2048) {
+		throw new SettingsApiError(label + "不能超过 2048 个字符。", 400);
+	}
 	if (!trimmed) return "";
 	let parsed: URL;
 	try {
@@ -216,8 +244,12 @@ export const POST: APIRoute = async ({ request }) => {
 			body: JSON.stringify(payload),
 		});
 		if (!response.ok) {
-			const status = response.status === 409 || response.status === 422 ? 409 : 502;
-			throw new SettingsApiError(await githubError(response, "写入 settings.json 失败"), status);
+			const status =
+				response.status === 409 || response.status === 422 ? 409 : 502;
+			throw new SettingsApiError(
+				await githubError(response, "写入 settings.json 失败"),
+				status,
+			);
 		}
 		const result = (await response.json()) as { commit?: { sha?: string } };
 		return json({
