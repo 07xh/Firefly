@@ -214,11 +214,11 @@ export const PUT: APIRoute = async ({ request }) => {
 		if (typeof input.sha !== "string" || input.sha !== current.sha) return json({ error: "文章已被其他操作修改，请刷新后重试" }, 409);
 		const slug = path.split("/").pop()?.replace(/\.mdx?$/, "") ?? "";
 		let content = typeof input.rawContent === "string" ? input.rawContent : makeMarkdown({ ...input, slug });
-		if (!content || content.length > 500_000 || (typeof input.rawContent === "string" && !/^---\\r?\\n/.test(content))) {
+		if (!content || content.length > 500_000 || (typeof input.rawContent === "string" && !/^---\r?\n/.test(content))) {
 			return json({ error: "完整文章内容不合法或超过 500 KB" }, 400);
 		}
 		if (typeof input.rawContent === "string") {
-			const frontmatter = content.match(/^---\\r?\\n([\\s\\S]*?)\\r?\\n---/);
+			const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
 			if (!frontmatter) return json({ error: "未找到有效的 frontmatter，无法保存文章元数据" }, 400);
 			const title = typeof input.title === "string" ? input.title.trim() : "";
 			if (!title || title.length > 200) return json({ error: "标题不能为空且不能超过 200 个字符" }, 400);
