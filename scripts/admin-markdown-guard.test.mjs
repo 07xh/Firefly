@@ -69,13 +69,12 @@ test("MDX 标签、主题提示块保留原始语法，普通正文仍可编辑"
   ].join("\n");
 
   const result = prepareMarkdownForVisualEditing(source);
-  assert.ok(result.records.length >= 4);
-  assert.ok(result.records.some(record => record.raw === ":::tip"));
-  assert.ok(result.records.some(record => record.raw === ":::"));
-  assert.ok(result.records.some(record => record.raw === "<TabGroup labels={items}>"));
-  assert.ok(result.records.some(record => record.raw === "</TabGroup>"));
-  assert.match(result.markdown, /这段正文仍可编辑/);
-  assert.match(result.markdown, /组件内部文字/);
+  assert.equal(result.records.length, 2);
+  assert.ok(result.records.some(record => record.raw === ":::tip\n这段正文仍可编辑。\n:::"));
+  assert.ok(result.records.some(record => record.raw === "<TabGroup labels={items}>\n组件内部文字。\n</TabGroup>"));
+  assert.doesNotMatch(result.markdown, /这段正文仍可编辑/);
+  assert.doesNotMatch(result.markdown, /组件内部文字/);
+  assert.match(result.markdown, /开头正文/);
   assert.match(result.markdown, /结尾正文/);
 });
 
