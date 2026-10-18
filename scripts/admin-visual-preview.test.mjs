@@ -157,6 +157,7 @@ test("simple literal TabGroup exposes safe structured editing with exact code pr
     '<TabGroup labels={["demo.js", "demo.py"]}>',
     "\x60\x60\x60js",
     'const text = "hello";',
+    'const sample = "</TabGroup>";',
     "console.log(text);",
     "\x60\x60\x60",
     "\x60\x60\x60py",
@@ -170,7 +171,7 @@ test("simple literal TabGroup exposes safe structured editing with exact code pr
   assert.equal(model.items.length, 2);
   assert.equal(model.items[0].title, "demo.js");
   assert.equal(model.items[0].language, "js");
-  assert.equal(model.items[0].text, 'const text = "hello";\nconsole.log(text);');
+  assert.equal(model.items[0].text, 'const text = "hello";\nconst sample = "</TabGroup>";\nconsole.log(text);');
   assert.equal(model.items[1].text, "print(2)");
 });
 
