@@ -97,6 +97,7 @@
         "src/pages/api/admin/preview.ts",
         "src/pages/api/admin/deployment-status.ts",
         "src/pages/api/admin/github-check.ts",
+        "src/pages/api/admin/settings.ts",
         "src/pages/api/auth/login.ts"
       ],
       "formatter": {
