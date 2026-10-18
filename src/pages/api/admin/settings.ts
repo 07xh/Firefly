@@ -9,6 +9,7 @@ type SettingsRecord = Record<string, unknown> & {
 	bannerTitle: string;
 	bannerSubtitle: string;
 	backgroundImage: string;
+	backgroundColor: string;
 	avatar: string;
 	nickname: string;
 	bio: string;
@@ -25,10 +26,11 @@ const DEFAULT_SETTINGS: SettingsRecord = {
 	bannerTitle: "Lovely firefly!",
 	bannerSubtitle: "In Reddened Chrysalis, I Once Rest",
 	backgroundImage: "",
+	backgroundColor: "",
 	avatar: "",
 	nickname: "XiaYe",
 	bio: "Hello, I'm XiaYe.",
-	announcement: "",
+	announcement: "欢迎来到我的博客！这是一则示例公告。",
 	githubUrl: "",
 	showGithub: true,
 	email: "",
@@ -41,6 +43,7 @@ const SETTING_KEYS = [
 	"bannerTitle",
 	"bannerSubtitle",
 	"backgroundImage",
+	"backgroundColor",
 	"avatar",
 	"nickname",
 	"bio",
@@ -164,6 +167,7 @@ function normalizeSettings(value: unknown): SettingsRecord {
 		"bannerTitle",
 		"bannerSubtitle",
 		"backgroundImage",
+		"backgroundColor",
 		"avatar",
 		"nickname",
 		"bio",
@@ -253,6 +257,21 @@ function validateText(
 	return value.trim();
 }
 
+function validateBackgroundColor(value: unknown): string {
+	if (typeof value !== "string") {
+		throw new SettingsApiError("背景颜色必须是字符串。", 400);
+	}
+	const color = value.trim();
+	if (!color) return "";
+	if (!/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(color)) {
+		throw new SettingsApiError(
+			"背景颜色只支持 #RGB 或 #RRGGBB 格式；留空则使用主题默认颜色。",
+			400,
+		);
+	}
+	return color.toLowerCase();
+}
+
 function validateAnnouncement(value: unknown): string {
 	if (typeof value !== "string") {
 		throw new SettingsApiError("公告文本必须是字符串。", 400);
@@ -304,6 +323,9 @@ function applySubmittedSettings(
 			input.backgroundImage,
 			"背景图片链接",
 		);
+	}
+	if (has("backgroundColor")) {
+		next.backgroundColor = validateBackgroundColor(input.backgroundColor);
 	}
 	if (has("avatar")) next.avatar = validateMediaUrl(input.avatar, "头像链接");
 	if (has("nickname")) next.nickname = validateText(input.nickname, "昵称", 120);
