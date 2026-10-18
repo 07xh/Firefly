@@ -250,13 +250,17 @@ async function loadTiptapModules() {
 
 
   function getUnsafeReason(markdown) {
-    // Ignore fenced code: imports and angle-bracket examples inside code are safe text.
+    // Ignore fenced and inline code: syntax examples in code must not disable visual editing.
     const withoutFences = markdown
       .replace(/```[\s\S]*?```/g, "")
-      .replace(/^\s*~~~[\s\S]*?^\s*~~~\s*$/gm, "");
+      .replace(/^\s*~~~[\s\S]*?^\s*~~~\s*$/gm, "")
+      .replace(/`+`[^\n]*?`+`/g, "")
+      .replace(/\\</g, "&lt;");
 
-    if (/^\s*(?:import|export)\s/m.test(withoutFences)) {
-      return "正文包含 MDX import/export 语句。为避免组件丢失，请使用 Markdown 源码模式编辑。";
+    // Match actual MDX declarations, not prose that merely starts with “import” or “export”.
+    if (/^\s*import\s+(?:[\w*{]|["'])[\s\S]*?(?:\sfrom\s+["'][^"']+["']\s*;?\s*)?$/m.test(withoutFences) ||
+        /^\s*export\s+(?:default\b|\*\s+from\b|\{[^}]*\}\s*from\b|(?:const|let|var|function|class|async\s+function)\b)/m.test(withoutFences)) {
+      return "正文包含 MDX import/export 声明。为避免组件或导出逻辑丢失，请使用 Markdown 源码模式编辑。";
     }
     if (/<\/?[A-Z][A-Za-z0-9_.:-]*(?:\s|\/?>)/.test(withoutFences)) {
       return "正文包含自定义 MDX/组件标签。为避免破坏组件，请使用 Markdown 源码模式编辑。";
@@ -267,7 +271,9 @@ async function loadTiptapModules() {
     if (/^\s*:{3,}/m.test(withoutFences)) {
       return "正文包含主题提示块或 Markdown directive，请使用源码模式避免丢失主题语法。";
     }
-    if (/(^|\n)\s*\$\$|\$(?:\\.|[^$\n])+\$/m.test(withoutFences)) {
+    // Recognize block math delimiters and likely TeX expressions, but not ordinary prices like $5$.
+    if (/^\s*\$\$\s*$/m.test(withoutFences) ||
+        /\$(?:\\[a-zA-Z]+|[a-zA-Z][^$\n]*|[^$\n]*\\[a-zA-Z]+)\$/.test(withoutFences)) {
       return "正文包含数学公式语法。请使用源码模式，以保留 KaTeX/LaTeX 公式。";
     }
     if (/(^|\n)\s*(?:[-*+]|\d+\.)\s+\[[ xX]\]\s/m.test(withoutFences)) {
