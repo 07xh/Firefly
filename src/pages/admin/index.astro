@@ -46,7 +46,7 @@ function render(){
  }
 }
 async function refresh(){try{say("正在读取 GitHub…");articles=await api("GET");render();say("已读取 "+articles.length+" 篇文章")}catch(e){say(e.message,true);$("list").textContent="读取失败，请确认服务端令牌和仓库权限已配置。"}}
-function reset(){selected=null;$("editor").reset();$("slug").disabled=false;$("published").value=new Date().toISOString().slice(0,10);$("formTitle").textContent="新建文章";$("delete").disabled=true;showEditorTab();$("deployLink").hidden=true;$("deployLink").removeAttribute("href")}
+function reset(){selected=null;for(const id of ["title","slug","published","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?new Date().toISOString().slice(0,10):""} $("draft").checked=false;$("slug").disabled=false;$("formTitle").textContent="新建文章";$("delete").disabled=true;showEditorTab();$("deployLink").hidden=true;$("deployLink").removeAttribute("href")}
 function showEditorTab(){$("body").hidden=false;$("markdownPreview").hidden=true;$("editorTab").classList.add("active");$("previewTab").classList.remove("active")}
 function showPreviewTab(){$("body").hidden=true;$("markdownPreview").hidden=false;$("editorTab").classList.remove("active");$("previewTab").classList.add("active")}
 async function renderMarkdownPreview(){showPreviewTab();$("markdownPreview").innerHTML="<p class=muted>正在生成预览…</p>";try{const r=await fetch("/api/admin/preview/",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({markdown:$("body").value})});if(r.status===401){goLogin();return}const d=await r.json().catch(()=>({error:"预览响应无法解析"}));if(!r.ok)throw new Error(d.error||"Markdown 预览失败");$("markdownPreview").innerHTML=d.html||"<p class=muted>暂无内容</p>"}catch(e){$("markdownPreview").textContent=e.message}}
