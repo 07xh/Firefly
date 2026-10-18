@@ -8,7 +8,7 @@ export const prerender = false;
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>文章管理 · Firefly</title>
 <style>
-:root{font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#202820;background:#f3f6f3}*{box-sizing:border-box}body{margin:0}header{padding:16px max(18px,calc((100vw - 1100px)/2));background:white;border-bottom:1px solid #e1e8e1;display:flex;justify-content:space-between;align-items:center}h1{font-size:19px;margin:0}.wrap{max-width:1100px;margin:18px auto 26px;padding:0 16px}.articles-grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px}.admin-tabs{max-width:1100px;margin:20px auto 0;padding:0 16px;display:flex;gap:8px;border-bottom:1px solid #e3eae4}.admin-tab{border:1px solid transparent;border-bottom:0;border-radius:10px 10px 0 0;padding:10px 14px;background:transparent;color:#718075;cursor:pointer;font:inherit;font-size:13px;transition:background .15s,color .15s,border-color .15s}.admin-tab:hover{background:#f7faf7;color:#16834c}.admin-tab[aria-selected=true]{border-color:#d8e9dd;background:white;color:#12884f;font-weight:650;box-shadow:0 -1px 0 #fff inset}#articlesTabPanel[hidden],#appearanceTabPanel[hidden]{display:none!important}.settings-panel{max-width:900px;margin:0 auto}.settings-cards{display:grid;gap:16px}.settings-card{background:#fff;border:1px solid #e2eae3;border-radius:16px;padding:20px;box-shadow:0 3px 12px #173c2510;min-width:0}.settings-card-heading{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}.settings-card-number{display:inline-flex;align-items:center;justify-content:center;flex:0 0 34px;height:34px;border-radius:11px;background:#eaf7ef;color:#16834c;font-size:12px;font-weight:800;letter-spacing:.04em}.settings-card-heading h3{margin:1px 0 4px;font-size:15px;font-weight:750;color:#26372b}.settings-card-heading p{margin:0;color:#79867c;font-size:12px;line-height:1.6}.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}.settings-grid-one{grid-template-columns:minmax(0,1fr)}.settings-field{display:grid;gap:7px;min-width:0;margin:0}.settings-field>label{font-size:13px;color:#334155;font-weight:650}.settings-field>small{color:#718075;font-size:12px;line-height:1.6}.settings-control{width:100%;min-width:0;border:1px solid #d8e1d8;border-radius:11px;padding:11px 13px;font:inherit;font-size:13px;background:#fff;color:#202820;transition:border-color .15s,box-shadow .15s}.settings-control:hover{border-color:#c2d3c5}.settings-control:focus{border-color:#10b981;outline:none;box-shadow:0 0 0 3px #10b98122}textarea.settings-control{resize:vertical;min-height:100px;line-height:1.7}#bio{min-height:100px}#announcement{min-height:120px}.settings-preview{display:flex;align-items:center;gap:12px;min-height:74px;padding:10px;border:1px solid #edf1ed;border-radius:12px;background:#f8faf8;overflow:hidden}.settings-preview img{width:100px;height:64px;object-fit:cover;border-radius:8px;background:#eef2ee;flex:0 0 auto}.settings-preview.is-avatar img{width:64px;height:64px;border-radius:50%;object-fit:cover}.settings-preview-note{font-size:12px;color:#8b968e;line-height:1.6}.settings-toggle{position:relative;display:flex;align-items:center;gap:10px;min-height:42px;padding:9px 12px;border:1px solid #e4ebe5;border-radius:11px;background:#fafcfa;cursor:pointer}.settings-toggle input{position:absolute;width:1px;height:1px;opacity:0}.settings-toggle-track{position:relative;display:inline-block;flex:0 0 36px;width:36px;height:21px;border-radius:999px;background:#cbd5ce;transition:background .18s}.settings-toggle-track:before{content:"";position:absolute;left:3px;top:3px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0002;transition:transform .18s}.settings-toggle input:checked+.settings-toggle-track{background:#16a064}.settings-toggle input:checked+.settings-toggle-track:before{transform:translateX(15px)}.settings-toggle input:focus-visible+.settings-toggle-track{outline:3px solid #10b98144;outline-offset:3px}.settings-toggle-label{font-size:12px;font-weight:650;color:#47574b}.settings-toggle small{display:block;font-size:11px;font-weight:400;color:#89958c;margin-top:2px}.settings-switch-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.settings-color-row{display:grid;grid-template-columns:54px minmax(0,1fr);gap:10px;align-items:center}.settings-color-picker{width:54px;height:44px;padding:4px;border:1px solid #d8e1d8;border-radius:11px;background:#fff;cursor:pointer}.settings-save-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px 2px 10px}.settings-save-button{border:0;border-radius:11px;background:linear-gradient(135deg,#15965a,#087a43);color:#fff;padding:12px 18px;font:inherit;font-size:13px;font-weight:750;box-shadow:0 5px 12px #0d894b26;cursor:pointer;transition:transform .15s,opacity .15s}.settings-save-button:hover{transform:translateY(-1px)}.settings-save-button:disabled{opacity:.6;cursor:wait;transform:none}.settings-status{font-size:12px;color:#657267;line-height:1.6;overflow-wrap:anywhere}.admin-tab:focus-visible{outline:2px solid #10b981;outline-offset:2px}.panel{background:white;border:1px solid #e0e7e0;border-radius:14px;padding:18px;min-width:0}.btn{border:1px solid #d5dfd5;border-radius:8px;background:white;color:#263329;padding:9px 12px;cursor:pointer}.primary{background:#12884f;color:white;border-color:#12884f}.danger{color:#b42318}.toolbar{display:flex;gap:8px;margin-bottom:12px}.toolbar input{min-width:0;flex:1}.toolbar select{max-width:100px;border:1px solid #d8e1d8;border-radius:8px;padding:8px 5px;background:white;color:#263329;font:inherit;font-size:12px}.field{display:grid;gap:6px;margin-bottom:13px}.field label{font-size:12px;color:#59675d;font-weight:650}.field input,.field textarea,.toolbar input{width:100%;border:1px solid #d8e1d8;border-radius:8px;padding:10px;font:inherit;background:white;color:#202820}.field textarea{min-height:240px;resize:vertical;font-family:ui-monospace,monospace;line-height:1.6}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.item{width:100%;display:block;text-align:left;background:white;border:1px solid #e3e9e3;border-radius:9px;padding:11px;margin-bottom:8px;cursor:pointer;color:inherit}.article-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-bottom:8px;align-items:stretch}.article-row .item{margin:0}.article-delete{border:1px solid #f1c6c3;border-radius:8px;background:#fff8f7;color:#b42318;padding:8px;cursor:pointer;min-width:48px}.article-delete:disabled{opacity:.55;cursor:wait}.item strong,.item small{display:block;overflow-wrap:anywhere}.item strong{font-size:13px}.item small,.muted{color:#718075;font-size:12px}.actions{display:flex;gap:8px;flex-wrap:wrap}.status{min-height:20px;font-size:12px;margin-top:12px;color:#657267;overflow-wrap:anywhere}.check{display:flex;gap:8px;align-items:center;font-size:13px;margin:12px 0}.empty{color:#758077;font-size:13px;line-height:1.7}.editor-tabs{display:flex;gap:8px;margin:2px 0 9px}.editor-tabs .active{background:#eaf6ee;border-color:#b6dbc3;color:#127947}.markdown-preview{min-height:240px;border:1px solid #d8e1d8;border-radius:8px;padding:14px;line-height:1.75;overflow-wrap:anywhere;color:#202820}.markdown-preview h1,.markdown-preview h2,.markdown-preview h3{line-height:1.35;margin:1.1em 0 .6em}.markdown-preview p,.markdown-preview ul,.markdown-preview ol,.markdown-preview blockquote{margin:.65em 0}.markdown-preview pre{overflow:auto;background:#f3f6f3;padding:12px;border-radius:8px}.markdown-preview code{font-family:ui-monospace,monospace;background:#f3f6f3;padding:2px 4px;border-radius:4px}.markdown-preview pre code{padding:0}.markdown-preview img{max-width:100%;height:auto}.markdown-preview table{border-collapse:collapse;max-width:100%;display:block;overflow:auto}.markdown-preview th,.markdown-preview td{border:1px solid #d8e1d8;padding:6px 9px}.markdown-preview blockquote{border-left:3px solid #b6dbc3;padding-left:12px;color:#59675d}.deploy-link{display:inline-block;margin-top:7px;color:#12884f;font-size:12px}.actions .btn{min-width:100px}@media(max-width:720px){.wrap{margin-top:12px}.articles-grid{grid-template-columns:1fr}.admin-tabs{margin-top:12px;padding:0 12px}.admin-tab{padding:10px 9px;font-size:12px}.settings-panel{padding:16px}.grid{grid-template-columns:1fr}.list{max-height:260px;overflow:auto}header{padding:13px 15px}}
+:root{font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#202820;background:#f3f6f3}*{box-sizing:border-box}body{margin:0}header{padding:16px max(18px,calc((100vw - 1100px)/2));background:white;border-bottom:1px solid #e1e8e1;display:flex;justify-content:space-between;align-items:center}h1{font-size:19px;margin:0}.wrap{max-width:1100px;margin:18px auto 26px;padding:0 16px}.articles-grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px}.admin-tabs{max-width:1100px;margin:20px auto 0;padding:0 16px;display:flex;gap:8px;border-bottom:1px solid #e3eae4}.admin-tab{border:1px solid transparent;border-bottom:0;border-radius:10px 10px 0 0;padding:10px 14px;background:transparent;color:#718075;cursor:pointer;font:inherit;font-size:13px;transition:background .15s,color .15s,border-color .15s}.admin-tab:hover{background:#f7faf7;color:#16834c}.admin-tab[aria-selected=true]{border-color:#d8e9dd;background:white;color:#12884f;font-weight:650;box-shadow:0 -1px 0 #fff inset}#articlesTabPanel[hidden],#appearanceTabPanel[hidden]{display:none!important}.settings-panel{max-width:900px;margin:0 auto}.settings-cards{display:grid;gap:16px}.settings-card{background:#fff;border:1px solid #e2eae3;border-radius:16px;padding:20px;box-shadow:0 3px 12px #173c2510;min-width:0}.settings-card-heading{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}.settings-card-number{display:inline-flex;align-items:center;justify-content:center;flex:0 0 34px;height:34px;border-radius:11px;background:#eaf7ef;color:#16834c;font-size:12px;font-weight:800;letter-spacing:.04em}.settings-card-heading h3{margin:1px 0 4px;font-size:15px;font-weight:750;color:#26372b}.settings-card-heading p{margin:0;color:#79867c;font-size:12px;line-height:1.6}.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}.settings-grid-one{grid-template-columns:minmax(0,1fr)}.nav-link-row{display:grid;grid-template-columns:1fr 2fr 1.4fr auto;gap:10px;align-items:end;padding:12px;border:1px solid #e2eae3;border-radius:12px;background:#fbfdfb}.nav-link-row .settings-field{margin:0}.nav-link-row .settings-control{padding:9px 10px}.nav-link-remove{border:1px solid #f1c6c3;border-radius:10px;background:#fff8f7;color:#b42318;padding:9px 11px;white-space:nowrap}.theme-hue-value{min-width:44px;text-align:right;font-variant-numeric:tabular-nums}.theme-hue-swatch{width:28px;height:28px;border-radius:8px;border:1px solid #0002;flex:0 0 auto}@media(max-width:560px){.nav-link-row{grid-template-columns:1fr}.nav-link-remove{width:100%}}.settings-field{display:grid;gap:7px;min-width:0;margin:0}.settings-field>label{font-size:13px;color:#334155;font-weight:650}.settings-field>small{color:#718075;font-size:12px;line-height:1.6}.settings-control{width:100%;min-width:0;border:1px solid #d8e1d8;border-radius:11px;padding:11px 13px;font:inherit;font-size:13px;background:#fff;color:#202820;transition:border-color .15s,box-shadow .15s}.settings-control:hover{border-color:#c2d3c5}.settings-control:focus{border-color:#10b981;outline:none;box-shadow:0 0 0 3px #10b98122}textarea.settings-control{resize:vertical;min-height:100px;line-height:1.7}#bio{min-height:100px}#announcement{min-height:120px}.settings-preview{display:flex;align-items:center;gap:12px;min-height:74px;padding:10px;border:1px solid #edf1ed;border-radius:12px;background:#f8faf8;overflow:hidden}.settings-preview img{width:100px;height:64px;object-fit:cover;border-radius:8px;background:#eef2ee;flex:0 0 auto}.settings-preview.is-avatar img{width:64px;height:64px;border-radius:50%;object-fit:cover}.settings-preview-note{font-size:12px;color:#8b968e;line-height:1.6}.settings-toggle{position:relative;display:flex;align-items:center;gap:10px;min-height:42px;padding:9px 12px;border:1px solid #e4ebe5;border-radius:11px;background:#fafcfa;cursor:pointer}.settings-toggle input{position:absolute;width:1px;height:1px;opacity:0}.settings-toggle-track{position:relative;display:inline-block;flex:0 0 36px;width:36px;height:21px;border-radius:999px;background:#cbd5ce;transition:background .18s}.settings-toggle-track:before{content:"";position:absolute;left:3px;top:3px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0002;transition:transform .18s}.settings-toggle input:checked+.settings-toggle-track{background:#16a064}.settings-toggle input:checked+.settings-toggle-track:before{transform:translateX(15px)}.settings-toggle input:focus-visible+.settings-toggle-track{outline:3px solid #10b98144;outline-offset:3px}.settings-toggle-label{font-size:12px;font-weight:650;color:#47574b}.settings-toggle small{display:block;font-size:11px;font-weight:400;color:#89958c;margin-top:2px}.settings-switch-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.settings-color-row{display:grid;grid-template-columns:54px minmax(0,1fr);gap:10px;align-items:center}.settings-color-picker{width:54px;height:44px;padding:4px;border:1px solid #d8e1d8;border-radius:11px;background:#fff;cursor:pointer}.settings-save-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px 2px 10px}.settings-save-button{border:0;border-radius:11px;background:linear-gradient(135deg,#15965a,#087a43);color:#fff;padding:12px 18px;font:inherit;font-size:13px;font-weight:750;box-shadow:0 5px 12px #0d894b26;cursor:pointer;transition:transform .15s,opacity .15s}.settings-save-button:hover{transform:translateY(-1px)}.settings-save-button:disabled{opacity:.6;cursor:wait;transform:none}.settings-status{font-size:12px;color:#657267;line-height:1.6;overflow-wrap:anywhere}.admin-tab:focus-visible{outline:2px solid #10b981;outline-offset:2px}.panel{background:white;border:1px solid #e0e7e0;border-radius:14px;padding:18px;min-width:0}.btn{border:1px solid #d5dfd5;border-radius:8px;background:white;color:#263329;padding:9px 12px;cursor:pointer}.primary{background:#12884f;color:white;border-color:#12884f}.danger{color:#b42318}.toolbar{display:flex;gap:8px;margin-bottom:12px}.toolbar input{min-width:0;flex:1}.toolbar select{max-width:100px;border:1px solid #d8e1d8;border-radius:8px;padding:8px 5px;background:white;color:#263329;font:inherit;font-size:12px}.field{display:grid;gap:6px;margin-bottom:13px}.field label{font-size:12px;color:#59675d;font-weight:650}.field input,.field textarea,.toolbar input{width:100%;border:1px solid #d8e1d8;border-radius:8px;padding:10px;font:inherit;background:white;color:#202820}.field textarea{min-height:240px;resize:vertical;font-family:ui-monospace,monospace;line-height:1.6}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.item{width:100%;display:block;text-align:left;background:white;border:1px solid #e3e9e3;border-radius:9px;padding:11px;margin-bottom:8px;cursor:pointer;color:inherit}.article-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-bottom:8px;align-items:stretch}.article-row .item{margin:0}.article-delete{border:1px solid #f1c6c3;border-radius:8px;background:#fff8f7;color:#b42318;padding:8px;cursor:pointer;min-width:48px}.article-delete:disabled{opacity:.55;cursor:wait}.item strong,.item small{display:block;overflow-wrap:anywhere}.item strong{font-size:13px}.item small,.muted{color:#718075;font-size:12px}.actions{display:flex;gap:8px;flex-wrap:wrap}.status{min-height:20px;font-size:12px;margin-top:12px;color:#657267;overflow-wrap:anywhere}.check{display:flex;gap:8px;align-items:center;font-size:13px;margin:12px 0}.empty{color:#758077;font-size:13px;line-height:1.7}.editor-tabs{display:flex;gap:8px;margin:2px 0 9px}.editor-tabs .active{background:#eaf6ee;border-color:#b6dbc3;color:#127947}.markdown-preview{min-height:240px;border:1px solid #d8e1d8;border-radius:8px;padding:14px;line-height:1.75;overflow-wrap:anywhere;color:#202820}.markdown-preview h1,.markdown-preview h2,.markdown-preview h3{line-height:1.35;margin:1.1em 0 .6em}.markdown-preview p,.markdown-preview ul,.markdown-preview ol,.markdown-preview blockquote{margin:.65em 0}.markdown-preview pre{overflow:auto;background:#f3f6f3;padding:12px;border-radius:8px}.markdown-preview code{font-family:ui-monospace,monospace;background:#f3f6f3;padding:2px 4px;border-radius:4px}.markdown-preview pre code{padding:0}.markdown-preview img{max-width:100%;height:auto}.markdown-preview table{border-collapse:collapse;max-width:100%;display:block;overflow:auto}.markdown-preview th,.markdown-preview td{border:1px solid #d8e1d8;padding:6px 9px}.markdown-preview blockquote{border-left:3px solid #b6dbc3;padding-left:12px;color:#59675d}.deploy-link{display:inline-block;margin-top:7px;color:#12884f;font-size:12px}.actions .btn{min-width:100px}@media(max-width:720px){.wrap{margin-top:12px}.articles-grid{grid-template-columns:1fr}.admin-tabs{margin-top:12px;padding:0 12px}.admin-tab{padding:10px 9px;font-size:12px}.settings-panel{padding:16px}.grid{grid-template-columns:1fr}.list{max-height:260px;overflow:auto}header{padding:13px 15px}}
 </style></head>
 <body>
 <header><h1>✦ Firefly 文章管理</h1><div style="display:flex;gap:12px;align-items:center"><a href="/" style="color:#16864f;font-size:13px">返回网站 ↗</a><button class="btn" id="logout" type="button">退出登录</button></div></header>
@@ -100,6 +100,9 @@ export const prerender = false;
         </div>
       </div>
 <div class="settings-grid">
+        <div class="settings-field" style="grid-column:1/-1"><label for="themeHue">主题强调色（色相）</label><div style="display:flex;align-items:center;gap:12px"><input id="themeHue" name="themeHue" type="range" min="0" max="360" step="1" value="165" style="width:100%;accent-color:#16a064" aria-label="主题强调色色相"><span id="themeHueValue" class="theme-hue-value">165°</span><span id="themeHueSwatch" class="theme-hue-swatch" style="background:hsl(165 70% 45%)" aria-hidden="true"></span></div><small>改变网站链接、按钮和强调元素的主色相（0–360），保留主题现有明暗模式与布局。保存后随网站部署生效。</small></div>
+      </div>
+<div class="settings-grid">
         <div class="settings-field"><label for="bannerTitle">主标题</label><input id="bannerTitle" name="bannerTitle" type="text" maxlength="200" placeholder="Lovely firefly!" class="settings-control"></div>
         <div class="settings-field"><label for="bannerSubtitle">副标题</label><input id="bannerSubtitle" name="bannerSubtitle" type="text" maxlength="500" placeholder="In Reddened Chrysalis, I Once Rest" class="settings-control"></div>
         <div class="settings-field" style="grid-column:1/-1">
@@ -140,6 +143,11 @@ export const prerender = false;
         <label class="settings-toggle"><input id="showNavMy" name="showNavMy" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示“我的”菜单<small>控制动态、项目、相册等菜单分组入口。</small></span></label>
         <label class="settings-toggle"><input id="showNavLinks" name="showNavLinks" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示“链接”菜单<small>控制 GitHub、Gitee、文档等子菜单入口。</small></span></label>
         <label class="settings-toggle"><input id="showNavAbout" name="showNavAbout" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示“关于”菜单<small>控制打赏与关于我等菜单分组入口。</small></span></label>
+      </div>
+      <div class="settings-field mt-4">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><label>“链接”下拉菜单项目</label><button id="addCustomNavLink" type="button" class="btn">＋ 添加链接</button></div>
+        <small>可修改、添加、删除和排序链接菜单项。站内链接填写 /path/，外部地址使用完整 HTTP/HTTPS 链接；图标格式示例：material-symbols:link。最多 12 项。</small>
+        <div id="customNavLinksEditor" class="space-y-3 mt-3"></div>
       </div>
     </section>
 
@@ -197,7 +205,7 @@ export const prerender = false;
 </main>
 <script>
 // @ts-nocheck
-const $=id=>document.getElementById(id);let articles=[],selected=null;
+const $=id=>document.getElementById(id);let articles=[],selected=null,customNavLinksDraft=[];
 function goLogin(){location.assign("/admin/login/?next="+encodeURIComponent(location.pathname+location.search))}
 function say(s,bad=false){$("status").textContent=s;$("status").style.color=bad?"#b42318":"#657267"}
 function frontmatterValue(source,key){const match=source.match(new RegExp("^"+key+":\\s*(.*?)\\s*$","m"));if(!match)return "";const raw=match[1].trim();try{const parsed=JSON.parse(raw);if(Array.isArray(parsed))return parsed.map(String).join(", ");if(typeof parsed==="string")return parsed;if(parsed===null)return ""}catch{}if(raw.startsWith("'")&&raw.endsWith("'"))return raw.slice(1,-1).replace(/''/g,"'");return raw}
@@ -391,6 +399,66 @@ function updateMusicPreview(){
 }
 $("backgroundMusic").addEventListener("input",updateMusicPreview);
 
+function renderCustomNavLinks(){
+ const root=$("customNavLinksEditor");
+ if(!root)return;
+ root.replaceChildren();
+ if(!customNavLinksDraft.length){
+  const empty=document.createElement("p");
+  empty.className="settings-status";
+  empty.textContent="当前没有自定义链接。点击“添加链接”可创建顶部“链接”下拉菜单项目。";
+  root.append(empty);
+  return;
+ }
+ customNavLinksDraft.forEach((item,index)=>{
+  const row=document.createElement("div");
+  row.className="nav-link-row";
+  const field=(labelText,key,placeholder,maxLength)=>{
+   const wrap=document.createElement("div");
+   wrap.className="settings-field";
+   const label=document.createElement("label");
+   const input=document.createElement("input");
+   const id="custom-nav-"+index+"-"+key;
+   label.htmlFor=id;
+   label.textContent=labelText;
+   input.id=id;
+   input.type="text";
+   input.className="settings-control";
+   input.maxLength=maxLength;
+   input.placeholder=placeholder;
+   input.value=typeof item[key]==="string"?item[key]:"";
+   input.autocomplete="off";
+   input.addEventListener("input",()=>{customNavLinksDraft[index][key]=input.value});
+   wrap.append(label,input);
+   return wrap;
+  };
+  row.append(
+   field("名称","name","例如：个人 GitHub",60),
+   field("链接","url","/about/ 或 https://example.com",2048),
+   field("图标标识","icon","material-symbols:link",100)
+  );
+  const remove=document.createElement("button");
+  remove.type="button";
+  remove.className="nav-link-remove";
+  remove.textContent="删除";
+  remove.setAttribute("aria-label","删除第 "+(index+1)+" 个自定义导航链接");
+  remove.addEventListener("click",()=>{customNavLinksDraft.splice(index,1);renderCustomNavLinks()});
+  row.append(remove);
+  root.append(row);
+ });
+}
+function updateThemeHuePreview(){
+ const hue=Math.max(0,Math.min(360,Number($("themeHue").value)||0));
+ $("themeHueValue").textContent=Math.round(hue)+"°";
+ $("themeHueSwatch").style.backgroundColor="hsl("+hue+" 70% 45%)";
+}
+$("themeHue").addEventListener("input",updateThemeHuePreview);
+$("addCustomNavLink").addEventListener("click",()=>{
+ if(customNavLinksDraft.length>=12){say("自定义导航链接最多添加 12 项。",true);return}
+ customNavLinksDraft.push({name:"",url:"",icon:"material-symbols:link"});
+ renderCustomNavLinks();
+});
+
 async function loadSettings(){
  const status=$("settingsStatus");status.textContent="正在读取全局配置…";status.style.color="#657267";
  try{
@@ -402,6 +470,8 @@ async function loadSettings(){
    $(id).value=typeof data[id]==="string"?data[id]:"";
   }
   $("backgroundColorPicker").value=/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(data.backgroundColor||"")?expandColor(data.backgroundColor):"#f3f6f3";
+  $("themeHue").value=String(Number.isFinite(data.themeHue)?Math.max(0,Math.min(360,Math.round(data.themeHue))):165);updateThemeHuePreview();
+  customNavLinksDraft=Array.isArray(data.customNavLinks)?data.customNavLinks.map(item=>({name:String(item?.name||""),url:String(item?.url||""),icon:String(item?.icon||"material-symbols:link")})):[];renderCustomNavLinks();
   $("showGithub").checked=data.showGithub===true;
   $("showEmail").checked=data.showEmail===true;
   $("showSupportAndShare").checked=data.showSupportAndShare===true;
@@ -443,6 +513,8 @@ $("settingsForm").addEventListener("submit",async event=>{
   bannerSubtitle:$("bannerSubtitle").value,
   backgroundImage:$("backgroundImage").value.trim(),
   backgroundColor:$("backgroundColor").value.trim(),
+  themeHue:Number($("themeHue").value),
+  customNavLinks:customNavLinksDraft.map(item=>({name:String(item.name||"").trim(),url:String(item.url||"").trim(),icon:String(item.icon||"").trim()})),
   avatar:$("avatar").value.trim(),
   nickname:$("nickname").value,
   bio:$("bio").value,
@@ -470,6 +542,13 @@ $("settingsForm").addEventListener("submit",async event=>{
   if(values[key]&&!checkedExternalUrl(values[key])){status.textContent=label+"请填写完整的 HTTP/HTTPS 链接。";status.style.color="#b42318";$(key).focus();return}
  }
  if(values.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)){status.textContent="请填写有效的邮箱地址。";status.style.color="#b42318";$("email").focus();return}
+ if(values.customNavLinks.length>12){status.textContent="自定义导航链接最多添加 12 项。";status.style.color="#b42318";return}
+ for(const [index,link] of values.customNavLinks.entries()){
+  if(!link.name||!link.url){status.textContent="第 "+(index+1)+" 个导航链接需要填写名称和地址，未使用的空行请删除。";status.style.color="#b42318";return}
+  const internal=link.url.startsWith("/")&&!link.url.startsWith("//")&&!link.url.includes(String.fromCharCode(92))&&!link.url.split("").some(ch=>ch.charCodeAt(0)<=32);
+  if(!internal&&!checkedExternalUrl(link.url)){status.textContent="第 "+(index+1)+" 个导航链接地址不合法，请填写 /path/ 或完整 HTTP/HTTPS 链接。";status.style.color="#b42318";return}
+  if(link.icon&&!/^[a-z0-9-]+:[a-z0-9-]+$/i.test(link.icon)){status.textContent="第 "+(index+1)+" 个图标格式不正确，例如 material-symbols:link。";status.style.color="#b42318";return}
+ }
  button.disabled=true;status.style.color="#657267";status.textContent="正在保存到 GitHub…";
  try{
   const response=await fetch("/api/admin/settings/",{method:"PUT",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(values)});
