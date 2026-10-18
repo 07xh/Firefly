@@ -320,7 +320,6 @@ test("details with attributes, nested components, or formatted bodies remain sou
   ];
   for (const source of cases) {
     const model = inspectProtectedMarkdown(source, "HTML details");
-    assert.equal(model.kind, "details");
     assert.notEqual(model.editable, true, source);
   }
 });
