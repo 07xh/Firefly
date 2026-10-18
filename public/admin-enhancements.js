@@ -80,6 +80,7 @@
       const done = () => { dialog.removeEventListener("close", closed); resolve(dialog.returnValue === "confirm"); };
       const closed = () => done();
       dialog.addEventListener("close", closed, { once: true });
+      dialog.returnValue = "cancel";
       if (typeof dialog.showModal === "function") dialog.showModal();
       else { dialog.removeEventListener("close", closed); resolve(window.confirm("确认删除 " + target + "？")); }
     });
