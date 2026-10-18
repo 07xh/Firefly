@@ -71,7 +71,7 @@ test("基础提示容器进入可视化解析，MDX 组件仍作为无损保留�
   const result = prepareMarkdownForVisualEditing(source);
   assert.equal(result.records.length, 1);
   assert.ok(result.records.some(record => record.raw === "<TabGroup labels={items}>\n组件内部文字。\n</TabGroup>"));
-  assert.match(result.markdown, /:::tip\n这段正文 \*\*可直接编辑\*\*\.\n:::/);
+  assert.match(result.markdown, /:::tip\n这段正文 \*\*可直接编辑\*\*。\n:::/);
   assert.doesNotMatch(result.markdown, /组件内部文字/);
   assert.match(result.markdown, /开头正文/);
   assert.match(result.markdown, /结尾正文/);
