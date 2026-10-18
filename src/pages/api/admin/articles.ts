@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { env as workerEnv } from "cloudflare:workers";
 
 type RuntimeEnv = {
 	GITHUB_CONTENTS_TOKEN?: string;
@@ -21,8 +22,8 @@ const headers = (token: string) => ({
 	"Content-Type": "application/json",
 });
 
-function getConfig(locals: App.Locals): { token: string; repo: string; branch: string } {
-	const env = (locals as unknown as { runtime?: { env?: RuntimeEnv } }).runtime?.env;
+function getConfig(): { token: string; repo: string; branch: string } {
+	const env = workerEnv as unknown as RuntimeEnv;
 	const token = env?.GITHUB_CONTENTS_TOKEN?.trim();
 	const repo = env?.GITHUB_CONTENTS_REPO?.trim() || "07xh/Firefly";
 	const branch = env?.GITHUB_CONTENTS_BRANCH?.trim() || "master";
@@ -120,9 +121,9 @@ async function readPost(path: string, config: ReturnType<typeof getConfig>): Pro
 	return { path: file.path, sha: file.sha, content: file.encoding === "base64" ? decodeBase64(file.content) : file.content };
 }
 
-export const GET: APIRoute = async ({ locals }) => {
+export const GET: APIRoute = async () => {
 	try {
-		const config = getConfig(locals);
+		const config = getConfig();
 		const files = await findPostFiles(config);
 		const posts = await Promise.all(files.map(async (file) => {
 			try {
@@ -140,9 +141,9 @@ export const GET: APIRoute = async ({ locals }) => {
 	}
 };
 
-export const POST: APIRoute = async ({ request, locals }) => {
+export const POST: APIRoute = async ({ request }) => {
 	try {
-		const config = getConfig(locals);
+		const config = getConfig();
 		const input = (await request.json()) as Record<string, unknown>;
 		const slug = safeSlug(input.slug);
 		const extension = input.extension === "mdx" ? "mdx" : "md";
@@ -163,9 +164,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
 	}
 };
 
-export const PUT: APIRoute = async ({ request, locals }) => {
+export const PUT: APIRoute = async ({ request }) => {
 	try {
-		const config = getConfig(locals);
+		const config = getConfig();
 		const input = (await request.json()) as Record<string, unknown>;
 		const path = typeof input.path === "string" ? input.path : "";
 		if (!path.startsWith(ROOT) || !/^src\/content\/posts\/(?:[\w-]+\/)*[\w-]+\.mdx?$/.test(path)) return json({ error: "文章路径不合法" }, 400);
@@ -196,9 +197,9 @@ export const PUT: APIRoute = async ({ request, locals }) => {
 	}
 };
 
-export const DELETE: APIRoute = async ({ request, locals }) => {
+export const DELETE: APIRoute = async ({ request }) => {
 	try {
-		const config = getConfig(locals);
+		const config = getConfig();
 		const input = (await request.json()) as Record<string, unknown>;
 		const path = typeof input.path === "string" ? input.path : "";
 		if (!path.startsWith(ROOT) || !/^src\/content\/posts\/(?:[\w-]+\/)*[\w-]+\.mdx?$/.test(path)) return json({ error: "文章路径不合法" }, 400);
