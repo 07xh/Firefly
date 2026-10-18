@@ -5,6 +5,18 @@ export const prerender = false;
 
 const FILE_PATH = "src/data/settings.json";
 
+type LayoutSettings = {
+  sidebarEnabled: boolean;
+  sidebarPosition: "left" | "right" | "both";
+  tabletSidebar: "left" | "right";
+  postListMode: "list" | "grid";
+  mobilePostListMode: "list" | "grid";
+  coverPosition: "left" | "right";
+  gridMasonry: boolean;
+  gridColumnWidth: number;
+  gridCoverFullWidth: boolean;
+};
+
 type SettingsRecord = Record<string, unknown> & {
 	bannerTitle: string;
 	bannerSubtitle: string;
@@ -30,6 +42,7 @@ type SettingsRecord = Record<string, unknown> & {
 	aboutContent: string;
 	showSourceGithub: boolean;
 	sourceGithubUrl: string;
+  layoutSettings: LayoutSettings;
 };
 
 const DEFAULT_SETTINGS: SettingsRecord = {
@@ -57,6 +70,17 @@ const DEFAULT_SETTINGS: SettingsRecord = {
 	aboutContent: "# 关于我 / About Me\n\n你好！我是 **夏叶** ，一个在数字世界中默默无闻的一片叶子。\n\n## 🛠️ 关于本站\n\n这个网站使用 **Astro** 框架构建，采用了 [Firefly](https://github.com/CuteLeaf/Firefly) 模板，Firefly 是基于 [Fuwari](https://github.com/saicaca/fuwari) 的二次开发。\n\n**Firefly** 是一款基于 Astro 框架和 Fuwari 模板开发的清新美观且现代化个人博客主题模板，专为技术爱好者和内容创作者设计。该主题融合了现代 Web 技术栈，提供了丰富的功能模块和高度可定制的界面，让您能够轻松打造出专业且美观的个人博客网站。\n\n**🖥️ 在线预览： [Firefly - Demo site](https://firefly.cuteleaf.cn/)**\n\n**📝 Firefly 使用文档： [https://docs-firefly.cuteleaf.cn](https://docs-firefly.cuteleaf.cn/)**\n\n**⭐ Firefly 开源地址：[https://github.com/CuteLeaf/Firefly](https://github.com/CuteLeaf/Firefly)**\n\n**⭐ Fuwari 开源地址：[https://github.com/saicaca/fuwari](https://github.com/saicaca/fuwari)**\n\n---\n\n*感谢你的来访！希望在这里能找到对你有用的内容！*\n",
 	showSourceGithub: false,
 	sourceGithubUrl: "",
+  layoutSettings: {
+    sidebarEnabled: true,
+    sidebarPosition: "both",
+    tabletSidebar: "left",
+    postListMode: "list",
+    mobilePostListMode: "grid",
+    coverPosition: "right",
+    gridMasonry: false,
+    gridColumnWidth: 320,
+    gridCoverFullWidth: false,
+  },
 };
 
 const SETTING_KEYS = [
@@ -84,6 +108,7 @@ const SETTING_KEYS = [
 	"aboutContent",
 	"showSourceGithub",
 	"sourceGithubUrl",
+  "layoutSettings",
 ] as const;
 
 type SettingKey = (typeof SETTING_KEYS)[number];
@@ -186,6 +211,22 @@ async function githubError(
 	);
 }
 
+function normalizeLayoutSettings(value: unknown): LayoutSettings {
+  const raw = value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  const fallback = DEFAULT_SETTINGS.layoutSettings;
+  return {
+    sidebarEnabled: typeof raw.sidebarEnabled === "boolean" ? raw.sidebarEnabled : fallback.sidebarEnabled,
+    sidebarPosition: raw.sidebarPosition === "left" || raw.sidebarPosition === "right" || raw.sidebarPosition === "both" ? raw.sidebarPosition : fallback.sidebarPosition,
+    tabletSidebar: raw.tabletSidebar === "left" || raw.tabletSidebar === "right" ? raw.tabletSidebar : fallback.tabletSidebar,
+    postListMode: raw.postListMode === "list" || raw.postListMode === "grid" ? raw.postListMode : fallback.postListMode,
+    mobilePostListMode: raw.mobilePostListMode === "list" || raw.mobilePostListMode === "grid" ? raw.mobilePostListMode : fallback.mobilePostListMode,
+    coverPosition: raw.coverPosition === "left" || raw.coverPosition === "right" ? raw.coverPosition : fallback.coverPosition,
+    gridMasonry: typeof raw.gridMasonry === "boolean" ? raw.gridMasonry : fallback.gridMasonry,
+    gridColumnWidth: typeof raw.gridColumnWidth === "number" && Number.isInteger(raw.gridColumnWidth) && raw.gridColumnWidth >= 220 && raw.gridColumnWidth <= 460 ? raw.gridColumnWidth : fallback.gridColumnWidth,
+    gridCoverFullWidth: typeof raw.gridCoverFullWidth === "boolean" ? raw.gridCoverFullWidth : fallback.gridCoverFullWidth,
+  };
+}
+
 function normalizeSettings(value: unknown): SettingsRecord {
 	if (!value || typeof value !== "object" || Array.isArray(value)) {
 		throw new SettingsApiError("settings.json 必须是 JSON 对象。", 500);
@@ -227,6 +268,7 @@ function normalizeSettings(value: unknown): SettingsRecord {
 		result[key] =
 			typeof merged[key] === "boolean" ? merged[key] : DEFAULT_SETTINGS[key];
 	}
+	result.layoutSettings = normalizeLayoutSettings(merged.layoutSettings);
 	return result as SettingsRecord;
 }
 
@@ -347,6 +389,41 @@ function validateBoolean(value: unknown, label: string): boolean {
 	return value;
 }
 
+function applyLayoutSettings(current: LayoutSettings, value: unknown): LayoutSettings {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new SettingsApiError("layoutSettings 必须是 JSON 对象。", 400);
+  const input = value as Record<string, unknown>;
+  const next: LayoutSettings = { ...current };
+  const has = (key: keyof LayoutSettings) => Object.hasOwn(input, key);
+  if (has("sidebarEnabled")) next.sidebarEnabled = validateBoolean(input.sidebarEnabled, "layoutSettings.sidebarEnabled");
+  if (has("sidebarPosition")) {
+    if (input.sidebarPosition !== "left" && input.sidebarPosition !== "right" && input.sidebarPosition !== "both") throw new SettingsApiError("侧边栏布局必须选择 left、right 或 both。", 400);
+    next.sidebarPosition = input.sidebarPosition;
+  }
+  if (has("tabletSidebar")) {
+    if (input.tabletSidebar !== "left" && input.tabletSidebar !== "right") throw new SettingsApiError("平板端侧边栏位置必须选择 left 或 right。", 400);
+    next.tabletSidebar = input.tabletSidebar;
+  }
+  if (has("postListMode")) {
+    if (input.postListMode !== "list" && input.postListMode !== "grid") throw new SettingsApiError("桌面文章布局必须选择 list 或 grid。", 400);
+    next.postListMode = input.postListMode;
+  }
+  if (has("mobilePostListMode")) {
+    if (input.mobilePostListMode !== "list" && input.mobilePostListMode !== "grid") throw new SettingsApiError("移动端文章布局必须选择 list 或 grid。", 400);
+    next.mobilePostListMode = input.mobilePostListMode;
+  }
+  if (has("coverPosition")) {
+    if (input.coverPosition !== "left" && input.coverPosition !== "right") throw new SettingsApiError("列表封面位置必须选择 left 或 right。", 400);
+    next.coverPosition = input.coverPosition;
+  }
+  if (has("gridMasonry")) next.gridMasonry = validateBoolean(input.gridMasonry, "layoutSettings.gridMasonry");
+  if (has("gridCoverFullWidth")) next.gridCoverFullWidth = validateBoolean(input.gridCoverFullWidth, "layoutSettings.gridCoverFullWidth");
+  if (has("gridColumnWidth")) {
+    if (typeof input.gridColumnWidth !== "number" || !Number.isInteger(input.gridColumnWidth) || input.gridColumnWidth < 220 || input.gridColumnWidth > 460) throw new SettingsApiError("网格卡片最小宽度必须是 220–460 之间的整数。", 400);
+    next.gridColumnWidth = input.gridColumnWidth;
+  }
+  return next;
+}
+
 function applySubmittedSettings(
 	current: SettingsRecord,
 	input: Record<string, unknown>,
@@ -427,6 +504,7 @@ function applySubmittedSettings(
 	if (has("sourceGithubUrl")) {
 		next.sourceGithubUrl = validateMediaUrl(input.sourceGithubUrl, "GitHub 原文/源码链接");
 	}
+  if (has("layoutSettings")) next.layoutSettings = applyLayoutSettings(current.layoutSettings, input.layoutSettings);
 
 	return normalizeSettings(next);
 }
