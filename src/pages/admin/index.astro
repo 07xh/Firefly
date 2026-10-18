@@ -149,8 +149,29 @@ export const prerender = false;
       </div>
     </section>
 
+
+    <section class="settings-card" aria-labelledby="aboutContentSettingsTitle">
+      <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="aboutContentSettingsTitle">关于我页面设置</h3><p>自定义“关于我 / About Me”页面正文，支持标准 Markdown、多行文本和链接。</p></div></div>
+      <div class="settings-field">
+        <label for="aboutContent">关于我页面正文</label>
+        <textarea id="aboutContent" name="aboutContent" rows="12" maxlength="30000" placeholder="# 关于我 / About Me&#10;&#10;在这里填写个人介绍、关于本站、GitHub 开源地址等内容。" class="settings-control"></textarea>
+        <small>最多 30000 个字符。支持标题、列表、粗体、链接、引用、代码和普通 Markdown 表格；保存后随网站重新部署生效。</small>
+      </div>
+    </section>
+
+    <section class="settings-card" aria-labelledby="sourceGithubSettingsTitle">
+      <div class="settings-card-heading"><span class="settings-card-number">07</span><div><h3 id="sourceGithubSettingsTitle">GitHub 原文 / 源码链接设置</h3><p>统一控制页脚是否显示链接，并修改链接目标地址。</p></div></div>
+      <div class="settings-grid settings-grid-one">
+        <div class="settings-field">
+          <label for="sourceGithubUrl">原文 / 源码 GitHub 地址</label>
+          <input id="sourceGithubUrl" name="sourceGithubUrl" type="url" maxlength="2048" placeholder="https://github.com/用户名/仓库 或具体文件路径" class="settings-control">
+          <small>填写仓库、Markdown 原文或 GitHub 文件地址均可；必须是完整的 HTTP/HTTPS 链接。</small>
+        </div>
+        <label class="settings-toggle"><input id="showSourceGithub" name="showSourceGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示 GitHub 原文 / 源码链接<small>开启后在网站页脚显示；关闭后隐藏，但不会清空上面的地址。</small></span></label>
+      </div>
+    </section>
     <section class="settings-card" aria-labelledby="featureSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="featureSettingsTitle">多媒体与功能模块</h3><p>配置背景音乐外链，以及文章页的“支持与分享”卡片开关。</p></div></div>
+      <div class="settings-card-heading"><span class="settings-card-number">08</span><div><h3 id="featureSettingsTitle">多媒体与功能模块</h3><p>配置背景音乐外链，以及文章页的“支持与分享”卡片开关。</p></div></div>
       <div class="settings-grid settings-grid-one">
         <div class="settings-field">
           <label for="backgroundMusic">背景音乐外链</label>
@@ -372,13 +393,14 @@ async function loadSettings(){
   if(response.status===401){goLogin();return}
   const data=await response.json().catch(()=>({error:"配置接口返回无法解析的响应"}));
   if(!response.ok)throw new Error(data.error||"读取全局配置失败");
-  for(const id of ["bannerTitle","bannerSubtitle","backgroundImage","backgroundColor","avatar","nickname","bio","announcement","githubUrl","email","backgroundMusic"]){
+  for(const id of ["bannerTitle","bannerSubtitle","backgroundImage","backgroundColor","avatar","nickname","bio","announcement","githubUrl","email","backgroundMusic","aboutContent","sourceGithubUrl"]){
    $(id).value=typeof data[id]==="string"?data[id]:"";
   }
   $("backgroundColorPicker").value=/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(data.backgroundColor||"")?expandColor(data.backgroundColor):"#f3f6f3";
   $("showGithub").checked=data.showGithub===true;
   $("showEmail").checked=data.showEmail===true;
   $("showSupportAndShare").checked=data.showSupportAndShare===true;
+  $("showSourceGithub").checked=data.showSourceGithub===true;
   updateImagePreview();updateAvatarPreview();updateMusicPreview();
   status.textContent="已加载仓库中的配置。";
  }catch(error){
@@ -418,10 +440,13 @@ $("settingsForm").addEventListener("submit",async event=>{
   email:$("email").value.trim(),
   showEmail:$("showEmail").checked,
   backgroundMusic:$("backgroundMusic").value.trim(),
-  showSupportAndShare:$("showSupportAndShare").checked
+  showSupportAndShare:$("showSupportAndShare").checked,
+  aboutContent:$("aboutContent").value,
+  showSourceGithub:$("showSourceGithub").checked,
+  sourceGithubUrl:$("sourceGithubUrl").value.trim()
  };
  if(values.backgroundColor&&!/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(values.backgroundColor)){status.textContent="背景颜色只支持 #RGB 或 #RRGGBB；留空可恢复主题默认颜色。";status.style.color="#b42318";$("backgroundColor").focus();return}
- for(const [key,label] of [["backgroundImage","背景图片"],["avatar","头像"],["githubUrl","GitHub 链接"],["backgroundMusic","背景音乐"]]){
+ for(const [key,label] of [["backgroundImage","背景图片"],["avatar","头像"],["githubUrl","GitHub 链接"],["backgroundMusic","背景音乐"],["sourceGithubUrl","GitHub 原文/源码链接"]]){
   if(values[key]&&!checkedExternalUrl(values[key])){status.textContent=label+"请填写完整的 HTTP/HTTPS 链接。";status.style.color="#b42318";$(key).focus();return}
  }
  if(values.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)){status.textContent="请填写有效的邮箱地址。";status.style.color="#b42318";$("email").focus();return}
