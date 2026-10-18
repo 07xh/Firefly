@@ -88,7 +88,6 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
           FIREFLY_CONTENTS_TOKEN: ${{ secrets.FIREFLY_CONTENTS_TOKEN }}
-          FIREFLY_ADMIN_PASSWORD: ${{ secrets.FIREFLY_ADMIN_PASSWORD }}
         run: |
           set -euo pipefail
           config="wrangler.jsonc"
@@ -103,4 +102,3 @@ jobs:
             fi
           }
           sync_secret "FIREFLY_CONTENTS_TOKEN" "$FIREFLY_CONTENTS_TOKEN"
-          sync_secret "FIREFLY_ADMIN_PASSWORD" "$FIREFLY_ADMIN_PASSWORD"
