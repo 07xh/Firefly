@@ -48,7 +48,7 @@ function getConfig(): GitHubConfig {
   const repo = env && env.GITHUB_CONTENTS_REPO ? env.GITHUB_CONTENTS_REPO.trim() : "07xh/Firefly";
   const branch = env && env.GITHUB_CONTENTS_BRANCH ? env.GITHUB_CONTENTS_BRANCH.trim() : "master";
   if (!token) throw new SettingsApiError("Worker 未配置 FIREFLY_CONTENTS_TOKEN。", 503);
-  if (!/^[\\w.-]+\\/[\\w.-]+$/.test(repo) || !/^[\\w./-]+$/.test(branch)) {
+  if (repo.split("/").length !== 2 || repo.split("/").some((part) => !/^[A-Za-z0-9_.-]+$/.test(part)) || branch.split("/").some((part) => !/^[A-Za-z0-9_.-]+$/.test(part))) {
     throw new SettingsApiError("GitHub 仓库或分支配置格式不合法。", 503);
   }
   return { token, repo, branch };
@@ -80,7 +80,7 @@ function encodeBase64(value: string): string {
 }
 
 function decodeBase64(value: string): string {
-  const binary = atob(value.replace(/\\s/g, ""));
+  const binary = atob(value.replace(new RegExp("[^A-Za-z0-9+/=]", "g"), ""));
   const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
   return new TextDecoder().decode(bytes);
 }
@@ -90,7 +90,7 @@ async function githubError(response: Response, operation: string): Promise<strin
   try {
     const payload = (await response.clone().json()) as { message?: unknown };
     if (typeof payload.message === "string") {
-      message = payload.message.replace(/\\s+/g, " ").trim().slice(0, 180);
+      message = payload.message.trim().slice(0, 180);
     }
   } catch {
     // Keep the status if GitHub returned a non-JSON body.

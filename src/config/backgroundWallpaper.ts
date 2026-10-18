@@ -1,4 +1,5 @@
 import type { BackgroundWallpaperConfig } from "@/types/backgroundWallpaper";
+import siteSettings from "../data/settings.json";
 
 export const backgroundWallpaper: BackgroundWallpaperConfig = {
 	// 壁纸模式："banner" 横幅壁纸，"fullscreen" 全屏壁纸，"overlay" 覆盖透明，"none" 纯色背景无壁纸
@@ -214,3 +215,13 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 		},
 	},
 };
+
+const customBackgroundImage = siteSettings.backgroundImage.trim();
+if (customBackgroundImage) {
+  const wallpaperSource = backgroundWallpaper.src;
+  if (typeof wallpaperSource === "object" && !Array.isArray(wallpaperSource)) {
+    wallpaperSource.desktop = customBackgroundImage;
+    wallpaperSource.mobile = customBackgroundImage;
+  }
+}
+

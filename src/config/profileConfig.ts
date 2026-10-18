@@ -1,4 +1,5 @@
 import type { ProfileConfig } from "../types/profileConfig";
+import siteSettings from "../data/settings.json";
 
 export const profileConfig: ProfileConfig = {
 	// 头像
@@ -12,7 +13,7 @@ export const profileConfig: ProfileConfig = {
 	name: "XiaYe",
 
 	// 个人签名
-	bio: "Hello, I'm XiaYe.",
+	bio: siteSettings.bio,
 
 	// 链接配置
 	// 已经预装的图标集：fa7-brands，fa7-regular，fa7-solid，material-symbols，simple-icons
