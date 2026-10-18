@@ -1,4 +1,6 @@
 ---
+import "../../styles/admin-index.css";
+
 export const prerender = false;
 ---
 <!doctype html>
@@ -11,8 +13,59 @@ export const prerender = false;
 <body>
 <header><h1>✦ Firefly 文章管理</h1><div style="display:flex;gap:12px;align-items:center"><a href="/" style="color:#16864f;font-size:13px">返回网站 ↗</a><button class="btn" id="logout" type="button">退出登录</button></div></header>
 <main class="wrap">
-<section class="panel"><h2 style="font-size:16px;margin:0 0 12px">文章管理</h2><div class="toolbar"><input id="search" placeholder="搜索文章…" aria-label="搜索文章"><select id="statusFilter" aria-label="筛选文章状态"><option value="all">全部</option><option value="published">已发布</option><option value="draft">草稿</option></select><button class="btn" id="refresh">刷新</button></div><button class="btn primary" id="new" style="width:100%;margin-bottom:12px">＋ 新建文章</button><div id="list" class="list"><p class="empty">正在读取文章列表…</p></div></section>
-<section class="panel"><h2 id="formTitle" style="font-size:16px;margin:0 0 16px">新建文章</h2><form id="editor">
+<section
+  class="min-w-0 rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm"
+>
+  <div class="mb-4 flex items-center justify-between gap-3">
+    <h2 class="text-base font-semibold text-gray-800">文章管理</h2>
+    <button
+      id="refresh"
+      type="button"
+      class="inline-flex shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 transition hover:border-emerald-200 hover:bg-emerald-50/50 hover:text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30"
+    >
+      刷新
+    </button>
+  </div>
+
+  <div class="mb-3 space-y-2">
+    <input
+      id="search"
+      type="search"
+      placeholder="搜索文章标题或路径…"
+      aria-label="搜索文章"
+      class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 transition hover:border-gray-300 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+    />
+    <select
+      id="statusFilter"
+      aria-label="筛选文章状态"
+      class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-700 transition hover:border-gray-300 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+    >
+      <option value="all">全部文章</option>
+      <option value="published">已发布</option>
+      <option value="draft">草稿</option>
+    </select>
+  </div>
+
+  <button
+    id="new"
+    type="button"
+    class="mb-4 flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-emerald-700 hover:shadow active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-2"
+  >
+    <span aria-hidden="true" class="text-base leading-none">+</span>
+    新建文章
+  </button>
+
+  <div
+    id="list"
+    class="max-h-[60vh] space-y-1 overflow-y-auto pr-1"
+    aria-label="文章列表"
+  >
+    <p class="rounded-lg px-3 py-8 text-center text-sm text-gray-400">
+      正在读取文章列表…
+    </p>
+  </div>
+</section>
+<section class="min-w-0 rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm"><h2 id="formTitle" style="font-size:16px;margin:0 0 16px">新建文章</h2><form id="editor">
 <div class="field"><label for="title">标题 *</label><input id="title" required maxlength="200"></div>
 <div class="grid"><div class="field"><label for="slug">文件名 *</label><input id="slug" required pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,79}" placeholder="my-post"></div><div class="field"><label for="published">发布日期 *</label><input id="published" type="date" required></div></div>
 <div class="grid"><div class="field"><label for="category">分类</label><input id="category" maxlength="100"></div><div class="field"><label for="tags">标签（逗号分隔）</label><input id="tags" placeholder="技术, 随笔"></div></div>
@@ -32,19 +85,102 @@ async function api(method,data){const r=await fetch("/api/admin/articles/",{meth
 function render(){
  const q=$("search").value.trim().toLowerCase();
  const statusFilter=$("statusFilter").value;
- $("list").replaceChildren();
- const items=articles.filter(a=>((a.title||"").toLowerCase().includes(q)||(a.path||"").toLowerCase().includes(q))&&(statusFilter==="all"||(statusFilter==="draft"?a.draft:!a.draft)));
- if(!items.length){const p=document.createElement("p");p.className="empty";p.textContent="没有找到文章";$("list").append(p);return}
+ const list=$("list");
+ list.replaceChildren();
+
+ const items=articles.filter(a=>
+  ((a.title||"").toLowerCase().includes(q)||(a.path||"").toLowerCase().includes(q)) &&
+  (statusFilter==="all"||(statusFilter==="draft"?a.draft:!a.draft))
+ );
+
+ if(!items.length){
+  const empty=document.createElement("p");
+  empty.className="rounded-lg px-3 py-8 text-center text-sm text-gray-400";
+  empty.textContent="没有找到文章";
+  list.append(empty);
+  return;
+ }
+
  for(const a of items){
-  const row=document.createElement("div");row.className="article-row";
-  const b=document.createElement("button");b.type="button";b.className="item";
-  const t=document.createElement("strong");t.textContent=a.title;
-  const m=document.createElement("small");m.textContent=(a.published||"无日期")+(a.draft?" · 草稿":"")+" · "+a.path;
-  b.append(t,m);
-  b.onclick=()=>{selected=a;$("formTitle").textContent="编辑文章";$("slug").value=a.path.split("/").pop().replace(/\.mdx?$/,"");$("slug").disabled=true;$("body").value=a.content||"";$("title").value=frontmatterValue(a.content||"","title")||a.title;$("published").value=frontmatterValue(a.content||"","published")||a.published;$("category").value=frontmatterValue(a.content||"","category");$("description").value=frontmatterValue(a.content||"","description");$("tags").value=frontmatterValue(a.content||"","tags");$("draft").checked=a.draft;$("saveDraft").textContent=a.draft?"保存草稿修改":"转为草稿";$("publish").textContent=a.draft?"发布这篇文章":"保存修改并发布";$("delete").disabled=false;say(a.content?"已载入文章。标题、日期、分类、摘要和标签会与正文一起保存。":"未能载入文章内容，请刷新后重试。",!a.content);$("editor").scrollIntoView({behavior:"smooth",block:"start"})};
-  const del=document.createElement("button");del.type="button";del.className="article-delete";del.textContent="删除";del.setAttribute("aria-label","删除文章："+a.title);
-  del.onclick=async event=>{event.stopPropagation();if(!confirm("确定删除“"+a.title+"”？此操作会提交到 GitHub 并触发部署。"))return;del.disabled=true;try{await api("DELETE",{path:a.path,sha:a.sha});if(selected&&selected.path===a.path)reset();say("文章已删除，正在刷新列表…");await refresh()}catch(e){say(e.message,true)}finally{del.disabled=false}};
-  row.append(b,del);$("list").append(row);
+  const isActive=selected?.path===a.path;
+  const row=document.createElement("div");
+  row.className=[
+   "group relative flex min-w-0 items-center gap-1 rounded-r-lg border-l-4 transition-colors duration-150",
+   isActive
+    ? "border-emerald-500 bg-emerald-50/60"
+    : "border-transparent hover:bg-gray-50"
+  ].join(" ");
+
+  const item=document.createElement("button");
+  item.type="button";
+  item.className=[
+   "min-w-0 flex-1 rounded-r-lg px-3 py-3 text-left",
+   "focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-500/30"
+  ].join(" ");
+
+  const titleRow=document.createElement("span");
+  titleRow.className="block truncate text-sm font-semibold text-gray-800";
+  titleRow.textContent=a.title||"未命名文章";
+
+  const pathRow=document.createElement("span");
+  pathRow.className="mt-1 block truncate text-xs font-normal text-gray-400";
+  pathRow.textContent=a.path;
+
+  item.append(titleRow,pathRow);
+
+  item.onclick=()=>{
+   selected=a;
+   $("formTitle").textContent="编辑文章";
+   $("slug").value=a.path.split("/").pop().replace(/\.mdx?$/,"");
+   $("slug").disabled=true;
+   $("body").value=a.content||"";
+   $("title").value=frontmatterValue(a.content||"","title")||a.title;
+   $("published").value=frontmatterValue(a.content||"","published")||a.published;
+   $("category").value=frontmatterValue(a.content||"","category");
+   $("description").value=frontmatterValue(a.content||"","description");
+   $("tags").value=frontmatterValue(a.content||"","tags");
+   $("draft").checked=a.draft;
+   $("saveDraft").textContent=a.draft?"保存草稿修改":"转为草稿";
+   $("publish").textContent=a.draft?"发布这篇文章":"保存修改并发布";
+   $("delete").disabled=false;
+   say(
+    a.content
+     ?"已载入文章。标题、日期、分类、摘要和标签会与正文一起保存。"
+     :"未能载入文章内容，请刷新后重试。",
+    !a.content
+   );
+   render();
+   $("editor").scrollIntoView({behavior:"smooth",block:"start"});
+  };
+
+  const del=document.createElement("button");
+  del.type="button";
+  del.textContent="删除";
+  del.setAttribute("aria-label","删除文章："+a.title);
+  del.className=[
+   "mr-1 shrink-0 rounded-md px-2.5 py-2 text-xs font-medium text-rose-600 transition-colors",
+   "hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40",
+   "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
+  ].join(" ");
+
+  del.onclick=async event=>{
+   event.stopPropagation();
+   if(!confirm("确定删除“"+a.title+"”？此操作会提交到 GitHub 并触发部署。"))return;
+   del.disabled=true;
+   try{
+    await api("DELETE",{path:a.path,sha:a.sha});
+    if(selected&&selected.path===a.path)reset();
+    say("文章已删除，正在刷新列表…");
+    await refresh();
+   }catch(e){
+    say(e.message,true);
+   }finally{
+    del.disabled=false;
+   }
+  };
+
+  row.append(item,del);
+  list.append(row);
  }
 }
 async function refresh(){try{say("正在读取 GitHub…");articles=await api("GET");render();say("已读取 "+articles.length+" 篇文章")}catch(e){say(e.message,true);$("list").textContent="读取失败，请确认服务端令牌和仓库权限已配置。"}}
