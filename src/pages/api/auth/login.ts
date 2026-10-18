@@ -47,7 +47,7 @@ async function sameSecret(
 
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request, locals }) => {
+async function handleLogin({ request, locals }: Parameters<APIRoute>[0]): Promise<Response> {
 	if (request.headers.get("Origin") !== new URL(request.url).origin) {
 		return jsonResponse({ error: "请求来源不受允许。" }, 403);
 	}
@@ -72,7 +72,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 		return jsonResponse(
 			{
 				error:
-					"后台认证尚未配置。请检查 Worker 密码 Secret 与 FIRE​​FLY_SESSIONS KV 绑定。",
+					"后台认证尚未配置。请检查 Worker 密码 Secret 与 FIREFLY_SESSIONS KV 绑定。",
 			},
 			503,
 		);
@@ -127,5 +127,14 @@ export const POST: APIRoute = async ({ request, locals }) => {
 		});
 	} catch {
 		return jsonResponse({ error: "认证服务暂时不可用，请稍后重试。" }, 503);
+	}
+}
+
+export const POST: APIRoute = async (context) => {
+	try {
+		return await handleLogin(context);
+	} catch (error) {
+		console.error("[Firefly] login handler failure", error instanceof Error ? error.message : String(error));
+		return jsonResponse({ error: "登录接口处理失败，请查看 Worker 日志。" }, 500);
 	}
 };
