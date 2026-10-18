@@ -87,9 +87,9 @@ export const prerender = false;
     保存后会提交到 GitHub，并触发 Cloudflare 构建与部署；原有文章管理和登录保护保持不变。
   </p>
   <form id="settingsForm" class="settings-cards">
-    <section class="settings-card" aria-labelledby="backgroundColorSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">01</span><div><h3 id="backgroundColorSettingsTitle">外观与底色设置</h3><p>调整网站的全局底色；留空即可恢复主题默认颜色。</p></div></div>
-      <div class="settings-grid">
+<section class="settings-card" aria-labelledby="backgroundColorSettingsTitle">
+      <div class="settings-card-heading"><span class="settings-card-number">01</span><div><h3 id="appearanceBannerTitle">全局外观与 Banner</h3><p>统一设置页面底色、顶部标题、副标题和 Banner 背景图。</p></div></div>
+<div class="settings-grid">
         <div class="settings-field" style="grid-column:1/-1">
           <label for="backgroundColor">全局背景颜色</label>
           <div class="settings-color-row">
@@ -99,10 +99,7 @@ export const prerender = false;
           <small>支持 #RGB 或 #RRGGBB。选择颜色会自动填写色值；清空文本框后保存则恢复主题默认配色。</small>
         </div>
       </div>
-    </section>
-    <section class="settings-card" aria-labelledby="bannerSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">02</span><div><h3 id="bannerSettingsTitle">顶部 Banner 设置</h3><p>设置首页顶部主标题、副标题与背景大图。</p></div></div>
-      <div class="settings-grid">
+<div class="settings-grid">
         <div class="settings-field"><label for="bannerTitle">主标题</label><input id="bannerTitle" name="bannerTitle" type="text" maxlength="200" placeholder="Lovely firefly!" class="settings-control"></div>
         <div class="settings-field"><label for="bannerSubtitle">副标题</label><input id="bannerSubtitle" name="bannerSubtitle" type="text" maxlength="500" placeholder="In Reddened Chrysalis, I Once Rest" class="settings-control"></div>
         <div class="settings-field" style="grid-column:1/-1">
@@ -118,9 +115,9 @@ export const prerender = false;
       </div>
     </section>
 
-    <section class="settings-card" aria-labelledby="profileSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">03</span><div><h3 id="profileSettingsTitle">个人名片与头像</h3><p>用于左侧个人资料卡的头像、昵称和个人简介。</p></div></div>
-      <div class="settings-grid">
+<section class="settings-card" aria-labelledby="profileSettingsTitle">
+      <div class="settings-card-heading"><span class="settings-card-number">02</span><div><h3 id="profileAnnouncementTitle">个人名片与公告</h3><p>配置头像、昵称、个人签名和侧栏多行公告。</p></div></div>
+<div class="settings-grid">
         <div class="settings-field"><label for="avatar">头像链接</label><input id="avatar" name="avatar" type="url" maxlength="2048" placeholder="https://example.com/avatar.png" class="settings-control"></div>
         <div class="settings-field"><label for="nickname">昵称 / 用户名</label><input id="nickname" name="nickname" type="text" maxlength="120" placeholder="XiaYe" class="settings-control"></div>
         <div class="settings-field" style="grid-column:1/-1">
@@ -132,27 +129,12 @@ export const prerender = false;
         </div>
         <div class="settings-field" style="grid-column:1/-1"><label for="bio">个人签名 / 简介</label><textarea id="bio" name="bio" rows="3" maxlength="5000" placeholder="Hello, I'm XiaYe." class="settings-control"></textarea><small>最多 5000 个字符。</small></div>
       </div>
+<div class="settings-field"><label for="announcement">公告内容</label><textarea id="announcement" name="announcement" rows="4" maxlength="10000" placeholder="欢迎来到我的博客！&#10;更新与通知可以分行填写。" class="settings-control"></textarea><small>最多 10000 个字符，保存时会保留换行。</small></div>
     </section>
 
-    <section class="settings-card" aria-labelledby="announcementSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">04</span><div><h3 id="announcementSettingsTitle">公告栏设置</h3><p>支持多行文本；是否显示公告栏仍由前台组件决定。</p></div></div>
-      <div class="settings-field"><label for="announcement">公告内容</label><textarea id="announcement" name="announcement" rows="4" maxlength="10000" placeholder="欢迎来到我的博客！&#10;更新与通知可以分行填写。" class="settings-control"></textarea><small>最多 10000 个字符，保存时会保留换行。</small></div>
-    </section>
-
-    <section class="settings-card" aria-labelledby="socialSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">05</span><div><h3 id="socialSettingsTitle">社交与链接控制</h3><p>填写公开访问的 GitHub 地址与邮箱，并独立控制对应图标显隐。</p></div></div>
-      <div class="settings-grid">
-        <div class="settings-field"><label for="githubUrl">GitHub 链接</label><input id="githubUrl" name="githubUrl" type="url" maxlength="2048" placeholder="https://github.com/yourname" class="settings-control"></div>
-        <div class="settings-field"><label for="email">邮箱地址</label><input id="email" name="email" type="email" maxlength="320" autocomplete="email" placeholder="you@example.com" class="settings-control"></div>
-        <label class="settings-toggle"><input id="showGithub" name="showGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示 GitHub 图标<small>关闭后前台不显示该入口（需组件读取此项）。</small></span></label>
-        <label class="settings-toggle"><input id="showEmail" name="showEmail" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示邮箱图标<small>关闭后前台不显示邮箱入口（需组件读取此项）。</small></span></label>
-      </div>
-    </section>
-
-
-    <section class="settings-card" aria-labelledby="navVisibilitySettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="navVisibilitySettingsTitle">导航栏链接显隐控制</h3><p>分别控制顶部导航栏中的“社交”“我的”“关于”入口；桌面导航和移动端抽屉共用此设置。</p></div></div>
-      <div class="settings-switch-grid">
+<section class="settings-card" aria-labelledby="navVisibilitySettingsTitle">
+      <div class="settings-card-heading"><span class="settings-card-number">03</span><div><h3 id="navVisibilitySettingsTitle">顶部导航栏分类与子菜单显隐</h3><p>统一控制社交、我的、链接和关于四个导航分组。</p></div></div>
+<div class="settings-switch-grid">
         <label class="settings-toggle"><input id="showNavSocial" name="showNavSocial" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示“社交”菜单<small>控制友链、留言等菜单分组入口。</small></span></label>
         <label class="settings-toggle"><input id="showNavMy" name="showNavMy" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示“我的”菜单<small>控制动态、项目、相册等菜单分组入口。</small></span></label>
         <label class="settings-toggle"><input id="showNavLinks" name="showNavLinks" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示“链接”菜单<small>控制 GitHub、Gitee、文档等子菜单入口。</small></span></label>
@@ -160,9 +142,9 @@ export const prerender = false;
       </div>
     </section>
 
-    <section class="settings-card" aria-labelledby="aboutContentSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">07</span><div><h3 id="aboutContentSettingsTitle">关于我页面与打赏开关</h3><p>控制“关于我”页面访问、介绍正文以及页面内的支持作者模块。</p></div></div>
-      <div class="settings-switch-grid mb-4">
+<section class="settings-card" aria-labelledby="aboutContentSettingsTitle">
+      <div class="settings-card-heading"><span class="settings-card-number">04</span><div><h3 id="aboutDonationSettingsTitle">关于我页面与打赏设置</h3><p>编辑 About Me 正文，控制页面访问、打赏模块和二维码。</p></div></div>
+<div class="settings-switch-grid mb-4">
         <label class="settings-toggle"><input id="showAbout" name="showAbout" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">启用“关于我”页面<small>关闭后 /about/ 会重定向到首页，导航子项也会隐藏。</small></span></label>
         <label class="settings-toggle"><input id="showAboutDonation" name="showAboutDonation" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示关于我页面打赏卡片<small>开启后在介绍正文下方显示“支持作者”入口。</small></span></label>
       </div>
@@ -178,9 +160,15 @@ export const prerender = false;
       </div>
     </section>
 
-    <section class="settings-card" aria-labelledby="sourceGithubSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">08</span><div><h3 id="sourceGithubSettingsTitle">GitHub 原文 / 源码链接设置</h3><p>统一控制页脚是否显示链接，并修改链接目标地址。</p></div></div>
-      <div class="settings-grid settings-grid-one">
+<section class="settings-card" aria-labelledby="socialSettingsTitle">
+      <div class="settings-card-heading"><span class="settings-card-number">05</span><div><h3 id="articleSocialSettingsTitle">文章页功能与源码链接</h3><p>管理社交入口、文章页支持与分享卡片、源码链接及背景音乐。</p></div></div>
+<div class="settings-grid">
+        <div class="settings-field"><label for="githubUrl">GitHub 链接</label><input id="githubUrl" name="githubUrl" type="url" maxlength="2048" placeholder="https://github.com/yourname" class="settings-control"></div>
+        <div class="settings-field"><label for="email">邮箱地址</label><input id="email" name="email" type="email" maxlength="320" autocomplete="email" placeholder="you@example.com" class="settings-control"></div>
+        <label class="settings-toggle"><input id="showGithub" name="showGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示 GitHub 图标<small>关闭后前台不显示该入口（需组件读取此项）。</small></span></label>
+        <label class="settings-toggle"><input id="showEmail" name="showEmail" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示邮箱图标<small>关闭后前台不显示邮箱入口（需组件读取此项）。</small></span></label>
+      </div>
+<div class="settings-grid settings-grid-one">
         <div class="settings-field">
           <label for="sourceGithubUrl">原文 / 源码 GitHub 地址</label>
           <input id="sourceGithubUrl" name="sourceGithubUrl" type="url" maxlength="2048" placeholder="https://github.com/用户名/仓库 或具体文件路径" class="settings-control">
@@ -188,10 +176,7 @@ export const prerender = false;
         </div>
         <label class="settings-toggle"><input id="showSourceGithub" name="showSourceGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示 GitHub 原文 / 源码链接<small>开启后在网站页脚显示；关闭后隐藏，但不会清空上面的地址。</small></span></label>
       </div>
-    </section>
-    <section class="settings-card" aria-labelledby="featureSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">09</span><div><h3 id="featureSettingsTitle">多媒体与功能模块</h3><p>配置背景音乐外链，以及文章页的“支持与分享”卡片开关。</p></div></div>
-      <div class="settings-grid settings-grid-one">
+<div class="settings-grid settings-grid-one">
         <div class="settings-field">
           <label for="backgroundMusic">背景音乐外链</label>
           <input id="backgroundMusic" name="backgroundMusic" type="url" maxlength="2048" placeholder="https://example.com/music.mp3" class="settings-control">
@@ -202,7 +187,7 @@ export const prerender = false;
       </div>
     </section>
 
-    <div class="settings-save-row">
+<div class="settings-save-row">
       <button id="saveSettings" type="submit" class="settings-save-button">保存全局配置</button>
       <span id="settingsStatus" class="settings-status" role="status" aria-live="polite"></span>
     </div>
