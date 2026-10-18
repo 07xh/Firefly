@@ -1000,7 +1000,7 @@ async function loadTiptapModules() {
                 hint: "标题可以留空，也可以用一句简短文字说明这张提示卡片。",
                 maxLength: 120,
                 allowEmpty: true,
-                validate: value => !/[<>{}\\r\\n]/.test(value),
+                validate: value => !/[<>{}\r\n]/.test(value),
                 invalidMessage: "标题请使用一行普通文字。",
                 onSave: value => updateAttributes({ title: value }),
               });
