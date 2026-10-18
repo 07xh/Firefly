@@ -130,6 +130,7 @@ export const prerender = false;
         <div class="settings-field" style="grid-column:1/-1"><label for="bio">个人签名 / 简介</label><textarea id="bio" name="bio" rows="3" maxlength="5000" placeholder="Hello, I'm XiaYe." class="settings-control"></textarea><small>最多 5000 个字符。</small></div>
       </div>
 <div class="settings-field"><label for="announcement">公告内容</label><textarea id="announcement" name="announcement" rows="4" maxlength="10000" placeholder="欢迎来到我的博客！&#10;更新与通知可以分行填写。" class="settings-control"></textarea><small>最多 10000 个字符，保存时会保留换行。</small></div>
+<label class="settings-toggle"><input id="showAnnouncement" name="showAnnouncement" type="checkbox" checked><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示公告栏<small>关闭后，前台侧栏不再显示公告模块。</small></span></label>
     </section>
 
 <section class="settings-card" aria-labelledby="navVisibilitySettingsTitle">
@@ -406,6 +407,7 @@ async function loadSettings(){
   $("showSupportAndShare").checked=data.showSupportAndShare===true;
   $("showSourceGithub").checked=data.showSourceGithub===true;
   $("showAbout").checked=data.showAbout!==false;
+  $("showAnnouncement").checked=data.showAnnouncement!==false;
   $("showAboutDonation").checked=data.showAboutDonation===true;
   $("showNavSocial").checked=data.showNavSocial!==false;
   $("showNavMy").checked=data.showNavMy!==false;
@@ -445,6 +447,7 @@ $("settingsForm").addEventListener("submit",async event=>{
   nickname:$("nickname").value,
   bio:$("bio").value,
   announcement:$("announcement").value,
+  showAnnouncement:$("showAnnouncement").checked,
   githubUrl:$("githubUrl").value.trim(),
   showGithub:$("showGithub").checked,
   email:$("email").value.trim(),
