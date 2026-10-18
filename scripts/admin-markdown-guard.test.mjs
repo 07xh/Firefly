@@ -90,7 +90,7 @@ test("容器内包含 MDX 标签时整体保留，避免 marker 移出容器", (
   const raw = [
     ":::tip",
     "说明文字。",
-    "<Badge type=\\"tip\\">新</Badge>",
+    '<Badge type="tip">新</Badge>',
     ":::",
   ].join("\n");
   const result = prepareMarkdownForVisualEditing("前言\n\n" + raw + "\n\n后记");
