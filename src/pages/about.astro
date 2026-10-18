@@ -13,6 +13,12 @@ import MainGridLayout from "@/layouts/MainGridLayout.astro";
 import { getAuthorAvatarUrl } from "@/utils/schema-image";
 import { buildProfilePage } from "@/utils/schema-utils";
 
+export const prerender = false;
+
+if (siteSettings.showAbout === false) {
+    return Astro.redirect("/");
+}
+
 const aboutPost = await getEntry("spec", "about");
 
 if (!aboutPost) {
@@ -52,6 +58,15 @@ const jsonLd = buildProfilePage({
             <Markdown class="mt-2">
                 {aboutContentHtml ? <div set:html={aboutContentHtml} /> : <Content />}
             </Markdown>
+            {siteSettings.showAboutDonation && siteConfig.pages.sponsor && (
+                <div class="mt-6 rounded-xl border border-(--line) bg-(--card-bg) p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-lg font-bold">喜欢这里的内容？</h2>
+                        <p class="mt-1 text-sm opacity-75">如果本站对你有所帮助，欢迎支持后续维护与创作。</p>
+                    </div>
+                    <a href="/sponsor/" class="btn-regular whitespace-nowrap">♥ 支持作者</a>
+                </div>
+            )}
         </div>
     </div>
 </MainGridLayout>
