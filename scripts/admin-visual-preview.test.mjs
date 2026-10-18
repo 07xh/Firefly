@@ -263,6 +263,7 @@ test("simple plain task lists expose structured editing without losing checked s
   assert.equal(model.editable, true);
   assert.deepEqual(model.items.map(item => item.checked), [true, false, true]);
   assert.deepEqual(model.items.map(item => item.text), ["已完成", "待处理", "再检查"]);
+  assert.equal(inspectProtectedMarkdown("- [ ] 结尾换行正常\n", "Task list").editable, true);
 });
 
 test("mixed, nested, formatted, and overlong task lists remain source-only", () => {
