@@ -148,7 +148,7 @@ test("structured serializer rejects nested markup, expressions, and invalid comp
   assert.throws(() => serializeEditableStepTimeline({ kind: "timeline" }, [
     { date: "2026", title: "Okay", text: "Details.", icon: "unknown" },
   ]), /图标名称/);
-  assert.throws(() => serializeEditableStepTimeline({ kind: "steps" }, []), /1 到 30 项/);
+  assert.throws(() => serializeEditableStepTimeline({ kind: "steps" }, []), /1 到 30 个步骤或时间点/);
 });
 
 
@@ -208,7 +208,7 @@ test("TabGroup serializer rejects unsafe labels, languages, and oversized conten
   assert.throws(() => serializeEditableTabGroup({ kind: "tabs" }, [{ title: 'bad"label', language: "js", text: "x" }]), /标签名称/);
   assert.throws(() => serializeEditableTabGroup({ kind: "tabs" }, [{ title: "JS", language: "{run()}", text: "x" }]), /代码语言/);
   assert.throws(() => serializeEditableTabGroup({ kind: "tabs" }, [{ title: "JS", language: "js", text: "x".repeat(50001) }]), /50000/);
-  assert.throws(() => serializeEditableTabGroup({ kind: "tabs" }, []), /1 到 20 项/);
+  assert.throws(() => serializeEditableTabGroup({ kind: "tabs" }, []), /1 到 20 个之间/);
 });
 
 
