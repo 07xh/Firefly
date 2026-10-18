@@ -1,8 +1,49 @@
-import { Editor } from "https://cdn.jsdelivr.net/npm/@tiptap/core@3.31.3/+esm";
-import StarterKit from "https://cdn.jsdelivr.net/npm/@tiptap/starter-kit@3.31.3/+esm";
-import { Markdown } from "https://cdn.jsdelivr.net/npm/@tiptap/markdown@3.31.3/+esm";
-import Image from "https://cdn.jsdelivr.net/npm/@tiptap/extension-image@3.31.3/+esm";
-import { TableKit } from "https://cdn.jsdelivr.net/npm/@tiptap/extension-table@3.31.3/+esm";
+let Editor, StarterKit, Markdown, Image, TableKit;
+
+async function loadTiptapModules() {
+  const providers = [
+    {
+      name: "jsDelivr",
+      urls: [
+        "https://cdn.jsdelivr.net/npm/@tiptap/core@3.31.3/+esm",
+        "https://cdn.jsdelivr.net/npm/@tiptap/starter-kit@3.31.3/+esm",
+        "https://cdn.jsdelivr.net/npm/@tiptap/markdown@3.31.3/+esm",
+        "https://cdn.jsdelivr.net/npm/@tiptap/extension-image@3.31.3/+esm",
+        "https://cdn.jsdelivr.net/npm/@tiptap/extension-table@3.31.3/+esm",
+      ],
+    },
+    {
+      name: "esm.sh",
+      urls: [
+        "https://esm.sh/@tiptap/core@3.31.3",
+        "https://esm.sh/@tiptap/starter-kit@3.31.3",
+        "https://esm.sh/@tiptap/markdown@3.31.3",
+        "https://esm.sh/@tiptap/extension-image@3.31.3",
+        "https://esm.sh/@tiptap/extension-table@3.31.3",
+      ],
+    },
+  ];
+  const failures = [];
+  for (const provider of providers) {
+    try {
+      const [core, starter, markdown, image, table] = await Promise.all(
+        provider.urls.map((url) => import(url)),
+      );
+      if (!core.Editor || !starter.default || !markdown.Markdown || !image.default || !table.TableKit) {
+        throw new Error("模块导出不完整");
+      }
+      Editor = core.Editor;
+      StarterKit = starter.default;
+      Markdown = markdown.Markdown;
+      Image = image.default;
+      TableKit = table.TableKit;
+      return provider.name;
+    } catch (error) {
+      failures.push(provider.name + ": " + (error instanceof Error ? error.message : String(error)));
+    }
+  }
+  throw new Error("Tiptap 模块无法从主/备用 CDN 加载。请检查网络或 CDN 拦截。 " + failures.join(" | "));
+}
 
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -395,6 +436,8 @@ import { TableKit } from "https://cdn.jsdelivr.net/npm/@tiptap/extension-table@3
   }
 
   async function init() {
+    const providerName = await loadTiptapModules();
+    status("可视化编辑器模块加载成功（" + providerName + "）。");
     const initial = splitFrontmatter(sourceField.value);
     frontmatterPrefix = initial.prefix;
     unsupportedReason = getUnsafeReason(initial.body);
@@ -541,6 +584,10 @@ import { TableKit } from "https://cdn.jsdelivr.net/npm/@tiptap/extension-table@3
     if ($("visualTab")) { $("visualTab").disabled = true; $("visualTab").textContent = "可视化编辑器不可用"; }
     $("wysiwygFallback") && ($("wysiwygFallback").hidden = false);
     window.dispatchEvent(new CustomEvent("firefly:wysiwyg-ready", { detail: { ok: false } }));
-    status("可视化编辑器加载失败，已回退到 Markdown 源码模式；正文内容未被修改。", true);
+    const detail = error instanceof Error ? error.message : String(error);
+    status("可视化编辑器加载失败，已回退到 Markdown 源码模式；正文内容未被修改。原因：" + detail, true);
+    if ($("wysiwygFallback")) {
+      $("wysiwygFallback").textContent = "加载失败详情：" + detail + "。请检查当前网络是否能访问 jsDelivr 或 esm.sh；正文仍可在 Markdown 源码模式编辑。";
+    }
   });
 })();
