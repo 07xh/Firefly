@@ -749,6 +749,13 @@ async function loadTiptapModules() {
       ".firefly-visual-preview__panel{border:1px solid #dfe7df;border-radius:8px;overflow:hidden;background:#fff;min-width:0}",
       ".firefly-visual-preview__panel-head{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 10px;background:#f2f7f2;border-bottom:1px solid #e0e8e0;font-weight:700}",
       ".firefly-visual-preview__panel pre{margin:0;padding:10px;overflow:auto;max-height:180px;background:#fbfcfb;color:#344139;font:12px/1.6 ui-monospace,SFMono-Regular,monospace;white-space:pre-wrap;overflow-wrap:anywhere}",
+      ".firefly-visual-preview__tabs{display:flex;gap:5px;overflow-x:auto;padding:3px 0 8px;scrollbar-width:thin}",
+      ".firefly-visual-preview__tab{flex:0 0 auto;border:1px solid #dce7de;background:#f8fbf8;color:#54675a;border-radius:7px;padding:6px 10px;font:inherit;font-size:12px;cursor:pointer}",
+      ".firefly-visual-preview__tab[aria-selected=true]{background:#e4f5e9;color:#126b3c;border-color:#9fd2ae;font-weight:750}",
+      ".firefly-visual-preview__math{min-width:0;overflow-x:auto}",
+      ".firefly-visual-preview__math--inline{display:inline-block;vertical-align:middle;padding:1px 5px;max-width:100%;text-align:left;background:#f7f8fa}",
+      ".firefly-visual-preview__math .katex-display{margin:.2em 0}",
+      ".firefly-visual-preview__math .katex{font-size:1.08em}",
       ".firefly-visual-preview__math{display:block;white-space:pre-wrap;overflow:auto;padding:12px;border-radius:8px;text-align:center;background:#f7f8fa;border:1px solid #e1e5ea;color:#344054;font:14px/1.8 ui-serif,Georgia,serif;overflow-wrap:anywhere}",
       ".firefly-visual-preview__todo{display:flex;align-items:flex-start;gap:8px;padding:3px 0;color:#3e4d42}",
       ".firefly-visual-preview__todo input{margin-top:5px;accent-color:#16834c}",
@@ -756,9 +763,42 @@ async function loadTiptapModules() {
       ".firefly-visual-preview__embed{display:flex;align-items:center;gap:10px;padding:12px;border:1px dashed #c9d8cc;border-radius:9px;background:#f7faf7}",
       ".firefly-visual-preview__icon{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:#e4f4e9;color:#176c3c;font-size:18px;font-weight:800;flex:0 0 auto}",
       ".firefly-visual-preview__empty{padding:10px;border:1px dashed #d7ded7;border-radius:8px;background:#fafcfa;color:#69776d}",
-      "@media(prefers-color-scheme:dark){.firefly-visual-preview{color:#e5ebe5}.firefly-visual-preview__title,.firefly-visual-preview__item-title{color:#e7efe7}.firefly-visual-preview__text{color:#d0d8d0}.firefly-visual-preview__item,.firefly-visual-preview__panel{background:#202820;border-color:#3b493d}.firefly-visual-preview__panel-head{background:#273328;border-color:#3b493d}.firefly-visual-preview__panel pre,.firefly-visual-preview__math,.firefly-visual-preview__empty{background:#1a211b;color:#d7e2d8;border-color:#3b493d}.firefly-visual-preview__prop{background:#26352a;color:#c0dfc7;border-color:#3c5943}.firefly-visual-preview__callout{background:#1d2b21;color:#dce8de;border-color:#3b6045}.firefly-visual-preview__callout--warning,.firefly-visual-preview__callout--caution{background:#2b2519;border-color:#66502d}.firefly-visual-preview__callout--danger{background:#2d1e1e;border-color:#6b3434}.firefly-visual-preview__callout--important{background:#292035;border-color:#59457b}.firefly-visual-preview__callout--info{background:#1c2635;border-color:#385783}.firefly-visual-preview__link{background:#203328;border-color:#3d6048;color:#a5e5b8}.firefly-visual-preview__embed{background:#202820;border-color:#465749}}",
+      "@media(prefers-color-scheme:dark){.firefly-visual-preview{color:#e5ebe5}.firefly-visual-preview__title,.firefly-visual-preview__item-title{color:#e7efe7}.firefly-visual-preview__text{color:#d0d8d0}.firefly-visual-preview__item,.firefly-visual-preview__panel{background:#202820;border-color:#3b493d}.firefly-visual-preview__panel-head{background:#273328;border-color:#3b493d}.firefly-visual-preview__panel pre,.firefly-visual-preview__math,.firefly-visual-preview__empty{background:#1a211b;color:#d7e2d8;border-color:#3b493d}.firefly-visual-preview__prop{background:#26352a;color:#c0dfc7;border-color:#3c5943}.firefly-visual-preview__tabs{background:#1a211b}.firefly-visual-preview__tab{background:#202820;color:#d0d8d0;border-color:#3b493d}.firefly-visual-preview__tab[aria-selected=true]{background:#21432d;color:#b3edc3;border-color:#3d7650}.firefly-visual-preview__prop{background:#26352a;color:#c0dfc7;border-color:#3c5943}.firefly-visual-preview__callout{background:#1d2b21;color:#dce8de;border-color:#3b6045}.firefly-visual-preview__callout--warning,.firefly-visual-preview__callout--caution{background:#2b2519;border-color:#66502d}.firefly-visual-preview__callout--danger{background:#2d1e1e;border-color:#6b3434}.firefly-visual-preview__callout--important{background:#292035;border-color:#59457b}.firefly-visual-preview__callout--info{background:#1c2635;border-color:#385783}.firefly-visual-preview__link{background:#203328;border-color:#3d6048;color:#a5e5b8}.firefly-visual-preview__embed{background:#202820;border-color:#465749}}",
     ].join("\n");
     document.head.append(style);
+  }
+
+  function renderKatexInto(target, tex, displayMode) {
+    const source = String(tex || "");
+    const render = () => {
+      const katex = window.FireflyKatex;
+      if (!katex || typeof katex.renderToString !== "function") {
+        target.textContent = source;
+        target.dataset.katexState = "fallback";
+        return false;
+      }
+      try {
+        // KaTeX generates the HTML; author-provided input is never inserted as HTML directly.
+        target.innerHTML = katex.renderToString(source, {
+          displayMode: Boolean(displayMode),
+          throwOnError: false,
+          trust: false,
+          strict: "ignore",
+          maxExpand: 500,
+          maxSize: 20,
+          output: "htmlAndMathml",
+        });
+        target.dataset.katexState = "rendered";
+        return true;
+      } catch {
+        target.textContent = source;
+        target.dataset.katexState = "fallback";
+        return false;
+      }
+    };
+    if (!render()) {
+      window.addEventListener("firefly:katex-ready", render, { once: true });
+    }
   }
 
   function createProtectedVisualPreview(raw, reason) {
@@ -821,21 +861,61 @@ async function loadTiptapModules() {
     } else if (model.kind === "tabs") {
       heading(model.title);
       if (model.items?.length) {
-        for (const item of model.items) {
+        const tablist = visualPreviewElement("div", "firefly-visual-preview__tabs");
+        tablist.setAttribute("role", "tablist");
+        tablist.setAttribute("aria-label", "文章标签页预览");
+        const panels = [];
+        model.items.forEach((item, index) => {
+          const button = visualPreviewElement("button", "firefly-visual-preview__tab", item.title);
+          button.type = "button";
+          button.setAttribute("role", "tab");
+          button.setAttribute("aria-selected", String(index === 0));
+          button.tabIndex = index === 0 ? 0 : -1;
           const panel = visualPreviewElement("div", "firefly-visual-preview__panel");
+          panel.setAttribute("role", "tabpanel");
+          panel.hidden = index !== 0;
           const panelHead = visualPreviewElement("div", "firefly-visual-preview__panel-head");
           panelHead.append(visualPreviewElement("span", "", item.title));
           if (item.language) panelHead.append(visualPreviewElement("span", "firefly-visual-preview__muted", item.language));
           panel.append(panelHead, visualPreviewElement("pre", "", item.text));
+          button.addEventListener("click", () => {
+            for (let panelIndex = 0; panelIndex < panels.length; panelIndex += 1) {
+              const active = panelIndex === index;
+              panels[panelIndex].button.setAttribute("aria-selected", String(active));
+              panels[panelIndex].button.tabIndex = active ? 0 : -1;
+              panels[panelIndex].panel.hidden = !active;
+            }
+          });
+          panels.push({ button, panel });
+          tablist.append(button);
+          preview.append(tablist);
           preview.append(panel);
-        }
+        });
       } else {
         paragraph("标签页组件已识别，内容为空。");
       }
     } else if (model.kind === "math") {
       heading(model.title);
-      preview.append(visualPreviewElement("div", "firefly-visual-preview__math", model.text || "公式为空"));
-      paragraph("公式源码已保留；可通过“编辑语法”修改。", "firefly-visual-preview__muted");
+      const formula = visualPreviewElement("div", "firefly-visual-preview__math", model.text || "公式为空");
+      formula.setAttribute("aria-label", "数学公式预览");
+      renderKatexInto(formula, model.text || "", model.display);
+      preview.append(formula);
+      paragraph("公式源码保留在原文中；点击“编辑语法”可修改。", "firefly-visual-preview__muted");
+    } else if (model.kind === "inline-math") {
+      const line = visualPreviewElement("div", "firefly-visual-preview__text");
+      line.style.lineHeight = "2.1";
+      for (const segment of model.segments || []) {
+        if (segment.kind === "math") {
+          const formula = visualPreviewElement("span", "firefly-visual-preview__math firefly-visual-preview__math--inline", segment.text);
+          formula.setAttribute("aria-label", "行内公式预览");
+          renderKatexInto(formula, segment.text, false);
+          line.append(formula);
+        } else if (segment.text) {
+          line.append(document.createTextNode(segment.text + " "));
+        }
+      }
+      preview.append(line);
+      paragraph("可视化展示保留了公式原文；如需修改，点击“编辑语法”。", "firefly-visual-preview__muted");
     } else if (model.kind === "task-list") {
       heading(model.title);
       for (const item of model.items || []) {
