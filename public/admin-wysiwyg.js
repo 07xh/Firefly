@@ -541,7 +541,7 @@ async function loadTiptapModules() {
         level: "block",
         start: source => source.indexOf(":::"),
         tokenize(source, _tokens, lexer) {
-          const opening = /^ {0,3}:{3,}[ \t]*(tip|warning|danger|info|success|note|important|caution)(?:[ \t]+([^\r\n]*?))?[ \t]*\r?\n/i.exec(source);
+          const opening = /^ {0,3}:{3,}[ \t]*(tip|warning|danger|info|success|note|important|caution)(?:\[([^\]\r\n]*)\]|[ \t]+([^\r\n]*?))?[ \t]*\r?\n/i.exec(source);
           if (!opening) return undefined;
 
           const lines = source.split("\n");
@@ -574,7 +574,7 @@ async function loadTiptapModules() {
               continue;
             }
 
-            if (/^ {0,3}:{3,}[ \t]*[A-Za-z][A-Za-z0-9_-]*(?:[ \t]+.*)?[ \t]*$/.test(line)) {
+            if (/^ {0,3}:{3,}[ \t]*[A-Za-z][A-Za-z0-9_-]*(?:\[[^\]\r\n]*\]|[ \t]+.*)?[ \t]*$/.test(line)) {
               depth += 1;
             }
           }
@@ -591,7 +591,7 @@ async function loadTiptapModules() {
             type: "fireflyCallout",
             raw: source.slice(0, consumed),
             calloutType: type,
-            calloutTitle: String(opening[2] || "").trim(),
+            calloutTitle: String(opening[2] ?? opening[3] ?? "").trim(),
             text: inner,
             tokens: lexer.blockTokens(inner),
           };
@@ -617,7 +617,7 @@ async function loadTiptapModules() {
         const body = helpers.renderChildren(node.content || []).replace(/\n+$/, "");
         return ":::"
           + type
-          + (title ? " " + title : "")
+          + (title ? "[" + title.replace(/[\]\r\n]/g, " ") + "]" : "")
           + "\n"
           + body
           + "\n:::\n\n";
