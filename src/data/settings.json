@@ -3,6 +3,12 @@
 	"bannerSubtitle": "In Reddened Chrysalis, I Once Rest",
 	"backgroundImage": "",
 	"backgroundColor": "",
+	"themeHue": 165,
+	"customNavLinks": [
+		{ "name": "GitHub", "url": "https://github.com/CuteLeaf/Firefly", "icon": "fa7-brands:github", "external": true },
+		{ "name": "Gitee", "url": "https://gitee.com/CuteLeaf/Firefly", "icon": "fa7-brands:gitee", "external": true },
+		{ "name": "Firefly文档", "url": "https://docs-firefly.cuteleaf.cn", "icon": "material-symbols:docs", "external": true }
+	],
 	"avatar": "",
 	"nickname": "小慌",
 	"bio": "Hello, I'm Xiaohuang",
