@@ -1083,7 +1083,7 @@ async function loadTiptapModules() {
         iconWrap.append(iconLabel, iconSelect);
         fields.append(iconWrap);
 
-        const textField = makeField("正文（纯文字）", item.text, "text", { wide: true, multiline: true, maxLength: 500, placeholder: "写一段简单说明，不包含 Markdown 格式符号。" });
+        const textField = makeField("说明文字", item.text, "text", { wide: true, multiline: true, maxLength: 500, placeholder: "用普通文字说明即可；复杂排版会保留原样。" });
         fields.append(textField.wrap);
 
         rowRefs.push({ title: titleField, date: dateField, type: typeSelect, icon: iconSelect, text: textField });
@@ -2367,7 +2367,7 @@ async function loadTiptapModules() {
     pendingUploads += 1;
     const toolbar = $("wysiwygUpload");
     if (toolbar) toolbar.disabled = true;
-    status("正在上传图片到 GitHub，请稍候…");
+    status("正在上传图片…");
     const form = new FormData();
     form.append("file", file, file.name || "image.png");
     try {
@@ -2385,7 +2385,7 @@ async function loadTiptapModules() {
         alt: file.name || "文章图片",
         title: file.name || "",
       }).run();
-      status("图片已上传并插入正文。请保存文章，网站才会显示这张图片。");
+      status("图片已插入正文。保存文章后，网站才会显示这张图片。");
     } catch (error) {
       status(error instanceof Error ? error.message : "图片上传失败。", true);
     } finally {
