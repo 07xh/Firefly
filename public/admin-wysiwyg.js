@@ -1,4 +1,5 @@
 import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=20261018-callouts";
+import { inspectProtectedMarkdown } from "/admin-visual-preview.js?v=20261018-visual-blocks";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
@@ -711,6 +712,180 @@ async function loadTiptapModules() {
     });
   }
 
+  function visualPreviewElement(tag, className, text) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text !== undefined && text !== null) element.textContent = String(text);
+    return element;
+  }
+
+  function ensureProtectedVisualPreviewStyles() {
+    if (document.getElementById("firefly-visual-preview-styles")) return;
+    const style = document.createElement("style");
+    style.id = "firefly-visual-preview-styles";
+    style.textContent = [
+      ".firefly-visual-preview{display:grid;gap:9px;min-width:0;color:#27342b;font-size:13px;line-height:1.65}",
+      ".firefly-visual-preview__eyebrow{font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:#718075;font-weight:750}",
+      ".firefly-visual-preview__title{font-size:15px;font-weight:750;line-height:1.4;margin:0;color:#25372b;overflow-wrap:anywhere}",
+      ".firefly-visual-preview__text{white-space:pre-wrap;overflow-wrap:anywhere;color:#46554a}",
+      ".firefly-visual-preview__muted{font-size:12px;color:#738076}",
+      ".firefly-visual-preview__props{display:flex;flex-wrap:wrap;gap:5px}",
+      ".firefly-visual-preview__prop{border:1px solid #d6e2d7;background:#f6faf6;border-radius:6px;padding:2px 7px;font-size:11px;color:#55705a;overflow-wrap:anywhere}",
+      ".firefly-visual-preview__badge{display:inline-flex;vertical-align:middle;margin:2px 4px;padding:2px 9px;border-radius:999px;background:#e4f5eb;color:#147744;border:1px solid #c4e8d1;font-size:11px;font-weight:750}",
+      ".firefly-visual-preview__badge--warning,.firefly-visual-preview__badge--caution{background:#fff4dc;color:#925c05;border-color:#f1d8a0}",
+      ".firefly-visual-preview__badge--danger{background:#ffebeb;color:#b42323;border-color:#f2c4c4}",
+      ".firefly-visual-preview__badge--important{background:#f1eaff;color:#7041ac;border-color:#ded0f7}",
+      ".firefly-visual-preview__badge--note{background:#f1f4f6;color:#58636f;border-color:#dce2e7}",
+      ".firefly-visual-preview__callout{border:1px solid #cfe4d4;border-left:4px solid #16834c;background:#f4fbf5;border-radius:9px;padding:11px 13px;display:grid;gap:6px}",
+      ".firefly-visual-preview__callout--warning,.firefly-visual-preview__callout--caution{border-color:#f0d9a6;border-left-color:#b7791f;background:#fffaf0}",
+      ".firefly-visual-preview__callout--danger{border-color:#f0c3c3;border-left-color:#dc2626;background:#fff6f6}",
+      ".firefly-visual-preview__callout--important{border-color:#ddd0fa;border-left-color:#7c3aed;background:#faf7ff}",
+      ".firefly-visual-preview__callout--info{border-color:#c9defb;border-left-color:#2563eb;background:#f5f9ff}",
+      ".firefly-visual-preview__list{display:grid;gap:7px;margin:0;padding:0;list-style:none}",
+      ".firefly-visual-preview__item{display:grid;grid-template-columns:25px minmax(0,1fr);gap:9px;align-items:start;border:1px solid #e2e9e2;border-radius:9px;padding:9px 10px;background:#fff}",
+      ".firefly-visual-preview__number{display:flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#e2f4e8;color:#16834c;font-weight:800;font-size:11px}",
+      ".firefly-visual-preview__item-title{font-weight:750;color:#304237;overflow-wrap:anywhere}",
+      ".firefly-visual-preview__item-meta{font-size:11px;color:#728074;margin-bottom:2px}",
+      ".firefly-visual-preview__panel{border:1px solid #dfe7df;border-radius:8px;overflow:hidden;background:#fff;min-width:0}",
+      ".firefly-visual-preview__panel-head{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:7px 10px;background:#f2f7f2;border-bottom:1px solid #e0e8e0;font-weight:700}",
+      ".firefly-visual-preview__panel pre{margin:0;padding:10px;overflow:auto;max-height:180px;background:#fbfcfb;color:#344139;font:12px/1.6 ui-monospace,SFMono-Regular,monospace;white-space:pre-wrap;overflow-wrap:anywhere}",
+      ".firefly-visual-preview__math{display:block;white-space:pre-wrap;overflow:auto;padding:12px;border-radius:8px;text-align:center;background:#f7f8fa;border:1px solid #e1e5ea;color:#344054;font:14px/1.8 ui-serif,Georgia,serif;overflow-wrap:anywhere}",
+      ".firefly-visual-preview__todo{display:flex;align-items:flex-start;gap:8px;padding:3px 0;color:#3e4d42}",
+      ".firefly-visual-preview__todo input{margin-top:5px;accent-color:#16834c}",
+      ".firefly-visual-preview__link{display:inline-flex;align-items:center;gap:7px;border:1px solid #d7e6db;background:#f6fbf7;padding:6px 10px;border-radius:8px;color:#167346;font-weight:700;overflow-wrap:anywhere}",
+      ".firefly-visual-preview__embed{display:flex;align-items:center;gap:10px;padding:12px;border:1px dashed #c9d8cc;border-radius:9px;background:#f7faf7}",
+      ".firefly-visual-preview__icon{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:#e4f4e9;color:#176c3c;font-size:18px;font-weight:800;flex:0 0 auto}",
+      ".firefly-visual-preview__empty{padding:10px;border:1px dashed #d7ded7;border-radius:8px;background:#fafcfa;color:#69776d}",
+      "@media(prefers-color-scheme:dark){.firefly-visual-preview{color:#e5ebe5}.firefly-visual-preview__title,.firefly-visual-preview__item-title{color:#e7efe7}.firefly-visual-preview__text{color:#d0d8d0}.firefly-visual-preview__item,.firefly-visual-preview__panel{background:#202820;border-color:#3b493d}.firefly-visual-preview__panel-head{background:#273328;border-color:#3b493d}.firefly-visual-preview__panel pre,.firefly-visual-preview__math,.firefly-visual-preview__empty{background:#1a211b;color:#d7e2d8;border-color:#3b493d}.firefly-visual-preview__prop{background:#26352a;color:#c0dfc7;border-color:#3c5943}.firefly-visual-preview__callout{background:#1d2b21;color:#dce8de;border-color:#3b6045}.firefly-visual-preview__callout--warning,.firefly-visual-preview__callout--caution{background:#2b2519;border-color:#66502d}.firefly-visual-preview__callout--danger{background:#2d1e1e;border-color:#6b3434}.firefly-visual-preview__callout--important{background:#292035;border-color:#59457b}.firefly-visual-preview__callout--info{background:#1c2635;border-color:#385783}.firefly-visual-preview__link{background:#203328;border-color:#3d6048;color:#a5e5b8}.firefly-visual-preview__embed{background:#202820;border-color:#465749}}",
+    ].join("\n");
+    document.head.append(style);
+  }
+
+  function createProtectedVisualPreview(raw, reason) {
+    ensureProtectedVisualPreviewStyles();
+    const model = inspectProtectedMarkdown(raw, reason);
+    const preview = visualPreviewElement("div", "firefly-visual-preview firefly-visual-preview--" + model.kind);
+    const heading = (title, extraClass = "") => preview.append(visualPreviewElement("div", "firefly-visual-preview__title" + (extraClass ? " " + extraClass : ""), title));
+    const paragraph = (text, className = "firefly-visual-preview__text") => {
+      if (text) preview.append(visualPreviewElement("div", className, text));
+    };
+    const propertyList = (attributes, parent = preview) => {
+      if (!attributes?.length) return;
+      const wrap = visualPreviewElement("div", "firefly-visual-preview__props");
+      for (const item of attributes) {
+        const chip = visualPreviewElement("span", "firefly-visual-preview__prop", item.name + "=" + item.value);
+        wrap.append(chip);
+      }
+      parent.append(wrap);
+    };
+    const appendItems = (items, kind) => {
+      if (!items?.length) {
+        paragraph("组件已识别，但没有可摘要的子项。");
+        return;
+      }
+      const list = visualPreviewElement(kind === "steps" ? "ol" : "div", "firefly-visual-preview__list");
+      items.forEach((item, index) => {
+        const row = visualPreviewElement("div", "firefly-visual-preview__item");
+        row.append(visualPreviewElement("span", "firefly-visual-preview__number", kind === "timeline" ? "●" : String(index + 1)));
+        const main = visualPreviewElement("div", "");
+        if (item.date) main.append(visualPreviewElement("div", "firefly-visual-preview__item-meta", item.date));
+        main.append(visualPreviewElement("div", "firefly-visual-preview__item-title", item.title || ("第 " + (index + 1) + " 项")));
+        if (item.text) main.append(visualPreviewElement("div", "firefly-visual-preview__text", item.text));
+        row.append(main);
+        list.append(row);
+      });
+      preview.append(list);
+    };
+
+    if (model.kind === "callout") {
+      const callout = visualPreviewElement("div", "firefly-visual-preview__callout firefly-visual-preview__callout--" + model.type);
+      const title = model.title || ({ tip: "提示", warning: "注意", danger: "警告", info: "信息", success: "成功", note: "备注", important: "重要", caution: "谨慎" }[model.type] || "提示");
+      callout.append(visualPreviewElement("div", "firefly-visual-preview__title", title));
+      callout.append(visualPreviewElement("div", "firefly-visual-preview__text", model.text || "此容器暂时没有可显示的正文。"));
+      preview.append(callout);
+    } else if (model.kind === "badges") {
+      const line = visualPreviewElement("div", "firefly-visual-preview__text");
+      for (const segment of model.segments || []) {
+        if (segment.kind === "badge") {
+          const known = new Set(["tip", "warning", "danger", "info", "success", "note", "important", "caution"]);
+          const type = known.has(segment.type) ? segment.type : "default";
+          line.append(visualPreviewElement("span", "firefly-visual-preview__badge firefly-visual-preview__badge--" + type, segment.text));
+        } else if (segment.text) {
+          line.append(document.createTextNode(segment.text + " "));
+        }
+      }
+      preview.append(line);
+    } else if (model.kind === "steps" || model.kind === "timeline") {
+      heading(model.title);
+      appendItems(model.items, model.kind);
+    } else if (model.kind === "tabs") {
+      heading(model.title);
+      if (model.items?.length) {
+        for (const item of model.items) {
+          const panel = visualPreviewElement("div", "firefly-visual-preview__panel");
+          const panelHead = visualPreviewElement("div", "firefly-visual-preview__panel-head");
+          panelHead.append(visualPreviewElement("span", "", item.title));
+          if (item.language) panelHead.append(visualPreviewElement("span", "firefly-visual-preview__muted", item.language));
+          panel.append(panelHead, visualPreviewElement("pre", "", item.text));
+          preview.append(panel);
+        }
+      } else {
+        paragraph("标签页组件已识别，内容为空。");
+      }
+    } else if (model.kind === "math") {
+      heading(model.title);
+      preview.append(visualPreviewElement("div", "firefly-visual-preview__math", model.text || "公式为空"));
+      paragraph("公式源码已保留；可通过“编辑语法”修改。", "firefly-visual-preview__muted");
+    } else if (model.kind === "task-list") {
+      heading(model.title);
+      for (const item of model.items || []) {
+        const row = visualPreviewElement("label", "firefly-visual-preview__todo");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.disabled = true;
+        checkbox.checked = Boolean(item.checked);
+        row.append(checkbox, visualPreviewElement("span", "", item.text));
+        preview.append(row);
+      }
+    } else if (model.kind === "footnotes" || model.kind === "wiki") {
+      heading(model.title);
+      for (const item of model.items || []) {
+        const row = visualPreviewElement("div", "firefly-visual-preview__link");
+        row.append(visualPreviewElement("span", "", item.title));
+        if (item.text && item.text !== item.title) row.append(visualPreviewElement("span", "firefly-visual-preview__muted", item.text));
+        preview.append(row);
+      }
+    } else if (model.kind === "details") {
+      const card = visualPreviewElement("div", "firefly-visual-preview__panel");
+      card.append(visualPreviewElement("div", "firefly-visual-preview__panel-head", "▸ " + model.title));
+      if (model.text) card.append(visualPreviewElement("div", "firefly-visual-preview__text", model.text));
+      preview.append(card);
+    } else if (model.kind === "embed") {
+      const card = visualPreviewElement("div", "firefly-visual-preview__embed");
+      card.append(visualPreviewElement("div", "firefly-visual-preview__icon", "↗"));
+      const main = visualPreviewElement("div", "");
+      main.append(visualPreviewElement("div", "firefly-visual-preview__item-title", model.title));
+      main.append(visualPreviewElement("div", "firefly-visual-preview__text", model.host || "外部内容"));
+      main.append(visualPreviewElement("div", "firefly-visual-preview__muted", model.text || "未执行嵌入代码"));
+      card.append(main);
+      preview.append(card);
+    } else if (model.kind === "component") {
+      const card = visualPreviewElement("div", "firefly-visual-preview__panel");
+      card.append(visualPreviewElement("div", "firefly-visual-preview__panel-head", model.title || "MDX 组件"));
+      if (model.text) card.append(visualPreviewElement("div", "firefly-visual-preview__text", model.text));
+      propertyList(model.attributes, card);
+      preview.append(card);
+    } else if (model.kind === "html") {
+      heading(model.title);
+      paragraph(model.text || "HTML / 主题组件语法已安全保留。");
+    } else {
+      heading(model.title || "扩展语法");
+      paragraph(model.text || "这种语法已安全保留，预览区隐藏了源码。点击“编辑语法”可修改原始内容。");
+      if (model.text) paragraph("保存时仍保留原始语法，不会把此预览摘要写回文章。", "firefly-visual-preview__muted");
+    }
+    return preview;
+  }
+
   function createProtectedMarkdownBlock() {
     return NodeExtension.create({
       name: "protectedMarkdownBlock",
@@ -763,12 +938,8 @@ async function loadTiptapModules() {
               openProtectedSyntaxEditor(activeEditor, getPos, currentNode);
             });
             header.append(label, edit);
-            const preview = document.createElement("pre");
-            preview.className = "firefly-protected-markdown__preview";
             const raw = typeof currentNode.attrs.raw === "string" ? currentNode.attrs.raw : "";
-            preview.textContent = raw.length > 1200
-              ? raw.slice(0, 1200) + "\n… 预览已截断，保存时仍保留完整内容。"
-              : raw;
+            const preview = createProtectedVisualPreview(raw, currentNode.attrs.reason || "扩展 Markdown");
             root.append(header, preview);
           };
           render();
