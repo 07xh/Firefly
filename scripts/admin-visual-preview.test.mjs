@@ -3,6 +3,44 @@ import test from "node:test";
 
 import { describeProtectedSyntax, inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "../public/admin-visual-preview.js";
 import { normalizeEditorLinkAddress } from "../public/admin-link-utils.js";
+import { getAdminImagePreviewUrl, resolveRepositoryImagePath } from "../public/admin-image-preview-utils.js";
+
+test("相对图片预览路径按文章源文件目录解析，不按后台地址解析", () => {
+  assert.equal(
+    resolveRepositoryImagePath("src/content/posts/firefly.md", "./images/1.avif"),
+    "src/content/posts/images/1.avif",
+  );
+  assert.equal(
+    resolveRepositoryImagePath("src/content/posts/guide/firefly-layout-system.md", "../images/left-list.avif"),
+    "src/content/posts/images/left-list.avif",
+  );
+  assert.equal(
+    getAdminImagePreviewUrl("src/content/posts/firefly.md", "./images/1.avif"),
+    "/api/admin/image-preview/?path=src%2Fcontent%2Fposts%2Fimages%2F1.avif",
+  );
+  assert.equal(
+    resolveRepositoryImagePath("src/content/posts/firefly.md", "./images/a%20b.webp?width=2#preview"),
+    "src/content/posts/images/a b.webp",
+  );
+});
+
+test("相对图片预览拒绝外部地址、非图片与越界路径", () => {
+  const article = "src/content/posts/guide/firefly-layout-system.md";
+  for (const source of [
+    "https://example.com/image.png",
+    "//example.com/image.png",
+    "/images/image.png",
+    "data:image/png;base64,AAAA",
+    "#section",
+    "../../../../../secrets.png",
+    "./readme.md",
+    "./images/%2F%2Fevil.png",
+    "./images/%ZZ.avif",
+  ]) {
+    assert.equal(resolveRepositoryImagePath(article, source), null, source);
+    assert.equal(getAdminImagePreviewUrl(article, source), null, source);
+  }
+});
 
 test("Firefly Badge component renders as a safe visual preview model", () => {
   const model = inspectProtectedMarkdown('前言 <Badge type="tip">新功能</Badge> 后记', "MDX component");
