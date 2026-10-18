@@ -282,7 +282,11 @@ import { TableKit } from "https://cdn.jsdelivr.net/npm/@tiptap/extension-table@3
       if (event.detail?.mode === "visual") loadSourceIntoEditor();
     });
     sourceField.addEventListener("input", () => {
-      if (activeMode === "source") lastLoadedSource = sourceField.value;
+      if (activeMode !== "source") return;
+      lastLoadedSource = sourceField.value;
+      const split = splitFrontmatter(sourceField.value);
+      frontmatterPrefix = split.prefix;
+      reportUnsupported(getUnsafeReason(split.body));
     });
 
     reportUnsupported(unsupportedReason);
