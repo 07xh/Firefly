@@ -114,7 +114,7 @@ import { TableKit } from "https://cdn.jsdelivr.net/npm/@tiptap/extension-table@3
       return;
     }
     const sameSavedArticle = detail.path && snapshot.path === detail.path;
-    const sameNewArticle = !snapshot.path && detail.slug && snapshot.slug === detail.slug;
+    const sameNewArticle = !snapshot.path && Boolean(detail.slug);
     if (sameSavedArticle || sameNewArticle) {
       try { sessionStorage.removeItem(recoveryKey); } catch {}
     }
