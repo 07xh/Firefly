@@ -1,0 +1,124 @@
+name: Publish scheduled Firefly posts
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: firefly-scheduled-publishing
+  cancel-in-progress: false
+
+jobs:
+  check-due-posts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check due posts and dispatch a Cloudflare rebuild
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          import path from "node:path";
+
+          const root = "src/content/posts";
+          const now = Date.now();
+          const duePosts = [];
+
+          function listMarkdown(directory) {
+            if (!fs.existsSync(directory)) return [];
+            return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+              const fullPath = path.join(directory, entry.name);
+              if (entry.isDirectory()) return listMarkdown(fullPath);
+              return entry.isFile() && /\.mdx?$/i.test(entry.name) ? [fullPath] : [];
+            });
+          }
+
+          function scalar(value) {
+            const raw = value.trim();
+            if (raw.startsWith('"') && raw.endsWith('"')) {
+              try { return JSON.parse(raw); } catch { return raw.slice(1, -1); }
+            }
+            if (raw.startsWith("'") && raw.endsWith("'")) return raw.slice(1, -1).replace(/''/g, "'");
+            return raw;
+          }
+
+          for (const file of listMarkdown(root)) {
+            const source = fs.readFileSync(file, "utf8");
+            const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+            if (!match) continue;
+            const fm = match[1];
+            if (/^draft:\s*true\s*(?:#.*)?$/m.test(fm)) continue;
+            const dateMatch = fm.match(/^date:\s*(.*?)\s*$/m);
+            if (!dateMatch) continue;
+            const dateValue = scalar(dateMatch[1]);
+            const timestamp = Date.parse(dateValue);
+            if (Number.isFinite(timestamp) && timestamp <= now) {
+              duePosts.push({ file, timestamp });
+            }
+          }
+
+          if (duePosts.length === 0) {
+            console.log("No scheduled posts are due.");
+            process.exit(0);
+          }
+
+          const repo = process.env.REPOSITORY;
+          const headers = {
+            Accept: "application/vnd.github+json",
+            Authorization: "Bearer " + process.env.GH_TOKEN,
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "Firefly-Scheduled-Publisher",
+          };
+          const runsResponse = await fetch(
+            "https://api.github.com/repos/" + repo +
+              "/actions/workflows/deploy-cloudflare.yml/runs?branch=master&per_page=50",
+            { headers },
+          );
+          if (!runsResponse.ok) {
+            throw new Error("Unable to check Cloudflare workflow status: HTTP " + runsResponse.status);
+          }
+          const runs = (await runsResponse.json()).workflow_runs ?? [];
+
+          if (runs.some((run) => ["queued", "in_progress", "waiting", "requested", "pending"].includes(run.status))) {
+            console.log("A Cloudflare deployment is already active; the next scheduled check will verify whether another rebuild is needed.");
+            process.exit(0);
+          }
+
+          const successfulRuns = runs
+            .filter((run) => run.conclusion === "success" && run.head_branch === "master")
+            .sort((a, b) => Date.parse(b.created_at) - Date.parse(a.created_at));
+          const latestSuccessfulStart = successfulRuns.length
+            ? Date.parse(successfulRuns[0].created_at)
+            : Number.NEGATIVE_INFINITY;
+          const needingRebuild = duePosts.filter((post) => post.timestamp > latestSuccessfulStart);
+
+          if (needingRebuild.length === 0) {
+            console.log("Due posts are already included in a successful deployment.");
+            process.exit(0);
+          }
+
+          console.log("A scheduled publication is due; dispatching a Cloudflare rebuild.");
+          const dispatchResponse = await fetch(
+            "https://api.github.com/repos/" + repo + "/actions/workflows/deploy-cloudflare.yml/dispatches",
+            {
+              method: "POST",
+              headers: { ...headers, "Content-Type": "application/json" },
+              body: JSON.stringify({ ref: "master" }),
+            },
+          );
+          if (dispatchResponse.status !== 204) {
+            const body = (await dispatchResponse.text()).slice(0, 500);
+            throw new Error("Cloudflare workflow dispatch failed: HTTP " + dispatchResponse.status + " " + body);
+          }
+          console.log("Cloudflare rebuild queued for " + needingRebuild.length + " due post(s).");
+          NODE
