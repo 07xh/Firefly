@@ -20,6 +20,7 @@ export const prerender = false;
 const ROOT = "src/content/posts/";
 const headers = (token: string) => ({
 	Accept: "application/vnd.github+json",
+	"User-Agent": "Firefly-Admin/1.0 (https://github.com/07xh/Firefly)",
 	Authorization: `Bearer ${token}`,
 	"X-GitHub-Api-Version": "2022-11-28",
 	"Content-Type": "application/json",
