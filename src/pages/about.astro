@@ -68,7 +68,7 @@ const jsonLd = buildProfilePage({
             <Markdown class="mt-2">
                 {aboutContentHtml ? <div set:html={aboutContentHtml} /> : <Content />}
             </Markdown>
-            {siteSettings.showNavAbout !== false && siteSettings.showAboutDonation && siteConfig.pages.sponsor && (
+            {siteSettings.showNavAbout !== false && siteSettings.showAboutDonation && (donationQrCodeUrl || siteConfig.pages.sponsor) && (
                 <div class="mt-6 rounded-xl border border-(--line) bg-(--card-bg) p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div class="flex items-center gap-4">
                         {donationQrCodeUrl && (
@@ -84,7 +84,7 @@ const jsonLd = buildProfilePage({
                             <p class="mt-1 text-sm opacity-75">如果本站对你有所帮助，欢迎支持后续维护与创作。</p>
                         </div>
                     </div>
-                    <a href="/sponsor/" class="btn-regular whitespace-nowrap">♥ 支持作者</a>
+                    {siteConfig.pages.sponsor && <a href="/sponsor/" class="btn-regular whitespace-nowrap">♥ 支持作者</a>}
                 </div>
             )}
         </div>
