@@ -28,6 +28,7 @@ export const GET: APIRoute = async ({ url }) => {
 			{
 				headers: {
 					Accept: "application/vnd.github+json",
+					"User-Agent": "Firefly-Admin/1.0 (https://github.com/07xh/Firefly)",
 					"X-GitHub-Api-Version": "2022-11-28",
 				},
 			},
