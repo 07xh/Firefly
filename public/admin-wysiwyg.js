@@ -514,6 +514,121 @@ async function loadTiptapModules() {
     document.head.append(style);
   }
 
+  function openSimpleTextDialog({
+    title,
+    label,
+    value = "",
+    placeholder = "",
+    hint = "",
+    maxLength = 120,
+    allowEmpty = false,
+    validate,
+    invalidMessage = "请检查填写内容。",
+    onSave,
+  }) {
+    if (document.getElementById("firefly-simple-text-dialog")) return;
+
+    const dialog = document.createElement("dialog");
+    dialog.id = "firefly-simple-text-dialog";
+    dialog.setAttribute("aria-labelledby", "firefly-simple-text-title");
+    const style = document.createElement("style");
+    style.textContent = [
+      "#firefly-simple-text-dialog{width:min(440px,calc(100vw - 24px));max-width:none;border:1px solid #d6e4d8;border-radius:16px;padding:0;background:#fbfdfb;color:#243329;box-shadow:0 20px 70px #102e1b33}",
+      "#firefly-simple-text-dialog::backdrop{background:#16231c88;backdrop-filter:blur(3px)}",
+      ".firefly-simple-text-inner{padding:22px;display:grid;gap:13px}",
+      ".firefly-simple-text-inner h2{margin:0;font-size:19px;line-height:1.4}",
+      ".firefly-simple-text-hint{margin:0;color:#67766a;font-size:12px;line-height:1.65}",
+      ".firefly-simple-text-field{display:grid;gap:6px}",
+      ".firefly-simple-text-field label{font-size:12px;font-weight:700;color:#536457}",
+      ".firefly-simple-text-field input{width:100%;box-sizing:border-box;border:1px solid #ceddce;border-radius:8px;padding:11px;background:#fff;color:#243329;font:inherit;font-size:14px}",
+      ".firefly-simple-text-error{margin:0;color:#b42323;font-size:12px;line-height:1.5}",
+      ".firefly-simple-text-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}",
+      ".firefly-simple-text-actions button{border:1px solid #cbd9ce;border-radius:8px;background:#fff;color:#314536;padding:9px 13px;font:inherit;font-size:13px;cursor:pointer}",
+      ".firefly-simple-text-actions .primary{background:#177746;color:#fff;border-color:#177746;font-weight:750}",
+      "@media(max-width:420px){.firefly-simple-text-inner{padding:16px}.firefly-simple-text-actions button{flex:1}}",
+      "@media(prefers-color-scheme:dark){#firefly-simple-text-dialog{background:#1a231b;color:#e6eee7;border-color:#3f5844}.firefly-simple-text-hint,.firefly-simple-text-field label{color:#b8c9bb}.firefly-simple-text-field input,.firefly-simple-text-actions button{background:#202820;color:#e4ece5;border-color:#4c6551}.firefly-simple-text-actions .primary{background:#26794a;color:#fff;border-color:#26794a}}",
+    ].join("\n");
+    document.head.append(style);
+
+    const inner = document.createElement("div");
+    inner.className = "firefly-simple-text-inner";
+    const heading = document.createElement("h2");
+    heading.id = "firefly-simple-text-title";
+    heading.textContent = title;
+    const description = document.createElement("p");
+    description.className = "firefly-simple-text-hint";
+    description.textContent = hint;
+
+    const wrap = document.createElement("div");
+    wrap.className = "firefly-simple-text-field";
+    const fieldLabel = document.createElement("label");
+    fieldLabel.htmlFor = "firefly-simple-text-value";
+    fieldLabel.textContent = label;
+    const input = document.createElement("input");
+    input.id = "firefly-simple-text-value";
+    input.type = "text";
+    input.value = String(value ?? "");
+    input.placeholder = placeholder;
+    input.maxLength = maxLength;
+    input.autocomplete = "off";
+    wrap.append(fieldLabel, input);
+
+    const error = document.createElement("p");
+    error.className = "firefly-simple-text-error";
+    error.setAttribute("role", "alert");
+    error.hidden = true;
+    const actions = document.createElement("div");
+    actions.className = "firefly-simple-text-actions";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = "取消";
+    const save = document.createElement("button");
+    save.type = "button";
+    save.className = "primary";
+    save.textContent = "应用更改";
+    actions.append(cancel, save);
+    inner.append(heading, description, wrap, error, actions);
+    dialog.append(inner);
+    document.body.append(dialog);
+
+    let closed = false;
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      if (dialog.open && typeof dialog.close === "function") dialog.close();
+      dialog.remove();
+      style.remove();
+    };
+    cancel.addEventListener("click", close);
+    dialog.addEventListener("cancel", event => {
+      event.preventDefault();
+      close();
+    });
+    const apply = () => {
+      const next = input.value.trim();
+      if ((!allowEmpty && !next) || (validate && !validate(next))) {
+        error.textContent = invalidMessage;
+        error.hidden = false;
+        input.focus();
+        return;
+      }
+      if (typeof onSave === "function") onSave(next);
+      close();
+    };
+    save.addEventListener("click", apply);
+    input.addEventListener("keydown", event => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        apply();
+      }
+    });
+
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+    input.focus();
+    input.select();
+  }
+
   function createMdxBadgeInline() {
     return NodeExtension.create({
       name: "fireflyBadge",
@@ -607,13 +722,17 @@ async function loadTiptapModules() {
             label.addEventListener("dblclick", event => {
               event.preventDefault();
               event.stopPropagation();
-              const next = window.prompt("标签文字", String(currentNode.attrs.label || ""));
-              if (next === null) return;
-              if (!isSafeBadgeLabel(next)) {
-                status("标签文字不能为空，请使用普通文字，不要输入换行或特殊格式符号。", true);
-                return;
-              }
-              updateAttributes({ label: next });
+              openSimpleTextDialog({
+                title: "编辑文字标签",
+                label: "标签文字",
+                value: String(currentNode.attrs.label || ""),
+                placeholder: "例如：新功能",
+                hint: "标签适合放简短提示。请使用普通文字，不要输入格式标记。",
+                maxLength: 120,
+                validate: isSafeBadgeLabel,
+                invalidMessage: "标签文字不能为空，请使用普通文字。",
+                onSave: next => updateAttributes({ label: next }),
+              });
             });
 
             const controls = document.createElement("span");
@@ -641,13 +760,17 @@ async function loadTiptapModules() {
             edit.addEventListener("click", event => {
               event.preventDefault();
               event.stopPropagation();
-              const next = window.prompt("标签文字", String(currentNode.attrs.label || ""));
-              if (next === null) return;
-              if (!isSafeBadgeLabel(next)) {
-                status("标签文字不能为空，请使用普通文字，不要输入换行或特殊格式符号。", true);
-                return;
-              }
-              updateAttributes({ label: next });
+              openSimpleTextDialog({
+                title: "编辑文字标签",
+                label: "标签文字",
+                value: String(currentNode.attrs.label || ""),
+                placeholder: "例如：新功能",
+                hint: "标签适合放简短提示。请使用普通文字，不要输入格式标记。",
+                maxLength: 120,
+                validate: isSafeBadgeLabel,
+                invalidMessage: "标签文字不能为空，请使用普通文字。",
+                onSave: next => updateAttributes({ label: next }),
+              });
             });
             controls.append(select, edit);
             root.append(label, controls);
@@ -868,8 +991,18 @@ async function loadTiptapModules() {
             editTitle.addEventListener("click", event => {
               event.preventDefault();
               event.stopPropagation();
-              const value = window.prompt("提示块标题（留空使用默认标题）", String(currentNode.attrs.title || ""));
-              if (value !== null) updateAttributes({ title: value.trim() });
+              openSimpleTextDialog({
+                title: "编辑提示卡片标题",
+                label: "标题",
+                value: String(currentNode.attrs.title || ""),
+                placeholder: "留空时使用默认标题",
+                hint: "标题可以留空，也可以用一句简短文字说明这张提示卡片。",
+                maxLength: 120,
+                allowEmpty: true,
+                validate: value => !/[<>{}\\r\\n]/.test(value),
+                invalidMessage: "标题请使用一行普通文字。",
+                onSave: value => updateAttributes({ title: value }),
+              });
             });
             header.append(editTitle);
 
