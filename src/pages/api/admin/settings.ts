@@ -204,7 +204,7 @@ async function githubError(
 function safeNavigationUrl(value: unknown): string {
 	if (typeof value !== "string") return "";
 	const candidate = value.trim();
-	if (!candidate || candidate.length > 2048 || /[\\\\\u0000-\u0020]/.test(candidate)) return "";
+	if (!candidate || candidate.length > 2048 || candidate.split("").some((character) => character.charCodeAt(0) <= 32 || character.charCodeAt(0) === 92)) return "";
 	if (candidate.startsWith("/") && !candidate.startsWith("//")) return candidate;
 	try {
 		const parsed = new URL(candidate);
@@ -226,7 +226,7 @@ function normalizeCustomNavLinks(value: unknown): CustomNavLink[] {
 			? suppliedIcon
 			: "material-symbols:link";
 		if (!name || !url) return [];
-		return [{ name, url, icon, external: /^https?:\\/\\//i.test(url) }];
+		return [{ name, url, icon, external: url.startsWith("http://") || url.startsWith("https://"),
 	});
 }
 
@@ -382,7 +382,7 @@ function validateCustomNavLinks(value: unknown): CustomNavLink[] {
 			name,
 			url,
 			icon: suppliedIcon || "material-symbols:link",
-			external: /^https?:\\/\\//i.test(url),
+			external: url.startsWith("http://") || url.startsWith("https://"),
 		};
 	});
 }
