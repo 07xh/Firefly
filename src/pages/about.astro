@@ -14,7 +14,7 @@ import { buildProfilePage } from "@/utils/schema-utils";
 
 export const prerender = false;
 
-if (siteSettings.showAbout === false || siteSettings.showNavAbout === false) {
+if (!siteSettings.showAbout || !siteSettings.showNavAbout) {
 	return Astro.redirect("/");
 }
 
