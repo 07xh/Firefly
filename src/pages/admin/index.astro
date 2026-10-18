@@ -119,6 +119,12 @@ export const prerender = false;
 
 
 /* Tiptap-based WYSIWYG article editor */
+.local-recovery-row { display:flex; align-items:center; flex-wrap:wrap; gap:9px; margin:0 0 10px; padding:10px 12px; border:1px solid #e2eae3; border-radius:10px; background:#f8fbf8; }
+.local-recovery-toggle { display:inline-flex; align-items:center; gap:7px; color:#425248; font-size:12px; font-weight:650; cursor:pointer; }
+.local-recovery-toggle input { width:16px; height:16px; accent-color:#12884f; }
+.local-recovery-row #restoreLocalRecovery[hidden] { display:none!important; }
+.local-recovery-row #localRecoveryStatus { flex:1 1 220px; min-width:0; line-height:1.6; }
+
 .rich-editor-shell { border:1px solid #d8e1d8; border-radius:12px; overflow:hidden; background:#fff; }
 .rich-editor-toolbar { display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:9px; border-bottom:1px solid #e6ece7; background:#f8fbf8; }
 .rich-editor-toolbar button { min-height:36px; min-width:38px; border:1px solid #dce5dd; border-radius:8px; padding:6px 9px; background:#fff; color:#35443a; font-size:12px; cursor:pointer; }
@@ -226,6 +232,11 @@ export const prerender = false;
 <div class="field"><label for="description">摘要</label><input id="description" maxlength="500"></div>
 <div class="field">
 <label for="body">文章正文</label>
+<div class="local-recovery-row">
+  <label class="local-recovery-toggle"><input type="checkbox" id="localRecoveryCheck"> <span>启用本地恢复</span></label>
+  <button type="button" id="restoreLocalRecovery" class="btn" hidden disabled>恢复未保存内容</button>
+  <span id="localRecoveryStatus" class="muted" role="status" aria-live="polite">默认关闭。开启后仅在当前浏览器标签页保存未加密文章的恢复副本。</span>
+</div>
 <div class="editor-tabs" role="tablist" aria-label="文章编辑模式">
 <button class="btn active" type="button" id="visualTab" role="tab" aria-selected="true" disabled>可视化编辑器加载中…</button>
 <button class="btn" type="button" id="editorTab" role="tab" aria-selected="false">Markdown 源码</button>
@@ -390,6 +401,14 @@ export const prerender = false;
 // @ts-nocheck
 const $ = id => document.getElementById(id);
 let articles = [], selected = null;
+Object.defineProperty(window, "FireflyArticleContext", {
+  configurable: true,
+  get() {
+    return selected
+      ? { path: selected.path || "", sha: selected.sha || "" }
+      : { path: "", sha: "" };
+  }
+});
 let settingsReady = false;
 let settingsSaving = false;
 let savedSettingsSnapshot = "";
@@ -940,6 +959,7 @@ reset();refresh();loadSettings();
     button.disabled = true;
     try {
       const result = await api("DELETE", { path: article.path, sha: article.sha });
+      window.dispatchEvent(new CustomEvent("firefly:clear-recovery", { detail: { path: article.path } }));
       if (selected?.path === article.path) reset();
       say("阶段 2/4：删除已提交到 GitHub。" + (result.commitSha ? " Commit SHA：" + result.commitSha : ""));
       await refresh();
@@ -1092,6 +1112,8 @@ reset();refresh();loadSettings();
       const result = await api(selected ? "PUT" : "POST", data);
       if (!result.commitSha) throw new Error("GitHub 已响应，但未返回 Commit SHA，无法跟踪部署。请刷新列表确认写入结果。");
       const scheduled = !isDraft && Boolean(date && Date.parse(date) > Date.now());
+      const savedPath = selected?.path || ("src/content/posts/" + slug + ".md");
+      window.dispatchEvent(new CustomEvent("firefly:save-complete", { detail: { path: savedPath, slug } }));
       reset();
       await refresh();
       const commit = $("enhancedCommitLink");
@@ -1114,4 +1136,4 @@ reset();refresh();loadSettings();
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=cc09621"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=1711f50"></script></body></html>
