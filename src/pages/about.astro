@@ -15,7 +15,7 @@ import { buildProfilePage } from "@/utils/schema-utils";
 
 export const prerender = false;
 
-if (siteSettings.showAbout === false) {
+if (siteSettings.showAbout === false || siteSettings.showNavAbout === false) {
     return Astro.redirect("/");
 }
 
@@ -26,6 +26,16 @@ if (!aboutPost) {
 }
 
 const { Content } = await render(aboutPost);
+const donationQrCodeUrl = (() => {
+    const value = typeof siteSettings.donationQrCode === "string" ? siteSettings.donationQrCode.trim() : "";
+    if (!value) return "";
+    try {
+        const parsed = new URL(value);
+        return parsed.protocol === "https:" || parsed.protocol === "http:" ? parsed.href : "";
+    } catch {
+        return "";
+    }
+})();
 const aboutContentHtml = siteSettings.aboutContent.trim()
     ? sanitizeHtml(await marked.parse(siteSettings.aboutContent), {
         allowedTags: [...sanitizeHtml.defaults.allowedTags, "img", "table", "thead", "tbody", "tr", "th", "td", "del", "details", "summary"],
@@ -58,11 +68,21 @@ const jsonLd = buildProfilePage({
             <Markdown class="mt-2">
                 {aboutContentHtml ? <div set:html={aboutContentHtml} /> : <Content />}
             </Markdown>
-            {siteSettings.showAboutDonation && siteConfig.pages.sponsor && (
+            {siteSettings.showNavAbout !== false && siteSettings.showAboutDonation && siteConfig.pages.sponsor && (
                 <div class="mt-6 rounded-xl border border-(--line) bg-(--card-bg) p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
-                        <h2 class="text-lg font-bold">喜欢这里的内容？</h2>
-                        <p class="mt-1 text-sm opacity-75">如果本站对你有所帮助，欢迎支持后续维护与创作。</p>
+                    <div class="flex items-center gap-4">
+                        {donationQrCodeUrl && (
+                            <img
+                                src={donationQrCodeUrl}
+                                alt="打赏二维码"
+                                loading="lazy"
+                                class="h-28 w-28 rounded-lg border border-black/10 object-contain bg-white p-1 dark:border-white/15"
+                            />
+                        )}
+                        <div>
+                            <h2 class="text-lg font-bold">喜欢这里的内容？</h2>
+                            <p class="mt-1 text-sm opacity-75">如果本站对你有所帮助，欢迎支持后续维护与创作。</p>
+                        </div>
                     </div>
                     <a href="/sponsor/" class="btn-regular whitespace-nowrap">♥ 支持作者</a>
                 </div>
