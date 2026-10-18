@@ -865,6 +865,7 @@ async function loadTiptapModules() {
         tablist.setAttribute("role", "tablist");
         tablist.setAttribute("aria-label", "文章标签页预览");
         const panels = [];
+        preview.append(tablist);
         model.items.forEach((item, index) => {
           const button = visualPreviewElement("button", "firefly-visual-preview__tab", item.title);
           button.type = "button";
@@ -888,7 +889,6 @@ async function loadTiptapModules() {
           });
           panels.push({ button, panel });
           tablist.append(button);
-          preview.append(tablist);
           preview.append(panel);
         });
       } else {
