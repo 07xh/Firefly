@@ -103,23 +103,50 @@ function getProtectedRanges(source) {
     });
   };
 
-  // Treat each directive as a single opaque source block.
+  // Recognize supported callouts as editable editor nodes; opaque-protect other
+  // directives and any callout that contains unknown nested directive syntax.
+  const editableCalloutTypes = new Set([
+    "tip", "warning", "danger", "info", "success", "note", "important", "caution",
+  ]);
+  const calloutRanges = [];
+  const directiveOpening = /^[ \t]{0,3}:{3,}[ \t]*([A-Za-z][A-Za-z0-9_-]*)(?:[ \t]+[^\r\n]*)?[ \t]*$/;
+  const directiveClosing = /^[ \t]{0,3}:{3,}[ \t]*$/;
+
   for (let i = 0; i < lines.length; i += 1) {
     const line = lines[i] || "";
-    if (!/^[ \t]*:{3,}/.test(line) || /^[ \t]*:{3,}[ \t]*$/.test(line)) continue;
+    const opening = line.match(directiveOpening);
+    if (!opening || directiveClosing.test(line)) continue;
+
     let depth = 1;
     let close = i + 1;
+    let unsupportedNested = false;
+
     for (; close < lines.length; close += 1) {
       const candidate = lines[close] || "";
-      if (/^[ \t]*:{3,}[ \t]*$/.test(candidate)) {
+      if (directiveClosing.test(candidate)) {
         depth -= 1;
         if (depth === 0) break;
-      } else if (/^[ \t]*:{3,}[ \t]*\S/.test(candidate)) {
-        depth += 1;
+      } else {
+        const nested = candidate.match(directiveOpening);
+        if (nested && !directiveClosing.test(candidate)) {
+          depth += 1;
+          if (!editableCalloutTypes.has(nested[1].toLowerCase())) {
+            unsupportedNested = true;
+          }
+        }
       }
     }
+
     const end = close < lines.length ? close : lines.length - 1;
-    add(i, end, "Theme directive", "block");
+    const isEditableCallout = editableCalloutTypes.has(opening[1].toLowerCase())
+      && close < lines.length
+      && !unsupportedNested;
+
+    if (isEditableCallout) {
+      calloutRanges.push({ start: i, end });
+    } else {
+      add(i, end, "Theme directive", "block");
+    }
     i = end;
   }
 
@@ -349,6 +376,18 @@ function getProtectedRanges(source) {
       else break;
     }
     return { start: first, end: last };
+  }
+
+  // If a supported callout contains other Markdown/MDX syntax that the visual
+  // editor protects as an opaque block, keep the entire callout opaque too.
+  // This avoids relocating markers outside their container or changing nesting.
+  for (const callout of calloutRanges) {
+    const containsProtectedSyntax = ranges.some((range) =>
+      range.start <= callout.end && range.end >= callout.start
+    );
+    if (containsProtectedSyntax) {
+      add(callout.start, callout.end, "Callout with extended Markdown/MDX", "block");
+    }
   }
 
   const expanded = ranges.map((range) => {
