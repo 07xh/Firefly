@@ -60,7 +60,7 @@ function redirectToLogin(context: Parameters<Parameters<typeof defineMiddleware>
 	const login = new URL("/admin/login/", context.url.origin);
 	login.searchParams.set(
 		"next",
-		context.url.pathname + context.url.search,
+		`${context.url.pathname}${context.url.search}`,
 	);
 	return securityHeaders(
 		new Response(null, {
