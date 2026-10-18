@@ -1,5 +1,4 @@
 ---
-export const prerender = true;
 import { render } from "astro:content";
 import Comment from "@components/comment/index.astro";
 import Markdown from "@components/common/Markdown.astro";
@@ -48,6 +47,8 @@ import {
 	toAbsoluteUrl,
 } from "@/utils/schema-utils";
 import { url } from "@/utils/url-utils";
+
+export const prerender = true;
 
 const showSponsorButton =
 	sponsorConfig.showButtonInPost && siteConfig.pages.sponsor;
