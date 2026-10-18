@@ -79,6 +79,65 @@ async function loadTiptapModules() {
     return { prefix: match[0], body: source.slice(match[0].length), hasFrontmatter: true };
   }
 
+
+  const GLOBAL_MDX_COMPONENT_NAMES = new Set([
+    "Badge", "StepItem", "Steps", "TabGroup", "Timeline", "TimelineItem",
+  ]);
+
+  // Remove only redundant top-of-document imports from the global registry.
+  // Other imports, aliases, code examples and mid-document text are untouched.
+  function stripGlobalComponentImports(markdown) {
+    const lines = String(markdown || "").split("\n");
+    const output = [];
+    let preamble = true;
+    let removed = 0;
+
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i] || "";
+      if (!preamble) {
+        output.push(...lines.slice(i));
+        break;
+      }
+      if (/^[ \t]*$/.test(line)) {
+        output.push(line);
+        continue;
+      }
+      if (!/^[ \t]*import\b/.test(line)) {
+        preamble = false;
+        output.push(...lines.slice(i));
+        break;
+      }
+
+      let end = i;
+      let declaration = line;
+      let match = declaration.match(/^\s*import\s*\{([\s\S]*?)\}\s*from\s*(["'])(@\/components\/firefly-mdx|@components\/firefly-mdx)\2\s*;?\s*$/);
+      while (!match && end + 1 < lines.length && end - i < 24 && !/^[ \t]*$/.test(lines[end + 1])) {
+        end += 1;
+        declaration += "\n" + lines[end];
+        match = declaration.match(/^\s*import\s*\{([\s\S]*?)\}\s*from\s*(["'])(@\/components\/firefly-mdx|@components\/firefly-mdx)\2\s*;?\s*$/);
+      }
+
+      if (match) {
+        const names = match[1].split(",").map((value) => value.trim()).filter(Boolean);
+        const isSafeRedundantImport = names.length > 0 && names.every((name) =>
+          /^[A-Z][A-Za-z0-9_]*$/.test(name) && GLOBAL_MDX_COMPONENT_NAMES.has(name)
+        );
+        if (isSafeRedundantImport) {
+          removed += 1;
+          i = end;
+          continue;
+        }
+      }
+
+      output.push(...lines.slice(i, end + 1));
+      i = end;
+    }
+
+    let source = output.join("\n");
+    if (removed) source = source.replace(/^(?:[ \t]*\r?\n)+/, "");
+    return { source, removed };
+  }
+
   const recoveryKey = "firefly:admin:recovery:v1:last";
   const recoveryEnabledKey = "firefly:admin:recovery:v1:enabled";
   let recoveryTimer = null;
@@ -398,6 +457,260 @@ async function loadTiptapModules() {
     ui.textarea.setSelectionRange(0, 0);
   }
 
+
+  const CALLOUT_TYPES = ["tip", "warning", "danger", "info", "success", "note", "important", "caution"];
+  const CALLOUT_TITLES = {
+    tip: "提示",
+    warning: "注意",
+    danger: "警告",
+    info: "信息",
+    success: "成功",
+    note: "备注",
+    important: "重要",
+    caution: "谨慎",
+  };
+
+  function normalizeCalloutType(value) {
+    const type = String(value || "").toLowerCase();
+    return CALLOUT_TYPES.includes(type) ? type : "tip";
+  }
+
+  function ensureCalloutStyles() {
+    if (document.getElementById("firefly-callout-editor-styles")) return;
+    const style = document.createElement("style");
+    style.id = "firefly-callout-editor-styles";
+    style.textContent = [
+      ".firefly-callout{--firefly-callout-color:#0e7490;border:1px solid color-mix(in srgb,var(--firefly-callout-color) 22%,transparent);border-left:4px solid var(--firefly-callout-color);border-radius:10px;padding:11px 14px;margin:14px 0;background:color-mix(in srgb,var(--firefly-callout-color) 6%,white);color:#292524;}",
+      ".firefly-callout--tip{--firefly-callout-color:#0e7490}.firefly-callout--info{--firefly-callout-color:#2563eb}.firefly-callout--note{--firefly-callout-color:#64748b}.firefly-callout--warning,.firefly-callout--caution{--firefly-callout-color:#b45309}.firefly-callout--danger{--firefly-callout-color:#dc2626}.firefly-callout--important{--firefly-callout-color:#7c3aed}.firefly-callout--success{--firefly-callout-color:#15803d}",
+      ".firefly-callout__head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:8px;font-size:12px;line-height:1.5}",
+      ".firefly-callout__title{font-size:13px;font-weight:750;color:var(--firefly-callout-color)}",
+      ".firefly-callout__select,.firefly-callout__edit-title{border:1px solid color-mix(in srgb,var(--firefly-callout-color) 24%,#d6d3d1);border-radius:6px;background:#fff;color:#57534e;padding:3px 7px;font:inherit;cursor:pointer}",
+      ".firefly-callout__select{margin-left:auto;max-width:145px}.firefly-callout__content{min-height:1.5em;line-height:1.75;font-size:14px;outline:none}",
+      ".firefly-callout__content>:first-child{margin-top:0}.firefly-callout__content>:last-child{margin-bottom:0}.firefly-callout__content p{margin:5px 0}",
+      ".firefly-callout.ProseMirror-selectednode{outline:2px solid color-mix(in srgb,var(--firefly-callout-color) 45%,transparent);outline-offset:2px}",
+      "@media(prefers-color-scheme:dark){.firefly-callout{background:color-mix(in srgb,var(--firefly-callout-color) 12%,#18181b);color:#e7e5e4}.firefly-callout__select,.firefly-callout__edit-title{background:#27272a;color:#e7e5e4;border-color:#52525b}}",
+    ].join("\n");
+    document.head.append(style);
+  }
+
+  function createCalloutBlock() {
+    return NodeExtension.create({
+      name: "fireflyCallout",
+      group: "block",
+      content: "block+",
+      defining: true,
+      isolating: true,
+
+      addAttributes() {
+        return {
+          type: {
+            default: "tip",
+            parseHTML: element => normalizeCalloutType(element.getAttribute("data-type")),
+            renderHTML: attributes => ({ "data-type": normalizeCalloutType(attributes.type) }),
+          },
+          title: {
+            default: "",
+            parseHTML: element => element.getAttribute("data-title") || "",
+            renderHTML: attributes => ({ "data-title": String(attributes.title || "") }),
+          },
+        };
+      },
+
+      parseHTML() {
+        return [{ tag: "aside[data-firefly-callout]" }];
+      },
+
+      renderHTML({ node, HTMLAttributes }) {
+        const type = normalizeCalloutType(node.attrs.type);
+        const title = String(node.attrs.title || "").trim() || CALLOUT_TITLES[type];
+        return ["aside", {
+          ...HTMLAttributes,
+          "data-firefly-callout": "true",
+          "data-type": type,
+          class: "firefly-callout firefly-callout--" + type,
+        },
+          ["div", { class: "firefly-callout__head" },
+            ["strong", { class: "firefly-callout__title" }, title],
+          ],
+          ["div", { class: "firefly-callout__content" }, 0],
+        ];
+      },
+
+      markdownTokenizer: {
+        name: "fireflyCallout",
+        level: "block",
+        start: source => source.indexOf(":::"),
+        tokenize(source, _tokens, lexer) {
+          const opening = /^ {0,3}:{3,}[ \t]*(tip|warning|danger|info|success|note|important|caution)(?:[ \t]+([^\r\n]*?))?[ \t]*\r?\n/i.exec(source);
+          if (!opening) return undefined;
+
+          const lines = source.split("\n");
+          let depth = 1;
+          let fence = null;
+          let closingLine = -1;
+
+          for (let i = 1; i < lines.length; i += 1) {
+            const line = (lines[i] || "").replace(/\r$/, "");
+            if (fence) {
+              const closingFence = line.match(/^ {0,3}(\x60{3,}|~{3,})[ \t]*$/);
+              if (closingFence && closingFence[1][0] === fence.char && closingFence[1].length >= fence.length) {
+                fence = null;
+              }
+              continue;
+            }
+
+            const openingFence = line.match(/^ {0,3}(\x60{3,}|~{3,})/);
+            if (openingFence) {
+              fence = { char: openingFence[1][0], length: openingFence[1].length };
+              continue;
+            }
+
+            if (/^ {0,3}:{3,}[ \t]*$/.test(line)) {
+              depth -= 1;
+              if (depth === 0) {
+                closingLine = i;
+                break;
+              }
+              continue;
+            }
+
+            if (/^ {0,3}:{3,}[ \t]*[A-Za-z][A-Za-z0-9_-]*(?:[ \t]+.*)?[ \t]*$/.test(line)) {
+              depth += 1;
+            }
+          }
+
+          if (closingLine < 0) return undefined;
+          let consumed = 0;
+          for (let i = 0; i <= closingLine; i += 1) {
+            consumed += lines[i].length;
+            if (i < closingLine || source[consumed] === "\n") consumed += 1;
+          }
+          const type = String(opening[1] || "tip").toLowerCase();
+          const inner = lines.slice(1, closingLine).join("\n").replace(/\r$/gm, "");
+          return {
+            type: "fireflyCallout",
+            raw: source.slice(0, consumed),
+            calloutType: type,
+            calloutTitle: String(opening[2] || "").trim(),
+            text: inner,
+            tokens: lexer.blockTokens(inner),
+          };
+        },
+      },
+
+      parseMarkdown(token, helpers) {
+        return {
+          type: "fireflyCallout",
+          attrs: {
+            type: normalizeCalloutType(token.calloutType),
+            title: String(token.calloutTitle || ""),
+          },
+          content: helpers.parseBlockChildren
+            ? helpers.parseBlockChildren(token.tokens || [])
+            : helpers.parseChildren(token.tokens || []),
+        };
+      },
+
+      renderMarkdown(node, helpers) {
+        const type = normalizeCalloutType(node.attrs?.type);
+        const title = String(node.attrs?.title || "").trim();
+        const body = helpers.renderChildren(node.content || []).replace(/\n+$/, "");
+        return ":::"
+          + type
+          + (title ? " " + title : "")
+          + "\n"
+          + body
+          + "\n:::\n\n";
+      },
+
+      addNodeView() {
+        return ({ node, editor: activeEditor, getPos }) => {
+          const root = document.createElement("aside");
+          root.className = "firefly-callout";
+          root.setAttribute("data-firefly-callout", "true");
+          const header = document.createElement("div");
+          header.className = "firefly-callout__head";
+          const contentDOM = document.createElement("div");
+          contentDOM.className = "firefly-callout__content";
+          root.append(header, contentDOM);
+          let currentNode = node;
+
+          const updateAttributes = patch => {
+            const position = getPos();
+            if (typeof position !== "number") return;
+            const current = activeEditor.state.doc.nodeAt(position);
+            if (!current || current.type.name !== "fireflyCallout") return;
+            activeEditor.view.dispatch(
+              activeEditor.state.tr.setNodeMarkup(position, undefined, {
+                ...current.attrs,
+                ...patch,
+              }),
+            );
+          };
+
+          const renderHeader = () => {
+            const type = normalizeCalloutType(currentNode.attrs.type);
+            const title = String(currentNode.attrs.title || "").trim() || CALLOUT_TITLES[type];
+            root.className = "firefly-callout firefly-callout--" + type;
+            root.setAttribute("data-type", type);
+            root.setAttribute("data-title", String(currentNode.attrs.title || ""));
+            header.replaceChildren();
+
+            const titleLabel = document.createElement("strong");
+            titleLabel.className = "firefly-callout__title";
+            titleLabel.textContent = title;
+            header.append(titleLabel);
+
+            const editTitle = document.createElement("button");
+            editTitle.type = "button";
+            editTitle.className = "firefly-callout__edit-title";
+            editTitle.textContent = "编辑标题";
+            editTitle.addEventListener("mousedown", event => event.preventDefault());
+            editTitle.addEventListener("click", event => {
+              event.preventDefault();
+              event.stopPropagation();
+              const value = window.prompt("提示块标题（留空使用默认标题）", String(currentNode.attrs.title || ""));
+              if (value !== null) updateAttributes({ title: value.trim() });
+            });
+            header.append(editTitle);
+
+            const select = document.createElement("select");
+            select.className = "firefly-callout__select";
+            select.setAttribute("aria-label", "提示块类型");
+            for (const optionType of CALLOUT_TYPES) {
+              const option = document.createElement("option");
+              option.value = optionType;
+              option.textContent = CALLOUT_TITLES[optionType];
+              select.append(option);
+            }
+            select.value = type;
+            select.addEventListener("mousedown", event => event.stopPropagation());
+            select.addEventListener("change", () => updateAttributes({ type: normalizeCalloutType(select.value) }));
+            header.append(select);
+          };
+
+          renderHeader();
+          return {
+            dom: root,
+            contentDOM,
+            update(nextNode) {
+              if (nextNode.type.name !== "fireflyCallout") return false;
+              currentNode = nextNode;
+              renderHeader();
+              return true;
+            },
+            stopEvent(event) {
+              return header.contains(event.target);
+            },
+            ignoreMutation(mutation) {
+              return header.contains(mutation.target);
+            },
+          };
+        };
+      },
+    });
+  }
+
   function createProtectedMarkdownBlock() {
     return NodeExtension.create({
       name: "protectedMarkdownBlock",
@@ -519,14 +832,29 @@ async function loadTiptapModules() {
     if (!editor) return false;
     const current = sourceField.value || "";
     const split = splitFrontmatter(current);
-    const prepared = prepareMarkdownForVisualEditing(split.body);
+    const migrated = stripGlobalComponentImports(split.body);
+    const sourceBody = migrated.removed ? migrated.source : split.body;
+    if (migrated.removed) {
+      sourceField.value = split.prefix + sourceBody;
+      sourceField.dispatchEvent(new Event("input", { bubbles: true }));
+    }
+    const prepared = prepareMarkdownForVisualEditing(sourceBody);
     frontmatterPrefix = split.prefix;
     loadingSource = true;
     try {
       editor.commands.setContent(prepared.markdown, { contentType: "markdown", emitUpdate: false });
       replaceProtectedMarkerParagraphs(editor, prepared.records);
-      lastLoadedSource = current;
+      lastLoadedSource = sourceField.value || current;
       reportProtected(prepared.records);
+      if (migrated.removed) {
+        status("已从本次编辑稿移除 " + migrated.removed + " 条冗余 firefly-mdx import；保存文章后即可将清理结果写入 GitHub。");
+        if (notice) {
+          notice.hidden = false;
+          notice.textContent = (notice.textContent ? notice.textContent + " " : "")
+            + "已自动移除 " + migrated.removed + " 条冗余的 firefly-mdx 组件 import；保存后写入 GitHub。";
+          notice.setAttribute("role", "status");
+        }
+      }
       return true;
     } catch (error) {
       reportVisualLoadFailure(error);
@@ -584,6 +912,14 @@ async function loadTiptapModules() {
     }
     const chain = editor.chain().focus();
     switch (action) {
+      case "callout": {
+        editor.chain().focus().insertContent({
+          type: "fireflyCallout",
+          attrs: { type: "tip", title: "" },
+          content: [{ type: "paragraph" }],
+        }).run();
+        break;
+      }
       case "paragraph": chain.setParagraph().run(); break;
       case "h1": chain.toggleHeading({ level: 1 }).run(); break;
       case "h2": chain.toggleHeading({ level: 2 }).run(); break;
@@ -625,6 +961,7 @@ async function loadTiptapModules() {
 
   async function init() {
     const providerName = await loadTiptapModules();
+    ensureCalloutStyles();
     status("可视化编辑器模块加载成功（" + providerName + "）。");
     frontmatterPrefix = splitFrontmatter(sourceField.value).prefix;
 
@@ -640,6 +977,7 @@ async function loadTiptapModules() {
         Markdown.configure({ markedOptions: { gfm: true } }),
         Image.configure({ inline: false, allowBase64: false }),
         TableKit,
+        createCalloutBlock(),
         createProtectedMarkdownBlock(),
       ],
       content: "",
