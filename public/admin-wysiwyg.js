@@ -2252,7 +2252,7 @@ async function loadTiptapModules() {
       '.firefly-prosemirror-content img[data-firefly-image-preview="true"]:focus-visible{outline-color:#16834c;box-shadow:0 0 0 4px #16834c22}',
       '@media(prefers-color-scheme:dark){.firefly-prosemirror-content img[data-firefly-image-preview="true"]:hover{outline-color:#78c992}.firefly-prosemirror-content img[data-firefly-image-preview="true"]:focus-visible{outline-color:#8be0a5}}',
       '@media(prefers-reduced-motion:reduce){.firefly-prosemirror-content img[data-firefly-image-preview="true"]{transition:none}}',
-    ].join("\\n");
+    ].join("\n");
     document.head.append(style);
   }
 
