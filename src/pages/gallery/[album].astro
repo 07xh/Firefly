@@ -1,5 +1,4 @@
 ---
-export const prerender = true;
 import { Icon } from "astro-icon/components";
 import EncryptedContent from "@/components/features/EncryptedContent.astro";
 import PhotoCard from "@/components/pages/gallery/PhotoCard.astro";
@@ -11,6 +10,8 @@ import "@/styles/pages/gallery-album.css";
 import { getAlbumCover, scanAlbumPhotos } from "@/utils/gallery-utils";
 import { getLqipProps } from "@/utils/lqip-utils";
 import { url } from "@/utils/url-utils";
+
+export const prerender = true;
 
 // 检查页面是否启用
 if (!siteConfig.pages.gallery) {
