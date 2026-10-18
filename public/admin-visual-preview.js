@@ -197,6 +197,12 @@ function isSafeCalloutBody(value) {
   );
 }
 
+
+function isSafeTaskListText(value) {
+  const text = String(value ?? "").trim();
+  return text.length > 0 && text.length <= 500 && !/[<>{}\x60*_~$\[\]\r\n]/.test(text);
+}
+
 /** Data-only preview parser. It never evaluates MDX or inserts source as HTML. */
 export function inspectProtectedMarkdown(raw, reason = "") {
   const source = typeof raw === "string" ? raw : "";
@@ -308,8 +314,18 @@ export function inspectProtectedMarkdown(raw, reason = "") {
   }
 
   if (/^\s*[-*+]\s+\[[ xX]\]/m.test(source)) {
+    const normalized = source.replace(/\r\n/g, "\n").replace(/\n+$/, "");
+    const lines = normalized.split("\n");
+    const rawItems = lines.map(line => {
+      const match = /^- \[([ xX])\] (.+)$/.exec(line);
+      return match ? { checked: /[xX]/.test(match[1]), text: match[2] } : null;
+    });
+    const editable = Boolean(normalized)
+      && source === source.trimStart()
+      && lines.length <= 100
+      && rawItems.every(item => item && isSafeTaskListText(item.text));
     return {
-      kind: "task-list", title: "任务清单", label: "Markdown 任务清单",
+      kind: "task-list", title: "任务清单", label: "Markdown 任务清单", editable,
       items: source.split(/\r?\n/).filter(line => /^\s*[-*+]\s+\[[ xX]\]/.test(line)).map(line => ({
         checked: /^\s*[-*+]\s+\[[xX]\]/.test(line),
         text: plainText(line.replace(/^\s*[-*+]\s+\[[ xX]\]\s*/, "")),
@@ -432,4 +448,19 @@ export function serializeEditableCallout(model, values) {
   if (!isSafeCalloutTitle(title, true)) throw new Error("标题不能包含 Markdown 强调、标签、表达式或换行。");
   if (!isSafeCalloutBody(body)) throw new Error("正文必须是纯文本；列表、标题、Markdown 格式和嵌套组件仍需使用源码编辑。");
   return ":::" + type + (title ? "[" + title + "]" : "") + "\n" + body + "\n:::";
+}
+
+
+export function serializeEditableTaskList(values) {
+  const items = Array.isArray(values) ? values : [];
+  if (!items.length || items.length > 100) throw new Error("待办项目数量必须为 1 到 100 项。");
+  let totalLength = 0;
+  const lines = items.map(item => {
+    const text = String(item?.text ?? "").trim();
+    if (!isSafeTaskListText(text)) throw new Error("每一项都需要安全的纯文字，不能包含 Markdown/MDX 格式符号或换行。");
+    totalLength += text.length;
+    if (totalLength > 50000) throw new Error("待办清单总长度不能超过 50000 个字符。");
+    return "- [" + (item?.checked ? "x" : " ") + "] " + text;
+  });
+  return lines.join("\n");
 }

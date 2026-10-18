@@ -1,5 +1,5 @@
 import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=20261018-badge-node";
-import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout } from "/admin-visual-preview.js?v=20261018-callout-editor";
+import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList } from "/admin-visual-preview.js?v=20261018-task-list-editor";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
@@ -1488,6 +1488,157 @@ async function loadTiptapModules() {
     typeSelect.focus();
   }
 
+
+  function openStructuredTaskListEditor(activeEditor, getPos, node, model) {
+    const dialog = document.createElement("dialog");
+    dialog.className = "firefly-structured-editor";
+    dialog.setAttribute("aria-labelledby", "firefly-tasklist-editor-title");
+    const style = document.createElement("style");
+    style.textContent = [
+      ".firefly-structured-editor{width:min(760px,calc(100vw - 24px));max-width:none;max-height:88vh;overflow:auto;border:1px solid #d7e4d9;border-radius:16px;padding:0;background:#fbfdfb;color:#243329;box-shadow:0 20px 70px #102e1b33}",
+      ".firefly-structured-editor::backdrop{background:#16231c88;backdrop-filter:blur(3px)}",
+      ".firefly-structured-editor__inner{padding:clamp(14px,3vw,24px);display:grid;gap:14px}",
+      ".firefly-structured-editor__title{margin:0;font-size:19px;line-height:1.4}",
+      ".firefly-structured-editor__hint{margin:0;color:#67766a;font-size:12px;line-height:1.6}",
+      ".firefly-structured-editor__list{display:grid;gap:8px}",
+      ".firefly-structured-editor__task{display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:8px;align-items:center;border:1px solid #dce7dd;border-radius:10px;background:#fff;padding:8px;min-width:0}",
+      ".firefly-structured-editor__task input[type=checkbox]{width:18px;height:18px;accent-color:#177746}",
+      ".firefly-structured-editor__task input[type=text]{width:100%;min-width:0;box-sizing:border-box;border:1px solid #ceddce;border-radius:7px;background:#fff;color:#243329;padding:9px 10px;font:inherit;font-size:13px}",
+      ".firefly-structured-editor__actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:#fbfdfb;padding-top:8px}",
+      ".firefly-structured-editor__button{border:1px solid #cbd9ce;border-radius:8px;background:#fff;color:#314536;padding:8px 12px;font:inherit;font-size:13px;cursor:pointer}",
+      ".firefly-structured-editor__button--primary{background:#177746;color:#fff;border-color:#177746;font-weight:750}",
+      ".firefly-structured-editor__button--danger{color:#b42323;border-color:#e5c7c7}",
+      "@media(max-width:520px){.firefly-structured-editor__task{grid-template-columns:24px minmax(0,1fr)}.firefly-structured-editor__task .firefly-structured-editor__button{grid-column:2}.firefly-structured-editor__actions{justify-content:stretch}.firefly-structured-editor__actions button{flex:1}}",
+      "@media(prefers-color-scheme:dark){.firefly-structured-editor{background:#1a231b;color:#e6eee7;border-color:#3f5844}.firefly-structured-editor__hint{color:#b8c9bb}.firefly-structured-editor__task{background:#222d23;border-color:#405645}.firefly-structured-editor__task input[type=text],.firefly-structured-editor__button{background:#202820;color:#e4ece5;border-color:#4c6551}.firefly-structured-editor__actions{background:#1a231b}.firefly-structured-editor__button--primary{background:#26794a;border-color:#26794a;color:#fff}}",
+    ].join("\n");
+    document.head.append(style);
+    const inner = document.createElement("div");
+    inner.className = "firefly-structured-editor__inner";
+    const heading = document.createElement("h2");
+    heading.id = "firefly-tasklist-editor-title";
+    heading.className = "firefly-structured-editor__title";
+    heading.textContent = "可视化编辑待办清单";
+    const hint = document.createElement("p");
+    hint.className = "firefly-structured-editor__hint";
+    hint.textContent = "勾选状态和文字可以直接修改，也可添加或删除项目。仅支持纯文字条目；复杂 Markdown、嵌套列表和组件会继续保留源码。";
+    const list = document.createElement("div");
+    list.className = "firefly-structured-editor__list";
+    const error = document.createElement("p");
+    error.className = "firefly-structured-editor__hint";
+    error.setAttribute("role", "alert");
+    error.hidden = true;
+    const actions = document.createElement("div");
+    actions.className = "firefly-structured-editor__actions";
+    const add = document.createElement("button");
+    add.type = "button";
+    add.className = "firefly-structured-editor__button";
+    add.textContent = "＋ 添加待办";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "firefly-structured-editor__button";
+    cancel.textContent = "取消";
+    const save = document.createElement("button");
+    save.type = "button";
+    save.className = "firefly-structured-editor__button firefly-structured-editor__button--primary";
+    save.textContent = "保存清单";
+    actions.append(add, cancel, save);
+    inner.append(heading, hint, list, error, actions);
+    dialog.append(inner);
+    document.body.append(dialog);
+
+    let rowRefs = [];
+    let closed = false;
+    const initial = (model.items || []).map(item => ({ checked: Boolean(item.checked), text: item.text || "" }));
+    const getValues = () => rowRefs.map(row => ({
+      checked: row.checkbox.checked,
+      text: row.input.value,
+    }));
+    const renderRows = items => {
+      list.replaceChildren();
+      rowRefs = [];
+      items.forEach((item, index) => {
+        const row = document.createElement("div");
+        row.className = "firefly-structured-editor__task";
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.checked = Boolean(item.checked);
+        checkbox.setAttribute("aria-label", "待办项目 " + (index + 1) + " 是否完成");
+        const input = document.createElement("input");
+        input.type = "text";
+        input.maxLength = 500;
+        input.value = String(item.text || "");
+        input.setAttribute("aria-label", "待办项目 " + (index + 1) + " 内容");
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "firefly-structured-editor__button firefly-structured-editor__button--danger";
+        remove.textContent = "删除";
+        remove.addEventListener("click", () => {
+          const values = getValues();
+          values.splice(index, 1);
+          renderRows(values);
+        });
+        row.append(checkbox, input, remove);
+        list.append(row);
+        rowRefs.push({ checkbox, input });
+      });
+      add.disabled = items.length >= 100;
+    };
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      if (dialog.open && typeof dialog.close === "function") dialog.close();
+      dialog.remove();
+      if (!document.querySelector(".firefly-structured-editor")) style.remove();
+    };
+    const showError = message => {
+      error.textContent = message;
+      error.hidden = false;
+    };
+    add.addEventListener("click", () => {
+      const values = getValues();
+      if (values.length >= 100) return;
+      values.push({ checked: false, text: "新待办项目" });
+      renderRows(values);
+      list.querySelector("input[type=text]:last-of-type")?.focus();
+    });
+    cancel.addEventListener("click", close);
+    dialog.addEventListener("cancel", event => {
+      event.preventDefault();
+      close();
+    });
+    save.addEventListener("click", () => {
+      error.hidden = true;
+      let raw;
+      try {
+        raw = serializeEditableTaskList(getValues());
+      } catch (exception) {
+        showError(exception instanceof Error ? exception.message : "清单内容不符合可编辑格式。");
+        return;
+      }
+      const position = getPos();
+      if (typeof position !== "number") {
+        showError("清单已不在文档中，请关闭后重新选择。");
+        return;
+      }
+      const current = activeEditor.state.doc.nodeAt(position);
+      if (!current || current.type.name !== "protectedMarkdownBlock") {
+        showError("无法定位原始清单，已取消修改。");
+        return;
+      }
+      activeEditor.view.dispatch(activeEditor.state.tr.setNodeMarkup(position, undefined, {
+        ...current.attrs,
+        raw,
+      }));
+      status("待办清单已更新；点击“保存文章”后写入 GitHub。");
+      close();
+    });
+
+    renderRows(initial);
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+    list.querySelector("input[type=text]")?.focus();
+  }
+
   function visualPreviewElement(tag, className, text) {
     const element = document.createElement(tag);
     if (className) element.className = className;
@@ -1844,6 +1995,19 @@ async function loadTiptapModules() {
                 event.preventDefault();
                 event.stopPropagation();
                 openStructuredCalloutEditor(activeEditor, getPos, currentNode, model);
+              });
+              header.append(visualEdit);
+            } else if (model.kind === "task-list" && model.editable) {
+              const visualEdit = document.createElement("button");
+              visualEdit.type = "button";
+              visualEdit.className = "firefly-protected-markdown__edit";
+              visualEdit.textContent = "可视化编辑清单";
+              visualEdit.title = "修改勾选状态和文字，并添加或删除待办项目";
+              visualEdit.addEventListener("mousedown", event => event.preventDefault());
+              visualEdit.addEventListener("click", event => {
+                event.preventDefault();
+                event.stopPropagation();
+                openStructuredTaskListEditor(activeEditor, getPos, currentNode, model);
               });
               header.append(visualEdit);
             }

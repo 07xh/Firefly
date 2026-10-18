@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout } from "../public/admin-visual-preview.js";
+import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList } from "../public/admin-visual-preview.js";
 
 test("Firefly Badge component renders as a safe visual preview model", () => {
   const model = inspectProtectedMarkdown('前言 <Badge type="tip">新功能</Badge> 后记', "MDX component");
@@ -254,4 +254,48 @@ test("callout serializer rejects unsupported types and Markdown/MDX bodies", () 
   assert.throws(() => serializeEditableCallout({ kind: "callout" }, { type: "script", title: "", body: "普通文字" }), /有效的提示容器类型/);
   assert.throws(() => serializeEditableCallout({ kind: "callout" }, { type: "tip", title: "标题", body: "**加粗**" }), /纯文本/);
   assert.throws(() => serializeEditableCallout({ kind: "callout" }, { type: "tip", title: "", body: "::: nested" }), /纯文本/);
+});
+
+
+test("simple plain task lists expose structured editing without losing checked state", () => {
+  const model = inspectProtectedMarkdown("- [x] 已完成\n- [ ] 待处理\n- [X] 再检查", "Task list");
+  assert.equal(model.kind, "task-list");
+  assert.equal(model.editable, true);
+  assert.deepEqual(model.items.map(item => item.checked), [true, false, true]);
+  assert.deepEqual(model.items.map(item => item.text), ["已完成", "待处理", "再检查"]);
+  assert.equal(inspectProtectedMarkdown("- [ ] 结尾换行正常\n", "Task list").editable, true);
+});
+
+test("mixed, nested, formatted, and overlong task lists remain source-only", () => {
+  const cases = [
+    "任务：\n- [ ] 需要检查",
+    "- [ ] **加粗**",
+    "- [ ] 第一项\n  - [ ] 嵌套项目",
+    "- [ ] <Badge type=\"tip\">组件</Badge>",
+    "- [ ] " + "很长".repeat(300),
+  ];
+  for (const source of cases) {
+    const model = inspectProtectedMarkdown(source, "Task list");
+    assert.notEqual(model.editable, true, source.slice(0, 100));
+  }
+});
+
+test("task list serializer round-trips edited checkbox state and text", () => {
+  const values = [
+    { checked: true, text: "完成第一项" },
+    { checked: false, text: "待办第二项" },
+  ];
+  const raw = serializeEditableTaskList(values);
+  assert.equal(raw, "- [x] 完成第一项\n- [ ] 待办第二项");
+  const model = inspectProtectedMarkdown(raw, "Task list");
+  assert.equal(model.editable, true);
+  assert.deepEqual(model.items.map(item => item.checked), values.map(item => item.checked));
+  assert.deepEqual(model.items.map(item => item.text), values.map(item => item.text));
+});
+
+test("task list serializer rejects formatting, empty values, and more than 100 items", () => {
+  assert.throws(() => serializeEditableTaskList([{ text: "**bold**" }]), /纯文字/);
+  assert.throws(() => serializeEditableTaskList([{ text: "" }]), /纯文字/);
+  assert.throws(() => serializeEditableTaskList([]), /1 到 100 项/);
+  assert.throws(() => serializeEditableTaskList(Array.from({ length: 101 }, (_, i) => ({ text: "项目" + i }))), /1 到 100 项/);
 });
