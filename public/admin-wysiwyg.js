@@ -63,6 +63,9 @@ import { TableKit } from "https://cdn.jsdelivr.net/npm/@tiptap/extension-table@3
     $("visualTab")?.classList.toggle("active", mode === "visual");
     $("editorTab")?.classList.toggle("active", mode === "source");
     $("previewTab")?.classList.toggle("active", mode === "preview");
+    $("visualTab")?.setAttribute("aria-selected", String(mode === "visual"));
+    $("editorTab")?.setAttribute("aria-selected", String(mode === "source"));
+    $("previewTab")?.setAttribute("aria-selected", String(mode === "preview"));
     if (mode === "visual" && editor && !unsupportedReason) editor.commands.focus("end");
   }
 
