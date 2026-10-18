@@ -150,8 +150,21 @@ export const prerender = false;
     </section>
 
 
+    <section class="settings-card" aria-labelledby="navVisibilitySettingsTitle">
+      <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="navVisibilitySettingsTitle">导航栏链接显隐控制</h3><p>分别控制顶部导航栏中的“社交”“我的”“关于”入口；桌面导航和移动端抽屉共用此设置。</p></div></div>
+      <div class="settings-switch-grid">
+        <label class="settings-toggle"><input id="showNavSocial" name="showNavSocial" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示“社交”菜单<small>控制友链、留言等菜单分组入口。</small></span></label>
+        <label class="settings-toggle"><input id="showNavMy" name="showNavMy" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示“我的”菜单<small>控制动态、项目、相册等菜单分组入口。</small></span></label>
+        <label class="settings-toggle"><input id="showNavAbout" name="showNavAbout" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示“关于”菜单<small>控制打赏与关于我等菜单分组入口。</small></span></label>
+      </div>
+    </section>
+
     <section class="settings-card" aria-labelledby="aboutContentSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="aboutContentSettingsTitle">关于我页面设置</h3><p>自定义“关于我 / About Me”页面正文，支持标准 Markdown、多行文本和链接。</p></div></div>
+      <div class="settings-card-heading"><span class="settings-card-number">07</span><div><h3 id="aboutContentSettingsTitle">关于我页面与打赏开关</h3><p>控制“关于我”页面访问、介绍正文以及页面内的支持作者模块。</p></div></div>
+      <div class="settings-switch-grid mb-4">
+        <label class="settings-toggle"><input id="showAbout" name="showAbout" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">启用“关于我”页面<small>关闭后 /about/ 会重定向到首页，导航子项也会隐藏。</small></span></label>
+        <label class="settings-toggle"><input id="showAboutDonation" name="showAboutDonation" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示关于我页面打赏卡片<small>开启后在介绍正文下方显示“支持作者”入口。</small></span></label>
+      </div>
       <div class="settings-field">
         <label for="aboutContent">关于我页面正文</label>
         <textarea id="aboutContent" name="aboutContent" rows="12" maxlength="30000" placeholder="# 关于我 / About Me&#10;&#10;在这里填写个人介绍、关于本站、GitHub 开源地址等内容。" class="settings-control"></textarea>
@@ -160,7 +173,7 @@ export const prerender = false;
     </section>
 
     <section class="settings-card" aria-labelledby="sourceGithubSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">07</span><div><h3 id="sourceGithubSettingsTitle">GitHub 原文 / 源码链接设置</h3><p>统一控制页脚是否显示链接，并修改链接目标地址。</p></div></div>
+      <div class="settings-card-heading"><span class="settings-card-number">08</span><div><h3 id="sourceGithubSettingsTitle">GitHub 原文 / 源码链接设置</h3><p>统一控制页脚是否显示链接，并修改链接目标地址。</p></div></div>
       <div class="settings-grid settings-grid-one">
         <div class="settings-field">
           <label for="sourceGithubUrl">原文 / 源码 GitHub 地址</label>
@@ -171,7 +184,7 @@ export const prerender = false;
       </div>
     </section>
     <section class="settings-card" aria-labelledby="featureSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">08</span><div><h3 id="featureSettingsTitle">多媒体与功能模块</h3><p>配置背景音乐外链，以及文章页的“支持与分享”卡片开关。</p></div></div>
+      <div class="settings-card-heading"><span class="settings-card-number">09</span><div><h3 id="featureSettingsTitle">多媒体与功能模块</h3><p>配置背景音乐外链，以及文章页的“支持与分享”卡片开关。</p></div></div>
       <div class="settings-grid settings-grid-one">
         <div class="settings-field">
           <label for="backgroundMusic">背景音乐外链</label>
@@ -401,6 +414,11 @@ async function loadSettings(){
   $("showEmail").checked=data.showEmail===true;
   $("showSupportAndShare").checked=data.showSupportAndShare===true;
   $("showSourceGithub").checked=data.showSourceGithub===true;
+  $("showAbout").checked=data.showAbout!==false;
+  $("showAboutDonation").checked=data.showAboutDonation===true;
+  $("showNavSocial").checked=data.showNavSocial!==false;
+  $("showNavMy").checked=data.showNavMy!==false;
+  $("showNavAbout").checked=data.showNavAbout!==false;
   updateImagePreview();updateAvatarPreview();updateMusicPreview();
   status.textContent="已加载仓库中的配置。";
  }catch(error){
@@ -443,7 +461,12 @@ $("settingsForm").addEventListener("submit",async event=>{
   showSupportAndShare:$("showSupportAndShare").checked,
   aboutContent:$("aboutContent").value,
   showSourceGithub:$("showSourceGithub").checked,
-  sourceGithubUrl:$("sourceGithubUrl").value.trim()
+  sourceGithubUrl:$("sourceGithubUrl").value.trim(),
+  showAbout:$("showAbout").checked,
+  showAboutDonation:$("showAboutDonation").checked,
+  showNavSocial:$("showNavSocial").checked,
+  showNavMy:$("showNavMy").checked,
+  showNavAbout:$("showNavAbout").checked
  };
  if(values.backgroundColor&&!/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(values.backgroundColor)){status.textContent="背景颜色只支持 #RGB 或 #RRGGBB；留空可恢复主题默认颜色。";status.style.color="#b42318";$("backgroundColor").focus();return}
  for(const [key,label] of [["backgroundImage","背景图片"],["avatar","头像"],["githubUrl","GitHub 链接"],["backgroundMusic","背景音乐"],["sourceGithubUrl","GitHub 原文/源码链接"]]){
