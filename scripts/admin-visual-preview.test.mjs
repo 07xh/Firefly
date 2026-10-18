@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup } from "../public/admin-visual-preview.js";
+import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout } from "../public/admin-visual-preview.js";
 
 test("Firefly Badge component renders as a safe visual preview model", () => {
   const model = inspectProtectedMarkdown('前言 <Badge type="tip">新功能</Badge> 后记', "MDX component");
@@ -209,4 +209,49 @@ test("TabGroup serializer rejects unsafe labels, languages, and oversized conten
   assert.throws(() => serializeEditableTabGroup({ kind: "tabs" }, [{ title: "JS", language: "{run()}", text: "x" }]), /代码语言/);
   assert.throws(() => serializeEditableTabGroup({ kind: "tabs" }, [{ title: "JS", language: "js", text: "x".repeat(50001) }]), /50000/);
   assert.throws(() => serializeEditableTabGroup({ kind: "tabs" }, []), /1 到 20 项/);
+});
+
+
+test("simple plain-text callouts expose safe structured editing", () => {
+  const model = inspectProtectedMarkdown(":::tip[小提示]\n第一行正文。\n第二行正文。\n:::", "Callout");
+  assert.equal(model.kind, "callout");
+  assert.equal(model.editable, true);
+  assert.equal(model.type, "tip");
+  assert.equal(model.title, "小提示");
+  assert.equal(model.body, "第一行正文。\n第二行正文。");
+});
+
+test("formatted, nested, list, and outer-whitespace callouts remain source-only", () => {
+  const cases = [
+    ":::tip[标题]\n**加粗内容**\n:::",
+    ":::tip\n<Badge type=\\"tip\\">标签</Badge>\n:::",
+    ":::tip\n- 列表内容\n:::",
+    ":::tip[标题]\n标题一\n\n标题二\n:::",
+    "\n:::tip\n简单内容\n:::",
+  ];
+  for (const source of cases) {
+    const model = inspectProtectedMarkdown(source, "Callout");
+    assert.equal(model.kind, "callout");
+    assert.notEqual(model.editable, true, source);
+  }
+});
+
+test("callout serializer round-trips type, title, and multiline plain text", () => {
+  const raw = serializeEditableCallout({ kind: "callout" }, {
+    type: "warning",
+    title: "重要提醒",
+    body: "先检查设置。\n再保存更改。",
+  });
+  assert.equal(raw, ":::warning[重要提醒]\n先检查设置。\n再保存更改。\n:::");
+  const model = inspectProtectedMarkdown(raw, "Callout");
+  assert.equal(model.editable, true);
+  assert.equal(model.type, "warning");
+  assert.equal(model.title, "重要提醒");
+  assert.equal(model.body, "先检查设置。\n再保存更改。");
+});
+
+test("callout serializer rejects unsupported types and Markdown/MDX bodies", () => {
+  assert.throws(() => serializeEditableCallout({ kind: "callout" }, { type: "script", title: "", body: "普通文字" }), /有效的提示容器类型/);
+  assert.throws(() => serializeEditableCallout({ kind: "callout" }, { type: "tip", title: "标题", body: "**加粗**" }), /纯文本/);
+  assert.throws(() => serializeEditableCallout({ kind: "callout" }, { type: "tip", title: "", body: "::: nested" }), /纯文本/);
 });
