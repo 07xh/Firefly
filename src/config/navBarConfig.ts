@@ -1,3 +1,4 @@
+import siteSettings from "../data/settings.json";
 import {
 	type NavBarConfig,
 	type NavBarLink,
@@ -102,26 +103,12 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 		url: "#",
 		icon: "material-symbols:link",
 		// 子菜单
-		children: [
-			{
-				name: "GitHub",
-				url: "https://github.com/CuteLeaf/Firefly",
-				external: true,
-				icon: "fa7-brands:github",
-			},
-			{
-				name: "Gitee",
-				url: "https://gitee.com/CuteLeaf/Firefly",
-				external: true,
-				icon: "fa7-brands:gitee",
-			},
-			{
-				name: "Firefly文档",
-				url: "https://docs-firefly.cuteleaf.cn",
-				external: true,
-				icon: "material-symbols:docs",
-			},
-		],
+		children: siteSettings.customNavLinks.map((link) => ({
+			name: link.name,
+			url: link.url,
+			external: link.external,
+			icon: link.icon || "material-symbols:link",
+		})),
 	});
 
 	// 文档链接

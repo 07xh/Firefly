@@ -1,61 +1,14 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#f5f8f6">
-<title>Firefly · 后台设置</title>
-<style>
-:root{color-scheme:light;--bg:#f5f8f6;--panel:#fff;--ink:#202b25;--muted:#7c8981;--line:#e7ede8;--green:#19845a;--green-soft:#e8f5ed;--shadow:0 10px 30px #1f442f08}
-:root[data-theme="dark"]{color-scheme:dark;--bg:#121713;--panel:#1c241e;--ink:#e9f0eb;--muted:#a2afa6;--line:#354139;--green:#56c58a;--green-soft:#253a2d;--shadow:0 10px 30px #0002}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}a{color:inherit;text-decoration:none}button,input,select{font:inherit}.shell{max-width:1080px;margin:auto;padding:24px 20px 56px}.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}.brand{display:flex;align-items:center;gap:11px}.mark{width:40px;height:40px;border-radius:13px;background:var(--green);color:#fff;display:grid;place-items:center;font-size:22px;font-weight:800}.brand strong{display:block;font-size:17px}.brand small{color:var(--muted);font-size:11px;letter-spacing:1px}.actions{display:flex;gap:8px;flex-wrap:wrap}.btn{border:1px solid var(--line);border-radius:10px;padding:9px 13px;background:var(--panel);color:var(--ink);cursor:pointer;font-weight:650;font-size:12px}.btn.primary{background:var(--green);color:white;border-color:var(--green)}.intro{margin-bottom:22px}.eyebrow{color:var(--green);font-size:11px;font-weight:800;letter-spacing:1.2px}.intro h1{font-size:30px;letter-spacing:-.8px;margin:6px 0}.intro p{color:var(--muted);margin:0}.layout{display:grid;grid-template-columns:215px minmax(0,1fr);gap:18px}.nav,.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}.nav{padding:10px;align-self:start;display:grid;gap:4px}.nav a{padding:11px 12px;border-radius:10px;color:var(--muted);font-size:13px}.nav a.active,.nav a:hover{background:var(--green-soft);color:var(--green);font-weight:700}.panel{padding:23px;margin-bottom:15px}.panel h2{font-size:16px;margin:0 0 4px}.sub{color:var(--muted);font-size:12px;margin:0 0 19px}.field{display:grid;grid-template-columns:minmax(0,1fr) minmax(180px,240px);gap:18px;align-items:center;padding:15px 0;border-top:1px solid var(--line)}.field:first-of-type{border-top:0}.field strong{display:block;font-size:13px}.field small{display:block;color:var(--muted);font-size:11px;margin-top:3px}.control{width:100%;min-height:39px;border:1px solid var(--line);border-radius:9px;background:var(--bg);color:var(--ink);padding:8px 10px}.colors{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}.swatch{width:29px;height:29px;border:2px solid transparent;border-radius:9px;cursor:pointer}.swatch[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:2px}.toggle{display:flex;align-items:center;justify-content:flex-end;gap:9px}.toggle input{width:18px;height:18px;accent-color:var(--green)}.notice{padding:13px 15px;border:1px solid #e7d8b6;background:#fff9e9;color:#72551d;border-radius:12px;font-size:12px;line-height:1.8;margin-top:16px}.status{color:var(--muted);font-size:11px;margin-left:8px}.footer{color:var(--muted);font-size:11px;margin-top:20px;text-align:center}@media(max-width:700px){.shell{padding:16px 12px 35px}.top{align-items:flex-start}.intro h1{font-size:25px}.layout{grid-template-columns:1fr}.nav{display:flex;overflow:auto}.nav a{white-space:nowrap}.panel{padding:17px}.field{grid-template-columns:1fr;gap:9px}.colors,.toggle{justify-content:flex-start}.actions{justify-content:flex-end}}
-</style></head>
-<body><main class="shell">
-<header class="top"><a class="brand" href="/admin/dashboard.html"><span class="mark">✳</span><span><strong>Firefly</strong><small>CONTENT STUDIO</small></span></a><div class="actions"><a class="btn" href="/admin/dashboard.html">返回工作台</a><button class="btn" id="reset">恢复默认</button><button class="btn primary" id="save">保存设置</button></div></header>
-<section class="intro"><div class="eyebrow">WORKSPACE PREFERENCES</div><h1>后台设置</h1><p>调整你的工作台与写作习惯。设置保存在当前浏览器，不会修改网站文章。</p></section>
-<div class="layout"><nav class="nav" aria-label="设置分类"><a class="active" href="#appearance">外观与布局</a><a href="#workspace">工作台</a><a href="#writing">写作偏好</a><a href="#defaults">文章默认值</a><a href="#publishing">发布行为</a><a href="#security">安全与数据</a></nav>
-<div>
-<section class="panel" id="appearance"><h2>外观与布局</h2><p class="sub">定制后台的视觉风格和导航方式。</p>
-<div class="field"><div><strong>主题模式</strong><small>切换明暗外观，设置立即预览。</small></div><select class="control" data-setting="theme"><option value="light">浅色</option><option value="dark">深色</option></select></div>
-<div class="field"><div><strong>强调色</strong><small>应用于按钮、选中状态与交互提示。</small></div><div class="colors"><button class="swatch" style="background:#19845a" data-color="#19845a" aria-label="森林绿"></button><button class="swatch" style="background:#4778d0" data-color="#4778d0" aria-label="蓝色"></button><button class="swatch" style="background:#8b5cc7" data-color="#8b5cc7" aria-label="紫色"></button><button class="swatch" style="background:#d56c45" data-color="#d56c45" aria-label="橙色"></button><button class="swatch" style="background:#c34e75" data-color="#c34e75" aria-label="玫红"></button></div></div>
-<div class="field"><div><strong>导航布局</strong><small>选择你偏好的管理工作台布局。</small></div><select class="control" data-setting="layout"><option value="sidebar">侧边导航</option><option value="top">顶部导航（偏好记录）</option><option value="compact">紧凑导航</option></select></div>
-<div class="field"><div><strong>列表密度</strong><small>设置未来文章列表的默认行距。</small></div><select class="control" data-setting="density"><option value="comfortable">舒适</option><option value="standard">标准</option><option value="compact">紧凑</option></select></div></section>
-<section class="panel" id="workspace"><h2>工作台卡片</h2><p class="sub">选择希望在首页优先看到的内容。当前记录偏好，工作台卡片联动将在后续阶段接入。</p>
-<div class="field"><div><strong>文章概览卡片</strong><small>文章统计和内容入口。</small></div><label class="toggle"><input type="checkbox" data-setting="cardArticles"> 显示</label></div>
-<div class="field"><div><strong>发布流程卡片</strong><small>审核与部署状态入口。</small></div><label class="toggle"><input type="checkbox" data-setting="cardWorkflow"> 显示</label></div>
-<div class="field"><div><strong>快捷操作卡片</strong><small>常用写作和仓库链接。</small></div><label class="toggle"><input type="checkbox" data-setting="cardQuick"> 显示</label></div></section>
-<section class="panel" id="writing"><h2>写作偏好</h2><p class="sub">定义打开编辑器时偏好的编辑与预览方式。</p>
-<div class="field"><div><strong>默认编辑器</strong><small>该选项是偏好记录；编辑器模式切换尚待接入。</small></div><select class="control" data-setting="editor"><option value="markdown">Markdown</option><option value="rich">富文本</option><option value="split">编辑与预览分栏</option></select></div>
-<div class="field"><div><strong>默认预览</strong><small>选择文章预览的呈现方式。</small></div><select class="control" data-setting="preview"><option value="moments">朋友圈卡片</option><option value="article">文章页面</option><option value="mobile">移动端预览</option></select></div>
-<div class="field"><div><strong>自动保存草稿</strong><small>启用后仅表示写作偏好；实际在线自动保存需要后端接口。</small></div><label class="toggle"><input type="checkbox" data-setting="autosave"> 启用</label></div></section>
-<section class="panel" id="defaults"><h2>文章默认值</h2><p class="sub">用于后续新建文章的初始值，不会改动现有文章。</p>
-<div class="field"><div><strong>默认分类</strong><small>新文章的预设分类。</small></div><input class="control" data-setting="defaultCategory" placeholder="例如：随笔"></div>
-<div class="field"><div><strong>默认作者</strong><small>写入文章元数据的作者名称。</small></div><input class="control" data-setting="defaultAuthor" placeholder="例如：拾光"></div>
-<div class="field"><div><strong>默认标签</strong><small>多个标签使用英文逗号分隔。</small></div><input class="control" data-setting="defaultTags" placeholder="技术, 随笔"></div>
-<div class="field"><div><strong>新文章默认状态</strong><small>正式发布能力接入后才会影响服务端状态。</small></div><select class="control" data-setting="defaultStatus"><option value="draft">草稿</option><option value="review">待审核</option></select></div></section>
-<section class="panel" id="publishing"><h2>发布行为</h2><p class="sub">预先定义发布偏好。当前不会执行真正的发布动作。</p>
-<div class="field"><div><strong>发布前确认</strong><small>减少误操作风险。</small></div><label class="toggle"><input type="checkbox" data-setting="confirmPublish"> 每次确认</label></div>
-<div class="field"><div><strong>默认审核流程</strong><small>建议所有文章先经过审核，再合并发布。</small></div><select class="control" data-setting="publishFlow"><option value="review">先审核后发布</option><option value="direct">直接发布（暂不启用）</option></select></div>
-<div class="field"><div><strong>失败时保留草稿</strong><small>后端接入后将作为错误恢复策略。</small></div><label class="toggle"><input type="checkbox" data-setting="keepDraft"> 保留草稿</label></div></section>
-<section class="panel" id="security"><h2>安全与数据</h2><p class="sub">密钥和登录权限必须由服务端负责，不能保存在浏览器设置里。</p>
-<div class="field"><div><strong>后台身份验证</strong><small>当前静态页面尚未接入登录和权限验证。</small></div><span class="status">待后端实施</span></div>
-<div class="field"><div><strong>在线备份与版本历史</strong><small>需连接 GitHub API 后才能读取真实提交记录并恢复内容。</small></div><span class="status">待后端实施</span></div>
-<div class="field"><div><strong>导出本地设置</strong><small>下载当前偏好配置 JSON，可作为个人设置备份。</small></div><button class="btn" id="export">导出设置 JSON</button></div>
-<div class="notice"><strong>安全说明：</strong>本页只保存界面偏好至当前浏览器的 localStorage。它不保存密码、Token 或服务端密钥，也不会读写、发布或删除仓库内容。</div></section>
-<div class="footer">Firefly Content Studio · 后台偏好设置 <span id="status" role="status"></span></div>
-</div></div></main>
-<script>
-const KEY='firefly-admin-preferences-v1';
-const defaults={theme:'light',color:'#19845a',layout:'sidebar',density:'comfortable',cardArticles:true,cardWorkflow:true,cardQuick:true,editor:'markdown',preview:'moments',autosave:false,defaultCategory:'',defaultAuthor:'',defaultTags:'',defaultStatus:'draft',confirmPublish:true,publishFlow:'review',keepDraft:true};
-let settings={...defaults};
-const root=document.documentElement;
-function load(){try{const raw=localStorage.getItem(KEY);if(raw){const parsed=JSON.parse(raw);settings={...defaults,...parsed}}}catch(e){setStatus('无法读取本地设置，当前使用默认值')}} 
-function apply(){root.dataset.theme=settings.theme;root.style.setProperty('--green',settings.color);root.style.setProperty('--green-soft',settings.color+'20');document.querySelectorAll('[data-setting]').forEach(el=>{const k=el.dataset.setting;if(el.type==='checkbox')el.checked=Boolean(settings[k]);else el.value=settings[k]??''});document.querySelectorAll('[data-color]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.color===settings.color)))}
-function setStatus(s){document.getElementById('status').textContent=s}
-function collect(){document.querySelectorAll('[data-setting]').forEach(el=>{settings[el.dataset.setting]=el.type==='checkbox'?el.checked:el.value})}
-function save(){collect();try{localStorage.setItem(KEY,JSON.stringify(settings));apply();setStatus(' · 已保存到当前浏览器');}catch(e){setStatus(' · 保存失败：浏览器存储不可用')}}
-document.querySelectorAll('[data-setting]').forEach(el=>el.addEventListener('change',()=>{collect();apply();setStatus(' · 有未保存的更改')}));
-document.querySelectorAll('[data-color]').forEach(el=>el.addEventListener('click',()=>{settings.color=el.dataset.color;apply();setStatus(' · 有未保存的更改')}));
-document.getElementById('save').addEventListener('click',save);
-document.getElementById('reset').addEventListener('click',()=>{if(confirm('将所有后台偏好恢复为默认值？')){settings={...defaults};apply();try{localStorage.removeItem(KEY);setStatus(' · 已恢复默认设置')}catch(e){setStatus(' · 无法清除浏览器存储')}}});
-document.getElementById('export').addEventListener('click',()=>{collect();const blob=new Blob([JSON.stringify(settings,null,2)],{type:'application/json;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='firefly-admin-settings.json';a.click();URL.revokeObjectURL(url);setStatus(' · 设置 JSON 已导出')});
-load();apply();
-</script></body></html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="refresh" content="0;url=/admin/?tab=appearance">
+<title>后台设置 · Firefly</title>
+<script>location.replace("/admin/?tab=appearance");</script>
+</head>
+<body>
+<p>外观配置已统一到主后台。 <a href="/admin/?tab=appearance">进入新版后台</a></p>
+</body>
+</html>

@@ -8,6 +8,7 @@ import { i18n } from "@/i18n/translation";
 import type { WidgetComponentConfig } from "@/types/config";
 
 const config = { ...announcementConfig, content: siteSettings.announcement };
+const showAnnouncement = siteSettings.showAnnouncement !== false;
 
 interface Props {
 	class?: string;
@@ -20,7 +21,7 @@ const showTitle = widgetConfig?.showTitle !== false;
 ---
 
 <!-- 组件显示现在由sidebarLayoutConfig统一控制，无需检查config.enable -->
-{config.content.trim() && (
+{showAnnouncement && config.content.trim() && (
 <WidgetLayout
   name={config.title || i18n(I18nKey.announcement)}
   showTitle={showTitle}
