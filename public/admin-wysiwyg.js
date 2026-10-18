@@ -1,6 +1,7 @@
 import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=20261018-badge-node";
 import { describeProtectedSyntax, inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261018-natural-language";
 import { normalizeEditorLinkAddress } from "/admin-link-utils.js?v=20261018-natural-links";
+import { getAdminImagePreviewUrl } from "/admin-image-preview-utils.js?v=20261018-relative-image-preview";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
@@ -75,6 +76,30 @@ async function loadTiptapModules() {
     if (target) {
       target.textContent = message;
       target.style.color = isError ? "#b42318" : "#657267";
+    }
+  }
+
+  function currentArticlePath() {
+    const context = window.FireflyArticleContext;
+    return typeof context?.path === "string" ? context.path : "";
+  }
+
+  function previewImageSource(source) {
+    return getAdminImagePreviewUrl(currentArticlePath(), source) || source;
+  }
+
+  function reportEditorImageLoadFailure(image) {
+    if (!(image instanceof HTMLImageElement) || !editorElement.contains(image)) return;
+    const failed = Array.from(editorElement.querySelectorAll("img")).filter(item => item.complete && item.naturalWidth === 0);
+    const label = image.alt?.trim() || "未命名图片";
+    status(
+      "图片“" + label + "”无法加载。已保留文章中的原始引用；请检查图片路径或仓库读取权限，也可以点选图片后替换。",
+      true,
+    );
+    if (notice) {
+      notice.hidden = false;
+      notice.textContent = "检测到 " + Math.max(1, failed.length) + " 张图片无法加载。文章原文没有被删除或改写；可点选图片查看，或通过“图片”工具重新上传后替换。";
+      notice.setAttribute("role", "status");
     }
   }
 
@@ -2512,7 +2537,7 @@ async function loadTiptapModules() {
         event.preventDefault();
         const target = activeImagePreviewEditTarget;
         const current = target && editor?.state.doc.nodeAt(target.position);
-        if (!target || !current || current.type.name !== "image" || current.attrs.src !== target.src) {
+        if (!target || !current || current.type.name !== "image" || current.attrs.src !== target.source) {
           status("图片位置已变化，请重新点选图片后再修改说明。", true);
           editPanel.hidden = true;
           return;
@@ -2576,7 +2601,7 @@ async function loadTiptapModules() {
     const altInput = dialog.querySelector("[data-image-alt-input]");
     const titleInput = dialog.querySelector("[data-image-title-input]");
     activeImagePreviewEditTarget = editTarget && Number.isInteger(editTarget.position)
-      ? { position: editTarget.position, src: imageSrc, alt: String(alt || ""), title: String(title || "") }
+      ? { position: editTarget.position, source: String(editTarget.source ?? imageSrc), alt: String(alt || ""), title: String(title || "") }
       : null;
     if (editDescription) editDescription.hidden = !activeImagePreviewEditTarget;
     if (replaceImage) replaceImage.hidden = !activeImagePreviewEditTarget;
@@ -2607,6 +2632,19 @@ async function loadTiptapModules() {
 
   const markdownPreviewElement = $("markdownPreview");
   if (markdownPreviewElement) {
+    const resolvePreviewImages = () => {
+      const articlePath = currentArticlePath();
+      markdownPreviewElement.querySelectorAll("img").forEach(image => {
+        const originalSource = image.getAttribute("data-firefly-original-src") || image.getAttribute("src") || "";
+        const previewSource = getAdminImagePreviewUrl(articlePath, originalSource);
+        if (!previewSource) return;
+        image.setAttribute("data-firefly-original-src", originalSource);
+        if (image.getAttribute("src") !== previewSource) image.setAttribute("src", previewSource);
+      });
+    };
+    const previewImageObserver = new MutationObserver(resolvePreviewImages);
+    previewImageObserver.observe(markdownPreviewElement, { childList: true, subtree: true });
+    resolvePreviewImages();
     markdownPreviewElement.addEventListener("click", event => {
       const target = event.target;
       if (!(target instanceof HTMLImageElement)) return;
@@ -2629,7 +2667,7 @@ async function loadTiptapModules() {
     }
     if (replacementTarget) {
       const current = editor?.state.doc.nodeAt(replacementTarget.position);
-      if (!current || current.type.name !== "image" || current.attrs.src !== replacementTarget.src) {
+      if (!current || current.type.name !== "image" || current.attrs.src !== replacementTarget.source) {
         status("要替换的图片位置已变化，请重新点选原图片后再替换。", true);
         return;
       }
@@ -2653,7 +2691,7 @@ async function loadTiptapModules() {
       const uploadedAlt = file.name || "文章图片";
       if (replacementTarget) {
         const current = editor?.state.doc.nodeAt(replacementTarget.position);
-        if (!current || current.type.name !== "image" || current.attrs.src !== replacementTarget.src) {
+        if (!current || current.type.name !== "image" || current.attrs.src !== replacementTarget.source) {
           throw new Error("图片位置在上传期间发生变化，新图片尚未替换到正文。请重新点选图片后再试。");
         }
         editor.view.dispatch(editor.state.tr.setNodeMarkup(replacementTarget.position, current.type, {
@@ -2994,6 +3032,16 @@ async function loadTiptapModules() {
         status("已插入折叠内容。点击内容卡片上的“修改可展开内容”可以编辑标题和正文。");
         break;
       }
+      case "checkImages": {
+        const images = Array.from(editorElement.querySelectorAll("img"));
+        const failed = images.filter(image => image.complete && image.naturalWidth === 0);
+        const loading = images.filter(image => !image.complete);
+        if (!images.length) status("正文中还没有图片。");
+        else if (failed.length) status("检查完成：有 " + failed.length + " 张图片无法加载；原始图片引用已保留。点选破损图片可尝试替换。", true);
+        else if (loading.length) status("正在加载 " + loading.length + " 张图片，请稍后再次检查。");
+        else status("检查完成：正文中的 " + images.length + " 张图片均已加载。");
+        break;
+      }
       case "taskList": {
         const raw = "- [ ] 待办事项";
         const inserted = editor.chain().focus().insertContent({
@@ -3041,6 +3089,7 @@ async function loadTiptapModules() {
     ensureCalloutStyles();
     ensureBadgeStyles();
     ensureImagePreviewTriggerStyles();
+    editorElement.addEventListener("error", event => reportEditorImageLoadFailure(event.target), true);
     status("正文编辑已准备就绪。");
     frontmatterPrefix = splitFrontmatter(sourceField.value).prefix;
 
@@ -3054,7 +3103,16 @@ async function loadTiptapModules() {
           dropcursor: false,
         }),
         Markdown.configure({ markedOptions: { gfm: true } }),
-        Image.configure({
+        Image.extend({
+          renderHTML({ HTMLAttributes }) {
+            const attributes = { ...this.options.HTMLAttributes, ...HTMLAttributes };
+            const originalSource = String(HTMLAttributes.src || attributes.src || "");
+            attributes["data-firefly-original-src"] = originalSource;
+            const previewSource = getAdminImagePreviewUrl(currentArticlePath(), originalSource);
+            if (previewSource) attributes.src = previewSource;
+            return ["img", attributes];
+          },
+        }).configure({
           inline: false,
           allowBase64: false,
           // Make editor images discoverable and keyboard-accessible without changing Markdown serialization.
@@ -3083,7 +3141,8 @@ async function loadTiptapModules() {
         handleClickOn(_view, _position, node, _nodePosition, event) {
           if (node.type.name !== "image" || event.button !== 0) return false;
           event.preventDefault();
-          openImagePreview(node.attrs.src, node.attrs.alt, node.attrs.title, { position: _nodePosition });
+          const originalSource = String(node.attrs.src || "");
+          openImagePreview(previewImageSource(originalSource), node.attrs.alt, node.attrs.title, { position: _nodePosition, source: originalSource });
           return true;
         },
         handleKeyDown(_view, event) {
@@ -3097,11 +3156,15 @@ async function loadTiptapModules() {
           event.preventDefault();
           let imagePosition = null;
           try { imagePosition = editor.view.posAtDOM(target, 0); } catch {}
+          const node = Number.isInteger(imagePosition) ? editor.state.doc.nodeAt(imagePosition) : null;
+          const originalSource = node?.type.name === "image"
+            ? String(node.attrs.src || "")
+            : target.getAttribute("data-firefly-original-src") || target.getAttribute("src") || "";
           openImagePreview(
-            target.getAttribute("src") || "",
+            previewImageSource(originalSource),
             target.getAttribute("alt") || "",
             target.getAttribute("title") || "",
-            Number.isInteger(imagePosition) ? { position: imagePosition } : null,
+            Number.isInteger(imagePosition) ? { position: imagePosition, source: originalSource } : null,
           );
           return true;
         },
