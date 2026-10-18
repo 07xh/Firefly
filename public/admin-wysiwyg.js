@@ -50,6 +50,21 @@ import { TableKit } from "https://cdn.jsdelivr.net/npm/@tiptap/extension-table@3
     if (/<\/?(?:script|style|iframe|video|audio|div|section|details|summary|table|kbd|sup|sub|span|u|figure|figcaption)\b/i.test(withoutFences)) {
       return "正文包含 HTML 或主题特殊标签。为避免转换丢失属性，请使用 Markdown 源码模式编辑。";
     }
+    if (/^\s*:{3,}/m.test(withoutFences)) {
+      return "正文包含主题提示块或 Markdown directive，请使用源码模式避免丢失主题语法。";
+    }
+    if (/(^|\n)\s*\$\$|\$(?:\\.|[^$\n])+\$/m.test(withoutFences)) {
+      return "正文包含数学公式语法。请使用源码模式，以保留 KaTeX/LaTeX 公式。";
+    }
+    if (/(^|\n)\s*(?:[-*+]|\d+\.)\s+\[[ xX]\]\s/m.test(withoutFences)) {
+      return "正文包含任务清单。请使用源码模式，以保留复选框语法。";
+    }
+    if (/\[\[[^\]\n]+\]\]/.test(withoutFences)) {
+      return "正文包含 Wiki 双括号链接。请使用源码模式，以保留站内链接语法。";
+    }
+    if (/^\[\^[^\]]+\]:/m.test(withoutFences)) {
+      return "正文包含 Markdown 脚注定义。请使用源码模式，以保留脚注。";
+    }
     if (/(^|\n)\s*\{\s*(?:\/\*|[A-Za-z_$][\w$.]*\s*(?:\(|\?\.|\.|\[))/.test(withoutFences)) {
       return "正文包含 MDX 表达式。为避免改变运行逻辑，请使用 Markdown 源码模式编辑。";
     }
