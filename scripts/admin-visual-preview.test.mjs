@@ -224,7 +224,7 @@ test("simple plain-text callouts expose safe structured editing", () => {
 test("formatted, nested, list, and outer-whitespace callouts remain source-only", () => {
   const cases = [
     ":::tip[标题]\n**加粗内容**\n:::",
-    ":::tip\n<Badge type=\\"tip\\">标签</Badge>\n:::",
+    ':::tip\n<Badge type="tip">标签</Badge>\n:::',
     ":::tip\n- 列表内容\n:::",
     ":::tip[标题]\n# 小标题\n正文\n:::",
     "\n:::tip\n简单内容\n:::",
