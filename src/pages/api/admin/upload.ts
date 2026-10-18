@@ -65,7 +65,7 @@ export const POST: APIRoute = async ({ request }) => {
     if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) return json({ error: "仓库配置不合法。" }, 503);
 
     const contentLength = request.headers.get("Content-Length");
-    if (contentLength && (!/^\\d+$/.test(contentLength) || Number(contentLength) > 5 * 1024 * 1024)) {
+    if (contentLength && (!/^\d+$/.test(contentLength) || Number(contentLength) > 5 * 1024 * 1024)) {
       return json({ error: "上传请求超过 5 MiB 限制。" }, 413);
     }
     const form = await request.formData();
