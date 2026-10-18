@@ -33,12 +33,13 @@ jobs:
         run: pnpm run build
         env:
           CF_WORKERS: "1"
-      - name: Ensure session KV namespace exists and bind it
+      - name: Ensure session KV namespaces exist and bind them
         shell: bash
         run: |
           set -euo pipefail
           namespaces="$(pnpm exec wrangler kv namespace list)"
-          namespace_id="$(printf '%s' "$namespaces" | node -e '
+
+          firefly_sessions_id="$(printf '%s' "$namespaces" | node -e '
             let input = "";
             process.stdin.on("data", (chunk) => input += chunk);
             process.stdin.on("end", () => {
@@ -50,32 +51,60 @@ jobs:
               if (match) process.stdout.write(match.id);
             });
           ')"
-          if [ -z "$namespace_id" ]; then
+          if [ -z "$firefly_sessions_id" ]; then
             created="$(pnpm exec wrangler kv namespace create FIREFLY_SESSIONS)"
-            namespace_id="$(printf '%s' "$created" | grep -Eo '[a-f0-9]{32}' | tail -n 1 || true)"
+            firefly_sessions_id="$(printf '%s' "$created" | grep -Eo '[a-f0-9]{32}' | tail -n 1 || true)"
           fi
-          if ! [[ "$namespace_id" =~ ^[a-f0-9]{32}$ ]]; then
+          if ! [[ "$firefly_sessions_id" =~ ^[a-f0-9]{32}$ ]]; then
             echo "Unable to resolve a valid FIREFLY_SESSIONS namespace ID."
             exit 1
           fi
-          export FIREFLY_SESSIONS_NAMESPACE_ID="$namespace_id"
+
+          astro_session_id="$(printf '%s' "$namespaces" | node -e '
+            let input = "";
+            process.stdin.on("data", (chunk) => input += chunk);
+            process.stdin.on("end", () => {
+              const rows = JSON.parse(input);
+              const match = rows.find((row) =>
+                row.title === "firefly-SESSION" ||
+                row.title === "SESSION"
+              );
+              if (match) process.stdout.write(match.id);
+            });
+          ')"
+          if [ -z "$astro_session_id" ]; then
+            created="$(pnpm exec wrangler kv namespace create SESSION)"
+            astro_session_id="$(printf '%s' "$created" | grep -Eo '[a-f0-9]{32}' | tail -n 1 || true)"
+          fi
+          if ! [[ "$astro_session_id" =~ ^[a-f0-9]{32}$ ]]; then
+            echo "Unable to resolve a valid SESSION namespace ID for Astro."
+            exit 1
+          fi
+
+          export FIREFLY_SESSIONS_NAMESPACE_ID="$firefly_sessions_id"
+          export ASTRO_SESSION_NAMESPACE_ID="$astro_session_id"
           node --input-type=module <<'NODE'
           import fs from "node:fs";
-          const id = process.env.FIREFLY_SESSIONS_NAMESPACE_ID;
-          // Astro's Cloudflare adapter writes the deployable Wrangler config
-          // alongside its built Worker under dist/server/.
           const configPath = "dist/server/wrangler.json";
           if (!fs.existsSync(configPath)) {
             throw new Error("Astro Cloudflare build did not generate dist/server/wrangler.json");
           }
           const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
           if (!config.main) throw new Error("Generated Wrangler config has no Worker main entrypoint");
-          const kv = (config.kv_namespaces ?? []).find((item) => item.binding === "FIREFLY_SESSIONS");
-          if (kv) {
-            kv.id = id;
-          } else {
-            config.kv_namespaces = [...(config.kv_namespaces ?? []), { binding: "FIREFLY_SESSIONS", id }];
+
+          config.kv_namespaces ??= [];
+          for (const [binding, id] of [
+            ["FIREFLY_SESSIONS", process.env.FIREFLY_SESSIONS_NAMESPACE_ID],
+            ["SESSION", process.env.ASTRO_SESSION_NAMESPACE_ID],
+          ]) {
+            if (!/^[a-f0-9]{32}$/.test(id ?? "")) {
+              throw new Error(`Unable to resolve a valid KV ID for binding ${binding}`);
+            }
+            const entry = config.kv_namespaces.find((item) => item.binding === binding);
+            if (entry) entry.id = id;
+            else config.kv_namespaces.push({ binding, id });
           }
+
           if (config.assets) {
             config.assets.binding = config.assets.binding || "ASSETS";
             // Authentication middleware must run before static-asset routing on
@@ -92,7 +121,7 @@ jobs:
             console.log("Custom-domain route disabled by default; using workers.dev so deployment does not require Zone route permissions.");
           }
           fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
-          console.log("Injected FIREFLY_SESSIONS into the generated Worker config.");
+          console.log("Bound FIREFLY_SESSIONS and Astro SESSION KV namespaces in generated Worker config.");
           NODE
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
