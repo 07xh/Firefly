@@ -1,4 +1,4 @@
-import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=f9dee975";
+import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=45a72a92";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
