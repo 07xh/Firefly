@@ -249,6 +249,7 @@ export const prerender = false;
 .firefly-prosemirror-content img:hover { box-shadow:0 0 0 3px #16834c33; }
 .rich-editor-toolbar { position:relative; }
 .rich-editor-toolbar button:focus-visible,
+.rich-editor-toolbar-group > summary:focus-visible,
 .table-editor-tools button:focus-visible {
   outline:2px solid #16834c;
   outline-offset:2px;
@@ -332,6 +333,15 @@ export const prerender = false;
  .firefly-prosemirror-content img,.markdown-preview img { max-height:360px; }
  .rich-editor-toolbar { gap:5px; padding:7px; }
  .rich-editor-toolbar button { min-height:42px; min-width:42px; padding:6px 8px; }
+ .rich-editor-toolbar-group { display:flex; flex:0 0 auto; flex-wrap:wrap; align-items:center; gap:5px; max-width:100%; border:1px solid #dce5dd; border-radius:10px; background:#f0f7f1; padding:3px; }
+ .rich-editor-toolbar-group > summary { display:inline-flex; align-items:center; gap:6px; min-height:42px; padding:6px 10px; border:1px solid #dce5dd; border-radius:8px; background:#fff; color:#35443a; font-size:12px; font-weight:650; cursor:pointer; list-style:none; }
+ .rich-editor-toolbar-group > summary::-webkit-details-marker { display:none; }
+ .rich-editor-toolbar-group > summary::after { content:"＋"; font-size:11px; color:#63816b; }
+ .rich-editor-toolbar-group[open] > summary::after { content:"−"; }
+ .rich-editor-toolbar-group > summary:focus-visible { outline:2px solid #16834c; outline-offset:2px; }
+ .rich-editor-toolbar-group[open] { flex:1 1 100%; }
+ .rich-editor-toolbar-group[open] > summary { background:#e7f7ed; border-color:#8dc9a1; }
+ .table-editor-tools { flex:1 1 100%; }
  .rich-editor-help { font-size:12px; }
  .markdown-preview { padding:16px; font-size:var(--firefly-reading-size,16px); }
  .field #body:not([hidden]) { min-height:300px; padding:12px; font-size:var(--firefly-reading-source-size,14px); }
@@ -398,6 +408,8 @@ export const prerender = false;
   line-height:1.5;
 }
 @media(max-width:640px) {
+  .rich-editor-toolbar-group { width:auto; }
+  .rich-editor-toolbar-group[open] { width:100%; }
   .editor-reading-controls { gap:6px; padding:8px; }
   .editor-reading-controls__hint { flex:1 0 100%; margin-left:0; }
   .editor-reading-controls button { min-height:40px; min-width:40px; }
@@ -495,27 +507,33 @@ export const prerender = false;
 <div id="wysiwygPane" class="rich-editor-shell">
   <div class="rich-editor-toolbar" role="toolbar" aria-label="文章格式工具栏">
     <button type="button" data-editor-action="paragraph" title="普通正文">正文</button>
-    <button type="button" data-editor-action="h1" title="一级标题">一级标题</button>
-    <button type="button" data-editor-action="h2" title="二级标题">二级标题</button>
-    <button type="button" data-editor-action="h3" title="三级标题">三级标题</button>
+    <details class="rich-editor-toolbar-group" data-toolbar-group="text" open>
+      <summary aria-label="展开标题与文字格式">标题与格式</summary>
+      <button type="button" data-editor-action="h1" title="一级标题">一级标题</button>
+      <button type="button" data-editor-action="h2" title="二级标题">二级标题</button>
+      <button type="button" data-editor-action="h3" title="三级标题">三级标题</button>
+      <button type="button" data-editor-action="underline" title="下划线"><u>下划线</u></button>
+      <button type="button" data-editor-action="strike" title="删除线"><s>删除线</s></button>
+    </details>
     <span class="toolbar-divider" aria-hidden="true"></span>
     <button type="button" data-editor-action="bold" title="加粗"><strong>加粗</strong></button>
     <button type="button" data-editor-action="italic" title="斜体"><em>斜体</em></button>
-    <button type="button" data-editor-action="underline" title="下划线"><u>下划线</u></button>
-    <button type="button" data-editor-action="strike" title="删除线"><s>删除线</s></button>
     <span class="toolbar-divider" aria-hidden="true"></span>
     <button type="button" data-editor-action="bullet" title="插入或取消项目列表">项目列表</button>
     <button type="button" data-editor-action="ordered" title="插入或取消编号列表">编号列表</button>
-    <button type="button" data-editor-action="taskList" title="插入待办清单，可通过表单修改事项">待办清单</button>
     <button type="button" data-editor-action="quote" title="引用">引用</button>
-    <button type="button" data-editor-action="badge" title="插入可直接编辑的文字标签">文字标签</button>
-    <button type="button" data-editor-action="callout" title="插入可编辑提示卡片">提示卡片</button>
-    <button type="button" data-editor-action="details" title="插入可展开的补充内容，读者可以点击展开或收起">折叠内容</button>
-    <button type="button" data-editor-action="code" title="插入一段代码示例">代码示例</button>
-    <button type="button" data-editor-action="rule" title="插入分隔线">分隔线</button>
+    <details class="rich-editor-toolbar-group" data-toolbar-group="insert" open>
+      <summary aria-label="展开更多内容插入工具">插入内容</summary>
+      <button type="button" data-editor-action="taskList" title="插入待办清单，可通过表单修改事项">待办清单</button>
+      <button type="button" data-editor-action="badge" title="插入可直接编辑的文字标签">文字标签</button>
+      <button type="button" data-editor-action="callout" title="插入可编辑提示卡片">提示卡片</button>
+      <button type="button" data-editor-action="details" title="插入可展开的补充内容，读者可以点击展开或收起">折叠内容</button>
+      <button type="button" data-editor-action="code" title="插入一段代码示例">代码示例</button>
+      <button type="button" data-editor-action="rule" title="插入分隔线">分隔线</button>
+      <button type="button" data-editor-action="unlink" title="移除选中文字的链接">取消链接</button>
+    </details>
     <span class="toolbar-divider" aria-hidden="true"></span>
     <button type="button" data-editor-action="link" title="给选中文字添加链接；也可填写显示文字来插入新链接">添加链接</button>
-    <button type="button" data-editor-action="unlink" title="移除链接">取消链接</button>
     <button type="button" id="wysiwygUpload" title="上传图片">图片</button>
     <input type="file" id="wysiwygFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
     <button type="button" data-editor-action="table" title="选择行数、列数和表头后插入表格">插入表格</button>
@@ -1498,4 +1516,4 @@ reset();refresh();loadSettings();
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=20261018-disclosure"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=20261018-mobile-toolbar"></script></body></html>
