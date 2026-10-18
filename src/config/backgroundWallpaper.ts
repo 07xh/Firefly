@@ -1,6 +1,19 @@
 import type { BackgroundWallpaperConfig } from "@/types/backgroundWallpaper";
 import siteSettings from "../data/settings.json";
 
+const customBannerTitle = siteSettings.bannerTitle.trim() || "Lovely firefly!";
+const customBannerSubtitle = siteSettings.bannerSubtitle.trim();
+const bannerSubtitleLines = customBannerSubtitle
+	? [customBannerSubtitle]
+	: [
+			"In Reddened Chrysalis, I Once Rest",
+			"From Shattered Sky, I Free Fall",
+			"Amidst Silenced Stars, I Deep Sleep",
+			"Upon Lighted Fyrefly, I Soon Gaze",
+			"From Undreamt Night, I Thence Shine",
+			"In Finalized Morrow, I Full Bloom",
+		];
+
 export const backgroundWallpaper: BackgroundWallpaperConfig = {
 	// 壁纸模式："banner" 横幅壁纸，"fullscreen" 全屏壁纸，"overlay" 覆盖透明，"none" 纯色背景无壁纸
 	mode: "banner",
@@ -74,20 +87,11 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 			// 是否启用主页横幅文字
 			enable: true,
 			// 主页横幅主标题
-			title: siteSettings.bannerTitle.trim() || "Lovely firefly!",
+			title: customBannerTitle,
 			// 主页横幅主标题字体大小
 			titleSize: "4.5rem",
 			// 主页横幅副标题
-			subtitle: siteSettings.bannerSubtitle.trim()
-				? [siteSettings.bannerSubtitle.trim()]
-				: [
-					"In Reddened Chrysalis, I Once Rest",
-					"From Shattered Sky, I Free Fall",
-					"Amidst Silenced Stars, I Deep Sleep",
-					"Upon Lighted Fyrefly, I Soon Gaze",
-					"From Undreamt Night, I Thence Shine",
-					"In Finalized Morrow, I Full Bloom",
-				],
+			subtitle: bannerSubtitleLines,
 			// 主页横幅副标题字体大小
 			subtitleSize: "1.5rem",
 			typewriter: {
