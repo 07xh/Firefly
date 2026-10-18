@@ -3,18 +3,19 @@ import persistedSettings from "../data/settings.json";
 import { resolvePageToggles } from "../utils/page-toggle-utils";
 import { resolveSiteLang } from "../utils/site-config-utils";
 
-const adminLayoutSettings = (
-	persistedSettings as unknown as {
-		layoutSettings?: {
-			postListMode?: "list" | "grid";
-			mobilePostListMode?: "list" | "grid";
-			coverPosition?: "left" | "right";
-			gridMasonry?: boolean;
-			gridColumnWidth?: number;
-			gridCoverFullWidth?: boolean;
-		};
-	}
-).layoutSettings ?? {};
+const adminLayoutSettings =
+	(
+		persistedSettings as unknown as {
+			layoutSettings?: {
+				postListMode?: "list" | "grid";
+				mobilePostListMode?: "list" | "grid";
+				coverPosition?: "left" | "right";
+				gridMasonry?: boolean;
+				gridColumnWidth?: number;
+				gridCoverFullWidth?: boolean;
+			};
+		}
+	).layoutSettings ?? {};
 
 // 定义站点语言
 // 语言代码，例如：'zh_CN', 'zh_TW', 'en', 'ja', 'ru', 'ko'。
