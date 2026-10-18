@@ -12,6 +12,7 @@ import MusicPlayerView from "@components/features/MusicPlayerView.astro";
 import SakuraEffect from "@components/features/SakuraEffect.astro";
 import WavesEffect from "@components/features/WavesEffect.astro";
 import ConfigCarrier from "@components/layout/ConfigCarrier.astro";
+import siteSettings from "@/data/settings.json";
 
 import {
 	analyticsConfig,
@@ -77,6 +78,32 @@ const isHomePageCheck = isHomePage(Astro.url.pathname);
 // defines global css variables
 // why doing this in Layout instead of GlobalStyles: https://github.com/withastro/astro/issues/6728#issuecomment-1502203757
 const configHue = siteConfig.themeColor.hue;
+
+// 全局外观设置：空值时完全沿用主题默认背景，非法值不会进入内联 CSS。
+const customBackgroundColor =
+	typeof siteSettings.backgroundColor === "string" &&
+	/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(siteSettings.backgroundColor.trim())
+		? siteSettings.backgroundColor.trim()
+		: "";
+const customBackgroundImage = (() => {
+	if (typeof siteSettings.backgroundImage !== "string" || !siteSettings.backgroundImage.trim()) return "";
+	try {
+		const imageUrl = new URL(siteSettings.backgroundImage.trim());
+		return imageUrl.protocol === "http:" || imageUrl.protocol === "https:"
+			? imageUrl.href.replace(/["\\\\\\n\\r]/g, "")
+			: "";
+	} catch {
+		return "";
+	}
+})();
+const pageBackgroundStyle = [
+	customBackgroundColor
+		? `--page-bg: ${customBackgroundColor}; background-color: ${customBackgroundColor};`
+		: "",
+	customBackgroundImage
+		? `background-image: url("${customBackgroundImage}"); background-position: center; background-size: cover; background-repeat: no-repeat; background-attachment: fixed;`
+		: "",
+].filter(Boolean).join(" ");
 
 // 获取导航栏透明模式配置（banner 模式专属）
 const navbarTransparentMode =
@@ -155,7 +182,7 @@ const ogImageAlt = propsOgImageAlt ?? pageTitle;
 ---
 
 <!doctype html>
-<html lang={siteLang} class="bg-(--page-bg) text-[14px] md:text-[16px]" data-wallpaper-mode={backgroundWallpaper.mode} data-fullscreen-layout={fullscreenLayout} data-has-wallpaper={hasWallpaper ? "" : undefined} data-tag-style={siteConfig.tagStyle ?? "pill"} data-category-style={siteConfig.categoryStyle ?? "rectangle"}>
+<html lang={siteLang} class="bg-(--page-bg) text-[14px] md:text-[16px]" data-wallpaper-mode={backgroundWallpaper.mode} data-fullscreen-layout={fullscreenLayout} data-has-wallpaper={hasWallpaper ? "" : undefined} data-tag-style={siteConfig.tagStyle ?? "pill"} data-category-style={siteConfig.categoryStyle ?? "rectangle"} style={pageBackgroundStyle || undefined}>
   <head>
     <meta charset="UTF-8" />
     <style is:inline>
@@ -253,7 +280,7 @@ const ogImageAlt = propsOgImageAlt ?? pageTitle;
 
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <meta name="theme-color" content={`hsl(${siteConfig.themeColor.hue} 90% 60%)`} />
+    <meta name="theme-color" content={customBackgroundColor || `hsl(${siteConfig.themeColor.hue} 90% 60%)`} />
     {
       favicons.map((favicon) => (
         <link
@@ -516,6 +543,7 @@ const ogImageAlt = propsOgImageAlt ?? pageTitle;
         "dynamic-navbar": navbarMode === "dynamic",
       },
     ]}
+    style={pageBackgroundStyle || undefined}
   >
     <!-- 首帧前按运行时壁纸模式翻转卡片透明类（布局已由 data-wallpaper-mode 属性规则接管） -->
     <script is:inline>
