@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { inspectProtectedMarkdown } from "../public/admin-visual-preview.js";
+import { inspectProtectedMarkdown, serializeEditableStepTimeline } from "../public/admin-visual-preview.js";
 
 test("Firefly Badge component renders as a safe visual preview model", () => {
   const model = inspectProtectedMarkdown('前言 <Badge type="tip">新功能</Badge> 后记', "MDX component");
@@ -88,4 +88,65 @@ test("math expressions remain inert text in the preview model", () => {
   const model = inspectProtectedMarkdown("$$\n" + source + "\n$$", "LaTeX display math");
   assert.equal(model.text, source);
   assert.equal(typeof model.text, "string");
+});
+
+
+test("simple Steps and Timeline expose safe structured editing models", () => {
+  const steps = inspectProtectedMarkdown([
+    "<Steps>",
+    '  <StepItem title="Install" type="tip">Run command.</StepItem>',
+    '  <StepItem title="Verify">Check output.</StepItem>',
+    "</Steps>",
+  ].join("\n"), "MDX component");
+  assert.equal(steps.kind, "steps");
+  assert.equal(steps.editable, true);
+  assert.equal(steps.items.length, 2);
+  assert.equal(steps.items[0].title, "Install");
+  assert.equal(steps.items[0].text, "Run command.");
+
+  const timeline = inspectProtectedMarkdown([
+    "<Timeline>",
+    '  <TimelineItem date="2026-10-18" title="Published" icon="rocket">First release.</TimelineItem>',
+    "</Timeline>",
+  ].join("\n"), "MDX component");
+  assert.equal(timeline.kind, "timeline");
+  assert.equal(timeline.editable, true);
+  assert.equal(timeline.items[0].date, "2026-10-18");
+  assert.equal(timeline.items[0].icon, "rocket");
+});
+
+test("complex Steps and Timeline remain visual-only to preserve source semantics", () => {
+  const cases = [
+    '<Steps client:load><StepItem title="Install">Run command.</StepItem></Steps>',
+    '<Steps><StepItem title="Install">Run \x60pnpm install\x60.</StepItem></Steps>',
+    '<Steps><StepItem title="Install"><Badge type="tip">New</Badge></StepItem></Steps>',
+    '<Timeline><TimelineItem date="2026" title="First" class="custom">Details.</TimelineItem></Timeline>',
+  ];
+  for (const source of cases) {
+    const model = inspectProtectedMarkdown(source, "MDX component");
+    assert.equal(model.editable, false, source);
+  }
+});
+
+test("structured Steps and Timeline serializer emits stable plain-text MDX", () => {
+  const stepsModel = { kind: "steps" };
+  assert.equal(serializeEditableStepTimeline(stepsModel, [
+    { title: "Install", type: "tip", icon: "rocket", text: "Run command." },
+    { title: "Verify", text: "Check output." },
+  ]), '<Steps>\n  <StepItem title="Install" type="tip" icon="rocket">Run command.</StepItem>\n  <StepItem title="Verify">Check output.</StepItem>\n</Steps>');
+
+  const timelineModel = { kind: "timeline" };
+  assert.equal(serializeEditableStepTimeline(timelineModel, [
+    { date: "2026-10-18", title: "Published", text: "First release." },
+  ]), '<Timeline>\n  <TimelineItem date="2026-10-18" title="Published">First release.</TimelineItem>\n</Timeline>');
+});
+
+test("structured serializer rejects nested markup, expressions, and invalid component options", () => {
+  assert.throws(() => serializeEditableStepTimeline({ kind: "steps" }, [
+    { title: "Unsafe", text: "{runCode()}" },
+  ]), /正文不能为空/);
+  assert.throws(() => serializeEditableStepTimeline({ kind: "timeline" }, [
+    { date: "2026", title: "Okay", text: "Details.", icon: "unknown" },
+  ]), /图标名称/);
+  assert.throws(() => serializeEditableStepTimeline({ kind: "steps" }, []), /1 到 30 项/);
 });
