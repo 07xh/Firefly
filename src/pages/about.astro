@@ -1,5 +1,8 @@
 ---
 import { getEntry, render } from "astro:content";
+import { marked } from "marked";
+import sanitizeHtml from "sanitize-html";
+
 import Markdown from "@components/common/Markdown.astro";
 import { profileConfig } from "@/config/profileConfig";
 import { siteConfig } from "@/config/siteConfig";
@@ -9,8 +12,6 @@ import { i18n } from "@/i18n/translation";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
 import { getAuthorAvatarUrl } from "@/utils/schema-image";
 import { buildProfilePage } from "@/utils/schema-utils";
-import { marked } from "marked";
-import sanitizeHtml from "sanitize-html";
 
 export const prerender = false;
 
