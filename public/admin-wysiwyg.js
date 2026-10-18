@@ -1,5 +1,5 @@
 import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=20261018-callouts";
-import { inspectProtectedMarkdown } from "/admin-visual-preview.js?v=20261018-visual-blocks";
+import { inspectProtectedMarkdown } from "/admin-visual-preview.js?v=20261018-katex-tabs";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
@@ -886,6 +886,17 @@ async function loadTiptapModules() {
               panels[panelIndex].button.tabIndex = active ? 0 : -1;
               panels[panelIndex].panel.hidden = !active;
             }
+          });
+          button.addEventListener("keydown", event => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            event.preventDefault();
+            const currentIndex = panels.findIndex(entry => entry.button === button);
+            if (currentIndex < 0) return;
+            const nextIndex = event.key === "Home" ? 0
+              : event.key === "End" ? panels.length - 1
+              : (currentIndex + (event.key === "ArrowRight" ? 1 : -1) + panels.length) % panels.length;
+            panels[nextIndex].button.focus();
+            panels[nextIndex].button.click();
           });
           panels.push({ button, panel });
           tablist.append(button);
