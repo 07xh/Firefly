@@ -1,0 +1,74 @@
+name: Deploy Firefly to Cloudflare Workers
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firefly-cloudflare-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.22.0
+          run_install: false
+
+      - name: Validate Cloudflare configuration
+        env:
+          FIREFLY_SESSIONS_ID: ${{ vars.FIREFLY_SESSIONS_ID }}
+        run: |
+          if [ -z "$FIREFLY_SESSIONS_ID" ]; then
+            echo "::error::Set the repository Actions variable FIREFLY_SESSIONS_ID to the actual Cloudflare KV namespace ID."
+            exit 1
+          fi
+          node --input-type=module <<'NODE'
+          import fs from "node:fs";
+          const path = "wrangler.jsonc";
+          const config = JSON.parse(fs.readFileSync(path, "utf8"));
+          const binding = config.kv_namespaces?.find((item) => item.binding === "FIREFLY_SESSIONS");
+          if (!binding) throw new Error("FIREFLY_SESSIONS binding not found in wrangler.jsonc");
+          binding.id = process.env.FIREFLY_SESSIONS_ID;
+          fs.writeFileSync(path, JSON.stringify(config, null, 2) + "\n");
+          NODE
+          # Use the JSONC configuration as the single source of truth for this deployment.
+          rm -f wrangler.toml
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build Worker output
+        env:
+          CF_WORKERS: "1"
+          CI: "true"
+          CI_SKIP_REMOTE_FONTS: "1"
+        run: pnpm run build
+
+      - name: Deploy Worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::Set the repository Actions secret CLOUDFLARE_API_TOKEN."
+            exit 1
+          fi
+          if [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::error::Set the repository Actions variable CLOUDFLARE_ACCOUNT_ID."
+            exit 1
+          fi
+          pnpm exec wrangler deploy
