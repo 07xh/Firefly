@@ -1,5 +1,5 @@
 import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=20261018-badge-node";
-import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList } from "/admin-visual-preview.js?v=20261018-task-list-editor";
+import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261018-details-editor";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
@@ -1639,6 +1639,127 @@ async function loadTiptapModules() {
     list.querySelector("input[type=text]")?.focus();
   }
 
+
+  function openStructuredDetailsEditor(activeEditor, getPos, node, model) {
+    const dialog = document.createElement("dialog");
+    dialog.className = "firefly-structured-editor";
+    dialog.setAttribute("aria-labelledby", "firefly-details-editor-title");
+    const style = document.createElement("style");
+    style.textContent = [
+      ".firefly-structured-editor{width:min(720px,calc(100vw - 24px));max-width:none;max-height:88vh;overflow:auto;border:1px solid #d7e4d9;border-radius:16px;padding:0;background:#fbfdfb;color:#243329;box-shadow:0 20px 70px #102e1b33}",
+      ".firefly-structured-editor::backdrop{background:#16231c88;backdrop-filter:blur(3px)}",
+      ".firefly-structured-editor__inner{padding:clamp(14px,3vw,24px);display:grid;gap:14px}",
+      ".firefly-structured-editor__title{margin:0;font-size:19px;line-height:1.4}",
+      ".firefly-structured-editor__hint{margin:0;color:#67766a;font-size:12px;line-height:1.6}",
+      ".firefly-structured-editor__field{display:grid;gap:6px;min-width:0}",
+      ".firefly-structured-editor__field label{font-size:12px;font-weight:700;color:#536457}",
+      ".firefly-structured-editor__field input,.firefly-structured-editor__field textarea{width:100%;min-width:0;box-sizing:border-box;border:1px solid #ceddce;border-radius:8px;background:#fff;color:#243329;padding:10px;font:inherit;font-size:13px}",
+      ".firefly-structured-editor__field textarea{min-height:160px;resize:vertical;line-height:1.65}",
+      ".firefly-structured-editor__actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:#fbfdfb;padding-top:8px}",
+      ".firefly-structured-editor__button{border:1px solid #cbd9ce;border-radius:8px;background:#fff;color:#314536;padding:8px 12px;font:inherit;font-size:13px;cursor:pointer}",
+      ".firefly-structured-editor__button--primary{background:#177746;color:#fff;border-color:#177746;font-weight:750}",
+      "@media(prefers-color-scheme:dark){.firefly-structured-editor{background:#1a231b;color:#e6eee7;border-color:#3f5844}.firefly-structured-editor__hint,.firefly-structured-editor__field label{color:#b8c9bb}.firefly-structured-editor__field input,.firefly-structured-editor__field textarea,.firefly-structured-editor__button{background:#202820;color:#e4ece5;border-color:#4c6551}.firefly-structured-editor__actions{background:#1a231b}.firefly-structured-editor__button--primary{background:#26794a;border-color:#26794a;color:#fff}}",
+    ].join("\n");
+    document.head.append(style);
+    const inner = document.createElement("div");
+    inner.className = "firefly-structured-editor__inner";
+    const heading = document.createElement("h2");
+    heading.id = "firefly-details-editor-title";
+    heading.className = "firefly-structured-editor__title";
+    heading.textContent = "可视化编辑折叠区块";
+    const hint = document.createElement("p");
+    hint.className = "firefly-structured-editor__hint";
+    hint.textContent = "修改折叠标题和纯文本正文。为防止丢格式，含 Markdown 强调、列表、空行分段、HTML 或嵌套组件的折叠区仍使用“编辑语法”。";
+    const titleWrap = document.createElement("div");
+    titleWrap.className = "firefly-structured-editor__field";
+    const titleLabel = document.createElement("label");
+    titleLabel.textContent = "折叠标题";
+    const titleInput = document.createElement("input");
+    titleInput.type = "text";
+    titleInput.maxLength = 120;
+    titleInput.value = model.title || "";
+    titleInput.id = "firefly-details-title";
+    titleLabel.htmlFor = titleInput.id;
+    titleWrap.append(titleLabel, titleInput);
+    const bodyWrap = document.createElement("div");
+    bodyWrap.className = "firefly-structured-editor__field";
+    const bodyLabel = document.createElement("label");
+    bodyLabel.textContent = "正文";
+    const bodyInput = document.createElement("textarea");
+    bodyInput.maxLength = 5000;
+    bodyInput.rows = 8;
+    bodyInput.value = model.body || "";
+    bodyInput.id = "firefly-details-body";
+    bodyLabel.htmlFor = bodyInput.id;
+    bodyWrap.append(bodyLabel, bodyInput);
+    const error = document.createElement("p");
+    error.className = "firefly-structured-editor__hint";
+    error.setAttribute("role", "alert");
+    error.hidden = true;
+    const actions = document.createElement("div");
+    actions.className = "firefly-structured-editor__actions";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "firefly-structured-editor__button";
+    cancel.textContent = "取消";
+    const save = document.createElement("button");
+    save.type = "button";
+    save.className = "firefly-structured-editor__button firefly-structured-editor__button--primary";
+    save.textContent = "保存折叠区";
+    actions.append(cancel, save);
+    inner.append(heading, hint, titleWrap, bodyWrap, error, actions);
+    dialog.append(inner);
+    document.body.append(dialog);
+
+    let closed = false;
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      if (dialog.open && typeof dialog.close === "function") dialog.close();
+      dialog.remove();
+      if (!document.querySelector(".firefly-structured-editor")) style.remove();
+    };
+    cancel.addEventListener("click", close);
+    dialog.addEventListener("cancel", event => {
+      event.preventDefault();
+      close();
+    });
+    save.addEventListener("click", () => {
+      error.hidden = true;
+      let raw;
+      try {
+        raw = serializeEditableDetails({ title: titleInput.value, body: bodyInput.value });
+      } catch (exception) {
+        error.textContent = exception instanceof Error ? exception.message : "折叠区内容不符合可编辑格式。";
+        error.hidden = false;
+        return;
+      }
+      const position = getPos();
+      if (typeof position !== "number") {
+        error.textContent = "折叠区已不在文档中，请关闭后重新选择。";
+        error.hidden = false;
+        return;
+      }
+      const current = activeEditor.state.doc.nodeAt(position);
+      if (!current || current.type.name !== "protectedMarkdownBlock") {
+        error.textContent = "无法定位原始折叠区，已取消修改。";
+        error.hidden = false;
+        return;
+      }
+      activeEditor.view.dispatch(activeEditor.state.tr.setNodeMarkup(position, undefined, {
+        ...current.attrs,
+        raw,
+      }));
+      status("折叠区块已更新；点击“保存文章”后写入 GitHub。");
+      close();
+    });
+
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+    titleInput.focus();
+    titleInput.select();
+  }
+
   function visualPreviewElement(tag, className, text) {
     const element = document.createElement(tag);
     if (className) element.className = className;
@@ -2008,6 +2129,19 @@ async function loadTiptapModules() {
                 event.preventDefault();
                 event.stopPropagation();
                 openStructuredTaskListEditor(activeEditor, getPos, currentNode, model);
+              });
+              header.append(visualEdit);
+            } else if (model.kind === "details" && model.editable) {
+              const visualEdit = document.createElement("button");
+              visualEdit.type = "button";
+              visualEdit.className = "firefly-protected-markdown__edit";
+              visualEdit.textContent = "可视化编辑折叠区";
+              visualEdit.title = "修改折叠标题和纯文本正文";
+              visualEdit.addEventListener("mousedown", event => event.preventDefault());
+              visualEdit.addEventListener("click", event => {
+                event.preventDefault();
+                event.stopPropagation();
+                openStructuredDetailsEditor(activeEditor, getPos, currentNode, model);
               });
               header.append(visualEdit);
             }
