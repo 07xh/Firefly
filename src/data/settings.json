@@ -7,6 +7,7 @@
 	"nickname": "小慌",
 	"bio": "Hello, I'm Xiaohuang",
 	"announcement": "欢迎来到我的博客！",
+	"showAnnouncement": true,
 	"githubUrl": "",
 	"showGithub": false,
 	"email": "",
