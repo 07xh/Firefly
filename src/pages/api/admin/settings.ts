@@ -20,6 +20,11 @@ type SettingsRecord = Record<string, unknown> & {
 	showEmail: boolean;
 	backgroundMusic: string;
 	showSupportAndShare: boolean;
+	showAbout: boolean;
+	showAboutDonation: boolean;
+	showNavSocial: boolean;
+	showNavMy: boolean;
+	showNavAbout: boolean;
 	aboutContent: string;
 	showSourceGithub: boolean;
 	sourceGithubUrl: string;
@@ -40,6 +45,11 @@ const DEFAULT_SETTINGS: SettingsRecord = {
 	showEmail: false,
 	backgroundMusic: "",
 	showSupportAndShare: true,
+	showAbout: true,
+	showAboutDonation: false,
+	showNavSocial: true,
+	showNavMy: true,
+	showNavAbout: true,
 	aboutContent: "# 关于我 / About Me\n\n你好！我是 **夏叶** ，一个在数字世界中默默无闻的一片叶子。\n\n## 🛠️ 关于本站\n\n这个网站使用 **Astro** 框架构建，采用了 [Firefly](https://github.com/CuteLeaf/Firefly) 模板，Firefly 是基于 [Fuwari](https://github.com/saicaca/fuwari) 的二次开发。\n\n**Firefly** 是一款基于 Astro 框架和 Fuwari 模板开发的清新美观且现代化个人博客主题模板，专为技术爱好者和内容创作者设计。该主题融合了现代 Web 技术栈，提供了丰富的功能模块和高度可定制的界面，让您能够轻松打造出专业且美观的个人博客网站。\n\n**🖥️ 在线预览： [Firefly - Demo site](https://firefly.cuteleaf.cn/)**\n\n**📝 Firefly 使用文档： [https://docs-firefly.cuteleaf.cn](https://docs-firefly.cuteleaf.cn/)**\n\n**⭐ Firefly 开源地址：[https://github.com/CuteLeaf/Firefly](https://github.com/CuteLeaf/Firefly)**\n\n**⭐ Fuwari 开源地址：[https://github.com/saicaca/fuwari](https://github.com/saicaca/fuwari)**\n\n---\n\n*感谢你的来访！希望在这里能找到对你有用的内容！*\n",
 	showSourceGithub: false,
 	sourceGithubUrl: "",
@@ -60,6 +70,11 @@ const SETTING_KEYS = [
 	"showEmail",
 	"backgroundMusic",
 	"showSupportAndShare",
+	"showAbout",
+	"showAboutDonation",
+	"showNavSocial",
+	"showNavMy",
+	"showNavAbout",
 	"aboutContent",
 	"showSourceGithub",
 	"sourceGithubUrl",
@@ -194,6 +209,11 @@ function normalizeSettings(value: unknown): SettingsRecord {
 		"showGithub",
 		"showEmail",
 		"showSupportAndShare",
+		"showAbout",
+		"showAboutDonation",
+		"showNavSocial",
+		"showNavMy",
+		"showNavAbout",
 		"showSourceGithub",
 	] as const) {
 		result[key] =
@@ -376,6 +396,15 @@ function applySubmittedSettings(
 			input.showSupportAndShare,
 			"showSupportAndShare",
 		);
+	}
+	for (const key of [
+		"showAbout",
+		"showAboutDonation",
+		"showNavSocial",
+		"showNavMy",
+		"showNavAbout",
+	] as const) {
+		if (has(key)) next[key] = validateBoolean(input[key], key);
 	}
 	if (has("aboutContent")) {
 		next.aboutContent = validateAboutContent(input.aboutContent);
