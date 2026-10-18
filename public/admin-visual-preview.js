@@ -314,13 +314,14 @@ export function inspectProtectedMarkdown(raw, reason = "") {
   }
 
   if (/^\s*[-*+]\s+\[[ xX]\]/m.test(source)) {
-    const lines = source.split(/\r?\n/);
+    const normalized = source.replace(/\r\n/g, "\n").replace(/\n+$/, "");
+    const lines = normalized.split("\n");
     const rawItems = lines.map(line => {
       const match = /^- \[([ xX])\] (.+)$/.exec(line);
       return match ? { checked: /[xX]/.test(match[1]), text: match[2] } : null;
     });
-    const editable = source === source.trim()
-      && lines.length >= 1
+    const editable = Boolean(normalized)
+      && source === source.trimStart()
       && lines.length <= 100
       && rawItems.every(item => item && isSafeTaskListText(item.text));
     return {
