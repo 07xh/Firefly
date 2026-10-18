@@ -21,7 +21,7 @@ export function resolveRepositoryImagePath(articlePath, imageSource) {
   } catch {
     return null;
   }
-  if (!decoded || decoded.startsWith("/") || decoded.startsWith("//") || decoded.includes("\\")) return null;
+  if (!decoded || decoded.startsWith("/") || decoded.startsWith("//") || decoded.includes("\\") || decoded.includes("//")) return null;
 
   const articleParts = article.split("/");
   if (articleParts.length < 4 || articleParts[0] !== "src" || articleParts[1] !== "content" || articleParts[2] !== "posts") return null;
