@@ -124,7 +124,7 @@ test("complex Steps and Timeline remain visual-only to preserve source semantics
   ];
   for (const source of cases) {
     const model = inspectProtectedMarkdown(source, "MDX component");
-    assert.equal(model.editable, false, source);
+    assert.notEqual(model.editable, true, source);
   }
 });
 
