@@ -218,6 +218,29 @@ function isSafeDetailsBody(value, allowEmpty = true) {
     && !/\n\s*\n/.test(body);
 }
 
+/**
+ * Convert internal parser labels into plain Chinese suitable for the editor UI.
+ * The original reason is still stored unchanged so parser behaviour is unaffected.
+ */
+export function describeProtectedSyntax(reason = "") {
+  const value = String(reason || "").trim().toLowerCase();
+  if (/latex.*display math|display math/.test(value)) return "数学公式";
+  if (/latex.*inline math|inline math/.test(value)) return "含公式的正文";
+  if (/callout|提示容器/.test(value)) return "提示卡片";
+  if (/task[\s_-]*list|任务清单/.test(value)) return "待办清单";
+  if (/footnote|脚注/.test(value)) return "脚注内容";
+  if (/wiki/.test(value)) return "站内链接";
+  if (/import|export/.test(value)) return "组件引用设置";
+  if (/expression/.test(value)) return "动态内容";
+  if (/iframe|embed/.test(value)) return "外部嵌入内容";
+  if (/details|折叠/.test(value)) return "折叠内容";
+  if (/badge|徽章/.test(value)) return "徽章标记";
+  if (/component|组件/.test(value)) return "特殊内容组件";
+  if (/directive|指令/.test(value)) return "特殊内容区块";
+  if (/html|theme tag|主题标签/.test(value)) return "特殊版式内容";
+  return "特殊内容";
+}
+
 /** Data-only preview parser. It never evaluates MDX or inserts source as HTML. */
 export function inspectProtectedMarkdown(raw, reason = "") {
   const source = typeof raw === "string" ? raw : "";
