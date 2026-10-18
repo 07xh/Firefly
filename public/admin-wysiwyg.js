@@ -2242,6 +2242,100 @@ async function loadTiptapModules() {
     }
   }
 
+  function openImagePreview(src, alt = "", title = "") {
+    const imageSrc = typeof src === "string" ? src.trim() : "";
+    if (!imageSrc) return;
+
+    let dialog = document.getElementById("firefly-image-preview-dialog");
+    if (!dialog) {
+      const style = document.createElement("style");
+      style.dataset.fireflyImagePreview = "true";
+      style.textContent = [
+        "#firefly-image-preview-dialog{width:min(1100px,calc(100vw - 24px));max-width:none;max-height:92vh;margin:auto;border:1px solid #d7e4d9;border-radius:16px;padding:0;background:#f9fcf9;color:#243329;box-shadow:0 24px 80px #102e1b55;overflow:hidden}",
+        "#firefly-image-preview-dialog::backdrop{background:#14251bd9;backdrop-filter:blur(4px)}",
+        "#firefly-image-preview-dialog .firefly-image-preview__layout{display:grid;grid-template-rows:auto minmax(0,1fr);max-height:92vh}",
+        "#firefly-image-preview-dialog .firefly-image-preview__bar{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e0e9e1;background:#fff}",
+        "#firefly-image-preview-dialog .firefly-image-preview__caption{min-width:0;overflow-wrap:anywhere;font-size:13px;font-weight:650;color:#314536}",
+        "#firefly-image-preview-dialog .firefly-image-preview__actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;flex-shrink:0}",
+        "#firefly-image-preview-dialog .firefly-image-preview__button{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:6px 10px;border:1px solid #cbd9ce;border-radius:8px;background:#fff;color:#314536;text-decoration:none;font:inherit;font-size:12px;cursor:pointer}",
+        "#firefly-image-preview-dialog .firefly-image-preview__button:focus-visible{outline:2px solid #16834c;outline-offset:2px}",
+        "#firefly-image-preview-dialog .firefly-image-preview__image-wrap{display:flex;align-items:center;justify-content:center;min-height:140px;max-height:calc(92vh - 62px);overflow:auto;padding:14px;background:linear-gradient(45deg,#eef2ee 25%,transparent 25%),linear-gradient(-45deg,#eef2ee 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#eef2ee 75%),linear-gradient(-45deg,transparent 75%,#eef2ee 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0}",
+        "#firefly-image-preview-dialog .firefly-image-preview__image{display:block;max-width:100%;max-height:calc(92vh - 100px);width:auto;height:auto;object-fit:contain;border-radius:5px;box-shadow:0 4px 24px #102e1b24}",
+        "@media(max-width:520px){#firefly-image-preview-dialog .firefly-image-preview__bar{align-items:flex-start;flex-direction:column;gap:8px}#firefly-image-preview-dialog .firefly-image-preview__actions{width:100%}#firefly-image-preview-dialog .firefly-image-preview__button{flex:1}#firefly-image-preview-dialog .firefly-image-preview__image-wrap{padding:8px}}",
+        "@media(prefers-color-scheme:dark){#firefly-image-preview-dialog{background:#1a231b;color:#e6eee7;border-color:#405645}#firefly-image-preview-dialog .firefly-image-preview__bar{background:#202820;border-color:#405645}#firefly-image-preview-dialog .firefly-image-preview__caption{color:#e6eee7}#firefly-image-preview-dialog .firefly-image-preview__button{background:#263328;color:#e6eee7;border-color:#4c6551}}",
+      ].join("\n");
+      document.head.append(style);
+
+      dialog = document.createElement("dialog");
+      dialog.id = "firefly-image-preview-dialog";
+      dialog.setAttribute("aria-label", "图片放大预览");
+      const layout = document.createElement("div");
+      layout.className = "firefly-image-preview__layout";
+      const bar = document.createElement("div");
+      bar.className = "firefly-image-preview__bar";
+      const caption = document.createElement("div");
+      caption.className = "firefly-image-preview__caption";
+      caption.dataset.imageCaption = "true";
+      caption.textContent = "图片预览";
+      const actions = document.createElement("div");
+      actions.className = "firefly-image-preview__actions";
+      const original = document.createElement("a");
+      original.className = "firefly-image-preview__button";
+      original.dataset.imageOriginal = "true";
+      original.textContent = "打开原图 ↗";
+      original.target = "_blank";
+      original.rel = "noopener noreferrer";
+      original.hidden = true;
+      const close = document.createElement("button");
+      close.type = "button";
+      close.className = "firefly-image-preview__button";
+      close.textContent = "关闭";
+      close.addEventListener("click", () => dialog.close());
+      actions.append(original, close);
+      bar.append(caption, actions);
+      const imageWrap = document.createElement("div");
+      imageWrap.className = "firefly-image-preview__image-wrap";
+      const previewImage = document.createElement("img");
+      previewImage.className = "firefly-image-preview__image";
+      previewImage.alt = "";
+      previewImage.decoding = "async";
+      previewImage.addEventListener("error", () => {
+        caption.textContent = (caption.textContent || "图片") + "（加载失败，请检查图片链接或网络）";
+      });
+      imageWrap.append(previewImage);
+      layout.append(bar, imageWrap);
+      dialog.append(layout);
+      document.body.append(dialog);
+      dialog.addEventListener("click", event => {
+        if (event.target === dialog) dialog.close();
+      });
+    }
+
+    const previewImage = dialog.querySelector(".firefly-image-preview__image");
+    const caption = dialog.querySelector("[data-image-caption]");
+    const original = dialog.querySelector("[data-image-original]");
+    previewImage.src = imageSrc;
+    previewImage.alt = alt || title || "图片预览";
+    previewImage.title = title || "";
+    caption.textContent = alt || title || "图片预览";
+    try {
+      const url = new URL(imageSrc, location.href);
+      const safeProtocol = url.protocol === "https:" || url.protocol === "http:";
+      original.hidden = !safeProtocol;
+      if (safeProtocol) original.href = url.href;
+      else original.removeAttribute("href");
+    } catch {
+      original.hidden = true;
+      original.removeAttribute("href");
+    }
+
+    if (typeof dialog.showModal === "function") {
+      if (!dialog.open) dialog.showModal();
+    } else {
+      dialog.setAttribute("open", "");
+    }
+  }
+
   async function uploadImage(file) {
     if (!file || !file.type) return;
     if (!allowedImageTypes.has(file.type.toLowerCase())) {
@@ -2499,6 +2593,12 @@ async function loadTiptapModules() {
           "aria-label": "文章可视化编辑器",
           "aria-multiline": "true",
           spellcheck: "true",
+        },
+        handleClickOn(_view, _position, node, _nodePosition, event) {
+          if (node.type.name !== "image" || event.button !== 0) return false;
+          event.preventDefault();
+          openImagePreview(node.attrs.src, node.attrs.alt, node.attrs.title);
+          return true;
         },
         handlePaste(_view, event) {
           const files = Array.from(event.clipboardData?.files || []);

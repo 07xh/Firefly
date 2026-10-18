@@ -151,7 +151,8 @@ export const prerender = false;
 .firefly-prosemirror-content pre { padding:13px; border-radius:9px; background:#f1f5f2; overflow:auto; font:13px/1.6 ui-monospace,SFMono-Regular,monospace; }
 .firefly-prosemirror-content code { border-radius:4px; background:#f1f5f2; padding:2px 4px; font: .9em ui-monospace,SFMono-Regular,monospace; }
 .firefly-prosemirror-content pre code { padding:0; background:transparent; }
-.firefly-prosemirror-content img { display:block; max-width:100%; height:auto; border-radius:8px; }
+.firefly-prosemirror-content img { display:block; max-width:100%; height:auto; border-radius:8px; cursor:zoom-in; transition:box-shadow .15s ease; }
+.firefly-prosemirror-content img:hover { box-shadow:0 0 0 3px #16834c33; }
 .firefly-prosemirror-content table { width:100%; border-collapse:collapse; table-layout:fixed; }
 .firefly-prosemirror-content th,.firefly-prosemirror-content td { border:1px solid #d8e1d8; padding:7px 9px; vertical-align:top; }
 .firefly-prosemirror-content th { background:#f1f6f2; }
@@ -1199,4 +1200,4 @@ reset();refresh();loadSettings();
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=20261018-custom-table-insertion"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=20261018-image-direct-preview"></script></body></html>
