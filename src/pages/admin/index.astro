@@ -117,6 +117,43 @@ export const prerender = false;
   }
 }
 
+
+/* Tiptap-based WYSIWYG article editor */
+.rich-editor-shell { border:1px solid #d8e1d8; border-radius:12px; overflow:hidden; background:#fff; }
+.rich-editor-toolbar { display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding:9px; border-bottom:1px solid #e6ece7; background:#f8fbf8; }
+.rich-editor-toolbar button { min-height:36px; min-width:38px; border:1px solid #dce5dd; border-radius:8px; padding:6px 9px; background:#fff; color:#35443a; font-size:12px; cursor:pointer; }
+.rich-editor-toolbar button:hover,.rich-editor-toolbar button.is-active { background:#e7f7ed; border-color:#8dc9a1; color:#087a43; }
+.rich-editor-toolbar button:disabled { opacity:.55; cursor:wait; }
+.rich-editor-toolbar .toolbar-divider { width:1px; height:25px; background:#dce5dd; margin:0 2px; }
+.rich-editor-canvas { min-height:360px; max-height:72vh; overflow:auto; padding:18px; color:#202820; }
+.firefly-prosemirror-content { min-height:320px; outline:none; font-size:15px; line-height:1.85; overflow-wrap:anywhere; }
+.firefly-prosemirror-content > * { margin:0 0 .85em; }
+.firefly-prosemirror-content h1,.firefly-prosemirror-content h2,.firefly-prosemirror-content h3,.firefly-prosemirror-content h4 { line-height:1.35; margin:1.25em 0 .6em; font-weight:750; }
+.firefly-prosemirror-content h1 { font-size:1.8em; }
+.firefly-prosemirror-content h2 { font-size:1.5em; }
+.firefly-prosemirror-content h3 { font-size:1.25em; }
+.firefly-prosemirror-content ul,.firefly-prosemirror-content ol { padding-left:1.6em; }
+.firefly-prosemirror-content blockquote { border-left:3px solid #9acfa9; margin-left:0; padding-left:1em; color:#58685d; }
+.firefly-prosemirror-content pre { padding:13px; border-radius:9px; background:#f1f5f2; overflow:auto; font:13px/1.6 ui-monospace,SFMono-Regular,monospace; }
+.firefly-prosemirror-content code { border-radius:4px; background:#f1f5f2; padding:2px 4px; font: .9em ui-monospace,SFMono-Regular,monospace; }
+.firefly-prosemirror-content pre code { padding:0; background:transparent; }
+.firefly-prosemirror-content img { display:block; max-width:100%; height:auto; border-radius:8px; }
+.firefly-prosemirror-content table { width:100%; border-collapse:collapse; table-layout:fixed; }
+.firefly-prosemirror-content th,.firefly-prosemirror-content td { border:1px solid #d8e1d8; padding:7px 9px; vertical-align:top; }
+.firefly-prosemirror-content th { background:#f1f6f2; }
+.firefly-prosemirror-content a { color:#12884f; text-decoration:underline; }
+.rich-editor-help { padding:9px 12px; color:#78857b; background:#fbfdfb; border-top:1px solid #edf1ed; font-size:11px; line-height:1.65; }
+.rich-editor-notice { margin:9px 0; border:1px solid #f0d5a5; border-radius:9px; background:#fffbeb; color:#874d0e; padding:10px 12px; font-size:12px; line-height:1.65; overflow-wrap:anywhere; }
+.rich-editor-notice[hidden] { display:none!important; }
+#wysiwygFallback { margin-top:8px; color:#b42318; font-size:12px; line-height:1.6; }
+#markdownPreview[hidden],#wysiwygPane[hidden],#body[hidden] { display:none!important; }
+@media(max-width:720px) {
+ .rich-editor-canvas { min-height:280px; max-height:none; padding:13px; }
+ .firefly-prosemirror-content { min-height:250px; font-size:16px; }
+ .rich-editor-toolbar { gap:5px; padding:7px; }
+ .rich-editor-toolbar button { min-height:42px; min-width:42px; padding:6px 8px; }
+}
+
 </style></head>
 <body>
 <header><h1>✦ Firefly 管理后台</h1><div style="display:flex;gap:12px;align-items:center"><a href="/" style="color:#16864f;font-size:13px">返回网站 ↗</a><button class="btn" id="logout" type="button">退出登录</button></div></header>
@@ -187,7 +224,48 @@ export const prerender = false;
 <p class="muted" style="color:#b42318">安全提醒：当前 GitHub 仓库是公开的，Markdown 原文和 password 字段都可能被直接读取。现有密码保护只加密构建后的网页，不能保护公开仓库中的原文和密码；不要在此保存真正机密的内容。</p>
 <div class="grid"><div class="field"><label for="category">分类</label><input id="category" maxlength="100"></div><div class="field"><label for="tags">标签（逗号分隔）</label><input id="tags" placeholder="技术, 随笔"></div></div>
 <div class="field"><label for="description">摘要</label><input id="description" maxlength="500"></div>
-<div class="field"><label for="body">正文 Markdown / 已有文章完整源文件（元数据以表单字段为准）</label><div class="editor-tabs"><button class="btn active" type="button" id="editorTab">编辑</button><button class="btn" type="button" id="previewTab">Markdown 预览</button></div><textarea id="body" spellcheck="false" placeholder="新建时填写正文；编辑已有文章时这里会显示完整 Markdown/MDX 源文件，保留全部 frontmatter 元数据。"></textarea><div id="markdownPreview" class="markdown-preview" hidden><p class="muted">点击“Markdown 预览”查看排版效果。</p></div></div>
+<div class="field">
+<label for="body">文章正文</label>
+<div class="editor-tabs" role="tablist" aria-label="文章编辑模式">
+<button class="btn active" type="button" id="visualTab" role="tab" aria-selected="true" disabled>可视化编辑器加载中…</button>
+<button class="btn" type="button" id="editorTab" role="tab" aria-selected="false">Markdown 源码</button>
+<button class="btn" type="button" id="previewTab" role="tab" aria-selected="false">预览</button>
+</div>
+<div id="wysiwygPane" class="rich-editor-shell">
+  <div class="rich-editor-toolbar" role="toolbar" aria-label="文章格式工具栏">
+    <button type="button" data-editor-action="paragraph" title="普通正文">正文</button>
+    <button type="button" data-editor-action="h1" title="一级标题">H1</button>
+    <button type="button" data-editor-action="h2" title="二级标题">H2</button>
+    <button type="button" data-editor-action="h3" title="三级标题">H3</button>
+    <span class="toolbar-divider" aria-hidden="true"></span>
+    <button type="button" data-editor-action="bold" title="加粗"><strong>加粗</strong></button>
+    <button type="button" data-editor-action="italic" title="斜体"><em>斜体</em></button>
+    <button type="button" data-editor-action="underline" title="下划线"><u>下划线</u></button>
+    <button type="button" data-editor-action="strike" title="删除线"><s>删除线</s></button>
+    <span class="toolbar-divider" aria-hidden="true"></span>
+    <button type="button" data-editor-action="bullet" title="无序列表">• 列表</button>
+    <button type="button" data-editor-action="ordered" title="有序列表">1. 列表</button>
+    <button type="button" data-editor-action="quote" title="引用">引用</button>
+    <button type="button" data-editor-action="code" title="代码块">代码</button>
+    <button type="button" data-editor-action="rule" title="分割线">分割线</button>
+    <span class="toolbar-divider" aria-hidden="true"></span>
+    <button type="button" data-editor-action="link" title="插入或编辑链接">链接</button>
+    <button type="button" data-editor-action="unlink" title="移除链接">取消链接</button>
+    <button type="button" id="wysiwygUpload" title="上传图片">图片</button>
+    <input type="file" id="wysiwygFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+    <button type="button" data-editor-action="table" title="插入三行三列表格">表格</button>
+    <span class="toolbar-divider" aria-hidden="true"></span>
+    <button type="button" data-editor-action="undo" title="撤销">撤销</button>
+    <button type="button" data-editor-action="redo" title="重做">重做</button>
+  </div>
+  <div id="wysiwygNotice" class="rich-editor-notice" hidden></div>
+  <div id="wysiwygEditor" class="rich-editor-canvas"></div>
+  <div class="rich-editor-help">直接输入中文并按回车分段。选中文字后使用工具栏格式化；支持图片粘贴/拖入、链接、列表、引用、代码块和表格。包含无法无损转换的 MDX/HTML 特殊语法时，会自动切换回源码模式保护原文。</div>
+</div>
+<div id="wysiwygFallback" hidden>可视化编辑器加载失败，正文将保持原样。你仍可在 Markdown 源码模式下继续编辑。</div>
+<textarea id="body" spellcheck="false" hidden placeholder="在此编辑 Markdown / MDX 源文件。含特殊组件的文章会默认使用源码模式。"></textarea>
+<div id="markdownPreview" class="markdown-preview" hidden><p class="muted">点击“预览”查看当前正文。</p></div>
+</div>
 <label class="check"><input id="draft" type="checkbox" checked> 草稿箱状态（勾选后保存为草稿；取消勾选可保存已发布文章）</label>
 <div class="actions"><button class="btn" type="button" id="checkGitHub">检查 GitHub 写入权限</button><button class="btn" type="submit" id="saveDraft" value="draft">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空表单</button></div>
 </form><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿会将文章写入 GitHub 并触发构建，但保持草稿状态；发布文章会将 draft 设为 false，提交到 GitHub，并跟踪 Cloudflare 部署结果。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看 Cloudflare 部署日志 ↗</a></section>
@@ -451,6 +529,7 @@ function render(){
    $("slug").value=a.path.split("/").pop().replace(/\.mdx?$/,"");
    $("slug").disabled=true;
    $("body").value=a.content||"";
+   window.dispatchEvent(new CustomEvent("firefly:source-loaded"));
    $("title").value=frontmatterValue(a.content||"","title")||a.title;
    $("published").value=frontmatterValue(a.content||"","published")||a.published;
    $("date").value=toBeijingDateTimeLocal(frontmatterValue(a.content||"","date"));
@@ -507,10 +586,39 @@ function render(){
  }
 }
 async function refresh(){try{say("正在读取 GitHub…");articles=await api("GET");render();say("已读取 "+articles.length+" 篇文章")}catch(e){say(e.message,true);$("list").textContent="读取失败，请确认服务端令牌和仓库权限已配置。"}}
-function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;showEditorTab();$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
-function showEditorTab(){$("body").hidden=false;$("markdownPreview").hidden=true;$("editorTab").classList.add("active");$("previewTab").classList.remove("active")}
-function showPreviewTab(){$("body").hidden=true;$("markdownPreview").hidden=false;$("editorTab").classList.remove("active");$("previewTab").classList.add("active")}
-async function renderMarkdownPreview(){showPreviewTab();$("markdownPreview").innerHTML="<p class=muted>正在生成预览…</p>";try{const r=await fetch("/api/admin/preview/",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({markdown:$("body").value})});if(r.status===401){goLogin();return}const d=await r.json().catch(()=>({error:"预览响应无法解析"}));if(!r.ok)throw new Error(d.error||"Markdown 预览失败");$("markdownPreview").innerHTML=d.html||"<p class=muted>暂无内容</p>"}catch(e){$("markdownPreview").textContent=e.message}}
+function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
+function showVisualTab(){
+ if(window.FireflyRichEditor?.hasUnsupportedSyntax()){showEditorTab();say("当前文章包含 MDX/HTML 特殊语法，已保留源码编辑以避免内容损坏。");return}
+ $("body").hidden=true;$("wysiwygPane").hidden=false;$("markdownPreview").hidden=true;
+ $("visualTab").classList.add("active");$("editorTab").classList.remove("active");$("previewTab").classList.remove("active");
+ $("visualTab").setAttribute("aria-selected","true");$("editorTab").setAttribute("aria-selected","false");$("previewTab").setAttribute("aria-selected","false");
+ window.dispatchEvent(new CustomEvent("firefly:mode",{detail:{mode:"visual"}}));
+}
+function showEditorTab(){
+ $("body").hidden=false;$("wysiwygPane").hidden=true;$("markdownPreview").hidden=true;
+ $("visualTab").classList.remove("active");$("editorTab").classList.add("active");$("previewTab").classList.remove("active");
+ $("visualTab").setAttribute("aria-selected","false");$("editorTab").setAttribute("aria-selected","true");$("previewTab").setAttribute("aria-selected","false");
+ window.dispatchEvent(new CustomEvent("firefly:mode",{detail:{mode:"source"}}));
+}
+function showPreviewTab(){
+ $("body").hidden=true;$("wysiwygPane").hidden=true;$("markdownPreview").hidden=false;
+ $("visualTab").classList.remove("active");$("editorTab").classList.remove("active");$("previewTab").classList.add("active");
+ $("visualTab").setAttribute("aria-selected","false");$("editorTab").setAttribute("aria-selected","false");$("previewTab").setAttribute("aria-selected","true");
+ window.dispatchEvent(new CustomEvent("firefly:mode",{detail:{mode:"preview"}}));
+}
+async function renderMarkdownPreview(){
+ showPreviewTab();$("markdownPreview").innerHTML="<p class=muted>正在生成预览…</p>";
+ try{
+  let markdown=$("body").value;
+  const frontmatter=markdown.match(/^---\\r?\\n[\\s\\S]*?\\r?\\n---(?:\\r?\\n|$)/);
+  if(frontmatter)markdown=markdown.slice(frontmatter[0].length);
+  const r=await fetch("/api/admin/preview/",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({markdown})});
+  if(r.status===401){goLogin();return}
+  const d=await r.json().catch(()=>({error:"预览响应无法解析"}));
+  if(!r.ok)throw new Error(d.error||"Markdown 预览失败");
+  $("markdownPreview").innerHTML=d.html||"<p class=muted>暂无内容</p>";
+ }catch(e){$("markdownPreview").textContent=e.message}
+}
 async function watchDeployment(sha,attempt=0,successMessage="Cloudflare 部署成功，正式网站已更新。"){try{const r=await fetch("/api/admin/deployment-status/?sha="+encodeURIComponent(sha),{cache:"no-store"});if(r.status===401){goLogin();return}const d=await r.json().catch(()=>({error:"无法读取部署状态"}));if(!r.ok)throw new Error(d.error||"暂时无法查询部署状态");if(d.url){$("deployLink").href=d.url;$("deployLink").hidden=false}if(d.status==="success"){say(successMessage);return}if(d.status==="failure"){say("Cloudflare 部署失败，请打开部署日志检查。",true);return}if(attempt>=24){say("文章已提交到 GitHub，但部署仍未确认；可查看最新工作流日志。");return}say(d.status==="running"?"文章已提交，Cloudflare 正在构建/部署…":"文章已提交，正在等待 Cloudflare 部署启动…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}catch(e){if(attempt>=24){say("文章已提交到 GitHub，但仍无法确认部署状态："+e.message,true);return}say("正在查询 Cloudflare 部署状态…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}}
 async function checkGitHubPermission(){
  const button=$("checkGitHub");
@@ -720,45 +828,10 @@ $("new").onclick=()=>{
 };
 $("reset").onclick=()=>{if(isArticleDirty()&&!confirm("清空当前文章表单？未保存的修改将丢失。"))return;reset();say("文章表单已清空。")};
 $("refresh").onclick=refresh;$("search").oninput=render;$("statusFilter").onchange=render;
-$("editorTab").onclick=showEditorTab;$("previewTab").onclick=renderMarkdownPreview;$("body").addEventListener("input",()=>{if(!$("markdownPreview").hidden)renderMarkdownPreview()});
-$("editor").onsubmit=async e=>{
- e.preventDefault();
- const mode=e.submitter?.value==="publish"?"publish":"save";
- const selectedDate=$("date").value;
- const parsedDate=fromBeijingDateTimeLocal(selectedDate);
- if(selectedDate&&!parsedDate){say("定时发布时间格式无效，请重新选择。",true);return}
- if(mode==="publish"&&!confirm("直接发布会立即公开文章并清除定时发布时间，确定继续吗？"))return;
- if(mode==="publish"&&selectedDate){
-  $("date").value="";
-  $("published").value=todayInBeijing();
- }
- const date=mode==="publish"?"":parsedDate;
- const isDraft=mode==="publish"?false:$("draft").checked;
- if(mode==="save"&&!isDraft&&(!selected||selected.draft)&&!confirm("当前草稿开关已关闭，保存后文章可能公开显示。确定继续吗？"))return;
- $("draft").checked=isDraft;
- const metadata={title:$("title").value.trim(),published:$("published").value,date,password:$("articlePassword").value,passwordHint:$("passwordHint").value,category:$("category").value,description:$("description").value,tags:$("tags").value.split(",").map(x=>x.trim()).filter(Boolean),draft:isDraft};
- const data=selected?{path:selected.path,sha:selected.sha,rawContent:$("body").value,...metadata}:{...metadata,slug:$("slug").value,body:$("body").value};
- const buttons=[$("saveDraft"),$("publish")];buttons.forEach(b=>b.disabled=true);
- try{
-  const result=await api(selected?"PUT":"POST",data);
-  const scheduled=!isDraft&&date&&Date.parse(date)>Date.now();
-  reset();await refresh();
-  if(isDraft){
-   say("草稿已写入 GitHub，文章不会出现在公开列表。");
-   if(result.commitSha)watchDeployment(result.commitSha,0,"草稿版本部署完成；该文章仍保留在草稿箱。");
-  }else if(scheduled){
-   const when=new Date(date).toLocaleString("zh-CN",{timeZone:"Asia/Shanghai",hour12:false});
-   say("定时文章已保存，计划北京时间 "+when+" 发布；系统每 10 分钟检查并触发重建。");
-   if(result.commitSha)watchDeployment(result.commitSha,0,"定时发布配置部署成功；文章将在计划时间到达后自动发布。");
-  }else if(result.commitSha){
-   say("文章已写入 GitHub，正在跟踪 Cloudflare 部署…");
-   watchDeployment(result.commitSha);
-  }else{
-   say("文章已写入 GitHub，但接口未返回提交号，无法自动确认部署。",true);
-  }
- }catch(err){say(err.message,true)}
- finally{buttons.forEach(b=>b.disabled=false);updateSaveButtonLabel()}
-};
+$("visualTab").onclick=showVisualTab;$("editorTab").onclick=showEditorTab;$("previewTab").onclick=renderMarkdownPreview;$("body").addEventListener("input",()=>{if(!$("markdownPreview").hidden)renderMarkdownPreview()});
+// Save is handled by the single four-stage handler below. Keeping one submit
+// listener prevents duplicate GitHub writes from competing event handlers.
+
 $("delete").onclick=async()=>{if(!selected||!confirm("确定删除 "+selected.title+"？此操作会提交到 GitHub。"))return;$("delete").disabled=true;try{await api("DELETE",{path:selected.path,sha:selected.sha});say("文章已删除");reset();await refresh()}catch(e){say(e.message,true)}finally{$("delete").disabled=false}};
 reset();refresh();loadSettings();
 /* Firefly admin editor enhancements: image paste/drop, filters, accessible delete modal, deployment stages. */
@@ -1012,4 +1085,4 @@ reset();refresh();loadSettings();
   refresh();
 })();
 
-</script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=4401103"></script></body></html>
