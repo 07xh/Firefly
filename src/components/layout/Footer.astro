@@ -2,6 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { profileConfig } from "@/config";
+import siteSettings from "@/data/settings.json";
 import { url } from "@/utils/url-utils";
 
 const currentYear = new Date().getFullYear();
@@ -54,6 +55,16 @@ try {
 					target="_blank"
 					href={url("atom.xml")}>Atom</a
 				>
+				{siteSettings.showSourceGithub && siteSettings.sourceGithubUrl && (
+					<>
+						<span aria-hidden="true">/</span>
+						<a
+							class="transition link text-(--primary) font-medium"
+							target="_blank"
+							rel="noopener noreferrer"
+							href={siteSettings.sourceGithubUrl}>GitHub 原文 / 源码</a>
+					</>
+				)}
 				<span aria-hidden="true">/</span>
 				<a
 					class="transition link text-(--primary) font-medium"
