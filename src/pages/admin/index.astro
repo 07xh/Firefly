@@ -8,7 +8,7 @@ export const prerender = false;
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>文章管理 · Firefly</title>
 <style>
-:root{font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#202820;background:#f3f6f3}*{box-sizing:border-box}body{margin:0}header{padding:16px max(18px,calc((100vw - 1100px)/2));background:white;border-bottom:1px solid #e1e8e1;display:flex;justify-content:space-between;align-items:center}h1{font-size:19px;margin:0}.wrap{max-width:1100px;margin:18px auto 26px;padding:0 16px}.articles-grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px}.admin-tabs{max-width:1100px;margin:20px auto 0;padding:0 16px;display:flex;gap:8px;border-bottom:1px solid #e3eae4}.admin-tab{border:1px solid transparent;border-bottom:0;border-radius:10px 10px 0 0;padding:10px 14px;background:transparent;color:#718075;cursor:pointer;font:inherit;font-size:13px;transition:background .15s,color .15s,border-color .15s}.admin-tab:hover{background:#f7faf7;color:#16834c}.admin-tab[aria-selected=true]{border-color:#d8e9dd;background:white;color:#12884f;font-weight:650;box-shadow:0 -1px 0 #fff inset}#articlesTabPanel[hidden],#appearanceTabPanel[hidden]{display:none!important}.settings-panel{max-width:780px;margin:0 auto}.settings-field{display:grid;gap:7px;margin-bottom:18px}.settings-field>label{font-size:13px;color:#334155;font-weight:650}.settings-field>small{color:#718075;font-size:12px;line-height:1.6}.settings-control{width:100%;border:1px solid #d8e1d8;border-radius:9px;padding:10px 12px;font:inherit;font-size:13px;background:white;color:#202820;transition:border-color .15s,box-shadow .15s}.settings-control:focus{border-color:#10b981;outline:none;box-shadow:0 0 0 3px #10b98122}#bio{min-height:120px;font-family:inherit;line-height:1.65}.settings-preview{display:flex;align-items:center;gap:12px;padding:10px;border:1px solid #edf1ed;border-radius:10px;background:#f8faf8}.settings-preview img{width:112px;height:64px;object-fit:cover;border-radius:7px;background:#eef2ee}.settings-preview-note{font-size:12px;color:#8b968e}.admin-tab:focus-visible{outline:2px solid #10b981;outline-offset:2px}.panel{background:white;border:1px solid #e0e7e0;border-radius:14px;padding:18px;min-width:0}.btn{border:1px solid #d5dfd5;border-radius:8px;background:white;color:#263329;padding:9px 12px;cursor:pointer}.primary{background:#12884f;color:white;border-color:#12884f}.danger{color:#b42318}.toolbar{display:flex;gap:8px;margin-bottom:12px}.toolbar input{min-width:0;flex:1}.toolbar select{max-width:100px;border:1px solid #d8e1d8;border-radius:8px;padding:8px 5px;background:white;color:#263329;font:inherit;font-size:12px}.field{display:grid;gap:6px;margin-bottom:13px}.field label{font-size:12px;color:#59675d;font-weight:650}.field input,.field textarea,.toolbar input{width:100%;border:1px solid #d8e1d8;border-radius:8px;padding:10px;font:inherit;background:white;color:#202820}.field textarea{min-height:240px;resize:vertical;font-family:ui-monospace,monospace;line-height:1.6}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.item{width:100%;display:block;text-align:left;background:white;border:1px solid #e3e9e3;border-radius:9px;padding:11px;margin-bottom:8px;cursor:pointer;color:inherit}.article-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-bottom:8px;align-items:stretch}.article-row .item{margin:0}.article-delete{border:1px solid #f1c6c3;border-radius:8px;background:#fff8f7;color:#b42318;padding:8px;cursor:pointer;min-width:48px}.article-delete:disabled{opacity:.55;cursor:wait}.item strong,.item small{display:block;overflow-wrap:anywhere}.item strong{font-size:13px}.item small,.muted{color:#718075;font-size:12px}.actions{display:flex;gap:8px;flex-wrap:wrap}.status{min-height:20px;font-size:12px;margin-top:12px;color:#657267;overflow-wrap:anywhere}.check{display:flex;gap:8px;align-items:center;font-size:13px;margin:12px 0}.empty{color:#758077;font-size:13px;line-height:1.7}.editor-tabs{display:flex;gap:8px;margin:2px 0 9px}.editor-tabs .active{background:#eaf6ee;border-color:#b6dbc3;color:#127947}.markdown-preview{min-height:240px;border:1px solid #d8e1d8;border-radius:8px;padding:14px;line-height:1.75;overflow-wrap:anywhere;color:#202820}.markdown-preview h1,.markdown-preview h2,.markdown-preview h3{line-height:1.35;margin:1.1em 0 .6em}.markdown-preview p,.markdown-preview ul,.markdown-preview ol,.markdown-preview blockquote{margin:.65em 0}.markdown-preview pre{overflow:auto;background:#f3f6f3;padding:12px;border-radius:8px}.markdown-preview code{font-family:ui-monospace,monospace;background:#f3f6f3;padding:2px 4px;border-radius:4px}.markdown-preview pre code{padding:0}.markdown-preview img{max-width:100%;height:auto}.markdown-preview table{border-collapse:collapse;max-width:100%;display:block;overflow:auto}.markdown-preview th,.markdown-preview td{border:1px solid #d8e1d8;padding:6px 9px}.markdown-preview blockquote{border-left:3px solid #b6dbc3;padding-left:12px;color:#59675d}.deploy-link{display:inline-block;margin-top:7px;color:#12884f;font-size:12px}.actions .btn{min-width:100px}@media(max-width:720px){.wrap{margin-top:12px}.articles-grid{grid-template-columns:1fr}.admin-tabs{margin-top:12px;padding:0 12px}.admin-tab{padding:10px 9px;font-size:12px}.settings-panel{padding:16px}.grid{grid-template-columns:1fr}.list{max-height:260px;overflow:auto}header{padding:13px 15px}}
+:root{font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#202820;background:#f3f6f3}*{box-sizing:border-box}body{margin:0}header{padding:16px max(18px,calc((100vw - 1100px)/2));background:white;border-bottom:1px solid #e1e8e1;display:flex;justify-content:space-between;align-items:center}h1{font-size:19px;margin:0}.wrap{max-width:1100px;margin:18px auto 26px;padding:0 16px}.articles-grid{display:grid;grid-template-columns:320px minmax(0,1fr);gap:18px}.admin-tabs{max-width:1100px;margin:20px auto 0;padding:0 16px;display:flex;gap:8px;border-bottom:1px solid #e3eae4}.admin-tab{border:1px solid transparent;border-bottom:0;border-radius:10px 10px 0 0;padding:10px 14px;background:transparent;color:#718075;cursor:pointer;font:inherit;font-size:13px;transition:background .15s,color .15s,border-color .15s}.admin-tab:hover{background:#f7faf7;color:#16834c}.admin-tab[aria-selected=true]{border-color:#d8e9dd;background:white;color:#12884f;font-weight:650;box-shadow:0 -1px 0 #fff inset}#articlesTabPanel[hidden],#appearanceTabPanel[hidden]{display:none!important}.settings-panel{max-width:900px;margin:0 auto}.settings-cards{display:grid;gap:16px}.settings-card{background:#fff;border:1px solid #e2eae3;border-radius:16px;padding:20px;box-shadow:0 3px 12px #173c2510;min-width:0}.settings-card-heading{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}.settings-card-number{display:inline-flex;align-items:center;justify-content:center;flex:0 0 34px;height:34px;border-radius:11px;background:#eaf7ef;color:#16834c;font-size:12px;font-weight:800;letter-spacing:.04em}.settings-card-heading h3{margin:1px 0 4px;font-size:15px;font-weight:750;color:#26372b}.settings-card-heading p{margin:0;color:#79867c;font-size:12px;line-height:1.6}.settings-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}.settings-grid-one{grid-template-columns:minmax(0,1fr)}.settings-field{display:grid;gap:7px;min-width:0;margin:0}.settings-field>label{font-size:13px;color:#334155;font-weight:650}.settings-field>small{color:#718075;font-size:12px;line-height:1.6}.settings-control{width:100%;min-width:0;border:1px solid #d8e1d8;border-radius:11px;padding:11px 13px;font:inherit;font-size:13px;background:#fff;color:#202820;transition:border-color .15s,box-shadow .15s}.settings-control:hover{border-color:#c2d3c5}.settings-control:focus{border-color:#10b981;outline:none;box-shadow:0 0 0 3px #10b98122}textarea.settings-control{resize:vertical;min-height:100px;line-height:1.7}#bio{min-height:100px}#announcement{min-height:120px}.settings-preview{display:flex;align-items:center;gap:12px;min-height:74px;padding:10px;border:1px solid #edf1ed;border-radius:12px;background:#f8faf8;overflow:hidden}.settings-preview img{width:100px;height:64px;object-fit:cover;border-radius:8px;background:#eef2ee;flex:0 0 auto}.settings-preview.is-avatar img{width:64px;height:64px;border-radius:50%;object-fit:cover}.settings-preview-note{font-size:12px;color:#8b968e;line-height:1.6}.settings-toggle{position:relative;display:flex;align-items:center;gap:10px;min-height:42px;padding:9px 12px;border:1px solid #e4ebe5;border-radius:11px;background:#fafcfa;cursor:pointer}.settings-toggle input{position:absolute;width:1px;height:1px;opacity:0}.settings-toggle-track{position:relative;display:inline-block;flex:0 0 36px;width:36px;height:21px;border-radius:999px;background:#cbd5ce;transition:background .18s}.settings-toggle-track:before{content:"";position:absolute;left:3px;top:3px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 2px #0002;transition:transform .18s}.settings-toggle input:checked+.settings-toggle-track{background:#16a064}.settings-toggle input:checked+.settings-toggle-track:before{transform:translateX(15px)}.settings-toggle input:focus-visible+.settings-toggle-track{outline:3px solid #10b98144;outline-offset:3px}.settings-toggle-label{font-size:12px;font-weight:650;color:#47574b}.settings-toggle small{display:block;font-size:11px;font-weight:400;color:#89958c;margin-top:2px}.settings-switch-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.settings-save-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:4px 2px 10px}.settings-save-button{border:0;border-radius:11px;background:linear-gradient(135deg,#15965a,#087a43);color:#fff;padding:12px 18px;font:inherit;font-size:13px;font-weight:750;box-shadow:0 5px 12px #0d894b26;cursor:pointer;transition:transform .15s,opacity .15s}.settings-save-button:hover{transform:translateY(-1px)}.settings-save-button:disabled{opacity:.6;cursor:wait;transform:none}.settings-status{font-size:12px;color:#657267;line-height:1.6;overflow-wrap:anywhere}.admin-tab:focus-visible{outline:2px solid #10b981;outline-offset:2px}.panel{background:white;border:1px solid #e0e7e0;border-radius:14px;padding:18px;min-width:0}.btn{border:1px solid #d5dfd5;border-radius:8px;background:white;color:#263329;padding:9px 12px;cursor:pointer}.primary{background:#12884f;color:white;border-color:#12884f}.danger{color:#b42318}.toolbar{display:flex;gap:8px;margin-bottom:12px}.toolbar input{min-width:0;flex:1}.toolbar select{max-width:100px;border:1px solid #d8e1d8;border-radius:8px;padding:8px 5px;background:white;color:#263329;font:inherit;font-size:12px}.field{display:grid;gap:6px;margin-bottom:13px}.field label{font-size:12px;color:#59675d;font-weight:650}.field input,.field textarea,.toolbar input{width:100%;border:1px solid #d8e1d8;border-radius:8px;padding:10px;font:inherit;background:white;color:#202820}.field textarea{min-height:240px;resize:vertical;font-family:ui-monospace,monospace;line-height:1.6}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.item{width:100%;display:block;text-align:left;background:white;border:1px solid #e3e9e3;border-radius:9px;padding:11px;margin-bottom:8px;cursor:pointer;color:inherit}.article-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px;margin-bottom:8px;align-items:stretch}.article-row .item{margin:0}.article-delete{border:1px solid #f1c6c3;border-radius:8px;background:#fff8f7;color:#b42318;padding:8px;cursor:pointer;min-width:48px}.article-delete:disabled{opacity:.55;cursor:wait}.item strong,.item small{display:block;overflow-wrap:anywhere}.item strong{font-size:13px}.item small,.muted{color:#718075;font-size:12px}.actions{display:flex;gap:8px;flex-wrap:wrap}.status{min-height:20px;font-size:12px;margin-top:12px;color:#657267;overflow-wrap:anywhere}.check{display:flex;gap:8px;align-items:center;font-size:13px;margin:12px 0}.empty{color:#758077;font-size:13px;line-height:1.7}.editor-tabs{display:flex;gap:8px;margin:2px 0 9px}.editor-tabs .active{background:#eaf6ee;border-color:#b6dbc3;color:#127947}.markdown-preview{min-height:240px;border:1px solid #d8e1d8;border-radius:8px;padding:14px;line-height:1.75;overflow-wrap:anywhere;color:#202820}.markdown-preview h1,.markdown-preview h2,.markdown-preview h3{line-height:1.35;margin:1.1em 0 .6em}.markdown-preview p,.markdown-preview ul,.markdown-preview ol,.markdown-preview blockquote{margin:.65em 0}.markdown-preview pre{overflow:auto;background:#f3f6f3;padding:12px;border-radius:8px}.markdown-preview code{font-family:ui-monospace,monospace;background:#f3f6f3;padding:2px 4px;border-radius:4px}.markdown-preview pre code{padding:0}.markdown-preview img{max-width:100%;height:auto}.markdown-preview table{border-collapse:collapse;max-width:100%;display:block;overflow:auto}.markdown-preview th,.markdown-preview td{border:1px solid #d8e1d8;padding:6px 9px}.markdown-preview blockquote{border-left:3px solid #b6dbc3;padding-left:12px;color:#59675d}.deploy-link{display:inline-block;margin-top:7px;color:#12884f;font-size:12px}.actions .btn{min-width:100px}@media(max-width:720px){.wrap{margin-top:12px}.articles-grid{grid-template-columns:1fr}.admin-tabs{margin-top:12px;padding:0 12px}.admin-tab{padding:10px 9px;font-size:12px}.settings-panel{padding:16px}.grid{grid-template-columns:1fr}.list{max-height:260px;overflow:auto}header{padding:13px 15px}}
 </style></head>
 <body>
 <header><h1>✦ Firefly 文章管理</h1><div style="display:flex;gap:12px;align-items:center"><a href="/" style="color:#16864f;font-size:13px">返回网站 ↗</a><button class="btn" id="logout" type="button">退出登录</button></div></header>
@@ -80,39 +80,78 @@ export const prerender = false;
 <div class="actions"><button class="btn" type="button" id="checkGitHub">检查 GitHub 写入权限</button><button class="btn" type="submit" id="saveDraft" value="draft">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空表单</button></div>
 </form><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿会将文章写入 GitHub 并触发构建，但保持草稿状态；发布文章会将 draft 设为 false，提交到 GitHub，并跟踪 Cloudflare 部署结果。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看 Cloudflare 部署日志 ↗</a></section>
 </div>
-<section id="appearanceTabPanel" role="tabpanel" aria-labelledby="tabAppearance" class="settings-panel min-w-0 rounded-xl border border-gray-200/80 bg-white p-5 shadow-sm" hidden>
+<section id="appearanceTabPanel" role="tabpanel" aria-labelledby="tabAppearance" class="settings-panel min-w-0" hidden>
   <div class="mb-1 text-base font-semibold text-gray-800">全局外观配置</div>
   <p class="mb-5 text-sm leading-6 text-gray-500">
-    配置保存在仓库的 <code class="rounded bg-gray-100 px-1.5 py-0.5 text-xs">src/data/settings.json</code>。
-    保存会提交到 GitHub，并自动触发站点构建与部署。
+    配置统一保存在仓库的 <code class="rounded bg-gray-100 px-1.5 py-0.5 text-xs">src/data/settings.json</code>。
+    保存后会提交到 GitHub，并触发 Cloudflare 构建与部署；原有文章管理和登录保护保持不变。
   </p>
-  <form id="settingsForm">
-    <div class="settings-field">
-      <label for="backgroundImage">背景图片链接</label>
-      <input id="backgroundImage" name="backgroundImage" type="url" maxlength="2048" autocomplete="url" placeholder="https://example.com/background.jpg" class="settings-control">
-      <div class="settings-preview" id="backgroundImagePreviewBox">
-        <img id="backgroundImagePreview" alt="背景图片缩略预览" hidden>
-        <span id="backgroundImagePreviewEmpty" class="settings-preview-note">填写 HTTP/HTTPS 图片链接后，在这里预览。</span>
-        <span id="backgroundImagePreviewError" class="settings-preview-note" hidden>图片加载失败，请检查链接是否可公开访问。</span>
+  <form id="settingsForm" class="settings-cards">
+    <section class="settings-card" aria-labelledby="bannerSettingsTitle">
+      <div class="settings-card-heading"><span class="settings-card-number">01</span><div><h3 id="bannerSettingsTitle">顶部 Banner 设置</h3><p>设置首页顶部主标题、副标题与背景大图。</p></div></div>
+      <div class="settings-grid">
+        <div class="settings-field"><label for="bannerTitle">主标题</label><input id="bannerTitle" name="bannerTitle" type="text" maxlength="200" placeholder="Lovely firefly!" class="settings-control"></div>
+        <div class="settings-field"><label for="bannerSubtitle">副标题</label><input id="bannerSubtitle" name="bannerSubtitle" type="text" maxlength="500" placeholder="In Reddened Chrysalis, I Once Rest" class="settings-control"></div>
+        <div class="settings-field" style="grid-column:1/-1">
+          <label for="backgroundImage">背景图片链接</label>
+          <input id="backgroundImage" name="backgroundImage" type="url" maxlength="2048" autocomplete="url" placeholder="https://example.com/background.jpg" class="settings-control">
+          <div class="settings-preview" id="backgroundImagePreviewBox">
+            <img id="backgroundImagePreview" alt="背景图片缩略预览" hidden>
+            <span id="backgroundImagePreviewEmpty" class="settings-preview-note">填写 HTTP/HTTPS 图片链接后，可在此预览。</span>
+            <span id="backgroundImagePreviewError" class="settings-preview-note" hidden>图片加载失败，请检查链接是否可公开访问。</span>
+          </div>
+          <small>清空时保留主题默认背景图。预览仅用于检查链接是否可访问。</small>
+        </div>
       </div>
-      <small>填写后会覆盖主题当前的桌面与移动端默认壁纸；清空时恢复主题默认壁纸。</small>
-    </div>
-    <div class="settings-field">
-      <label for="backgroundMusic">背景音乐外链</label>
-      <input id="backgroundMusic" name="backgroundMusic" type="url" maxlength="2048" autocomplete="url" placeholder="https://example.com/music.mp3" class="settings-control">
-      <audio id="backgroundMusicPreview" class="w-full" controls preload="none" hidden></audio>
-      <small>填写可直接播放的 HTTP/HTTPS 音频地址。它会替换站点现有音乐播放器的默认曲目，不会自动播放；清空时恢复主题默认音乐。</small>
-    </div>
-    <div class="settings-field">
-      <label for="bio">个人签名 / 简介</label>
-      <textarea id="bio" name="bio" rows="4" maxlength="5000" placeholder="写一段介绍自己或博客的话……" class="settings-control"></textarea>
-      <small>最多 5000 个字符。保存后会更新站点使用的个人简介配置。</small>
-    </div>
-    <div class="mt-5 flex flex-wrap items-center gap-3">
-      <button id="saveSettings" type="submit" class="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:ring-offset-2 disabled:cursor-wait disabled:opacity-60">
-        保存全局配置
-      </button>
-      <span id="settingsStatus" class="text-sm text-gray-500" role="status" aria-live="polite"></span>
+    </section>
+
+    <section class="settings-card" aria-labelledby="profileSettingsTitle">
+      <div class="settings-card-heading"><span class="settings-card-number">02</span><div><h3 id="profileSettingsTitle">个人名片与头像</h3><p>用于左侧个人资料卡的头像、昵称和个人简介。</p></div></div>
+      <div class="settings-grid">
+        <div class="settings-field"><label for="avatar">头像链接</label><input id="avatar" name="avatar" type="url" maxlength="2048" placeholder="https://example.com/avatar.png" class="settings-control"></div>
+        <div class="settings-field"><label for="nickname">昵称 / 用户名</label><input id="nickname" name="nickname" type="text" maxlength="120" placeholder="XiaYe" class="settings-control"></div>
+        <div class="settings-field" style="grid-column:1/-1">
+          <div class="settings-preview is-avatar" id="avatarPreviewBox">
+            <img id="avatarPreview" alt="个人头像预览" hidden>
+            <span id="avatarPreviewEmpty" class="settings-preview-note">填写头像链接后，可在此查看头像预览。</span>
+            <span id="avatarPreviewError" class="settings-preview-note" hidden>头像加载失败，请确认图片链接可公开访问。</span>
+          </div>
+        </div>
+        <div class="settings-field" style="grid-column:1/-1"><label for="bio">个人签名 / 简介</label><textarea id="bio" name="bio" rows="3" maxlength="5000" placeholder="Hello, I'm XiaYe." class="settings-control"></textarea><small>最多 5000 个字符。</small></div>
+      </div>
+    </section>
+
+    <section class="settings-card" aria-labelledby="announcementSettingsTitle">
+      <div class="settings-card-heading"><span class="settings-card-number">03</span><div><h3 id="announcementSettingsTitle">公告栏设置</h3><p>支持多行文本；是否显示公告栏仍由前台组件决定。</p></div></div>
+      <div class="settings-field"><label for="announcement">公告内容</label><textarea id="announcement" name="announcement" rows="4" maxlength="10000" placeholder="欢迎来到我的博客！&#10;更新与通知可以分行填写。" class="settings-control"></textarea><small>最多 10000 个字符，保存时会保留换行。</small></div>
+    </section>
+
+    <section class="settings-card" aria-labelledby="socialSettingsTitle">
+      <div class="settings-card-heading"><span class="settings-card-number">04</span><div><h3 id="socialSettingsTitle">社交与链接控制</h3><p>填写公开访问的 GitHub 地址与邮箱，并独立控制对应图标显隐。</p></div></div>
+      <div class="settings-grid">
+        <div class="settings-field"><label for="githubUrl">GitHub 链接</label><input id="githubUrl" name="githubUrl" type="url" maxlength="2048" placeholder="https://github.com/yourname" class="settings-control"></div>
+        <div class="settings-field"><label for="email">邮箱地址</label><input id="email" name="email" type="email" maxlength="320" autocomplete="email" placeholder="you@example.com" class="settings-control"></div>
+        <label class="settings-toggle"><input id="showGithub" name="showGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示 GitHub 图标<small>关闭后前台不显示该入口（需组件读取此项）。</small></span></label>
+        <label class="settings-toggle"><input id="showEmail" name="showEmail" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示邮箱图标<small>关闭后前台不显示邮箱入口（需组件读取此项）。</small></span></label>
+      </div>
+    </section>
+
+    <section class="settings-card" aria-labelledby="featureSettingsTitle">
+      <div class="settings-card-heading"><span class="settings-card-number">05</span><div><h3 id="featureSettingsTitle">多媒体与功能模块</h3><p>配置背景音乐外链，以及文章页的“支持与分享”卡片开关。</p></div></div>
+      <div class="settings-grid settings-grid-one">
+        <div class="settings-field">
+          <label for="backgroundMusic">背景音乐外链</label>
+          <input id="backgroundMusic" name="backgroundMusic" type="url" maxlength="2048" placeholder="https://example.com/music.mp3" class="settings-control">
+          <audio id="backgroundMusicPreview" class="w-full" controls preload="none" hidden></audio>
+          <small>请使用可直接播放的 HTTP/HTTPS 音频地址。这里仅作预览，不会自动播放。</small>
+        </div>
+        <label class="settings-toggle"><input id="showSupportAndShare" name="showSupportAndShare" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">开启文章页“支持与分享”模块<small>关闭后，接入该配置的文章组件应隐藏支持与分享卡片。</small></span></label>
+      </div>
+    </section>
+
+    <div class="settings-save-row">
+      <button id="saveSettings" type="submit" class="settings-save-button">保存全局配置</button>
+      <span id="settingsStatus" class="settings-status" role="status" aria-live="polite"></span>
     </div>
   </form>
 </section>
@@ -286,6 +325,19 @@ $("backgroundImagePreview").onload=()=>{$("backgroundImagePreview").hidden=false
 $("backgroundImagePreview").onerror=()=>{$("backgroundImagePreview").hidden=true;$("backgroundImagePreviewError").hidden=false;$("backgroundImagePreviewEmpty").hidden=true};
 $("backgroundImage").addEventListener("input",updateImagePreview);
 
+function updateAvatarPreview(){
+ const url=checkedExternalUrl($("avatar").value);
+ const img=$("avatarPreview");
+ const empty=$("avatarPreviewEmpty");
+ const error=$("avatarPreviewError");
+ img.hidden=true;error.hidden=true;
+ if(!url){img.removeAttribute("src");empty.hidden=false;return}
+ empty.hidden=true;img.hidden=false;img.src=url;
+}
+$("avatarPreview").onload=()=>{$("avatarPreview").hidden=false;$("avatarPreviewError").hidden=true};
+$("avatarPreview").onerror=()=>{$("avatarPreview").hidden=true;$("avatarPreviewError").hidden=false;$("avatarPreviewEmpty").hidden=true};
+$("avatar").addEventListener("input",updateAvatarPreview);
+
 function updateMusicPreview(){
  const url=checkedExternalUrl($("backgroundMusic").value);
  const audio=$("backgroundMusicPreview");
@@ -296,16 +348,20 @@ function updateMusicPreview(){
 $("backgroundMusic").addEventListener("input",updateMusicPreview);
 
 async function loadSettings(){
- const status=$("settingsStatus");status.textContent="正在读取全局配置…";
+ const status=$("settingsStatus");status.textContent="正在读取全局配置…";status.style.color="#657267";
  try{
   const response=await fetch("/api/admin/settings/",{credentials:"same-origin",cache:"no-store"});
   if(response.status===401){goLogin();return}
   const data=await response.json().catch(()=>({error:"配置接口返回无法解析的响应"}));
   if(!response.ok)throw new Error(data.error||"读取全局配置失败");
-  $("backgroundImage").value=typeof data.backgroundImage==="string"?data.backgroundImage:"";
-  $("backgroundMusic").value=typeof data.backgroundMusic==="string"?data.backgroundMusic:"";
-  $("bio").value=typeof data.bio==="string"?data.bio:"";
-  updateImagePreview();updateMusicPreview();status.textContent="已加载仓库中的配置。";
+  for(const id of ["bannerTitle","bannerSubtitle","backgroundImage","avatar","nickname","bio","announcement","githubUrl","email","backgroundMusic"]){
+   $(id).value=typeof data[id]==="string"?data[id]:"";
+  }
+  $("showGithub").checked=data.showGithub===true;
+  $("showEmail").checked=data.showEmail===true;
+  $("showSupportAndShare").checked=data.showSupportAndShare===true;
+  updateImagePreview();updateAvatarPreview();updateMusicPreview();
+  status.textContent="已加载仓库中的配置。";
  }catch(error){
   status.textContent=error instanceof Error?error.message:"读取全局配置失败。";status.style.color="#b42318";
  }
@@ -316,8 +372,8 @@ async function watchSettingsDeployment(sha,attempt=0){
   if(response.status===401){goLogin();return}
   const data=await response.json().catch(()=>({error:"无法读取部署状态"}));
   if(!response.ok)throw new Error(data.error||"无法查询部署状态");
-  if(data.status==="success"){ $("settingsStatus").textContent="配置已保存，正式网站部署成功。";$("settingsStatus").style.color="#12884f";return }
-  if(data.status==="failure"){ $("settingsStatus").textContent="配置已写入 GitHub，但部署失败，请查看工作流日志。";$("settingsStatus").style.color="#b42318";return }
+  if(data.status==="success"){$("settingsStatus").textContent="配置已保存，正式网站部署成功。";$("settingsStatus").style.color="#12884f";return}
+  if(data.status==="failure"){$("settingsStatus").textContent="配置已写入 GitHub，但部署失败，请查看工作流日志。";$("settingsStatus").style.color="#b42318";return}
   if(attempt>=20){$("settingsStatus").textContent="配置已保存到 GitHub，部署仍未确认；可稍后检查 Actions。";return}
   $("settingsStatus").textContent="配置已保存，正在等待正式网站构建与部署…";
   setTimeout(()=>watchSettingsDeployment(sha,attempt+1),12000);
@@ -329,12 +385,28 @@ async function watchSettingsDeployment(sha,attempt=0){
 $("settingsForm").addEventListener("submit",async event=>{
  event.preventDefault();
  const button=$("saveSettings");const status=$("settingsStatus");
- const values={backgroundImage:$("backgroundImage").value.trim(),backgroundMusic:$("backgroundMusic").value.trim(),bio:$("bio").value};
- if(values.backgroundImage&&!checkedExternalUrl(values.backgroundImage)){status.textContent="背景图片请填写完整的 HTTP/HTTPS 链接。";status.style.color="#b42318";return}
- if(values.backgroundMusic&&!checkedExternalUrl(values.backgroundMusic)){status.textContent="背景音乐请填写完整的 HTTP/HTTPS 音频链接。";status.style.color="#b42318";return}
+ const values={
+  bannerTitle:$("bannerTitle").value,
+  bannerSubtitle:$("bannerSubtitle").value,
+  backgroundImage:$("backgroundImage").value.trim(),
+  avatar:$("avatar").value.trim(),
+  nickname:$("nickname").value,
+  bio:$("bio").value,
+  announcement:$("announcement").value,
+  githubUrl:$("githubUrl").value.trim(),
+  showGithub:$("showGithub").checked,
+  email:$("email").value.trim(),
+  showEmail:$("showEmail").checked,
+  backgroundMusic:$("backgroundMusic").value.trim(),
+  showSupportAndShare:$("showSupportAndShare").checked
+ };
+ for(const [key,label] of [["backgroundImage","背景图片"],["avatar","头像"],["githubUrl","GitHub 链接"],["backgroundMusic","背景音乐"]]){
+  if(values[key]&&!checkedExternalUrl(values[key])){status.textContent=label+"请填写完整的 HTTP/HTTPS 链接。";status.style.color="#b42318";$(key).focus();return}
+ }
+ if(values.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)){status.textContent="请填写有效的邮箱地址。";status.style.color="#b42318";$("email").focus();return}
  button.disabled=true;status.style.color="#657267";status.textContent="正在保存到 GitHub…";
  try{
-  const response=await fetch("/api/admin/settings/",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(values)});
+  const response=await fetch("/api/admin/settings/",{method:"PUT",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(values)});
   if(response.status===401){goLogin();return}
   const data=await response.json().catch(()=>({error:"保存接口返回无法解析的响应"}));
   if(!response.ok)throw new Error(data.error||"保存全局配置失败");
