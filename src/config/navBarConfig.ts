@@ -1,10 +1,10 @@
+import siteSettings from "../data/settings.json";
 import {
 	type NavBarConfig,
 	type NavBarLink,
 	type NavBarSearchConfig,
 	NavBarSearchMethod,
 } from "../types/navBarConfig";
-import siteSettings from "../data/settings.json";
 
 // ============================================================================
 // 导航栏配置 - 根据顺序动态生成导航栏链接
