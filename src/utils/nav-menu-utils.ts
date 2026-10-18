@@ -14,16 +14,28 @@ export function resolveNavMenuLinks(): NavBarLink[] {
 
 	function filterLinks(link: NavBarLink): NavBarLink | null {
 		// 一级分组显隐：桌面导航和移动端菜单共用此过滤器。
-		if (link.name === "社交" && siteSettings.showNavSocial === false) {
+		if (
+			link.name === "社交" &&
+			siteSettings.showNavSocial === false
+		) {
 			return null;
 		}
-		if (link.name === "我的" && siteSettings.showNavMy === false) {
+		if (
+			link.name === "我的" &&
+			siteSettings.showNavMy === false
+		) {
 			return null;
 		}
-		if (link.name === "链接" && siteSettings.showNavLinks === false) {
+		if (
+			link.name === "链接" &&
+			siteSettings.showNavLinks === false
+		) {
 			return null;
 		}
-		if (link.name === "关于" && siteSettings.showNavAbout === false) {
+		if (
+			link.name === "关于" &&
+			siteSettings.showNavAbout === false
+		) {
 			return null;
 		}
 
