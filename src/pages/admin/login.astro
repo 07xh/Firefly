@@ -73,7 +73,7 @@ export const prerender = false;
 				submit.disabled = true;
 				status.textContent = "正在验证…";
 				try {
-					const response = await fetch("/api/auth/login", {
+					const response = await fetch("/api/auth/login/", {
 						method: "POST",
 						credentials: "same-origin",
 						headers: { "Content-Type": "application/json" },
