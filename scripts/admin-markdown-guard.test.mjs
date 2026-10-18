@@ -120,3 +120,39 @@ test("保留块编辑后可按 marker 原位恢复新语法文本", () => {
   assert.match(restored, /前言/);
   assert.match(restored, /后记/);
 });
+
+
+test("复合 HTML/MDX 标签容器整体作为一个保留块", () => {
+  const raw = [
+    "<details>",
+    "<summary>展开</summary>",
+    "<div class='inside'>原始内容</div>",
+    "</details>",
+  ].join("\n");
+  const result = prepareMarkdownForVisualEditing("前言\n\n" + raw + "\n\n后记");
+
+  assert.equal(result.records.length, 1);
+  assert.equal(result.records[0].raw, raw);
+  assert.match(result.markdown, /前言/);
+  assert.match(result.markdown, /后记/);
+});
+
+test("简单变量和多行 MDX 表达式均保留", () => {
+  const first = "{userName}";
+  const second = ["{", "  getContent({ id: 1 })", "}"].join("\n");
+  const result = prepareMarkdownForVisualEditing("开头\n\n" + first + "\n\n" + second + "\n\n结尾");
+
+  assert.equal(result.records.length, 2);
+  assert.ok(result.records.some(record => record.raw === first));
+  assert.ok(result.records.some(record => record.raw === second));
+  assert.match(result.markdown, /开头/);
+  assert.match(result.markdown, /结尾/);
+});
+
+test("常见原始 HTML 链接属性不会被 Markdown 往返改写", () => {
+  const raw = "<a href='/docs' target='_blank' rel='noreferrer'>文档</a>";
+  const result = prepareMarkdownForVisualEditing("请访问 " + raw + " 查看说明。");
+
+  assert.equal(result.records.length, 1);
+  assert.equal(result.records[0].raw, "请访问 " + raw + " 查看说明。");
+});
