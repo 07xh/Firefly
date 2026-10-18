@@ -267,7 +267,7 @@ export const prerender = false;
 <div id="markdownPreview" class="markdown-preview" hidden><p class="muted">点击“预览”查看当前正文。</p></div>
 </div>
 <label class="check"><input id="draft" type="checkbox" checked> 草稿箱状态（勾选后保存为草稿；取消勾选可保存已发布文章）</label>
-<div class="actions"><button class="btn" type="button" id="checkGitHub">检查 GitHub 写入权限</button><button class="btn" type="submit" id="saveDraft" value="draft">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空表单</button></div>
+<div class="actions"><button class="btn" type="button" id="checkGitHub">检查 GitHub 写入权限</button><button class="btn" type="submit" id="saveDraft" value="save">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空表单</button></div>
 </form><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿会将文章写入 GitHub 并触发构建，但保持草稿状态；发布文章会将 draft 设为 false，提交到 GitHub，并跟踪 Cloudflare 部署结果。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看 Cloudflare 部署日志 ↗</a></section>
 </div>
 <section id="appearanceTabPanel" role="tabpanel" aria-labelledby="tabAppearance" class="settings-panel min-w-0" hidden>
@@ -472,7 +472,9 @@ function articleStatus(article) {
 }
 function updateSaveButtonLabel() {
  const draft = $("draft").checked;
- $("saveDraft").textContent = draft ? "保存为草稿" : (selected ? "保存修改" : "保存并公开");
+ const localDate = $("date").value;
+ const hasFutureDate = Boolean(localDate && Date.parse(localDate + ":00+08:00") > Date.now());
+ $("saveDraft").textContent = draft ? "保存为草稿" : (hasFutureDate ? "保存定时文章" : (selected ? "保存修改" : "保存并公开"));
 }
 function frontmatterValue(source,key){const match=source.match(new RegExp("^"+key+":\\s*(.*?)\\s*$","m"));if(!match)return "";const raw=match[1].trim();try{const parsed=JSON.parse(raw);if(Array.isArray(parsed))return parsed.map(String).join(", ");if(typeof parsed==="string")return parsed;if(parsed===null)return ""}catch{}if(raw.startsWith("'")&&raw.endsWith("'"))return raw.slice(1,-1).replace(/''/g,"'");return raw}
 async function api(method,data){const r=await fetch("/api/admin/articles/",{method,headers:{"Content-Type":"application/json"},...(data?{body:JSON.stringify(data)}:{})});if(r.status===401){goLogin();throw new Error("登录已过期，正在跳转登录页…")}const d=await r.json().catch(()=>({error:"服务器响应无法解析"}));if(!r.ok)throw new Error(d.error||"请求失败");return d}
@@ -588,11 +590,14 @@ function render(){
 async function refresh(){try{say("正在读取 GitHub…");articles=await api("GET");render();say("已读取 "+articles.length+" 篇文章")}catch(e){say(e.message,true);$("list").textContent="读取失败，请确认服务端令牌和仓库权限已配置。"}}
 function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
 function showVisualTab(){
- if(window.FireflyRichEditor?.hasUnsupportedSyntax()){showEditorTab();say("当前文章包含 MDX/HTML 特殊语法，已保留源码编辑以避免内容损坏。");return}
  $("body").hidden=true;$("wysiwygPane").hidden=false;$("markdownPreview").hidden=true;
  $("visualTab").classList.add("active");$("editorTab").classList.remove("active");$("previewTab").classList.remove("active");
  $("visualTab").setAttribute("aria-selected","true");$("editorTab").setAttribute("aria-selected","false");$("previewTab").setAttribute("aria-selected","false");
  window.dispatchEvent(new CustomEvent("firefly:mode",{detail:{mode:"visual"}}));
+ if(window.FireflyRichEditor?.hasUnsupportedSyntax()){
+  showEditorTab();
+  say("当前文章包含 MDX/HTML 特殊语法，已保留源码编辑以避免内容损坏。");
+ }
 }
 function showEditorTab(){
  $("body").hidden=false;$("wysiwygPane").hidden=true;$("markdownPreview").hidden=true;
@@ -1041,19 +1046,31 @@ reset();refresh();loadSettings();
   $("editor")?.addEventListener("submit", async event => {
     event.preventDefault();
     event.stopImmediatePropagation();
-    const mode = event.submitter?.value === "publish" ? "publish" : "draft";
-    const isDraft = mode === "draft";
+    if (window.FireflyRichEditor?.isBusy()) { say("图片仍在上传，请完成后再保存。", true); return; }
+    const mode = event.submitter?.value === "publish" ? "publish" : "save";
     const title = $("title").value.trim();
     const slug = $("slug").value.trim();
     const published = $("published").value;
+    const rawSchedule = $("date").value.trim();
+    let date = mode === "publish" ? "" : fromBeijingDateTimeLocal(rawSchedule);
     if (!title || title.length > 200) { say("阶段 1/4：标题不能为空且最多 200 个字符。", true); $("title").focus(); return; }
     if (!selected && !/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(slug)) { say("阶段 1/4：文件名格式不正确。", true); $("slug").focus(); return; }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(published) || Number.isNaN(Date.parse(published + "T00:00:00Z"))) { say("阶段 1/4：请选择有效的发布日期。", true); $("published").focus(); return; }
+    if (rawSchedule && mode !== "publish" && !date) { say("阶段 1/4：定时发布时间无效，请重新选择。", true); $("date").focus(); return; }
     if ($("body").value.length > 500000) { say("阶段 1/4：正文超过 500 KB 限制。", true); return; }
-    if (mode === "publish" && !window.confirm("发布文章将写入 GitHub 并触发 Cloudflare 部署，确定发布吗？")) return;
+    if (mode === "publish" && !window.confirm("直接发布会立即公开文章，并清除定时发布时间。确定继续吗？")) return;
+    if (mode === "publish") $("date").value = "";
+    const isDraft = mode === "publish" ? false : $("draft").checked;
     $("draft").checked = isDraft;
+    const password = $("articlePassword").value;
+    const passwordHint = $("passwordHint").value;
+    if (password.length > 200 || passwordHint.length > 120) { say("阶段 1/4：密码最多 200 个字符，密码提示最多 120 个字符。", true); return; }
+    if (date && Date.parse(date) <= Date.now() && !isDraft && mode !== "publish") {
+      say("阶段 1/4：所选发布时间已到，请直接发布或选择未来时间。", true); $("date").focus(); return;
+    }
     const metadata = {
-      title, published, category: $("category").value, description: $("description").value,
+      title, published, date, password, passwordHint,
+      category: $("category").value, description: $("description").value,
       tags: $("tags").value.split(",").map(x => x.trim()).filter(Boolean), draft: isDraft
     };
     const data = selected
@@ -1065,12 +1082,15 @@ reset();refresh();loadSettings();
     try {
       const result = await api(selected ? "PUT" : "POST", data);
       if (!result.commitSha) throw new Error("GitHub 已响应，但未返回 Commit SHA，无法跟踪部署。请刷新列表确认写入结果。");
+      const scheduled = !isDraft && Boolean(date && Date.parse(date) > Date.now());
       reset();
       await refresh();
       const commit = $("enhancedCommitLink");
       commit.href = result.commitUrl || ("https://github.com/07xh/Firefly/commit/" + encodeURIComponent(result.commitSha));
       commit.hidden = false;
-      say("阶段 2/4：已成功写入 GitHub。Commit SHA：" + result.commitSha);
+      if (isDraft) say("阶段 2/4：已成功写入 GitHub，文章保留在草稿箱。Commit SHA：" + result.commitSha);
+      else if (scheduled) say("阶段 2/4：定时文章已写入 GitHub，等待指定时间到达后自动重建。Commit SHA：" + result.commitSha);
+      else say("阶段 2/4：已成功写入 GitHub。Commit SHA：" + result.commitSha);
       watchDeployment(result.commitSha, 0, isDraft);
     } catch (error) {
       say(error instanceof Error ? error.message : "保存文章失败。", true);
