@@ -38,8 +38,9 @@ import { TableKit } from "https://cdn.jsdelivr.net/npm/@tiptap/extension-table@3
   function getUnsafeReason(markdown) {
     // Ignore fenced code: imports and angle-bracket examples inside code are safe text.
     const withoutFences = markdown
-      .replace(new RegExp("(^|\\\\n)\\\\s*[\\\\x60]{3}[^\\\\n]*\\\\n[\\\\s\\\\S]*?\\\\n\\\\s*[\\\\x60]{3}\\\\s*(?=\\\\n|$)", "g"), "")
+      .replace(/```[\s\S]*?```/g, "")
       .replace(/^\s*~~~[\s\S]*?^\s*~~~\s*$/gm, "");
+
     if (/^\s*(?:import|export)\s/m.test(withoutFences)) {
       return "正文包含 MDX import/export 语句。为避免组件丢失，请使用 Markdown 源码模式编辑。";
     }
