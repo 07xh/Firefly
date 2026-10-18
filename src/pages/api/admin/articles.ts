@@ -59,7 +59,7 @@ function json(data: unknown, status = 200): Response {
 function safeSlug(value: unknown): string | null {
 	if (typeof value !== "string") return null;
 	const slug = value.trim();
-	return /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(slug) ? slug : null;
+	return /^[\p{L}\p{N}][\p{L}\p{N}_-]{0,79}$/u.test(slug) ? slug : null;
 }
 
 function encodeBase64(value: string): string {
@@ -195,12 +195,12 @@ async function findPostFiles(config: ReturnType<typeof getConfig>): Promise<GitH
 	return (data.tree ?? []).filter((entry) =>
 		entry.type === "blob" &&
 		entry.path.startsWith(ROOT) &&
-		/^src\/content\/posts\/(?:[\w-]+\/)*[\w-]+\.mdx?$/.test(entry.path),
+		/^src\/content\/posts\/(?:[\p{L}\p{N}_-]+\/)*[\p{L}\p{N}_-]+\.mdx?$/u.test(entry.path),
 	);
 }
 
 async function readPost(path: string, config: ReturnType<typeof getConfig>): Promise<{ path: string; sha: string; content: string }> {
-	if (!path.startsWith(ROOT) || !/^src\/content\/posts\/(?:[\w-]+\/)*[\w-]+\.mdx?$/.test(path)) {
+	if (!path.startsWith(ROOT) || !/^src\/content\/posts\/(?:[\p{L}\p{N}_-]+\/)*[\p{L}\p{N}_-]+\.mdx?$/u.test(path)) {
 		throw new Error("Invalid article path");
 	}
 	const response = await github(`contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(config.branch)}`, config);
@@ -270,7 +270,7 @@ export const PUT: APIRoute = async ({ request }) => {
 		const config = getConfig();
 		const input = (await request.json()) as Record<string, unknown>;
 		const path = typeof input.path === "string" ? input.path : "";
-		if (!path.startsWith(ROOT) || !/^src\/content\/posts\/(?:[\w-]+\/)*[\w-]+\.mdx?$/.test(path)) return json({ error: "文章路径不合法" }, 400);
+		if (!path.startsWith(ROOT) || !/^src\/content\/posts\/(?:[\p{L}\p{N}_-]+\/)*[\p{L}\p{N}_-]+\.mdx?$/u.test(path)) return json({ error: "文章路径不合法" }, 400);
 		const current = await readPost(path, config);
 		if (typeof input.sha !== "string" || input.sha !== current.sha) return json({ error: "文章已被其他操作修改，请刷新后重试" }, 409);
 		const slug = path.split("/").pop()?.replace(/\.mdx?$/, "") ?? "";
@@ -337,7 +337,7 @@ export const DELETE: APIRoute = async ({ request }) => {
 		const config = getConfig();
 		const input = (await request.json()) as Record<string, unknown>;
 		const path = typeof input.path === "string" ? input.path : "";
-		if (!path.startsWith(ROOT) || !/^src\/content\/posts\/(?:[\w-]+\/)*[\w-]+\.mdx?$/.test(path)) return json({ error: "文章路径不合法" }, 400);
+		if (!path.startsWith(ROOT) || !/^src\/content\/posts\/(?:[\p{L}\p{N}_-]+\/)*[\p{L}\p{N}_-]+\.mdx?$/u.test(path)) return json({ error: "文章路径不合法" }, 400);
 		const current = await readPost(path, config);
 		if (typeof input.sha !== "string" || input.sha !== current.sha) return json({ error: "文章已被其他操作修改，请刷新后重试" }, 409);
 		const response = await github(`contents/${path.split("/").map(encodeURIComponent).join("/")}`, config, {
