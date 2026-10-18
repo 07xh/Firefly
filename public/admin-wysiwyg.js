@@ -38,18 +38,18 @@ import { TableKit } from "https://cdn.jsdelivr.net/npm/@tiptap/extension-table@3
   function getUnsafeReason(markdown) {
     // Ignore fenced code: imports and angle-bracket examples inside code are safe text.
     const withoutFences = markdown
-      .replace(new RegExp("(^|\\n)\\s*[\\x60]{3}[^\\n]*\\n[\\s\\S]*?\\n\\s*[\\x60]{3}\\s*(?=\\n|$)", "g"), "")
-      .replace(/^\\s*~~~[\\s\\S]*?^\\s*~~~\\s*$/gm, "");
-    if (/^\\s*(?:import|export)\\s/m.test(withoutFences)) {
+      .replace(new RegExp("(^|\\\\n)\\\\s*[\\\\x60]{3}[^\\\\n]*\\\\n[\\\\s\\\\S]*?\\\\n\\\\s*[\\\\x60]{3}\\\\s*(?=\\\\n|$)", "g"), "")
+      .replace(/^\s*~~~[\s\S]*?^\s*~~~\s*$/gm, "");
+    if (/^\s*(?:import|export)\s/m.test(withoutFences)) {
       return "正文包含 MDX import/export 语句。为避免组件丢失，请使用 Markdown 源码模式编辑。";
     }
-    if (/<\\/?[A-Z][A-Za-z0-9_.:-]*(?:\\s|\\/?>)/.test(withoutFences)) {
+    if (/<\/?[A-Z][A-Za-z0-9_.:-]*(?:\s|\/?>)/.test(withoutFences)) {
       return "正文包含自定义 MDX/组件标签。为避免破坏组件，请使用 Markdown 源码模式编辑。";
     }
-    if (/<\\/?(?:script|style|iframe|video|audio|div|section|details|summary|table|kbd|sup|sub|span|u|figure|figcaption)\\b/i.test(withoutFences)) {
+    if (/<\/?(?:script|style|iframe|video|audio|div|section|details|summary|table|kbd|sup|sub|span|u|figure|figcaption)\b/i.test(withoutFences)) {
       return "正文包含 HTML 或主题特殊标签。为避免转换丢失属性，请使用 Markdown 源码模式编辑。";
     }
-    if (/(^|\\n)\\s*\\{\\s*(?:\\/\\*|[A-Za-z_$][\\w$.]*\\s*(?:\\(|\\?\\.|\\.|\\[))/.test(withoutFences)) {
+    if (/(^|\n)\s*\{\s*(?:\/\*|[A-Za-z_$][\w$.]*\s*(?:\(|\?\.|\.|\[))/.test(withoutFences)) {
       return "正文包含 MDX 表达式。为避免改变运行逻辑，请使用 Markdown 源码模式编辑。";
     }
     return "";
