@@ -254,11 +254,11 @@ async function loadTiptapModules() {
     const withoutFences = markdown
       .replace(/```[\s\S]*?```/g, "")
       .replace(/^\s*~~~[\s\S]*?^\s*~~~\s*$/gm, "")
-      .replace(/`+`[^\n]*?`+`/g, "")
+      .replace(/(`+)([^\`\n]+)\1/g, "")
       .replace(/\\</g, "&lt;");
 
     // Match actual MDX declarations, not prose that merely starts with “import” or “export”.
-    if (/^\s*import\s+(?:[\w*{]|["'])[\s\S]*?(?:\sfrom\s+["'][^"']+["']\s*;?\s*)?$/m.test(withoutFences) ||
+    if (/^\s*import\s+(?:(?:[\w$*\s{},]+)\s+from\s+["'][^"']+["']|["'][^"']+["'])\s*;?\s*$/m.test(withoutFences) ||
         /^\s*export\s+(?:default\b|\*\s+from\b|\{[^}]*\}\s*from\b|(?:const|let|var|function|class|async\s+function)\b)/m.test(withoutFences)) {
       return "正文包含 MDX import/export 声明。为避免组件或导出逻辑丢失，请使用 Markdown 源码模式编辑。";
     }
