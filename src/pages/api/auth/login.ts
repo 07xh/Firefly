@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { env as workerEnv } from "cloudflare:workers";
 import {
 	createSessionToken,
 	hashText,
@@ -7,11 +8,6 @@ import {
 	sessionCookie,
 	storeAdminSession,
 } from "../../../lib/admin-session";
-
-type LoginEnv = {
-	FIREFLY_ADMIN_PASSWORD?: string;
-	FIREFLY_SESSIONS?: SessionKV;
-};
 
 function jsonResponse(
 	data: unknown,
@@ -47,7 +43,7 @@ async function sameSecret(
 
 export const prerender = false;
 
-async function handleLogin({ request, locals }: Parameters<APIRoute>[0]): Promise<Response> {
+async function handleLogin({ request }: Parameters<APIRoute>[0]): Promise<Response> {
 	if (request.headers.get("Origin") !== new URL(request.url).origin) {
 		return jsonResponse({ error: "请求来源不受允许。" }, 403);
 	}
@@ -64,10 +60,12 @@ async function handleLogin({ request, locals }: Parameters<APIRoute>[0]): Promis
 		return jsonResponse({ error: "登录请求过大。" }, 413);
 	}
 
-	const env = (locals as unknown as { runtime?: { env?: LoginEnv } }).runtime
-		?.env;
-	const password = env?.FIREFLY_ADMIN_PASSWORD;
-	const sessions = env?.FIREFLY_SESSIONS;
+	const runtimeEnv = workerEnv as unknown as {
+		FIREFLY_ADMIN_PASSWORD?: string;
+		FIREFLY_SESSIONS?: SessionKV;
+	};
+	const password = runtimeEnv.FIREFLY_ADMIN_PASSWORD;
+	const sessions = runtimeEnv.FIREFLY_SESSIONS;
 	if (!password || password.length < 16 || !sessions) {
 		return jsonResponse(
 			{
