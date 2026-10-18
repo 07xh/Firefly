@@ -63,3 +63,29 @@ test("unknown syntax becomes a safe component summary without evaluating express
   assert.equal(model.text, "原始说明");
   assert.doesNotMatch(JSON.stringify(model), /dangerousFunction/);
 });
+
+
+test("display math strips delimiters before KaTeX rendering", () => {
+  const model = inspectProtectedMarkdown("$$\n\\frac{a}{b} + c\n$$", "LaTeX display math");
+  assert.equal(model.kind, "math");
+  assert.equal(model.display, true);
+  assert.equal(model.text, "\\frac{a}{b} + c");
+  assert.doesNotMatch(model.text, /^\$\$|\$\$$/);
+});
+
+test("inline math separates readable prose from the TeX expression", () => {
+  const model = inspectProtectedMarkdown("欧拉公式 $e^{i\\pi} + 1 = 0$ 是常见例子。", "LaTeX inline math");
+  assert.equal(model.kind, "inline-math");
+  assert.deepEqual(model.segments, [
+    { kind: "text", text: "欧拉公式" },
+    { kind: "math", text: "e^{i\\pi} + 1 = 0" },
+    { kind: "text", text: "是常见例子。" },
+  ]);
+});
+
+test("math expressions remain inert text in the preview model", () => {
+  const source = String.raw`\htmlData{onclick=alert(1)}{x}`;
+  const model = inspectProtectedMarkdown("$$\n" + source + "\n$$", "LaTeX display math");
+  assert.equal(model.text, source);
+  assert.equal(typeof model.text, "string");
+});
