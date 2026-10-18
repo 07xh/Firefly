@@ -100,6 +100,14 @@
       "formatter": {
         "enabled": false
       }
+    },
+    {
+      "includes": [
+        "src/middleware.ts"
+      ],
+      "formatter": {
+        "enabled": false
+      }
     }
   ]
 }
