@@ -179,13 +179,38 @@ function isSafeTabGroupLabel(value) {
   return label.length > 0 && label.length <= 80 && !/['"\\<>{}\[\]\r\n\t]/.test(label);
 }
 
+
+const SAFE_CALLOUT_TYPES = new Set(["tip", "warning", "danger", "info", "success", "note", "important", "caution"]);
+
+function isSafeCalloutTitle(value, allowEmpty = true) {
+  const title = String(value ?? "").trim();
+  return (allowEmpty || title.length > 0)
+    && title.length <= 120
+    && !/[<>{}\x60*_~$\[\]\r\n]/.test(title);
+}
+
+function isSafeCalloutBody(value) {
+  const body = String(value ?? "").trim();
+  if (!body || body.length > 5000 || /[<>{}\x60*_~$\[\]]/.test(body)) return false;
+  return body.split(/\r?\n/).every(line =>
+    !/^\s*(?::{3,}|#{1,6}\s|>|[-*+]\s|\d+[.)]\s|!\[)/.test(line)
+  );
+}
+
 /** Data-only preview parser. It never evaluates MDX or inserts source as HTML. */
 export function inspectProtectedMarkdown(raw, reason = "") {
   const source = typeof raw === "string" ? raw : "";
   const detail = String(reason || "扩展 Markdown");
   const callout = source.match(/^\s*:{3,}\s*(tip|warning|danger|info|success|note|important|caution)(?:\[([^\]\r\n]*)\]|[ \t]+([^\r\n]*?))?[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*:{3,}[ \t]*$/i);
   if (callout) {
-    return { kind: "callout", title: (callout[2] ?? callout[3] ?? "").trim(), type: callout[1].toLowerCase(), text: plainText(callout[4]), body: callout[4].trim(), label: "提示容器" };
+    const title = (callout[2] ?? callout[3] ?? "").trim();
+    const body = callout[4].trim();
+    const type = callout[1].toLowerCase();
+    const editable = source === source.trim()
+      && SAFE_CALLOUT_TYPES.has(type)
+      && isSafeCalloutTitle(title, true)
+      && isSafeCalloutBody(body);
+    return { kind: "callout", title, type, text: plainText(body), body, editable, label: "提示容器" };
   }
 
   if (/latex.*display math/i.test(detail) || /^\s*\$\$[\s\S]*\$\$\s*$/.test(source)) {
@@ -394,4 +419,17 @@ export function serializeEditableTabGroup(model, values) {
     blocks.push(fence + language + "\n" + code + "\n" + fence);
   }
   return "<TabGroup labels={" + JSON.stringify(labels) + "}>\n" + blocks.join("\n") + "\n</TabGroup>";
+}
+
+
+/** Serializes only simple text callouts; formatted or nested bodies remain protected. */
+export function serializeEditableCallout(model, values) {
+  if (model?.kind !== "callout") throw new Error("只能保存提示容器。");
+  const type = String(values?.type ?? model.type ?? "").toLowerCase();
+  const title = String(values?.title ?? "").trim();
+  const body = String(values?.body ?? "").replace(/\r\n/g, "\n").trim();
+  if (!SAFE_CALLOUT_TYPES.has(type)) throw new Error("请选择有效的提示容器类型。");
+  if (!isSafeCalloutTitle(title, true)) throw new Error("标题不能包含 Markdown 强调、标签、表达式或换行。");
+  if (!isSafeCalloutBody(body)) throw new Error("正文必须是纯文本；列表、标题、Markdown 格式和嵌套组件仍需使用源码编辑。");
+  return ":::" + type + (title ? "[" + title + "]" : "") + "\n" + body + "\n:::";
 }
