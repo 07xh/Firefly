@@ -26,6 +26,50 @@ function readAttributes(source) {
   return attributes;
 }
 
+const COMPONENT_ITEM_TYPES = new Set(["default", "tip", "note", "important", "warning", "caution"]);
+const COMPONENT_ITEM_ICONS = new Set(["star", "rocket", "git", "flag", "book", "heart", "zap", "bug", "tag", "calendar", "code", "edit"]);
+const COMPONENT_TEXT_UNSAFE = /[<>{}\x60*_~$\[\]]/;
+
+function parseLiteralAttributes(source, allowedNames) {
+  const raw = String(source || "");
+  if (!raw.trim()) return [];
+  const pattern = /\s*([A-Za-z][A-Za-z0-9:_-]*)\s*=\s*(?:"([^"<>{}\r\n]*)"|'([^'<>{}\r\n]*)')/gy;
+  const attributes = [];
+  const seen = new Set();
+  let cursor = 0;
+  while (cursor < raw.length) {
+    pattern.lastIndex = cursor;
+    const match = pattern.exec(raw);
+    if (!match) return null;
+    const name = match[1];
+    const value = match[2] ?? match[3] ?? "";
+    if (!allowedNames.has(name) || seen.has(name)) return null;
+    if (value.length > 160 || /[\r\n]/.test(value)) return null;
+    seen.add(name);
+    attributes.push({ name, value });
+    cursor = pattern.lastIndex;
+  }
+  return attributes;
+}
+
+function isSafeStructuredText(value, maxLength = 500) {
+  const text = String(value ?? "").trim();
+  return text.length > 0 && text.length <= maxLength && !COMPONENT_TEXT_UNSAFE.test(text) && !/[\r\n]/.test(text);
+}
+
+function isEditableComponentItem(name, attributes, body) {
+  const allowed = name === "StepItem"
+    ? new Set(["title", "type", "icon"])
+    : new Set(["date", "title", "type", "icon"]);
+  const parsed = parseLiteralAttributes(attributes, allowed);
+  const text = String(body || "").trim();
+  if (!parsed || !isSafeStructuredText(text)) return false;
+  const values = Object.fromEntries(parsed.map(item => [item.name, item.value]));
+  if (values.type && !COMPONENT_ITEM_TYPES.has(values.type)) return false;
+  if (values.icon && !COMPONENT_ITEM_ICONS.has(values.icon)) return false;
+  return true;
+}
+
 function matchingComponentItems(body, name) {
   const result = [];
   const pattern = new RegExp("<" + name + "\\b([^>]*)>([\\s\\S]*?)<\\/" + name + "\\s*>", "g");
@@ -39,6 +83,9 @@ function matchingComponentItems(body, name) {
       icon: attr("icon") || "",
       text: plainText(match[2]),
       rawText: match[2].trim(),
+      raw: match[0],
+      offset: match.index ?? 0,
+      editable: isEditableComponentItem(name, match[1], match[2]),
     });
   }
   return result;
@@ -73,6 +120,45 @@ export function inspectProtectedMarkdown(raw, reason = "") {
     }
   }
 
+  const root = source.match(/<\s*(Steps|Timeline|TabGroup|StepItem|TimelineItem)\b([^>]*)>([\s\S]*?)<\/\s*\1\s*>/);
+  if (root) {
+    const name = root[1];
+    const attrs = readAttributes(root[2]);
+    if (name === "Steps" || name === "Timeline") {
+      const childName = name === "Steps" ? "StepItem" : "TimelineItem";
+      const childPattern = new RegExp("<" + childName + "\\b([^>]*)>([\\s\\S]*?)<\\/" + childName + "\\s*>", "g");
+      const items = matchingComponentItems(root[3], childName);
+      let remainder = root[3];
+      const matches = [...root[3].matchAll(childPattern)];
+      for (const match of matches.reverse()) {
+        const start = match.index ?? 0;
+        remainder = remainder.slice(0, start) + remainder.slice(start + match[0].length);
+      }
+      const editable = root[2].trim() === ""
+        && items.length > 0
+        && items.length === matches.length
+        && remainder.trim() === ""
+        && items.every(item => item.editable);
+      return {
+        kind: name === "Steps" ? "steps" : "timeline",
+        componentName: name,
+        title: name === "Steps" ? "步骤流程" : "时间线",
+        label: "Firefly 组件 · " + name,
+        editable,
+        items,
+      };
+    }
+    if (name === "TabGroup") {
+      const labelsAttr = root[2].match(/\blabels\s*=\s*\{\s*\[([\s\S]*?)\]\s*\}/);
+      const labels = labelsAttr ? [...labelsAttr[1].matchAll(/["']([^"']+)["']/g)].map(match => match[1]) : [];
+      const codeBlocks = [...root[3].matchAll(/\x60{3,}([^\n]*)\n([\s\S]*?)\x60{3,}/g)].map(match => ({ language: (match[1] || "").trim(), text: match[2].trim() }));
+      const panels = codeBlocks.length ? codeBlocks : root[3].split(/\n\s*\n/).filter(Boolean).map(text => ({ language: "", text: text.trim() }));
+      const items = panels.map((item, index) => ({ title: labels[index] || "内容 " + (index + 1), language: item.language, text: item.text }));
+      return { kind: "tabs", title: "标签页分组", label: "Firefly 组件 · TabGroup", items };
+    }
+    return { kind: "component", title: name, label: "Firefly 组件 · " + name, attributes: attrs, text: plainText(root[3]) };
+  }
+
   const badgePattern = /<Badge\b([^>]*)>([\s\S]*?)<\/Badge\s*>/g;
   if (badgePattern.test(source)) {
     badgePattern.lastIndex = 0;
@@ -87,30 +173,6 @@ export function inspectProtectedMarkdown(raw, reason = "") {
     }
     if (cursor < source.length) segments.push({ kind: "text", text: plainText(source.slice(cursor)) });
     return { kind: "badges", title: "徽章组件", segments: segments.filter(item => item.text), label: "徽章预览" };
-  }
-
-  const root = source.match(/<\s*(Steps|Timeline|TabGroup|StepItem|TimelineItem)\b([^>]*)>([\s\S]*?)<\/\s*\1\s*>/);
-  if (root) {
-    const name = root[1];
-    const attrs = readAttributes(root[2]);
-    if (name === "Steps" || name === "Timeline") {
-      const childName = name === "Steps" ? "StepItem" : "TimelineItem";
-      return {
-        kind: name === "Steps" ? "steps" : "timeline",
-        title: name === "Steps" ? "步骤流程" : "时间线",
-        label: "Firefly 组件 · " + name,
-        items: matchingComponentItems(root[3], childName),
-      };
-    }
-    if (name === "TabGroup") {
-      const labelsAttr = root[2].match(/\blabels\s*=\s*\{\s*\[([\s\S]*?)\]\s*\}/);
-      const labels = labelsAttr ? [...labelsAttr[1].matchAll(/["']([^"']+)["']/g)].map(match => match[1]) : [];
-      const codeBlocks = [...root[3].matchAll(/\x60{3,}([^\n]*)\n([\s\S]*?)\x60{3,}/g)].map(match => ({ language: (match[1] || "").trim(), text: match[2].trim() }));
-      const panels = codeBlocks.length ? codeBlocks : root[3].split(/\n\s*\n/).filter(Boolean).map(text => ({ language: "", text: text.trim() }));
-      const items = panels.map((item, index) => ({ title: labels[index] || "内容 " + (index + 1), language: item.language, text: item.text }));
-      return { kind: "tabs", title: "标签页分组", label: "Firefly 组件 · TabGroup", items };
-    }
-    return { kind: "component", title: name, label: "Firefly 组件 · " + name, attributes: attrs, text: plainText(root[3]) };
   }
 
   if (/^\s*[-*+]\s+\[[ xX]\]/m.test(source)) {
@@ -164,4 +226,38 @@ export function inspectProtectedMarkdown(raw, reason = "") {
   }
 
   return { kind: "unknown", title: detail, text: plainText(source), label: "扩展语法预览" };
+}
+
+export function serializeEditableStepTimeline(model, values) {
+  const componentName = model?.kind === "timeline" ? "Timeline" : "Steps";
+  const childName = componentName === "Timeline" ? "TimelineItem" : "StepItem";
+  const items = Array.isArray(values) ? values : [];
+  if (!items.length || items.length > 30) throw new Error("流程项目数量必须为 1 到 30 项。");
+  const allowedTypes = new Set(["default", "tip", "note", "important", "warning", "caution"]);
+  const allowedIcons = new Set(["", "star", "rocket", "git", "flag", "book", "heart", "zap", "bug", "tag", "calendar", "code", "edit"]);
+  const attribute = (name, value) => {
+    const text = String(value ?? "").trim();
+    if (!text) return "";
+    if (text.length > 160 || /[<>{}"\r\n]/.test(text)) throw new Error(name + " 不能包含标签、表达式、引号或换行。");
+    return " " + name + '="' + text.replace(/&/g, "&amp;") + '"';
+  };
+  const lines = ["<" + componentName + ">"];
+  for (const item of items) {
+    const title = String(item.title || "").trim();
+    const text = String(item.text || "").trim();
+    const type = String(item.type || "default");
+    const icon = String(item.icon || "");
+    if (!isSafeStructuredText(title, 160)) throw new Error("每一项都需要安全的纯文字标题。");
+    if (!isSafeStructuredText(text, 500)) throw new Error("正文不能为空，且暂不支持嵌套 Markdown/MDX 符号。");
+    if (!allowedTypes.has(type)) throw new Error("不支持的项目颜色类型。");
+    if (!allowedIcons.has(icon)) throw new Error("不支持的图标名称。");
+    let attrs = "";
+    if (componentName === "Timeline") attrs += attribute("date", item.date);
+    attrs += attribute("title", title);
+    if (type !== "default") attrs += attribute("type", type);
+    if (icon) attrs += attribute("icon", icon);
+    lines.push("  <" + childName + attrs + ">" + text + "</" + childName + ">");
+  }
+  lines.push("</" + componentName + ">");
+  return lines.join("\n");
 }
