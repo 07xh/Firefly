@@ -94,6 +94,31 @@ function updateFrontmatterField(content: string, key: string, value: string): st
 	return content.replace(match[0], "---\n" + updated + "\n---");
 }
 
+
+function frontmatterText(content: string, key: string): string {
+	const match = content.match(new RegExp("^" + key + ":\\s*(.*?)\\s*$", "m"));
+	if (!match) return "";
+	const raw = match[1].trim();
+	try {
+		const parsed = JSON.parse(raw) as unknown;
+		return typeof parsed === "string" ? parsed : "";
+	} catch {
+		return raw.replace(/^['"]|['"]$/g, "");
+	}
+}
+
+function frontmatterTags(content: string): string[] {
+	const raw = content.match(/^tags:\\s*(.*?)\\s*$/m)?.[1]?.trim() ?? "";
+	if (!raw) return [];
+	try {
+		const parsed = JSON.parse(raw) as unknown;
+		if (Array.isArray(parsed)) return parsed.filter((tag): tag is string => typeof tag === "string");
+	} catch {
+		// Existing posts may use standard YAML's unquoted bracket-list syntax.
+	}
+	return raw.replace(/^\\[|\\]$/g, "").split(",").map((tag) => tag.trim().replace(/^['"]|['"]$/g, "")).filter(Boolean);
+}
+
 function validDate(value: unknown): value is string {
 	if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
 	const date = new Date(value + "T00:00:00Z");
@@ -168,7 +193,16 @@ export const GET: APIRoute = async () => {
 				const post = await readPost(file.path, config);
 				const match = post.content.match(/^title:\s*(?:"([^"]*)"|'([^']*)'|(.+))\s*$/m);
 				const date = post.content.match(/^published:\s*(\d{4}-\d{2}-\d{2})\s*$/m);
-				return { path: post.path, sha: post.sha, content: post.content, title: (match?.[1] ?? match?.[2] ?? match?.[3] ?? file.path.split("/").pop() ?? "").trim(), published: date?.[1] ?? "", draft: /^draft:\s*true\s*$/m.test(post.content) };
+				return {
+					path: post.path,
+					sha: post.sha,
+					content: post.content,
+					title: (match?.[1] ?? match?.[2] ?? match?.[3] ?? file.path.split("/").pop() ?? "").trim(),
+					published: date?.[1] ?? "",
+					category: frontmatterText(post.content, "category"),
+					tags: frontmatterTags(post.content),
+					draft: /^draft:\s*true\s*$/m.test(post.content),
+				};
 			} catch {
 				return { path: file.path, sha: file.sha, title: file.path.split("/").pop() ?? file.path, published: "", draft: false };
 			}
@@ -243,7 +277,13 @@ export const PUT: APIRoute = async ({ request }) => {
 			body: JSON.stringify({ message: `Update article: ${slug}`, content: encodeBase64(content), sha: current.sha, branch: config.branch }),
 		});
 
-		if (!response.ok) return json({ error: await githubFailure(response, "GitHub 更新失败") }, 502);
+		if (!response.ok) {
+			const message = await githubFailure(response, "GitHub 更新失败");
+			if (response.status === 409 || response.status === 422) {
+				return json({ error: "GitHub 检测到并发修改或内容冲突。当前编辑内容仍保留，请重新载入最新版本后比较再保存。", detail: message }, 409);
+			}
+			return json({ error: message }, 502);
+		}
 		const written = (await response.json()) as { commit?: { sha?: string; html_url?: string } };
 		return json({ ok: true, path, commitSha: written.commit?.sha, commitUrl: written.commit?.html_url });
 	} catch (error) {
@@ -264,7 +304,13 @@ export const DELETE: APIRoute = async ({ request }) => {
 			body: JSON.stringify({ message: `Delete article: ${path.split("/").pop()}`, sha: current.sha, branch: config.branch }),
 		});
 
-		if (!response.ok) return json({ error: await githubFailure(response, "GitHub 删除失败") }, 502);
+		if (!response.ok) {
+			const message = await githubFailure(response, "GitHub 删除失败");
+			if (response.status === 409 || response.status === 422) {
+				return json({ error: "GitHub 检测到并发修改或删除冲突。文章未确认删除，请刷新列表后重新检查。", detail: message }, 409);
+			}
+			return json({ error: message }, 502);
+		}
 		return json({ ok: true, path });
 	} catch (error) {
 		return json({ error: error instanceof Error ? error.message : "Internal error" }, 503);
