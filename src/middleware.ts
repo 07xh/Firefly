@@ -110,7 +110,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 			const maxBodyBytes = isImageUpload ? 5 * 1024 * 1024 : 1_048_576;
 			if (
 				contentLength !== null &&
-				(!/^\\d+$/.test(contentLength) || Number(contentLength) > maxBodyBytes)
+				(!/^\d+$/.test(contentLength) || Number(contentLength) > maxBodyBytes)
 			) {
 				return errorResponse(
 					isImageUpload ? "图片上传请求超过 5 MiB 限制。" : "请求正文超过 1 MiB 限制。",
