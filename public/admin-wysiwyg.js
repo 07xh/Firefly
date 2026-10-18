@@ -1539,7 +1539,7 @@ async function loadTiptapModules() {
     const save = document.createElement("button");
     save.type = "button";
     save.className = "firefly-structured-editor__button firefly-structured-editor__button--primary";
-    save.textContent = "保存清单";
+    save.textContent = "应用更改";
     actions.append(add, cancel, save);
     inner.append(heading, hint, list, error, actions);
     dialog.append(inner);
@@ -1735,13 +1735,13 @@ async function loadTiptapModules() {
       }
       const position = getPos();
       if (typeof position !== "number") {
-        error.textContent = "折叠区已不在文档中，请关闭后重新选择。";
+        error.textContent = "这段内容已被移除，请关闭窗口后重新选择。";
         error.hidden = false;
         return;
       }
       const current = activeEditor.state.doc.nodeAt(position);
       if (!current || current.type.name !== "protectedMarkdownBlock") {
-        error.textContent = "无法定位原始折叠区，已取消修改。";
+        error.textContent = "找不到这段内容，已取消修改。";
         error.hidden = false;
         return;
       }
