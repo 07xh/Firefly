@@ -417,6 +417,10 @@ export const prerender = false;
 </main>
 <script>
 // @ts-nocheck
+import katex from "katex";
+import "katex/dist/katex.min.css";
+Object.assign(window, { FireflyKatex: katex });
+window.dispatchEvent(new Event("firefly:katex-ready"));
 const $ = id => document.getElementById(id);
 let articles = [], selected = null;
 Object.defineProperty(window, "FireflyArticleContext", {
@@ -1175,4 +1179,4 @@ reset();refresh();loadSettings();
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=20261018-visual-blocks"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=20261018-katex-tabs"></script></body></html>
