@@ -2401,7 +2401,7 @@ async function loadTiptapModules() {
       return;
     }
 
-    if (editor.state.selection.empty && editor.isActive("link")) {
+    if (editor.isActive("link")) {
       editor.chain().focus().extendMarkRange("link").run();
     }
 
