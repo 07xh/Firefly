@@ -1,5 +1,5 @@
-import type { ProfileConfig } from "../types/profileConfig";
 import siteSettings from "../data/settings.json";
+import type { ProfileConfig } from "../types/profileConfig";
 
 export const profileConfig: ProfileConfig = {
 	// 头像

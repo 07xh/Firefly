@@ -1,5 +1,5 @@
-import type { MusicPlayerConfig } from "../types/musicConfig";
 import siteSettings from "../data/settings.json";
+import type { MusicPlayerConfig } from "../types/musicConfig";
 
 // 音乐播放器配置
 export const musicPlayerConfig: MusicPlayerConfig = {

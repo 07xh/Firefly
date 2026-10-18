@@ -218,10 +218,9 @@ export const backgroundWallpaper: BackgroundWallpaperConfig = {
 
 const customBackgroundImage = siteSettings.backgroundImage.trim();
 if (customBackgroundImage) {
-  const wallpaperSource = backgroundWallpaper.src;
-  if (typeof wallpaperSource === "object" && !Array.isArray(wallpaperSource)) {
-    wallpaperSource.desktop = customBackgroundImage;
-    wallpaperSource.mobile = customBackgroundImage;
-  }
+	const wallpaperSource = backgroundWallpaper.src;
+	if (typeof wallpaperSource === "object" && !Array.isArray(wallpaperSource)) {
+		wallpaperSource.desktop = customBackgroundImage;
+		wallpaperSource.mobile = customBackgroundImage;
+	}
 }
-
