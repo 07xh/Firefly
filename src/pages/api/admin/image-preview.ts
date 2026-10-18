@@ -31,7 +31,7 @@ function json(message: string, status: number): Response {
 }
 
 function isAllowedImagePath(path: string): boolean {
-  if (path.length > 2048 || !path.startsWith("src/content/posts/") || path.includes("\\\\") || /[\\x00-\\x1f\\x7f]/.test(path)) return false;
+  if (path.length > 2048 || !path.startsWith("src/content/posts/") || path.includes("\\") || /[\x00-\x1f\x7f]/.test(path)) return false;
   const segments = path.split("/");
   if (segments.some(segment => !segment || segment === "." || segment === "..")) return false;
   const extension = segments.at(-1)?.split(".").pop()?.toLowerCase() || "";
@@ -40,7 +40,7 @@ function isAllowedImagePath(path: string): boolean {
 
 function decodeBase64Image(value: string): Uint8Array | null {
   try {
-    const binary = atob(value.replace(/\\s/g, ""));
+    const binary = atob(value.replace(/\s/g, ""));
     return Uint8Array.from(binary, char => char.charCodeAt(0));
   } catch {
     return null;
@@ -56,22 +56,27 @@ export const GET: APIRoute = async ({ url }) => {
   const repo = env.GITHUB_CONTENTS_REPO?.trim() || "07xh/Firefly";
   const branch = env.GITHUB_CONTENTS_BRANCH?.trim() || "master";
   if (!token) return json("图片预览服务尚未配置。", 503);
-  if (!/^[\\w.-]+\\/[\\w.-]+$/.test(repo)) return json("仓库配置不合法。", 503);
+  if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) return json("仓库配置不合法。", 503);
 
   try {
-    const githubUrl = `https://api.github.com/repos/${repo}/contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(branch)}`;
+    const githubUrl = "https://api.github.com/repos/" + repo + "/contents/" + path.split("/").map(encodeURIComponent).join("/") + "?ref=" + encodeURIComponent(branch);
     const response = await fetch(githubUrl, {
       headers: {
         Accept: "application/vnd.github.raw+json",
-        Authorization: `Bearer ${token}`,
+        Authorization: "Bearer " + token,
         "User-Agent": "Firefly-Admin/1.0 (https://github.com/07xh/Firefly)",
         "X-GitHub-Api-Version": "2022-11-28",
       },
     });
     if (!response.ok) {
-      const status = response.status === 404 ? 404 : response.status === 401 || response.status === 403 ? 502 : 502;
       return json(response.status === 404 ? "找不到这张图片，请检查文章中的图片路径。"
-        : `读取图片失败（${response.status}），请检查仓库读取权限。`, status);
+        : "读取图片失败（" + response.status + "），请检查仓库读取权限。", response.status === 404 ? 404 : 502);
+    }
+
+    const announcedSize = Number(response.headers.get("content-length"));
+    if (Number.isFinite(announcedSize) && announcedSize > MAX_PREVIEW_BYTES) {
+      await response.body?.cancel();
+      return json("图片超过后台预览的 12 MiB 限制；原文件未被修改。", 413);
     }
 
     let bytes: Uint8Array;
@@ -85,8 +90,7 @@ export const GET: APIRoute = async ({ url }) => {
       if (!decoded) return json("图片内容解码失败。", 502);
       bytes = decoded;
     } else {
-      const buffer = await response.arrayBuffer();
-      bytes = new Uint8Array(buffer);
+      bytes = new Uint8Array(await response.arrayBuffer());
     }
 
     if (bytes.byteLength < 1) return json("图片文件为空。", 404);
