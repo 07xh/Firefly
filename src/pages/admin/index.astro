@@ -466,8 +466,8 @@ export const prerender = false;
 </section>
 <section class="min-w-0 rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm"><h2 id="formTitle" style="font-size:16px;margin:0 0 16px">新建文章</h2><form id="editor">
 <div class="field"><label for="title">标题 *</label><input id="title" required maxlength="200"></div>
-<div class="grid"><div class="field"><label for="slug">文件名 *</label><input id="slug" required placeholder="my-post"></div><div class="field"><label for="published">展示发布日期 *</label><input id="published" type="date" required></div></div>
-<div class="grid"><div class="field"><label for="date">定时发布时间（北京时间）</label><input id="date" type="datetime-local" step="60"><small class="muted">留空表示立即生效；填写未来时间后，系统会自动安排重建。</small></div><div class="field"><label for="articlePassword">访问密码（可选）</label><input id="articlePassword" type="password" maxlength="200" autocomplete="new-password" placeholder="留空则不启用密码保护"><small class="muted">输入后，前台将显示密码解锁页面。</small></div></div>
+<div class="grid"><div class="field"><label for="slug">文章链接名称 *</label><input id="slug" required placeholder="my-first-post"><small>用于生成文章网址；可以写中文、字母或数字，也可以使用连字符和下划线，不需要填写完整网址。</small></div><div class="field"><label for="published">文章日期 *</label><input id="published" type="date" required></div></div>
+<div class="grid"><div class="field"><label for="date">计划公开时间（北京时间）</label><input id="date" type="datetime-local" step="60"><small class="muted">不填写则不设定定时公开时间；选择未来时间后，网站会在指定时间自动更新。</small></div><div class="field"><label for="articlePassword">访问密码（可选）</label><input id="articlePassword" type="password" maxlength="200" autocomplete="new-password" placeholder="留空则不启用密码保护"><small class="muted">输入后，前台将显示密码解锁页面。</small></div></div>
 <div class="field"><label for="passwordHint">密码提示（可选）</label><input id="passwordHint" maxlength="120" placeholder="例如：课程名称"></div>
 <p class="muted" style="color:#b42318">安全提醒：当前文章仓库是公开的，文章原文和访问密码也可能被他人查看。页面密码不能隐藏仓库中的文件，请不要在这里保存真正机密的信息。</p>
 <div class="grid"><div class="field"><label for="category">分类</label><input id="category" maxlength="100"></div><div class="field"><label for="tags">标签（逗号分隔）</label><input id="tags" placeholder="技术, 随笔"></div></div>
@@ -480,9 +480,9 @@ export const prerender = false;
   <span id="localRecoveryStatus" class="muted" role="status" aria-live="polite">默认关闭。开启后仅在当前浏览器标签页保存未加密文章的恢复副本。</span>
 </div>
 <div class="editor-tabs" role="tablist" aria-label="文章编辑模式">
-<button class="btn active" type="button" id="visualTab" role="tab" aria-selected="true" disabled>可视化编辑器加载中…</button>
+<button class="btn active" type="button" id="visualTab" role="tab" aria-selected="true" disabled>正在准备编辑区…</button>
 <button class="btn" type="button" id="editorTab" role="tab" aria-selected="false" title="高级编辑：仅在需要修改特殊内容原文时使用">高级模式</button>
-<button class="btn" type="button" id="previewTab" role="tab" aria-selected="false">预览</button>
+<button class="btn" type="button" id="previewTab" role="tab" aria-selected="false">预览效果</button>
 </div>
 <div class="editor-reading-controls" id="editorReadingControls" aria-label="阅读字号设置">
   <span class="editor-reading-controls__label">阅读字号</span>
@@ -507,9 +507,9 @@ export const prerender = false;
     <button type="button" data-editor-action="bullet" title="无序列表">• 列表</button>
     <button type="button" data-editor-action="ordered" title="有序列表">1. 列表</button>
     <button type="button" data-editor-action="quote" title="引用">引用</button>
-    <button type="button" data-editor-action="badge" title="插入可直接编辑的徽章组件">徽章</button>
+    <button type="button" data-editor-action="badge" title="插入可直接编辑的文字标签">文字标签</button>
     <button type="button" data-editor-action="callout" title="插入可编辑提示卡片">提示卡片</button>
-    <button type="button" data-editor-action="code" title="代码块">代码</button>
+    <button type="button" data-editor-action="code" title="插入一段代码示例">代码示例</button>
     <button type="button" data-editor-action="rule" title="分割线">分割线</button>
     <span class="toolbar-divider" aria-hidden="true"></span>
     <button type="button" data-editor-action="link" title="插入或编辑链接">链接</button>
@@ -537,17 +537,17 @@ export const prerender = false;
   <div class="rich-editor-help">直接输入文字并按回车分段。选中文字后，用工具栏调整标题、加粗、列表、链接、引用、图片和表格。公式与特殊版式会作为内容卡片显示并完整保留；平时只需编辑普通文字。</div>
 </div>
 <div id="wysiwygFallback" hidden>可视化编辑器暂时无法加载，文章原文没有被修改。你可以使用“高级模式”继续编辑。</div>
-<textarea id="body" spellcheck="false" hidden placeholder="高级模式：这里直接编辑文章原文。日常写作请返回“可视化编辑”。"></textarea>
+<textarea id="body" spellcheck="false" hidden placeholder="高级模式：这里直接编辑文章原文。日常写作请返回“直接编辑正文”。"></textarea>
 <div id="markdownPreview" class="markdown-preview" hidden><p class="muted">点击“预览”查看当前正文。</p></div>
 </div>
-<label class="check"><input id="draft" type="checkbox" checked> 草稿箱状态（勾选后保存为草稿；取消勾选可保存已发布文章）</label>
+<label class="check"><input id="draft" type="checkbox" checked> 暂不公开（勾选后保存到草稿箱；取消勾选后可公开或定时公开）</label>
 <div class="actions"><button class="btn" type="button" id="checkGitHub">检查文章保存权限</button><button class="btn" type="submit" id="saveDraft" value="save">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空表单</button></div>
-</form><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿后，文章会保存在草稿箱，不会公开显示。发布文章后，网站会自动更新；页面会显示更新进度。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看 Cloudflare 部署日志 ↗</a></section>
+</form><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿后，文章会保存在草稿箱，不会公开显示。发布文章后，网站会自动更新；页面会显示更新进度。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看网站更新记录 ↗</a></section>
 </div>
 <section id="appearanceTabPanel" role="tabpanel" aria-labelledby="tabAppearance" class="settings-panel min-w-0" hidden>
   <div class="mb-1 text-base font-semibold text-gray-800">全局外观配置</div>
   <p class="mb-5 text-sm leading-6 text-gray-500">
-    网站外观设置会自动保存在后台配置中。
+    网站外观设置会自动保存在后台；保存后会更新网站。
     保存后，网站会自动更新；原有文章管理和登录保护保持不变。
   </p>
   <form id="settingsForm" class="settings-cards">
@@ -558,9 +558,9 @@ export const prerender = false;
           <label for="backgroundColor">全局背景颜色</label>
           <div class="settings-color-row">
             <input id="backgroundColorPicker" type="color" value="#f3f6f3" aria-label="选择全局背景颜色" class="settings-color-picker">
-            <input id="backgroundColor" name="backgroundColor" type="text" maxlength="7" autocomplete="off" placeholder="留空使用主题默认颜色，例如 #f3f6f3" class="settings-control">
+            <input id="backgroundColor" name="backgroundColor" type="text" maxlength="7" autocomplete="off" placeholder="点击左侧色块选择颜色；清空后恢复默认配色" class="settings-control">
           </div>
-          <small>支持 #RGB 或 #RRGGBB。选择颜色会自动填写色值；清空文本框后保存则恢复主题默认配色。</small>
+          <small>点击左侧色块即可选择颜色；清空后保存会恢复主题默认配色。</small>
         </div>
       </div>
 <div class="settings-grid">
@@ -568,10 +568,10 @@ export const prerender = false;
         <div class="settings-field"><label for="bannerSubtitle">副标题</label><input id="bannerSubtitle" name="bannerSubtitle" type="text" maxlength="500" placeholder="In Reddened Chrysalis, I Once Rest" class="settings-control"></div>
         <div class="settings-field" style="grid-column:1/-1">
           <label for="backgroundImage">背景图片链接</label>
-          <input id="backgroundImage" name="backgroundImage" type="url" maxlength="2048" autocomplete="url" placeholder="https://example.com/background.jpg" class="settings-control">
+          <input id="backgroundImage" name="backgroundImage" type="url" maxlength="2048" autocomplete="url" placeholder="粘贴背景图片网址" class="settings-control">
           <div class="settings-preview" id="backgroundImagePreviewBox">
             <img id="backgroundImagePreview" alt="背景图片缩略预览" hidden>
-            <span id="backgroundImagePreviewEmpty" class="settings-preview-note">填写 HTTP/HTTPS 图片链接后，可在此预览。</span>
+            <span id="backgroundImagePreviewEmpty" class="settings-preview-note">填写图片网址后，可在此预览。</span>
             <span id="backgroundImagePreviewError" class="settings-preview-note" hidden>图片加载失败，请检查链接是否可公开访问。</span>
           </div>
           <small>清空时保留主题默认背景图。预览仅用于检查链接是否可访问。</small>
@@ -582,12 +582,12 @@ export const prerender = false;
 <section class="settings-card" aria-labelledby="profileAnnouncementTitle">
       <div class="settings-card-heading"><span class="settings-card-number">02</span><div><h3 id="profileAnnouncementTitle">个人名片与公告</h3><p>配置头像、昵称、个人签名和侧栏多行公告。</p></div></div>
 <div class="settings-grid">
-        <div class="settings-field"><label for="avatar">头像链接</label><input id="avatar" name="avatar" type="url" maxlength="2048" placeholder="https://example.com/avatar.png" class="settings-control"></div>
+        <div class="settings-field"><label for="avatar">头像链接</label><input id="avatar" name="avatar" type="url" maxlength="2048" placeholder="粘贴头像图片网址" class="settings-control"></div>
         <div class="settings-field"><label for="nickname">昵称 / 用户名</label><input id="nickname" name="nickname" type="text" maxlength="120" placeholder="XiaYe" class="settings-control"></div>
         <div class="settings-field" style="grid-column:1/-1">
           <div class="settings-preview is-avatar" id="avatarPreviewBox">
             <img id="avatarPreview" alt="个人头像预览" hidden>
-            <span id="avatarPreviewEmpty" class="settings-preview-note">填写头像链接后，可在此查看头像预览。</span>
+            <span id="avatarPreviewEmpty" class="settings-preview-note">填写头像图片网址后，可在此查看预览。</span>
             <span id="avatarPreviewError" class="settings-preview-note" hidden>头像加载失败，请确认图片链接可公开访问。</span>
           </div>
         </div>
@@ -614,13 +614,13 @@ export const prerender = false;
       </div>
       <div class="settings-field">
         <label for="aboutContent">关于我页面正文</label>
-        <textarea id="aboutContent" name="aboutContent" rows="12" maxlength="30000" placeholder="# 关于我 / About Me&#10;&#10;在这里填写个人介绍、关于本站、GitHub 开源地址等内容。" class="settings-control"></textarea>
-        <small>最多 30000 个字符。支持标题、列表、加粗、链接、引用和表格；保存后会自动更新到网站。</small>
+        <textarea id="aboutContent" name="aboutContent" rows="12" maxlength="30000" placeholder="在这里填写个人介绍、关于本站、开源项目地址等内容。&#10;&#10;可以直接输入文字，也可以空一行分段。" class="settings-control"></textarea>
+        <small>最多 30000 个字符。可以直接输入文字，也支持标题、列表、加粗、链接、引用和表格；保存后会自动更新到网站。</small>
       </div>
       <div class="settings-field mt-4">
         <label for="donationQrCode">打赏二维码图片链接</label>
         <input id="donationQrCode" name="donationQrCode" type="url" maxlength="2048" placeholder="https://example.com/donation-qr.png" class="settings-control">
-        <small>填写可公开访问的 HTTP/HTTPS 图片地址；该图片会在关于页面的打赏卡片中显示。</small>
+        <small>填写可公开访问的图片网址；该图片会显示在“关于我”页面的打赏卡片中。</small>
       </div>
     </section>
 
@@ -645,19 +645,19 @@ export const prerender = false;
           <label for="backgroundMusic">背景音乐外链</label>
           <input id="backgroundMusic" name="backgroundMusic" type="url" maxlength="2048" placeholder="https://example.com/music.mp3" class="settings-control">
           <audio id="backgroundMusicPreview" class="w-full" controls preload="none" hidden></audio>
-          <small>请使用可直接播放的 HTTP/HTTPS 音频地址。这里仅作预览，不会自动播放。</small>
+          <small>请填写可直接播放的音乐网址。可以先点播放键试听，网站不会自动播放。</small>
         </div>
         <label class="settings-toggle"><input id="showSupportAndShare" name="showSupportAndShare" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">开启文章页“支持与分享”模块<small>关闭后，接入该配置的文章组件应隐藏支持与分享卡片。</small></span></label>
       </div>
     </section>
 
 <section class="settings-card" aria-labelledby="layoutSettingsTitle">
-  <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="layoutSettingsTitle">布局管理与响应式显示</h3><p>保存后，网站会自动重新构建并应用这些设置。</p></div></div>
+  <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="layoutSettingsTitle">页面布局</h3><p>保存后，网站会自动重新构建并应用这些设置。</p></div></div>
   <div class="settings-grid">
     <div class="settings-field"><label for="layoutSidebarPosition">桌面侧边栏布局</label><select id="layoutSidebarPosition" name="layoutSidebarPosition" class="settings-control"><option value="left">左侧边栏</option><option value="right">右侧边栏</option><option value="both">双侧边栏</option></select><small>单侧布局让正文更宽；双侧布局可同时展示左右辅助信息。</small></div>
     <div class="settings-field"><label for="layoutTabletSidebar">平板端侧边栏位置</label><select id="layoutTabletSidebar" name="layoutTabletSidebar" class="settings-control"><option value="left">平板显示左侧</option><option value="right">平板显示右侧</option></select><small>仅桌面选择“双侧边栏”时有效。</small></div>
     <div class="settings-field"><label for="layoutPostListMode">桌面文章列表布局</label><select id="layoutPostListMode" name="layoutPostListMode" class="settings-control"><option value="list">列表模式（单列）</option><option value="grid">网格模式（自适应多列）</option></select></div>
-    <div class="settings-field"><label for="layoutMobilePostListMode">移动端文章布局</label><select id="layoutMobilePostListMode" name="layoutMobilePostListMode" class="settings-control"><option value="list">列表模式</option><option value="grid">网格模式</option></select><small>极窄屏幕仍遵循主题可读性保护规则。</small></div>
+    <div class="settings-field"><label for="layoutMobilePostListMode">移动端文章布局</label><select id="layoutMobilePostListMode" name="layoutMobilePostListMode" class="settings-control"><option value="list">列表模式</option><option value="grid">网格模式</option></select><small>手机屏幕较窄时，网站会优先保证正文易读。</small></div>
     <div class="settings-field"><label for="layoutCoverPosition">列表模式封面位置</label><select id="layoutCoverPosition" name="layoutCoverPosition" class="settings-control"><option value="right">封面在右侧</option><option value="left">封面在左侧</option></select><small>仅影响列表模式；网格封面固定在卡片顶部。</small></div>
     <div class="settings-field"><label for="layoutGridColumnWidth">网格卡片最小宽度（px）</label><input id="layoutGridColumnWidth" name="layoutGridColumnWidth" type="number" min="220" max="460" step="10" required value="320" class="settings-control"><small>220–460px；数值越小通常可显示更多列。</small></div>
   </div>
@@ -1238,7 +1238,7 @@ reset();refresh();loadSettings();
   // Accessible second-confirmation modal. A rejected request leaves the article untouched.
   const dialog = document.createElement("dialog");
   dialog.className = "firefly-delete-dialog";
-  dialog.innerHTML = '<form method="dialog" class="firefly-delete-card"><div aria-hidden="true" style="display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#fff0ef;color:#b42318;font-weight:900;font-size:22px">!</div><h2>确认删除文章？</h2><p>删除会提交到 GitHub 并触发 Cloudflare 重新部署。后台不能直接撤销，但可通过 Git 历史恢复。</p><p id="fireflyDeleteTarget" style="padding:9px 11px;border-radius:8px;background:#f7f8f7"></p><div class="firefly-delete-actions"><button type="submit" value="cancel" class="btn">取消</button><button type="submit" value="confirm" class="btn danger">确认删除</button></div></form>';
+  dialog.innerHTML = '<form method="dialog" class="firefly-delete-card"><div aria-hidden="true" style="display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#fff0ef;color:#b42318;font-weight:900;font-size:22px">!</div><h2>确认删除文章？</h2><p>删除后会从网站移除这篇文章，网站也会自动更新；此操作无法撤销。后台不能直接撤销，但可通过 Git 历史恢复。</p><p id="fireflyDeleteTarget" style="padding:9px 11px;border-radius:8px;background:#f7f8f7"></p><div class="firefly-delete-actions"><button type="submit" value="cancel" class="btn">取消</button><button type="submit" value="confirm" class="btn danger">确认删除</button></div></form>';
   document.body.append(dialog);
   function confirmDelete(target) {
     $("fireflyDeleteTarget").textContent = target;
