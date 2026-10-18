@@ -35,7 +35,7 @@
   }
   function tagsFor(article) {
     if (Array.isArray(article.tags)) return article.tags;
-    const raw = valueFrom(article.content, "tags").replace(/^\\[|\\]$/g, "");
+    const raw = valueFrom(article.content, "tags").replace(/^\[|\]$/g, "");
     return raw ? raw.split(",").map(x => x.trim().replace(/^['"]|['"]$/g, "")).filter(Boolean) : [];
   }
   function populateFilters() {
@@ -133,7 +133,7 @@
       if (response.status === 401) { goLogin(); throw new Error("登录已过期，请重新登录。"); }
       const data = await response.json().catch(() => ({ error: "图片上传接口响应无法解析" }));
       if (!response.ok) throw new Error(data.error || "图片上传失败");
-      const alt = (file.name || "图片").replace(/[\\[\\]\\n\\r]/g, " ").trim().slice(0, 100) || "图片";
+      const alt = (file.name || "图片").replace(/[\[\]\n\r]/g, " ").trim().slice(0, 100) || "图片";
       const markdown = "![" + alt + "](" + data.imageUrl + ")";
       const field = $("body");
       if (!field.value.includes(marker)) throw new Error("图片已上传，但占位符不见了。请手动插入：" + data.imageUrl);
