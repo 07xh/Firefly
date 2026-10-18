@@ -120,22 +120,6 @@ export function inspectProtectedMarkdown(raw, reason = "") {
     }
   }
 
-  const badgePattern = /<Badge\b([^>]*)>([\s\S]*?)<\/Badge\s*>/g;
-  if (badgePattern.test(source)) {
-    badgePattern.lastIndex = 0;
-    const segments = [];
-    let cursor = 0;
-    for (const match of source.matchAll(badgePattern)) {
-      const index = match.index ?? 0;
-      if (index > cursor) segments.push({ kind: "text", text: plainText(source.slice(cursor, index)) });
-      const attrs = readAttributes(match[1]);
-      segments.push({ kind: "badge", type: attrs.find(item => item.name === "type")?.value || "default", text: plainText(match[2]) });
-      cursor = index + match[0].length;
-    }
-    if (cursor < source.length) segments.push({ kind: "text", text: plainText(source.slice(cursor)) });
-    return { kind: "badges", title: "徽章组件", segments: segments.filter(item => item.text), label: "徽章预览" };
-  }
-
   const root = source.match(/<\s*(Steps|Timeline|TabGroup|StepItem|TimelineItem)\b([^>]*)>([\s\S]*?)<\/\s*\1\s*>/);
   if (root) {
     const name = root[1];
@@ -173,6 +157,22 @@ export function inspectProtectedMarkdown(raw, reason = "") {
       return { kind: "tabs", title: "标签页分组", label: "Firefly 组件 · TabGroup", items };
     }
     return { kind: "component", title: name, label: "Firefly 组件 · " + name, attributes: attrs, text: plainText(root[3]) };
+  }
+
+  const badgePattern = /<Badge\b([^>]*)>([\s\S]*?)<\/Badge\s*>/g;
+  if (badgePattern.test(source)) {
+    badgePattern.lastIndex = 0;
+    const segments = [];
+    let cursor = 0;
+    for (const match of source.matchAll(badgePattern)) {
+      const index = match.index ?? 0;
+      if (index > cursor) segments.push({ kind: "text", text: plainText(source.slice(cursor, index)) });
+      const attrs = readAttributes(match[1]);
+      segments.push({ kind: "badge", type: attrs.find(item => item.name === "type")?.value || "default", text: plainText(match[2]) });
+      cursor = index + match[0].length;
+    }
+    if (cursor < source.length) segments.push({ kind: "text", text: plainText(source.slice(cursor)) });
+    return { kind: "badges", title: "徽章组件", segments: segments.filter(item => item.text), label: "徽章预览" };
   }
 
   if (/^\s*[-*+]\s+\[[ xX]\]/m.test(source)) {
