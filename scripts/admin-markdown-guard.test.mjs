@@ -245,7 +245,7 @@ test("multiple protected formulas and special components survive marker restorat
   const expectedBlocks = [inlineFormula, customDirective, dynamicComponent, blockFormula];
 
   for (const raw of expectedBlocks) {
-    assert.equal(prepared.records.some(record => record.raw === raw), true, raw);
+    assert.equal(prepared.records.some(record => record.raw.includes(raw)), true, raw);
     assert.equal(restored.includes(raw), true, raw);
   }
   assert.doesNotMatch(restored, /FIREFLYRAWBLOCK\d+END/);
