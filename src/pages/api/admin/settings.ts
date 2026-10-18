@@ -14,6 +14,7 @@ type SettingsRecord = Record<string, unknown> & {
 	nickname: string;
 	bio: string;
 	announcement: string;
+	showAnnouncement: boolean;
 	githubUrl: string;
 	showGithub: boolean;
 	email: string;
@@ -41,6 +42,7 @@ const DEFAULT_SETTINGS: SettingsRecord = {
 	nickname: "Xiaohuang",
 	bio: "Hello, I'm Xiaohuang",
 	announcement: "欢迎来到我的博客！这是一则示例公告。",
+	showAnnouncement: true,
 	githubUrl: "",
 	showGithub: false,
 	email: "",
@@ -68,6 +70,7 @@ const SETTING_KEYS = [
 	"nickname",
 	"bio",
 	"announcement",
+	"showAnnouncement",
 	"githubUrl",
 	"showGithub",
 	"email",
@@ -214,6 +217,7 @@ function normalizeSettings(value: unknown): SettingsRecord {
 	}
 	for (const key of [
 		"showGithub",
+		"showAnnouncement",
 		"showEmail",
 		"showSupportAndShare",
 		"showAbout",
@@ -382,6 +386,9 @@ function applySubmittedSettings(
 	if (has("bio")) next.bio = validateText(input.bio, "个人签名", 5000);
 	if (has("announcement")) {
 		next.announcement = validateAnnouncement(input.announcement);
+	}
+	if (has("showAnnouncement")) {
+		next.showAnnouncement = validateBoolean(input.showAnnouncement, "showAnnouncement");
 	}
 	if (has("githubUrl")) {
 		next.githubUrl = validateMediaUrl(input.githubUrl, "GitHub 链接");
