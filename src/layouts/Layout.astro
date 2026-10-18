@@ -90,7 +90,7 @@ const customBackgroundImage = (() => {
 	try {
 		const imageUrl = new URL(siteSettings.backgroundImage.trim());
 		return imageUrl.protocol === "http:" || imageUrl.protocol === "https:"
-			? imageUrl.href.replace(/["\\\\\\n\\r]/g, "")
+			? imageUrl.href
 			: "";
 	} catch {
 		return "";
