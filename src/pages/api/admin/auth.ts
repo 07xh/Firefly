@@ -1,4 +1,5 @@
 import type { APIRoute } from "astro";
+import { env as workerEnv } from "cloudflare:workers";
 import {
 	clearAdminSession,
 	getSessionToken,
@@ -6,16 +7,11 @@ import {
 	type SessionKV,
 } from "../../../lib/admin-session";
 
-type LogoutEnv = {
-	FIREFLY_SESSIONS?: SessionKV;
-};
-
 export const prerender = false;
 
-export const POST: APIRoute = async ({ request, locals }) => {
-	const env = (locals as unknown as { runtime?: { env?: LogoutEnv } }).runtime
-		?.env;
-	const sessions = env?.FIREFLY_SESSIONS;
+export const POST: APIRoute = async ({ request }) => {
+	const sessions = (workerEnv as unknown as { FIREFLY_SESSIONS?: SessionKV })
+		.FIREFLY_SESSIONS;
 	const token = getSessionToken(request);
 	try {
 		await clearAdminSession(sessions, token);
