@@ -286,7 +286,7 @@ export default defineConfig({
 				return true;
 			},
 		}),
-		mdx({ recmaPlugins: [recmaAutoMdxComponents] }),
+		mdx({ processor: unified({ recmaPlugins: [recmaAutoMdxComponents] }) }),
 	],
 	markdown: {
 		processor: unified({
