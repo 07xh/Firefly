@@ -133,7 +133,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           FIREFLY_ADMIN_PASSWORD: ${{ secrets.FIREFLY_ADMIN_PASSWORD }}
-          GITHUB_CONTENTS_TOKEN: ${{ secrets.GITHUB_CONTENTS_TOKEN }}
+          FIREFLY_CONTENTS_TOKEN: ${{ secrets.FIREFLY_CONTENTS_TOKEN }}
         run: |
           set -euo pipefail
           config="dist/server/wrangler.json"
@@ -142,10 +142,10 @@ jobs:
           else
             echo "::notice::FIREFLY_ADMIN_PASSWORD was not supplied as an Actions secret; keep/configure it in the Cloudflare Worker settings."
           fi
-          if [ -n "${GITHUB_CONTENTS_TOKEN:-}" ]; then
-            printf '%s' "$GITHUB_CONTENTS_TOKEN" | pnpm exec wrangler secret put GITHUB_CONTENTS_TOKEN --config "$config"
+          if [ -n "${FIREFLY_CONTENTS_TOKEN:-}" ]; then
+            printf '%s' "$FIREFLY_CONTENTS_TOKEN" | pnpm exec wrangler secret put FIREFLY_CONTENTS_TOKEN --config "$config"
           else
-            echo "::notice::GITHUB_CONTENTS_TOKEN was not supplied as an Actions secret; keep/configure it in the Cloudflare Worker settings."
+            echo "::notice::FIREFLY_CONTENTS_TOKEN was not supplied as an Actions secret; keep/configure it in the Cloudflare Worker settings."
           fi
       - name: Deploy Worker
         run: pnpm exec wrangler deploy --config dist/server/wrangler.json
