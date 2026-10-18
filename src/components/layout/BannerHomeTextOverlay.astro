@@ -15,7 +15,6 @@ const homeText = backgroundWallpaper.common?.homeText;
 const customBannerTitle = siteSettings.bannerTitle.trim();
 const customBannerSubtitle = siteSettings.bannerSubtitle.trim();
 const displayBannerTitle = customBannerTitle || homeText?.title;
-const displayBannerSubtitle = customBannerSubtitle || initialRandomSubtitle;
 const homeTextLinks = (homeText?.links ?? [])
     .filter((link) => {
         const name = link.name.toLowerCase();
@@ -55,7 +54,7 @@ const homeTextLinksEnable = homeText?.linksEnable !== false;
                             customBannerSubtitle
                         ) : homeText.typewriter?.enable ? (
                             <TypewriterText
-                                text={homeText.subtitle}
+                                text={homeText.subtitle ?? ""}
                                 speed={homeText.typewriter.speed}
                                 deleteSpeed={homeText.typewriter.deleteSpeed}
                                 pauseTime={homeText.typewriter.pauseTime}
