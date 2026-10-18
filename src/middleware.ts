@@ -1,13 +1,10 @@
 import { defineMiddleware } from "astro:middleware";
+import { env as workerEnv } from "cloudflare:workers";
 import {
 	getSessionToken,
 	type SessionKV,
 	validateAdminSession,
 } from "./lib/admin-session";
-
-type AdminEnv = {
-	FIREFLY_SESSIONS?: SessionKV;
-};
 
 function securityHeaders(response: Response): Response {
 	const headers = new Headers(response.headers);
@@ -124,9 +121,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 			return redirectToLogin(context);
 		}
 
-		const env = (context.locals as unknown as { runtime?: { env?: AdminEnv } })
-			.runtime?.env;
-		const sessions = env?.FIREFLY_SESSIONS;
+		const sessions = (workerEnv as unknown as { FIREFLY_SESSIONS?: SessionKV })
+			.FIREFLY_SESSIONS;
 		if (!sessions) {
 			return errorResponse(
 				"后台认证尚未配置：请为 Worker 绑定 FIREFLY_SESSIONS KV 命名空间。",
