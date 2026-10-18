@@ -182,6 +182,16 @@ jobs:
             }
             return response.json();
           }
+          await check("public homepage", async () => {
+            const response = await fetch(base + "/", { redirect: "manual" });
+            const type = response.headers.get("content-type") || "";
+            const body = await response.text();
+            if (response.status !== 200 || !type.toLowerCase().includes("text/html") || !body.toLowerCase().includes("<html")) {
+              throw new Error("expected homepage HTTP 200 HTML, got HTTP " + response.status +
+                " (" + type + "): " + body.slice(0, 500));
+            }
+            return "HTTP 200 HTML";
+          });
           await check("login page", async () => {
             const response = await fetch(base + "/admin/login/", { redirect: "manual" });
             const body = await response.text();
