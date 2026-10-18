@@ -799,7 +799,6 @@ async function loadTiptapModules() {
 
     if (model.kind === "callout") {
       const callout = visualPreviewElement("div", "firefly-visual-preview__callout firefly-visual-preview__callout--" + model.type);
-      const allowed = new Set(["tip", "warning", "danger", "info", "success", "note", "important", "caution"]);
       const title = model.title || ({ tip: "提示", warning: "注意", danger: "警告", info: "信息", success: "成功", note: "备注", important: "重要", caution: "谨慎" }[model.type] || "提示");
       callout.append(visualPreviewElement("div", "firefly-visual-preview__title", title));
       callout.append(visualPreviewElement("div", "firefly-visual-preview__text", model.text || "此容器暂时没有可显示的正文。"));
