@@ -112,7 +112,7 @@ export function inspectProtectedMarkdown(raw, reason = "") {
   const footnotes = [...source.matchAll(/^\s*\[\^([^\]]+)\]:\s*(.+)$/gm)].map(match => ({ title: "[^" + match[1] + "]", text: plainText(match[2]) }));
   if (footnotes.length) return { kind: "footnotes", title: "脚注定义", label: "Markdown 脚注", items: footnotes };
 
-  const wikiLinks = [...source.matchAll(/\[\[([^\]]+)\]\]/g)].map(match => ({ title: match[1].split("|")[0].trim(), text: match[1].includes("|") ? match[1].split("|").slice(1).join("|").trim() : match[1].trim() });
+  const wikiLinks = [...source.matchAll(/\[\[([^\]]+)\]\]/g)].map(match => ({ title: match[1].split("|")[0].trim(), text: match[1].includes("|") ? match[1].split("|").slice(1).join("|").trim() : match[1].trim() }));
   if (wikiLinks.length) return { kind: "wiki", title: "Wiki 链接", label: "扩展链接", items: wikiLinks };
 
   const details = source.match(/<details\b[^>]*>([\s\S]*?)<\/details\s*>/i);
