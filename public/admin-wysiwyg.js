@@ -1,5 +1,5 @@
 import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=20261018-badge-node";
-import { inspectProtectedMarkdown, serializeEditableStepTimeline } from "/admin-visual-preview.js?v=20261018-structured-components";
+import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup } from "/admin-visual-preview.js?v=20261018-tabgroup-editor";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
@@ -1157,6 +1157,192 @@ async function loadTiptapModules() {
     firstInput?.focus();
   }
 
+
+  function openStructuredTabGroupEditor(activeEditor, getPos, node, model) {
+    const dialog = document.createElement("dialog");
+    dialog.className = "firefly-structured-editor";
+    dialog.setAttribute("aria-labelledby", "firefly-tabgroup-editor-title");
+    const style = document.createElement("style");
+    style.textContent = [
+      ".firefly-structured-editor{width:min(920px,calc(100vw - 24px));max-width:none;max-height:90vh;overflow:auto;border:1px solid #d7e4d9;border-radius:16px;padding:0;background:#fbfdfb;color:#243329;box-shadow:0 20px 70px #102e1b33}",
+      ".firefly-structured-editor::backdrop{background:#16231c88;backdrop-filter:blur(3px)}",
+      ".firefly-structured-editor__inner{padding:clamp(14px,3vw,24px);display:grid;gap:14px}",
+      ".firefly-structured-editor__title{margin:0;font-size:19px;line-height:1.4}",
+      ".firefly-structured-editor__hint{margin:0;color:#67766a;font-size:12px;line-height:1.6}",
+      ".firefly-structured-editor__list{display:grid;gap:12px}",
+      ".firefly-structured-editor__item{border:1px solid #dce7dd;border-radius:12px;background:#fff;padding:12px;display:grid;gap:10px;min-width:0}",
+      ".firefly-structured-editor__item-head{display:flex;justify-content:space-between;align-items:center;gap:8px}",
+      ".firefly-structured-editor__item-number{font-size:12px;font-weight:750;color:#27804c}",
+      ".firefly-structured-editor__fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}",
+      ".firefly-structured-editor__field{display:grid;gap:5px;min-width:0}",
+      ".firefly-structured-editor__field--wide{grid-column:1/-1}",
+      ".firefly-structured-editor__field label{font-size:12px;font-weight:700;color:#536457}",
+      ".firefly-structured-editor__field input,.firefly-structured-editor__field textarea{width:100%;min-width:0;box-sizing:border-box;border:1px solid #ceddce;border-radius:8px;background:#fff;color:#243329;padding:9px 10px;font:inherit;font-size:13px}",
+      ".firefly-structured-editor__field textarea{min-height:70px;resize:vertical}",
+      ".firefly-structured-editor__field textarea.firefly-tabgroup-code{min-height:150px;font:12px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;tab-size:2;white-space:pre;overflow:auto}",
+      ".firefly-structured-editor__actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;position:sticky;bottom:0;background:#fbfdfb;padding-top:8px}",
+      ".firefly-structured-editor__button{border:1px solid #cbd9ce;border-radius:8px;background:#fff;color:#314536;padding:8px 12px;font:inherit;font-size:13px;cursor:pointer}",
+      ".firefly-structured-editor__button--primary{background:#177746;color:#fff;border-color:#177746;font-weight:750}",
+      ".firefly-structured-editor__button--danger{color:#b42323;border-color:#e5c7c7}",
+      "@media(max-width:520px){.firefly-structured-editor__fields{grid-template-columns:1fr}.firefly-structured-editor__field--wide{grid-column:auto}.firefly-structured-editor__actions{justify-content:stretch}.firefly-structured-editor__actions button{flex:1}}",
+      "@media(prefers-color-scheme:dark){.firefly-structured-editor{background:#1a231b;color:#e6eee7;border-color:#3f5844}.firefly-structured-editor__hint,.firefly-structured-editor__field label{color:#b8c9bb}.firefly-structured-editor__item{background:#222d23;border-color:#405645}.firefly-structured-editor__field input,.firefly-structured-editor__field textarea,.firefly-structured-editor__button{background:#202820;color:#e4ece5;border-color:#4c6551}.firefly-structured-editor__actions{background:#1a231b}.firefly-structured-editor__button--primary{background:#26794a;border-color:#26794a;color:#fff}}",
+    ].join("\n");
+    document.head.append(style);
+
+    const inner = document.createElement("div");
+    inner.className = "firefly-structured-editor__inner";
+    const heading = document.createElement("h2");
+    heading.id = "firefly-tabgroup-editor-title";
+    heading.className = "firefly-structured-editor__title";
+    heading.textContent = "可视化编辑标签页";
+    const hint = document.createElement("p");
+    hint.className = "firefly-structured-editor__hint";
+    hint.textContent = "可修改标签名称、代码语言和代码内容。代码框中的 Markdown/MDX/HTML 只作为代码文本保留，不会执行；保存时会自动选择不与代码冲突的围栏符号。";
+    const list = document.createElement("div");
+    list.className = "firefly-structured-editor__list";
+    const error = document.createElement("p");
+    error.className = "firefly-structured-editor__hint";
+    error.setAttribute("role", "alert");
+    error.hidden = true;
+    const actions = document.createElement("div");
+    actions.className = "firefly-structured-editor__actions";
+    const add = document.createElement("button");
+    add.type = "button";
+    add.className = "firefly-structured-editor__button";
+    add.textContent = "＋ 添加标签页";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.className = "firefly-structured-editor__button";
+    cancel.textContent = "取消";
+    const save = document.createElement("button");
+    save.type = "button";
+    save.className = "firefly-structured-editor__button firefly-structured-editor__button--primary";
+    save.textContent = "保存标签页";
+    actions.append(add, cancel, save);
+    inner.append(heading, hint, list, error, actions);
+    dialog.append(inner);
+    document.body.append(dialog);
+
+    let rowRefs = [];
+    let closed = false;
+    const startingItems = (model.items || []).map(item => ({
+      title: item.title || "",
+      language: item.language || "",
+      text: item.text || "",
+    }));
+    const makeButton = (label, extraClass = "") => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "firefly-structured-editor__button" + (extraClass ? " " + extraClass : "");
+      button.textContent = label;
+      return button;
+    };
+    const makeField = (labelText, value, key, options = {}) => {
+      const wrap = document.createElement("div");
+      wrap.className = "firefly-structured-editor__field" + (options.wide ? " firefly-structured-editor__field--wide" : "");
+      const label = document.createElement("label");
+      label.textContent = labelText;
+      const input = options.multiline ? document.createElement("textarea") : document.createElement("input");
+      input.value = String(value ?? "");
+      input.maxLength = options.maxLength || 500;
+      if (options.placeholder) input.placeholder = options.placeholder;
+      if (options.multiline) input.rows = options.rows || 8;
+      label.htmlFor = "firefly-tab-" + key + "-" + rowRefs.length;
+      input.id = label.htmlFor;
+      if (options.className) input.className = options.className;
+      wrap.append(label, input);
+      return { wrap, input };
+    };
+    const getValues = () => rowRefs.map(row => ({
+      title: row.title.input.value,
+      language: row.language.input.value,
+      text: row.text.input.value,
+    }));
+    const renderRows = items => {
+      list.replaceChildren();
+      rowRefs = [];
+      items.forEach((item, index) => {
+        const card = document.createElement("section");
+        card.className = "firefly-structured-editor__item";
+        const cardHead = document.createElement("div");
+        cardHead.className = "firefly-structured-editor__item-head";
+        const number = document.createElement("span");
+        number.className = "firefly-structured-editor__item-number";
+        number.textContent = "标签页 " + (index + 1);
+        const remove = makeButton("删除标签页", "firefly-structured-editor__button--danger");
+        remove.addEventListener("click", () => {
+          const values = getValues();
+          values.splice(index, 1);
+          renderRows(values);
+        });
+        cardHead.append(number, remove);
+        const fields = document.createElement("div");
+        fields.className = "firefly-structured-editor__fields";
+        const titleField = makeField("标签名称", item.title, "title", { maxLength: 80, placeholder: "例如 JavaScript 示例" });
+        const languageField = makeField("代码语言", item.language, "language", { maxLength: 32, placeholder: "例如 js、python、bash" });
+        const textField = makeField("代码内容（原样保留）", item.text, "code", { wide: true, multiline: true, maxLength: 50000, rows: 9, className: "firefly-tabgroup-code" });
+        fields.append(titleField.wrap, languageField.wrap, textField.wrap);
+        rowRefs.push({ title: titleField, language: languageField, text: textField });
+        card.append(cardHead, fields);
+        list.append(card);
+      });
+      add.disabled = items.length >= 20;
+    };
+    const close = () => {
+      if (closed) return;
+      closed = true;
+      if (dialog.open && typeof dialog.close === "function") dialog.close();
+      dialog.remove();
+      if (!document.querySelector(".firefly-structured-editor")) style.remove();
+    };
+    const showError = message => {
+      error.textContent = message;
+      error.hidden = false;
+    };
+    add.addEventListener("click", () => {
+      const values = getValues();
+      if (values.length >= 20) return;
+      values.push({ title: "新标签页", language: "text", text: "" });
+      renderRows(values);
+    });
+    cancel.addEventListener("click", close);
+    dialog.addEventListener("cancel", event => {
+      event.preventDefault();
+      close();
+    });
+    save.addEventListener("click", () => {
+      error.hidden = true;
+      let raw;
+      try {
+        raw = serializeEditableTabGroup(model, getValues());
+      } catch (exception) {
+        showError(exception instanceof Error ? exception.message : "标签页内容不符合可编辑格式。");
+        return;
+      }
+      const position = getPos();
+      if (typeof position !== "number") {
+        showError("组件已不在文档中，请关闭后重新选择。");
+        return;
+      }
+      const current = activeEditor.state.doc.nodeAt(position);
+      if (!current || current.type.name !== "protectedMarkdownBlock") {
+        showError("无法定位原始组件，已取消修改。");
+        return;
+      }
+      activeEditor.view.dispatch(activeEditor.state.tr.setNodeMarkup(position, undefined, {
+        ...current.attrs,
+        raw,
+      }));
+      status("标签页组件已更新；点击“保存文章”后写入 GitHub。");
+      close();
+    });
+
+    renderRows(startingItems);
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+    list.querySelector("input")?.focus();
+  }
+
   function visualPreviewElement(tag, className, text) {
     const element = document.createElement(tag);
     if (className) element.className = className;
@@ -1487,6 +1673,19 @@ async function loadTiptapModules() {
                 event.preventDefault();
                 event.stopPropagation();
                 openStructuredStepTimelineEditor(activeEditor, getPos, currentNode, model);
+              });
+              header.append(visualEdit);
+            } else if (model.kind === "tabs" && model.editable) {
+              const visualEdit = document.createElement("button");
+              visualEdit.type = "button";
+              visualEdit.className = "firefly-protected-markdown__edit";
+              visualEdit.textContent = "可视化编辑标签页";
+              visualEdit.title = "编辑标签名称、代码语言、代码内容，并可添加或删除标签页";
+              visualEdit.addEventListener("mousedown", event => event.preventDefault());
+              visualEdit.addEventListener("click", event => {
+                event.preventDefault();
+                event.stopPropagation();
+                openStructuredTabGroupEditor(activeEditor, getPos, currentNode, model);
               });
               header.append(visualEdit);
             }
