@@ -205,3 +205,17 @@ test("Badge with unsupported class props or nested markup remains protected", ()
     assert.equal(result.records[0].raw, source);
   }
 });
+
+
+test("普通 Markdown 表格保留为可视化编辑内容，不被包装成源码保护块", () => {
+  const table = [
+    "| 名称 | 说明 |",
+    "| --- | --- |",
+    "| alpha | 第一项 |",
+    "| beta | 第二项 |",
+  ].join("\n");
+  const source = "表格前言。\n\n" + table + "\n\n表格后文。";
+  const result = prepareMarkdownForVisualEditing(source);
+  assert.equal(result.records.length, 0);
+  assert.equal(result.markdown, source);
+});
