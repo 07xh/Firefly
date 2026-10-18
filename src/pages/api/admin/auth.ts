@@ -1,5 +1,5 @@
-import type { APIRoute } from "astro";
 import { env as workerEnv } from "cloudflare:workers";
+import type { APIRoute } from "astro";
 import {
 	clearAdminSession,
 	getSessionToken,
