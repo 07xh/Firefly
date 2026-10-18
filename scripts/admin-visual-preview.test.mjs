@@ -395,7 +395,7 @@ test("visual editor rejects unsafe or malformed link addresses", () => {
     "https://",
     "mailto:",
     "tel:hello",
-    "https://example.com/with\\nnewline",
+    "https://example.com/with\nnewline",
     'https://example.com/" onclick="alert(1)',
     "/" + "a".repeat(2048),
   ]) {
