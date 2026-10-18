@@ -1,4 +1,6 @@
-let Editor, StarterKit, Markdown, Image, TableKit;
+import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=f9dee975";
+
+let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
 async function loadTiptapModules() {
   const providers = [
@@ -33,6 +35,7 @@ async function loadTiptapModules() {
         throw new Error("模块导出不完整");
       }
       Editor = core.Editor;
+      NodeExtension = core.Node;
       StarterKit = starter.default;
       Markdown = markdown.Markdown;
       Image = image.default;
@@ -57,7 +60,7 @@ async function loadTiptapModules() {
   let editor = null;
   let frontmatterPrefix = "";
   let loadingSource = false;
-  let unsupportedReason = "";
+  let visualLoadFailed = false;
   let pendingUploads = 0;
   let activeMode = "visual";
   let lastLoadedSource = sourceField.value;
@@ -249,48 +252,6 @@ async function loadTiptapModules() {
   }
 
 
-  function getUnsafeReason(markdown) {
-    // Ignore fenced and inline code: syntax examples in code must not disable visual editing.
-    const withoutFences = markdown
-      .replace(/```[\s\S]*?```/g, "")
-      .replace(/^\s*~~~[\s\S]*?^\s*~~~\s*$/gm, "")
-      .replace(/(`+)([^\`\n]+)\1/g, "")
-      .replace(/\\</g, "&lt;");
-
-    // Match actual MDX declarations, not prose that merely starts with “import” or “export”.
-    if (/^\s*import\s+(?:(?:[\w$*\s{},]+)\s+from\s+["'][^"']+["']|["'][^"']+["'])\s*;?\s*$/m.test(withoutFences) ||
-        /^\s*export\s+(?:default\b|\*\s+from\b|\{[^}]*\}\s*from\b|(?:const|let|var|function|class|async\s+function)\b)/m.test(withoutFences)) {
-      return "正文包含 MDX import/export 声明。为避免组件或导出逻辑丢失，请使用 Markdown 源码模式编辑。";
-    }
-    if (/<\/?[A-Z][A-Za-z0-9_.:-]*(?:\s|\/?>)/.test(withoutFences)) {
-      return "正文包含自定义 MDX/组件标签。为避免破坏组件，请使用 Markdown 源码模式编辑。";
-    }
-    if (/<\/?(?:script|style|iframe|video|audio|div|section|details|summary|table|kbd|sup|sub|span|u|figure|figcaption)\b/i.test(withoutFences)) {
-      return "正文包含 HTML 或主题特殊标签。为避免转换丢失属性，请使用 Markdown 源码模式编辑。";
-    }
-    if (/^\s*:{3,}/m.test(withoutFences)) {
-      return "正文包含主题提示块或 Markdown directive，请使用源码模式避免丢失主题语法。";
-    }
-    // Detect block math, TeX commands, and mathematical operators; avoid treating every $word$ as math.
-    if (/^\s*\$\$\s*$/m.test(withoutFences) ||
-        /\$[^$\n]*(?:\\[a-zA-Z]+|[=+*/^_<>≤≥±×÷])[^$\n]*\$/.test(withoutFences)) {
-      return "正文包含数学公式语法。请使用源码模式，以保留 KaTeX/LaTeX 公式。";
-    }
-    if (/(^|\n)\s*(?:[-*+]|\d+\.)\s+\[[ xX]\]\s/m.test(withoutFences)) {
-      return "正文包含任务清单。请使用源码模式，以保留复选框语法。";
-    }
-    if (/\[\[[^\]\n]+\]\]/.test(withoutFences)) {
-      return "正文包含 Wiki 双括号链接。请使用源码模式，以保留站内链接语法。";
-    }
-    if (/^\[\^[^\]]+\]:/m.test(withoutFences)) {
-      return "正文包含 Markdown 脚注定义。请使用源码模式，以保留脚注。";
-    }
-    if (/(^|\n)\s*\{\s*(?:\/\*|[A-Za-z_$][\w$.]*\s*(?:\(|\?\.|\.|\[))/.test(withoutFences)) {
-      return "正文包含 MDX 表达式。为避免改变运行逻辑，请使用 Markdown 源码模式编辑。";
-    }
-    return "";
-  }
-
   function setMode(mode) {
     activeMode = mode;
     $("body").hidden = mode !== "source";
@@ -302,59 +263,275 @@ async function loadTiptapModules() {
     $("visualTab")?.setAttribute("aria-selected", String(mode === "visual"));
     $("editorTab")?.setAttribute("aria-selected", String(mode === "source"));
     $("previewTab")?.setAttribute("aria-selected", String(mode === "preview"));
-    if (mode === "visual" && editor && !unsupportedReason) editor.commands.focus("end");
+    if (mode === "visual" && editor && !visualLoadFailed) editor.commands.focus("end");
   }
 
-  function reportUnsupported(reason) {
-    unsupportedReason = reason;
+  function reportProtected(records) {
+    const items = Array.isArray(records) ? records : [];
+    const count = items.length;
+    const types = [...new Set(items.map(item => item.reason).filter(Boolean))].join("、");
+    visualLoadFailed = false;
     if (notice) {
-      notice.hidden = !reason;
-      notice.textContent = reason
-        ? "本篇文章暂不支持可视化编辑：" + reason + " 正文已保留，请切换到 Markdown 源码模式编辑。"
+      notice.hidden = count === 0;
+      notice.textContent = count
+        ? "已启用混合可视化编辑：检测到 " + count + " 段扩展 Markdown/MDX 语法，已封装为可保真的“保留语法块”。普通正文可继续可视化编辑；需要修改语法本身时，点击对应块中的“编辑语法”。类型：" + types + "。"
         : "";
-      notice.setAttribute("role", reason ? "status" : "none");
-    }
-    if (reason) {
-      status("本篇文章已安全切换到 Markdown 源码模式：" + reason, true);
+      notice.setAttribute("role", count ? "status" : "none");
     }
     if ($("visualTab")) {
-      $("visualTab").setAttribute("aria-disabled", reason ? "true" : "false");
-      $("visualTab").disabled = Boolean(reason);
-      $("visualTab").title = reason || "所见即所得编辑";
-      $("visualTab").textContent = reason ? "可视化不可用" : "所见即所得";
+      $("visualTab").disabled = false;
+      $("visualTab").setAttribute("aria-disabled", "false");
+      $("visualTab").title = "所见即所得编辑；复杂 Markdown/MDX 语法以保留块显示";
+      $("visualTab").textContent = "所见即所得";
     }
+    if (count) status("已保护 " + count + " 段特殊语法；其他正文仍可可视化编辑。");
+  }
+
+  function reportVisualLoadFailure(error) {
+    visualLoadFailed = true;
+    const detail = error instanceof Error ? error.message : String(error);
+    if (notice) {
+      notice.hidden = false;
+      notice.textContent = "可视化编辑器无法安全载入本篇内容，原始正文未被改写。请使用 Markdown 源码模式编辑。错误：" + detail;
+      notice.setAttribute("role", "alert");
+    }
+    if ($("visualTab")) {
+      $("visualTab").disabled = true;
+      $("visualTab").setAttribute("aria-disabled", "true");
+      $("visualTab").title = detail;
+      $("visualTab").textContent = "可视化不可用";
+    }
+    status("可视化加载失败，已保留原始正文并回退源码模式：" + detail, true);
+  }
+
+  let protectedSyntaxDialog = null;
+  let protectedSyntaxTextarea = null;
+  let protectedSyntaxTarget = null;
+
+  function ensureProtectedSyntaxDialog() {
+    if (protectedSyntaxDialog) {
+      return { dialog: protectedSyntaxDialog, textarea: protectedSyntaxTextarea };
+    }
+
+    const style = document.createElement("style");
+    style.textContent = [
+      ".firefly-protected-markdown{border:1px dashed #b7a58a;border-radius:10px;background:#faf8f3;padding:10px 12px;margin:10px 0;color:#463f35;}",
+      ".firefly-protected-markdown__head{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12px;font-weight:650;margin-bottom:7px;}",
+      ".firefly-protected-markdown__preview{max-height:190px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;margin:0;color:#57534e;}",
+      ".firefly-protected-markdown__edit{border:1px solid #d6c7ad;border-radius:7px;padding:4px 9px;background:#fff;font-size:12px;cursor:pointer;}",
+      ".firefly-protected-dialog{width:min(860px,calc(100vw - 28px));max-width:none;border:1px solid #d8d1c4;border-radius:14px;padding:18px;background:#fff;color:#292524;box-shadow:0 24px 80px #0003;}",
+      ".firefly-protected-dialog::backdrop{background:#17171780;backdrop-filter:blur(2px);}",
+      ".firefly-protected-dialog textarea{display:block;width:100%;min-height:42vh;resize:vertical;border:1px solid #d6d3d1;border-radius:9px;padding:10px;font:13px/1.6 ui-monospace,SFMono-Regular,Menlo,monospace;}",
+      ".firefly-protected-dialog__actions{display:flex;justify-content:flex-end;gap:8px;margin-top:12px;}",
+      ".firefly-protected-dialog button{border:1px solid #d6d3d1;border-radius:8px;padding:7px 13px;background:#fff;cursor:pointer;}",
+      ".firefly-protected-dialog button[type=submit]{background:#292524;color:#fff;border-color:#292524;}"
+    ].join("");
+    document.head.append(style);
+
+    const dialog = document.createElement("dialog");
+    dialog.className = "firefly-protected-dialog";
+    const heading = document.createElement("h3");
+    heading.textContent = "编辑保留的 Markdown/MDX 语法";
+    heading.style.cssText = "font-size:16px;font-weight:700;margin:0 0 8px";
+    const description = document.createElement("p");
+    description.textContent = "这里修改的是原始语法片段。保存后会原样写回文章正文，不会由可视化编辑器重新格式化。";
+    description.style.cssText = "font-size:13px;color:#78716c;margin:0 0 12px";
+    const textarea = document.createElement("textarea");
+    textarea.setAttribute("aria-label", "原始 Markdown/MDX 语法");
+    const actions = document.createElement("div");
+    actions.className = "firefly-protected-dialog__actions";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = "取消";
+    const save = document.createElement("button");
+    save.type = "submit";
+    save.textContent = "保存语法块";
+    const form = document.createElement("form");
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const target = protectedSyntaxTarget;
+      if (!target) {
+        dialog.close();
+        return;
+      }
+      const pos = target.getPos();
+      if (typeof pos !== "number") {
+        dialog.close();
+        status("语法块已不在文档中，请重新选择后再编辑。", true);
+        return;
+      }
+      const current = target.editor.state.doc.nodeAt(pos);
+      if (!current || current.type.name !== "protectedMarkdownBlock") {
+        dialog.close();
+        status("无法定位语法块，已取消修改。", true);
+        return;
+      }
+      target.editor.view.dispatch(
+        target.editor.state.tr.setNodeMarkup(pos, undefined, {
+          ...current.attrs,
+          raw: textarea.value,
+        }),
+      );
+      protectedSyntaxTarget = null;
+      dialog.close();
+    });
+    cancel.addEventListener("click", () => {
+      protectedSyntaxTarget = null;
+      dialog.close();
+    });
+    actions.append(cancel, save);
+    form.append(textarea, actions);
+    dialog.append(heading, description, form);
+    document.body.append(dialog);
+    protectedSyntaxDialog = dialog;
+    protectedSyntaxTextarea = textarea;
+    return { dialog, textarea };
+  }
+
+  function openProtectedSyntaxEditor(activeEditor, getPos, node) {
+    const ui = ensureProtectedSyntaxDialog();
+    protectedSyntaxTarget = { editor: activeEditor, getPos };
+    ui.textarea.value = typeof node.attrs.raw === "string" ? node.attrs.raw : "";
+    if (typeof ui.dialog.showModal === "function") ui.dialog.showModal();
+    else ui.dialog.setAttribute("open", "");
+    ui.textarea.focus();
+    ui.textarea.setSelectionRange(0, 0);
+  }
+
+  function createProtectedMarkdownBlock() {
+    return NodeExtension.create({
+      name: "protectedMarkdownBlock",
+      group: "block",
+      atom: true,
+      selectable: true,
+      draggable: false,
+      isolating: true,
+      addAttributes() {
+        return {
+          marker: { default: "" },
+          raw: { default: "" },
+          reason: { default: "扩展 Markdown" },
+        };
+      },
+      parseHTML() {
+        return [{ tag: "div[data-firefly-protected-markdown]" }];
+      },
+      renderHTML({ node }) {
+        return ["div", { "data-firefly-protected-markdown": "true" },
+          ["strong", {}, "保留语法块"],
+          ["pre", {}, node.attrs.raw || ""],
+        ];
+      },
+      renderMarkdown(node) {
+        return node.attrs.marker || "";
+      },
+      addNodeView() {
+        return ({ node, editor: activeEditor, getPos }) => {
+          const root = document.createElement("div");
+          root.className = "firefly-protected-markdown";
+          root.contentEditable = "false";
+          root.setAttribute("data-firefly-protected-markdown", "true");
+          let currentNode = node;
+
+          const render = () => {
+            root.replaceChildren();
+            const header = document.createElement("div");
+            header.className = "firefly-protected-markdown__head";
+            const label = document.createElement("span");
+            label.textContent = "保留原始语法 · " + (currentNode.attrs.reason || "扩展 Markdown");
+            const edit = document.createElement("button");
+            edit.type = "button";
+            edit.className = "firefly-protected-markdown__edit";
+            edit.textContent = "编辑语法";
+            edit.addEventListener("mousedown", event => event.preventDefault());
+            edit.addEventListener("click", event => {
+              event.preventDefault();
+              event.stopPropagation();
+              openProtectedSyntaxEditor(activeEditor, getPos, currentNode);
+            });
+            header.append(label, edit);
+            const preview = document.createElement("pre");
+            preview.className = "firefly-protected-markdown__preview";
+            const raw = typeof currentNode.attrs.raw === "string" ? currentNode.attrs.raw : "";
+            preview.textContent = raw.length > 1200
+              ? raw.slice(0, 1200) + "\n… 预览已截断，保存时仍保留完整内容。"
+              : raw;
+            root.append(header, preview);
+          };
+          render();
+
+          return {
+            dom: root,
+            update(nextNode) {
+              if (nextNode.type.name !== "protectedMarkdownBlock") return false;
+              currentNode = nextNode;
+              render();
+              return true;
+            },
+            stopEvent(event) {
+              return Boolean(event.target instanceof Element && event.target.closest("button"));
+            },
+            ignoreMutation() {
+              return true;
+            },
+          };
+        };
+      },
+    });
+  }
+
+  function replaceProtectedMarkerParagraphs(activeEditor, records) {
+    if (!records.length) return;
+    const lookup = new Map(records.map(record => [record.marker, record]));
+    const json = activeEditor.getJSON();
+    function textOf(node) {
+      if (!node) return "";
+      if (typeof node.text === "string") return node.text;
+      return (node.content || []).map(textOf).join("");
+    }
+    json.content = (json.content || []).map(node => {
+      if (node.type !== "paragraph") return node;
+      const record = lookup.get(textOf(node));
+      if (!record) return node;
+      return {
+        type: "protectedMarkdownBlock",
+        attrs: { marker: record.marker, raw: record.raw, reason: record.reason },
+      };
+    });
+    activeEditor.commands.setContent(json, { emitUpdate: false });
   }
 
   function syncSourceFromEditor() {
-    if (!editor || loadingSource || unsupportedReason) return;
+    if (!editor || loadingSource || visualLoadFailed) return;
     const markdown = editor.getMarkdown();
-    sourceField.value = frontmatterPrefix + markdown + (markdown && !markdown.endsWith("\n") ? "\n" : "");
+    const records = [];
+    editor.state.doc.descendants(node => {
+      if (node.type.name === "protectedMarkdownBlock") {
+        records.push({ marker: node.attrs.marker, raw: node.attrs.raw });
+      }
+    });
+    const restored = restoreProtectedMarkdown(markdown, records);
+    sourceField.value = frontmatterPrefix + restored + (restored && !restored.endsWith("\n") ? "\n" : "");
     sourceField.dispatchEvent(new Event("input", { bubbles: true }));
   }
 
   function loadSourceIntoEditor() {
-    if (!editor) return;
-    const current = sourceField.value;
+    if (!editor) return false;
+    const current = sourceField.value || "";
     const split = splitFrontmatter(current);
-    const reason = getUnsafeReason(split.body);
-    if (reason) {
-      frontmatterPrefix = split.prefix;
-      lastLoadedSource = current;
-      reportUnsupported(reason);
-      setMode("source");
-      return;
-    }
-
+    const prepared = prepareMarkdownForVisualEditing(split.body);
     frontmatterPrefix = split.prefix;
-    unsupportedReason = "";
-    reportUnsupported("");
     loadingSource = true;
     try {
-      editor.commands.setContent(split.body, { contentType: "markdown", emitUpdate: false });
+      editor.commands.setContent(prepared.markdown, { contentType: "markdown", emitUpdate: false });
+      replaceProtectedMarkerParagraphs(editor, prepared.records);
       lastLoadedSource = current;
+      reportProtected(prepared.records);
+      return true;
     } catch (error) {
-      reportUnsupported("当前文档无法安全转换为可视化格式，请使用源码模式。");
+      reportVisualLoadFailure(error);
       setMode("source");
+      return false;
     } finally {
       loadingSource = false;
     }
@@ -401,8 +578,8 @@ async function loadTiptapModules() {
   }
 
   function runAction(action) {
-    if (!editor || unsupportedReason) {
-      status("当前文档包含无法无损转换的语法，请先使用源码模式。", true);
+    if (!editor || visualLoadFailed) {
+      status("当前文档未能安全载入可视化编辑器，请先使用源码模式。", true);
       return;
     }
     const chain = editor.chain().focus();
@@ -449,9 +626,7 @@ async function loadTiptapModules() {
   async function init() {
     const providerName = await loadTiptapModules();
     status("可视化编辑器模块加载成功（" + providerName + "）。");
-    const initial = splitFrontmatter(sourceField.value);
-    frontmatterPrefix = initial.prefix;
-    unsupportedReason = getUnsafeReason(initial.body);
+    frontmatterPrefix = splitFrontmatter(sourceField.value).prefix;
 
     editor = new Editor({
       element: editorElement,
@@ -465,8 +640,9 @@ async function loadTiptapModules() {
         Markdown.configure({ markedOptions: { gfm: true } }),
         Image.configure({ inline: false, allowBase64: false }),
         TableKit,
+        createProtectedMarkdownBlock(),
       ],
-      content: unsupportedReason ? "" : initial.body,
+      content: "",
       contentType: "markdown",
       editorProps: {
         attributes: {
@@ -541,7 +717,7 @@ async function loadTiptapModules() {
       lastLoadedSource = sourceField.value;
       const split = splitFrontmatter(sourceField.value);
       frontmatterPrefix = split.prefix;
-      reportUnsupported(getUnsafeReason(split.body));
+      reportProtected(prepareMarkdownForVisualEditing(split.body).records);
     });
 
     const recoveryToggle = $("localRecoveryCheck");
@@ -575,17 +751,22 @@ async function loadTiptapModules() {
     window.addEventListener("firefly:clear-recovery", event => clearRecovery(event.detail || {}));
     window.addEventListener("firefly:save-complete", event => clearRecovery(event.detail || {}));
 
-    reportUnsupported(unsupportedReason);
-    if (unsupportedReason) setMode("source");
-    else setMode("visual");
-    loadSourceIntoEditor();
+    const loadedVisually = loadSourceIntoEditor();
+    if (loadedVisually) setMode("visual");
     refreshRecoveryAvailability();
 
     window.FireflyRichEditor = {
       isBusy: () => pendingUploads > 0,
-      hasUnsupportedSyntax: () => Boolean(unsupportedReason),
+      hasUnsupportedSyntax: () => Boolean(visualLoadFailed),
       reload: loadSourceIntoEditor,
-      getMarkdown: () => editor ? editor.getMarkdown() : "",
+      getMarkdown: () => {
+        if (!editor) return "";
+        const records = [];
+        editor.state.doc.descendants(node => {
+          if (node.type.name === "protectedMarkdownBlock") records.push({ marker: node.attrs.marker, raw: node.attrs.raw });
+        });
+        return restoreProtectedMarkdown(editor.getMarkdown(), records);
+      },
       destroy: () => editor?.destroy(),
     };
     window.dispatchEvent(new CustomEvent("firefly:wysiwyg-ready", { detail: { ok: true } }));
