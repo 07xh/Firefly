@@ -602,14 +602,14 @@ async function loadTiptapModules() {
             const label = document.createElement("span");
             label.className = "firefly-mdx-badge__label";
             label.textContent = String(currentNode.attrs.label || "");
-            label.title = "双击徽章文字可编辑";
+            label.title = "双击标签文字可编辑";
             label.addEventListener("dblclick", event => {
               event.preventDefault();
               event.stopPropagation();
-              const next = window.prompt("徽章文字", String(currentNode.attrs.label || ""));
+              const next = window.prompt("标签文字", String(currentNode.attrs.label || ""));
               if (next === null) return;
               if (!isSafeBadgeLabel(next)) {
-                status("徽章文字不能为空，也不能包含换行、MDX 标签或 Markdown 强调符号。", true);
+                status("标签文字不能为空，请使用普通文字，不要输入换行或特殊格式符号。", true);
                 return;
               }
               updateAttributes({ label: next });
@@ -619,8 +619,8 @@ async function loadTiptapModules() {
             controls.className = "firefly-mdx-badge__controls";
             const select = document.createElement("select");
             select.className = "firefly-mdx-badge__select";
-            select.setAttribute("aria-label", "徽章类型");
-            select.title = "修改徽章类型";
+            select.setAttribute("aria-label", "标签类型");
+            select.title = "修改标签类型";
             for (const item of BADGE_TYPES) {
               const option = document.createElement("option");
               option.value = item;
@@ -635,15 +635,15 @@ async function loadTiptapModules() {
             edit.type = "button";
             edit.className = "firefly-mdx-badge__edit";
             edit.textContent = "编辑";
-            edit.title = "编辑徽章文字";
+            edit.title = "编辑标签文字";
             edit.addEventListener("mousedown", event => event.preventDefault());
             edit.addEventListener("click", event => {
               event.preventDefault();
               event.stopPropagation();
-              const next = window.prompt("徽章文字", String(currentNode.attrs.label || ""));
+              const next = window.prompt("标签文字", String(currentNode.attrs.label || ""));
               if (next === null) return;
               if (!isSafeBadgeLabel(next)) {
-                status("徽章文字不能为空，也不能包含换行、MDX 标签或 Markdown 强调符号。", true);
+                status("标签文字不能为空，请使用普通文字，不要输入换行或特殊格式符号。", true);
                 return;
               }
               updateAttributes({ label: next });
@@ -1133,12 +1133,12 @@ async function loadTiptapModules() {
       }
       const position = getPos();
       if (typeof position !== "number") {
-        showError("组件已不在文档中，请关闭后重新选择。");
+        showError("这段内容已被移除，请关闭窗口后重新选择。");
         return;
       }
       const current = activeEditor.state.doc.nodeAt(position);
       if (!current || current.type.name !== "protectedMarkdownBlock") {
-        showError("无法定位原始组件，已取消修改。");
+        showError("找不到这段内容，已取消修改。");
         return;
       }
       activeEditor.view.dispatch(activeEditor.state.tr.setNodeMarkup(position, undefined, {
@@ -1320,12 +1320,12 @@ async function loadTiptapModules() {
       }
       const position = getPos();
       if (typeof position !== "number") {
-        showError("组件已不在文档中，请关闭后重新选择。");
+        showError("这段内容已被移除，请关闭窗口后重新选择。");
         return;
       }
       const current = activeEditor.state.doc.nodeAt(position);
       if (!current || current.type.name !== "protectedMarkdownBlock") {
-        showError("无法定位原始组件，已取消修改。");
+        showError("找不到这段内容，已取消修改。");
         return;
       }
       activeEditor.view.dispatch(activeEditor.state.tr.setNodeMarkup(position, undefined, {
@@ -1464,13 +1464,13 @@ async function loadTiptapModules() {
       }
       const position = getPos();
       if (typeof position !== "number") {
-        error.textContent = "组件已不在文档中，请关闭后重新选择。";
+        error.textContent = "这段内容已被移除，请关闭窗口后重新选择。";
         error.hidden = false;
         return;
       }
       const current = activeEditor.state.doc.nodeAt(position);
       if (!current || current.type.name !== "protectedMarkdownBlock") {
-        error.textContent = "无法定位原始组件，已取消修改。";
+        error.textContent = "找不到这段内容，已取消修改。";
         error.hidden = false;
         return;
       }
@@ -1820,7 +1820,7 @@ async function loadTiptapModules() {
     const render = () => {
       const katex = window.FireflyKatex;
       if (!katex || typeof katex.renderToString !== "function") {
-        target.textContent = "公式预览暂不可用；原始公式已完整保留。";
+        target.textContent = "公式暂时无法预览，但内容已完整保留。";
         target.dataset.katexState = "fallback";
         return false;
       }
@@ -1838,7 +1838,7 @@ async function loadTiptapModules() {
         target.dataset.katexState = "rendered";
         return true;
       } catch {
-        target.textContent = "公式预览暂不可用；原始公式已完整保留。";
+        target.textContent = "公式暂时无法预览，但内容已完整保留。";
         target.dataset.katexState = "fallback";
         return false;
       }
@@ -2218,11 +2218,11 @@ async function loadTiptapModules() {
       lastLoadedSource = sourceField.value || current;
       reportProtected(prepared.records);
       if (migrated.removed) {
-        status("已从本次编辑稿移除 " + migrated.removed + " 条冗余 firefly-mdx import；保存文章后即可将清理结果写入 GitHub。");
+        status("已清理 " + migrated.removed + " 处重复引用。点击“保存文章”后，清理结果才会保存。");
         if (notice) {
           notice.hidden = false;
           notice.textContent = (notice.textContent ? notice.textContent + " " : "")
-            + "已自动移除 " + migrated.removed + " 条冗余的 firefly-mdx 组件 import；保存后写入 GitHub。";
+            + "已自动清理 " + migrated.removed + " 处重复引用；保存文章后生效。";
           notice.setAttribute("role", "status");
         }
       }
@@ -2385,7 +2385,7 @@ async function loadTiptapModules() {
         alt: file.name || "文章图片",
         title: file.name || "",
       }).run();
-      status("图片已上传并插入正文。图片文件已单独提交到 GitHub；文章正文仍需保存。");
+      status("图片已上传并插入正文。请保存文章，网站才会显示这张图片。");
     } catch (error) {
       status(error instanceof Error ? error.message : "图片上传失败。", true);
     } finally {
@@ -2425,7 +2425,7 @@ async function loadTiptapModules() {
     inner.className = "firefly-table-insert-inner";
     const heading = document.createElement("h2");
     heading.id = "firefly-table-insert-title";
-    heading.textContent = "插入 Markdown 表格";
+    heading.textContent = "插入表格";
     const hint = document.createElement("p");
     hint.className = "firefly-table-insert-hint";
     hint.textContent = "选择表格大小。插入后可以在单元格中直接编辑，再通过表格工具添加或删除行列。";
@@ -2522,7 +2522,7 @@ async function loadTiptapModules() {
       case "badge": {
         editor.chain().focus().insertContent({
           type: "fireflyBadge",
-          attrs: { type: "tip", label: "新徽章" },
+          attrs: { type: "tip", label: "新标签" },
         }).run();
         break;
       }
@@ -2556,7 +2556,7 @@ async function loadTiptapModules() {
       case "addRowAfter": if (typeof editor.commands.addRowAfter === "function") editor.chain().focus().addRowAfter().run(); else status("无法在当前位置插入行，请先点入表格单元格。", true); break;
       case "addColumnBefore": if (typeof editor.commands.addColumnBefore === "function") editor.chain().focus().addColumnBefore().run(); else status("无法在当前位置插入列，请先点入表格单元格。", true); break;
       case "addColumnAfter": if (typeof editor.commands.addColumnAfter === "function") editor.chain().focus().addColumnAfter().run(); else status("无法在当前位置插入列，请先点入表格单元格。", true); break;
-      case "toggleHeaderRow": if (typeof editor.commands.toggleHeaderRow === "function") editor.chain().focus().toggleHeaderRow().run(); else status("当前编辑器版本暂不支持切换表头。", true); break;
+      case "toggleHeaderRow": if (typeof editor.commands.toggleHeaderRow === "function") editor.chain().focus().toggleHeaderRow().run(); else status("暂时无法切换表头，请刷新后台后重试。", true); break;
       case "deleteRow": if (typeof editor.commands.deleteRow === "function") editor.chain().focus().deleteRow().run(); else status("无法删除当前行，请先点入表格单元格。", true); break;
       case "deleteColumn": if (typeof editor.commands.deleteColumn === "function") editor.chain().focus().deleteColumn().run(); else status("无法删除当前列，请先点入表格单元格。", true); break;
       case "deleteTable": if (typeof editor.commands.deleteTable === "function") editor.chain().focus().deleteTable().run(); else status("无法删除表格，请先点入表格单元格。", true); break;
@@ -2619,7 +2619,7 @@ async function loadTiptapModules() {
         attributes: {
           class: "firefly-prosemirror-content",
           role: "textbox",
-          "aria-label": "文章可视化编辑器",
+          "aria-label": "文章正文编辑区",
           "aria-multiline": "true",
           spellcheck: "true",
         },
