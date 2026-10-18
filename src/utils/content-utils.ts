@@ -3,23 +3,37 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { getCategoryUrl } from "@utils/url-utils";
 
-// // Retrieve posts and sort them by publication date
+function scheduledTimestamp(value: Date | string | undefined): number | undefined {
+	if (value === undefined) return undefined;
+	const timestamp = value instanceof Date ? value.getTime() : Date.parse(value);
+	return Number.isFinite(timestamp) ? timestamp : undefined;
+}
+
+// Production pages omit drafts and future-dated posts. A scheduled workflow
+// rebuilds the static site once a post's publication timestamp becomes due.
 async function getRawSortedPosts() {
+	const now = Date.now();
 	const allBlogPosts = await getCollection("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
+		if (!import.meta.env.PROD) return true; // Development is a preview environment.
+		if (data.draft === true) return false;
+		if (data.date === undefined) return true;
+		const scheduledAt = scheduledTimestamp(data.date);
+		return scheduledAt !== undefined && scheduledAt <= now;
 	});
 
-	const sorted = allBlogPosts.sort((a, b) => {
-		// 首先按置顶状态排序，置顶文章在前
+	// Use the scheduled timestamp as the display/sort date after release.
+	for (const post of allBlogPosts) {
+		const scheduledAt = scheduledTimestamp(post.data.date);
+		if (scheduledAt !== undefined && scheduledAt <= now) {
+			post.data.published = new Date(scheduledAt);
+		}
+	}
+
+	return allBlogPosts.sort((a, b) => {
 		if (a.data.pinned && !b.data.pinned) return -1;
 		if (!a.data.pinned && b.data.pinned) return 1;
-
-		// 如果置顶状态相同，则按发布日期排序
-		const dateA = new Date(a.data.published);
-		const dateB = new Date(b.data.published);
-		return dateA > dateB ? -1 : 1;
+		return b.data.published.getTime() - a.data.published.getTime();
 	});
-	return sorted;
 }
 
 export async function getSortedPosts(): Promise<CollectionEntry<"posts">[]> {
