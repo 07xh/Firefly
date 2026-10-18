@@ -64,6 +64,8 @@ async function loadTiptapModules() {
   let loadingSource = false;
   let visualLoadFailed = false;
   let pendingUploads = 0;
+  let activeImagePreviewEditTarget = null;
+  let pendingImageReplacementTarget = null;
   let activeMode = "visual";
   let lastLoadedSource = sourceField.value;
   let protectedMarkerSequence = 0;
@@ -2402,7 +2404,7 @@ async function loadTiptapModules() {
     document.head.append(style);
   }
 
-  function openImagePreview(src, alt = "", title = "") {
+  function openImagePreview(src, alt = "", title = "", editTarget = null) {
     const imageSrc = typeof src === "string" ? src.trim() : "";
     if (!imageSrc) return;
 
@@ -2413,12 +2415,21 @@ async function loadTiptapModules() {
       style.textContent = [
         "#firefly-image-preview-dialog{width:min(1100px,calc(100vw - 24px));max-width:none;max-height:92vh;margin:auto;border:1px solid #d7e4d9;border-radius:16px;padding:0;background:#f9fcf9;color:#243329;box-shadow:0 24px 80px #102e1b55;overflow:hidden}",
         "#firefly-image-preview-dialog::backdrop{background:#14251bd9;backdrop-filter:blur(4px)}",
-        "#firefly-image-preview-dialog .firefly-image-preview__layout{display:grid;grid-template-rows:auto minmax(0,1fr);max-height:92vh}",
+        "#firefly-image-preview-dialog .firefly-image-preview__layout{display:grid;grid-template-rows:auto auto minmax(0,1fr);max-height:92vh}",
         "#firefly-image-preview-dialog .firefly-image-preview__bar{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:10px 14px;border-bottom:1px solid #e0e9e1;background:#fff}",
         "#firefly-image-preview-dialog .firefly-image-preview__caption{min-width:0;overflow-wrap:anywhere;font-size:13px;font-weight:650;color:#314536}",
         "#firefly-image-preview-dialog .firefly-image-preview__actions{display:flex;flex-wrap:wrap;align-items:center;gap:8px;flex-shrink:0}",
         "#firefly-image-preview-dialog .firefly-image-preview__button{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:6px 10px;border:1px solid #cbd9ce;border-radius:8px;background:#fff;color:#314536;text-decoration:none;font:inherit;font-size:12px;cursor:pointer}",
         "#firefly-image-preview-dialog .firefly-image-preview__button:focus-visible{outline:2px solid #16834c;outline-offset:2px}",
+        "#firefly-image-preview-dialog .firefly-image-preview__edit{display:grid;gap:10px;padding:12px 14px;border-bottom:1px solid #e0e9e1;background:#f8fbf8}",
+        "#firefly-image-preview-dialog .firefly-image-preview__edit[hidden]{display:none!important}",
+        "#firefly-image-preview-dialog .firefly-image-preview__edit label{display:grid;gap:5px;color:#43574a;font-size:12px;font-weight:650}",
+        "#firefly-image-preview-dialog .firefly-image-preview__edit input{width:100%;min-height:40px;padding:8px 10px;border:1px solid #cbd9ce;border-radius:8px;background:#fff;color:#243329;font:inherit;font-size:14px}",
+        "#firefly-image-preview-dialog .firefly-image-preview__edit input:focus-visible{outline:2px solid #16834c;outline-offset:1px}",
+        "#firefly-image-preview-dialog .firefly-image-preview__edit-actions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}",
+        "#firefly-image-preview-dialog .firefly-image-preview__edit-actions button{min-height:38px;padding:7px 12px;border:1px solid #cbd9ce;border-radius:8px;background:#fff;color:#314536;font:inherit;font-size:12px;cursor:pointer}",
+        "#firefly-image-preview-dialog .firefly-image-preview__edit-actions button[type=submit]{background:#147a43;color:#fff;border-color:#147a43}",
+        "@media(prefers-color-scheme:dark){#firefly-image-preview-dialog .firefly-image-preview__edit{background:#202820;border-color:#405645}#firefly-image-preview-dialog .firefly-image-preview__edit label{color:#d5e4d7}#firefly-image-preview-dialog .firefly-image-preview__edit input{background:#263328;color:#e6eee7;border-color:#4c6551}#firefly-image-preview-dialog .firefly-image-preview__edit-actions button{background:#263328;color:#e6eee7;border-color:#4c6551}#firefly-image-preview-dialog .firefly-image-preview__edit-actions button[type=submit]{background:#2a965b;border-color:#2a965b}}",
         "#firefly-image-preview-dialog .firefly-image-preview__image-wrap{display:flex;align-items:center;justify-content:center;min-height:140px;max-height:calc(92vh - 62px);overflow:auto;padding:14px;background:linear-gradient(45deg,#eef2ee 25%,transparent 25%),linear-gradient(-45deg,#eef2ee 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#eef2ee 75%),linear-gradient(-45deg,transparent 75%,#eef2ee 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0}",
         "#firefly-image-preview-dialog .firefly-image-preview__image{display:block;max-width:100%;max-height:calc(92vh - 100px);width:auto;height:auto;object-fit:contain;border-radius:5px;box-shadow:0 4px 24px #102e1b24}",
         "@media(max-width:520px){#firefly-image-preview-dialog .firefly-image-preview__bar{align-items:flex-start;flex-direction:column;gap:8px}#firefly-image-preview-dialog .firefly-image-preview__actions{width:100%}#firefly-image-preview-dialog .firefly-image-preview__button{flex:1}#firefly-image-preview-dialog .firefly-image-preview__image-wrap{padding:8px}}",
@@ -2446,13 +2457,98 @@ async function loadTiptapModules() {
       original.target = "_blank";
       original.rel = "noopener noreferrer";
       original.hidden = true;
+      const editDescription = document.createElement("button");
+      editDescription.type = "button";
+      editDescription.className = "firefly-image-preview__button";
+      editDescription.dataset.imageEditDescription = "true";
+      editDescription.textContent = "修改图片说明";
+      editDescription.hidden = true;
+      const replaceImage = document.createElement("button");
+      replaceImage.type = "button";
+      replaceImage.className = "firefly-image-preview__button";
+      replaceImage.dataset.imageReplace = "true";
+      replaceImage.textContent = "替换图片";
+      replaceImage.hidden = true;
       const close = document.createElement("button");
       close.type = "button";
       close.className = "firefly-image-preview__button";
       close.textContent = "关闭";
       close.addEventListener("click", () => dialog.close());
-      actions.append(original, close);
+      actions.append(original, editDescription, replaceImage, close);
       bar.append(caption, actions);
+      const editPanel = document.createElement("form");
+      editPanel.className = "firefly-image-preview__edit";
+      editPanel.hidden = true;
+      const altLabel = document.createElement("label");
+      altLabel.textContent = "图片替代文字（描述图片内容）";
+      const altInput = document.createElement("input");
+      altInput.type = "text";
+      altInput.maxLength = 500;
+      altInput.autocomplete = "off";
+      altInput.dataset.imageAltInput = "true";
+      altInput.placeholder = "例如：文章编辑器的手机端界面";
+      altLabel.append(altInput);
+      const titleLabel = document.createElement("label");
+      titleLabel.textContent = "悬停提示标题（可选）";
+      const titleInput = document.createElement("input");
+      titleInput.type = "text";
+      titleInput.maxLength = 200;
+      titleInput.autocomplete = "off";
+      titleInput.dataset.imageTitleInput = "true";
+      titleInput.placeholder = "留空表示不显示悬停提示";
+      titleLabel.append(titleInput);
+      const editActions = document.createElement("div");
+      editActions.className = "firefly-image-preview__edit-actions";
+      const cancelEdit = document.createElement("button");
+      cancelEdit.type = "button";
+      cancelEdit.textContent = "取消";
+      cancelEdit.addEventListener("click", () => { editPanel.hidden = true; });
+      const saveEdit = document.createElement("button");
+      saveEdit.type = "submit";
+      saveEdit.textContent = "保存说明";
+      editActions.append(cancelEdit, saveEdit);
+      editPanel.append(altLabel, titleLabel, editActions);
+      editPanel.addEventListener("submit", event => {
+        event.preventDefault();
+        const target = activeImagePreviewEditTarget;
+        const current = target && editor?.state.doc.nodeAt(target.position);
+        if (!target || !current || current.type.name !== "image" || current.attrs.src !== target.src) {
+          status("图片位置已变化，请重新点选图片后再修改说明。", true);
+          editPanel.hidden = true;
+          return;
+        }
+        const altValue = altInput.value.trim();
+        const titleValue = titleInput.value.trim();
+        if (altValue.length > 500 || titleValue.length > 200) {
+          status("图片替代文字最多 500 个字符，提示标题最多 200 个字符。", true);
+          return;
+        }
+        editor.view.dispatch(editor.state.tr.setNodeMarkup(target.position, current.type, {
+          ...current.attrs,
+          alt: altValue,
+          title: titleValue,
+        }));
+        activeImagePreviewEditTarget = { ...target, alt: altValue, title: titleValue };
+        previewImage.alt = altValue || titleValue || "图片预览";
+        previewImage.title = titleValue;
+        caption.textContent = altValue || titleValue || "图片预览";
+        editPanel.hidden = true;
+        dialog.close();
+        status("图片说明已更新。保存文章后，网站才会显示这些修改。");
+      });
+      editDescription.addEventListener("click", () => {
+        if (!activeImagePreviewEditTarget) return;
+        altInput.value = activeImagePreviewEditTarget.alt || "";
+        titleInput.value = activeImagePreviewEditTarget.title || "";
+        editPanel.hidden = false;
+        altInput.focus();
+      });
+      replaceImage.addEventListener("click", () => {
+        if (!activeImagePreviewEditTarget) return;
+        pendingImageReplacementTarget = activeImagePreviewEditTarget;
+        dialog.close();
+        $("wysiwygFile")?.click();
+      });
       const imageWrap = document.createElement("div");
       imageWrap.className = "firefly-image-preview__image-wrap";
       const previewImage = document.createElement("img");
@@ -2463,7 +2559,7 @@ async function loadTiptapModules() {
         caption.textContent = (caption.textContent || "图片") + "（加载失败，请检查图片链接或网络）";
       });
       imageWrap.append(previewImage);
-      layout.append(bar, imageWrap);
+      layout.append(bar, editPanel, imageWrap);
       dialog.append(layout);
       document.body.append(dialog);
       dialog.addEventListener("click", event => {
@@ -2474,6 +2570,19 @@ async function loadTiptapModules() {
     const previewImage = dialog.querySelector(".firefly-image-preview__image");
     const caption = dialog.querySelector("[data-image-caption]");
     const original = dialog.querySelector("[data-image-original]");
+    const editDescription = dialog.querySelector("[data-image-edit-description]");
+    const replaceImage = dialog.querySelector("[data-image-replace]");
+    const editPanel = dialog.querySelector(".firefly-image-preview__edit");
+    const altInput = dialog.querySelector("[data-image-alt-input]");
+    const titleInput = dialog.querySelector("[data-image-title-input]");
+    activeImagePreviewEditTarget = editTarget && Number.isInteger(editTarget.position)
+      ? { position: editTarget.position, src: imageSrc, alt: String(alt || ""), title: String(title || "") }
+      : null;
+    if (editDescription) editDescription.hidden = !activeImagePreviewEditTarget;
+    if (replaceImage) replaceImage.hidden = !activeImagePreviewEditTarget;
+    if (editPanel) editPanel.hidden = true;
+    if (altInput) altInput.value = String(alt || "");
+    if (titleInput) titleInput.value = String(title || "");
     previewImage.src = imageSrc;
     previewImage.alt = alt || title || "图片预览";
     previewImage.title = title || "";
@@ -2507,6 +2616,8 @@ async function loadTiptapModules() {
   }
 
   async function uploadImage(file) {
+    const replacementTarget = pendingImageReplacementTarget;
+    pendingImageReplacementTarget = null;
     if (!file || !file.type) return;
     if (!allowedImageTypes.has(file.type.toLowerCase())) {
       status("仅支持 PNG、JPEG、WebP 和 GIF 图片。", true);
@@ -2515,6 +2626,13 @@ async function loadTiptapModules() {
     if (file.size <= 0 || file.size > 4 * 1024 * 1024) {
       status("图片必须大于 0 且不超过 4 MiB，请压缩后重试。", true);
       return;
+    }
+    if (replacementTarget) {
+      const current = editor?.state.doc.nodeAt(replacementTarget.position);
+      if (!current || current.type.name !== "image" || current.attrs.src !== replacementTarget.src) {
+        status("要替换的图片位置已变化，请重新点选原图片后再替换。", true);
+        return;
+      }
     }
     pendingUploads += 1;
     const toolbar = $("wysiwygUpload");
@@ -2532,12 +2650,27 @@ async function loadTiptapModules() {
       const data = await response.json().catch(() => ({ error: "图片上传响应无法解析" }));
       if (!response.ok) throw new Error(data.error || "图片上传失败");
       if (!data.imageUrl) throw new Error("上传接口未返回图片地址，图片没有插入正文。");
-      editor.chain().focus().setImage({
-        src: data.imageUrl,
-        alt: file.name || "文章图片",
-        title: file.name || "",
-      }).run();
-      status("图片已插入正文。保存文章后，网站才会显示这张图片。");
+      const uploadedAlt = file.name || "文章图片";
+      if (replacementTarget) {
+        const current = editor?.state.doc.nodeAt(replacementTarget.position);
+        if (!current || current.type.name !== "image" || current.attrs.src !== replacementTarget.src) {
+          throw new Error("图片位置在上传期间发生变化，新图片尚未替换到正文。请重新点选图片后再试。");
+        }
+        editor.view.dispatch(editor.state.tr.setNodeMarkup(replacementTarget.position, current.type, {
+          ...current.attrs,
+          src: data.imageUrl,
+          alt: uploadedAlt,
+          title: file.name || "",
+        }));
+        status("图片已替换。可再次点选图片修改说明；保存文章后，网站才会显示更改。");
+      } else {
+        editor.chain().focus().setImage({
+          src: data.imageUrl,
+          alt: uploadedAlt,
+          title: file.name || "",
+        }).run();
+        status("图片已插入正文。保存文章后，网站才会显示这张图片。");
+      }
     } catch (error) {
       status(error instanceof Error ? error.message : "图片上传失败。", true);
     } finally {
@@ -2950,7 +3083,7 @@ async function loadTiptapModules() {
         handleClickOn(_view, _position, node, _nodePosition, event) {
           if (node.type.name !== "image" || event.button !== 0) return false;
           event.preventDefault();
-          openImagePreview(node.attrs.src, node.attrs.alt, node.attrs.title);
+          openImagePreview(node.attrs.src, node.attrs.alt, node.attrs.title, { position: _nodePosition });
           return true;
         },
         handleKeyDown(_view, event) {
