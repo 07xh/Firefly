@@ -82,100 +82,21 @@ function scalar(value: string): string {
 }
 
 function replaceFrontmatterField(frontmatter: string, key: string, value: string): string {
-	const line = new RegExp(`^${key}:.*import { env as workerEnv } from "cloudflare:workers";
-
-import type { APIRoute } from "astro";
-
-type RuntimeEnv = {
-	FIREFLY_CONTENTS_TOKEN?: string;
-	GITHUB_CONTENTS_REPO?: string;
-	GITHUB_CONTENTS_BRANCH?: string;
-};
-
-type GitHubEntry = {
-	path: string;
-	sha: string;
-	type: string;
-	url?: string;
-};
-
-export const prerender = false;
-
-const ROOT = "src/content/posts/";
-const headers = (token: string) => ({
-	Accept: "application/vnd.github+json",
-	"User-Agent": "Firefly-Admin/1.0 (https://github.com/07xh/Firefly)",
-	Authorization: `Bearer ${token}`,
-	"X-GitHub-Api-Version": "2022-11-28",
-	"Content-Type": "application/json",
-});
-
-function getConfig(): { token: string; repo: string; branch: string } {
-	const env = workerEnv as unknown as RuntimeEnv;
-	const token = env?.FIREFLY_CONTENTS_TOKEN?.trim();
-	const repo = env?.GITHUB_CONTENTS_REPO?.trim() || "07xh/Firefly";
-	const branch = env?.GITHUB_CONTENTS_BRANCH?.trim() || "master";
-	if (!token) throw new Error("FIREFLY_CONTENTS_TOKEN is not configured");
-	if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error("Invalid repository configuration");
-	return { token, repo, branch };
-}
-
-async function githubFailure(response: Response, operation: string): Promise<string> {
-	let message = "";
-	try {
-		const payload = (await response.clone().json()) as { message?: unknown };
-		if (typeof payload.message === "string") {
-			message = payload.message.replace(/\s+/g, " ").trim().slice(0, 240);
-		}
-	} catch {
-		// GitHub may return a non-JSON error body; keep the HTTP status either way.
-	}
-	return `${operation} (${response.status})${message ? `：${message}` : ""}`;
-}
-
-function json(data: unknown, status = 200): Response {
-	return new Response(JSON.stringify(data), {
-		status,
-		headers: { "content-type": "application/json; charset=utf-8", "cache-control": "private, no-store" },
-	});
-}
-
-function safeSlug(value: unknown): string | null {
-	if (typeof value !== "string") return null;
-	const slug = value.trim();
-	return /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(slug) ? slug : null;
-}
-
-function encodeBase64(value: string): string {
-	const bytes = new TextEncoder().encode(value);
-	let binary = "";
-	for (let i = 0; i < bytes.length; i += 0x8000) {
-		binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-	}
-	return btoa(binary);
-}
-
-function decodeBase64(value: string): string {
-	const binary = atob(value.replace(/\n/g, ""));
-	const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
-	return new TextDecoder().decode(bytes);
-}
-
-, "m");
-	const replacement = `${key}: ${value}`;
-	return line.test(frontmatter) ? frontmatter.replace(line, replacement) : `${frontmatter}\n${replacement}`;
+	const line = new RegExp("^" + key + ":.*$", "m");
+	const replacement = key + ": " + value;
+	return line.test(frontmatter) ? frontmatter.replace(line, replacement) : frontmatter + "\n" + replacement;
 }
 
 function updateFrontmatterField(content: string, key: string, value: string): string {
 	const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
 	if (!match) throw new Error("未找到有效的 frontmatter，无法保存文章元数据");
 	const updated = replaceFrontmatterField(match[1], key, value);
-	return content.replace(match[0], `---\n${updated}\n---`);
+	return content.replace(match[0], "---\n" + updated + "\n---");
 }
 
 function validDate(value: unknown): value is string {
 	if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
-	const date = new Date(`${value}T00:00:00Z`);
+	const date = new Date(value + "T00:00:00Z");
 	return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 }
 
@@ -293,11 +214,11 @@ export const PUT: APIRoute = async ({ request }) => {
 		if (typeof input.sha !== "string" || input.sha !== current.sha) return json({ error: "文章已被其他操作修改，请刷新后重试" }, 409);
 		const slug = path.split("/").pop()?.replace(/\.mdx?$/, "") ?? "";
 		let content = typeof input.rawContent === "string" ? input.rawContent : makeMarkdown({ ...input, slug });
-		if (!content || content.length > 500_000 || (typeof input.rawContent === "string" && !/^---\r?\n/.test(content))) {
+		if (!content || content.length > 500_000 || (typeof input.rawContent === "string" && !/^---\\r?\\n/.test(content))) {
 			return json({ error: "完整文章内容不合法或超过 500 KB" }, 400);
 		}
 		if (typeof input.rawContent === "string") {
-			const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+			const frontmatter = content.match(/^---\\r?\\n([\\s\\S]*?)\\r?\\n---/);
 			if (!frontmatter) return json({ error: "未找到有效的 frontmatter，无法保存文章元数据" }, 400);
 			const title = typeof input.title === "string" ? input.title.trim() : "";
 			if (!title || title.length > 200) return json({ error: "标题不能为空且不能超过 200 个字符" }, 400);
