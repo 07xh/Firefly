@@ -408,7 +408,14 @@ function getProtectedRanges(source) {
     const containsProtectedSyntax = ranges.some((range) =>
       range.start <= callout.end && range.end >= callout.start
     );
-    if (containsProtectedSyntax) {
+    // Even a normally editable static Badge remains covered by its surrounding
+    // callout, so marker replacement can never move it outside the container.
+    const containsInlineBadge = editableBadgeRanges.some((range) => {
+      const start = lineAt(range.startOffset);
+      const end = lineAt(Math.max(range.startOffset, range.endOffset - 1));
+      return start <= callout.end && end >= callout.start;
+    });
+    if (containsProtectedSyntax || containsInlineBadge) {
       add(callout.start, callout.end, "Callout with extended Markdown/MDX", "block");
     }
   }
