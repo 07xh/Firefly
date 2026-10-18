@@ -250,10 +250,14 @@ function getProtectedRanges(source) {
   }
 
   // MDX evaluates curly-brace expressions even when they contain only a variable.
+  // Hide recognized math first so TeX braces are not mistaken for MDX expressions.
+  const expressionSource = masked
+    .replace(/^[ \t]*\$\$[ \t]*\r?\n[\s\S]*?^[ \t]*\$\$[ \t]*$/gm, match => blankNonNewlines(match))
+    .replace(/\$[^$\n]*(?:\\[a-zA-Z]+|[=+*/^_<>≤≥±×÷])[^$\n]*\$/g, match => blankNonNewlines(match));
   // Parse balanced braces outside common string/comment forms and preserve each
   // expression instead of allowing the Markdown parser to interpret its contents.
-  for (let i = 0; i < masked.length; i += 1) {
-    if (masked[i] !== "{" || isEscapedAt(masked, i)) continue;
+  for (let i = 0; i < expressionSource.length; i += 1) {
+    if (expressionSource[i] !== "{" || isEscapedAt(expressionSource, i)) continue;
     let depth = 1;
     let quote = "";
     let escaped = false;
@@ -261,9 +265,9 @@ function getProtectedRanges(source) {
     let blockComment = false;
     let close = -1;
 
-    for (let j = i + 1; j < masked.length; j += 1) {
-      const ch = masked[j];
-      const next = masked[j + 1];
+    for (let j = i + 1; j < expressionSource.length; j += 1) {
+      const ch = expressionSource[j];
+      const next = expressionSource[j + 1];
 
       if (lineComment) {
         if (ch === "\n") lineComment = false;
@@ -307,7 +311,7 @@ function getProtectedRanges(source) {
     }
 
     if (close < 0) continue;
-    const expression = masked.slice(i + 1, close).trim();
+    const expression = expressionSource.slice(i + 1, close).trim();
     if (!expression) continue;
     const startLine = lineAt(i);
     const endLine = lineAt(close);
