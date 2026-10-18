@@ -1,5 +1,5 @@
 import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=20261018-badge-node";
-import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261018-details-editor";
+import { describeProtectedSyntax, inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261018-natural-language";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
@@ -334,7 +334,7 @@ async function loadTiptapModules() {
     if (notice) {
       notice.hidden = count === 0;
       notice.textContent = count
-        ? "已启用混合可视化编辑：检测到 " + count + " 段扩展 Markdown/MDX 语法，已封装为可保真的“保留语法块”。普通正文可继续可视化编辑；需要修改语法本身时，点击对应块中的“编辑语法”。类型：" + types + "。"
+        ? "已将 " + count + " 段特殊内容单独保护起来，避免编辑时意外改动。其他文字仍可直接编辑；通常无需查看这些内容。需要调整时，点击对应内容卡片中的“查看/修改内容”。类别：" + types + "。"
         : "";
       notice.setAttribute("role", count ? "status" : "none");
     }
@@ -391,13 +391,13 @@ async function loadTiptapModules() {
     const dialog = document.createElement("dialog");
     dialog.className = "firefly-protected-dialog";
     const heading = document.createElement("h3");
-    heading.textContent = "编辑保留的 Markdown/MDX 语法";
+    heading.textContent = "查看或修改特殊内容";
     heading.style.cssText = "font-size:16px;font-weight:700;margin:0 0 8px";
     const description = document.createElement("p");
-    description.textContent = "这里修改的是原始语法片段。保存后会原样写回文章正文，不会由可视化编辑器重新格式化。";
+    description.textContent = "这部分用于呈现文章中的特殊版式或交互内容。日常写作通常无需修改；保存后会按原样写回，不会被普通文字编辑器改写。";
     description.style.cssText = "font-size:13px;color:#78716c;margin:0 0 12px";
     const textarea = document.createElement("textarea");
-    textarea.setAttribute("aria-label", "原始 Markdown/MDX 语法");
+    textarea.setAttribute("aria-label", "特殊内容原文（高级编辑）");
     const actions = document.createElement("div");
     actions.className = "firefly-protected-dialog__actions";
     const cancel = document.createElement("button");
@@ -405,7 +405,7 @@ async function loadTiptapModules() {
     cancel.textContent = "取消";
     const save = document.createElement("button");
     save.type = "submit";
-    save.textContent = "保存语法块";
+    save.textContent = "保存内容";
     const form = document.createElement("form");
     form.addEventListener("submit", event => {
       event.preventDefault();
@@ -1821,7 +1821,7 @@ async function loadTiptapModules() {
     const render = () => {
       const katex = window.FireflyKatex;
       if (!katex || typeof katex.renderToString !== "function") {
-        target.textContent = source;
+        target.textContent = "公式预览暂不可用；原始公式已完整保留。";
         target.dataset.katexState = "fallback";
         return false;
       }
@@ -1839,7 +1839,7 @@ async function loadTiptapModules() {
         target.dataset.katexState = "rendered";
         return true;
       } catch {
-        target.textContent = source;
+        target.textContent = "公式预览暂不可用；原始公式已完整保留。";
         target.dataset.katexState = "fallback";
         return false;
       }
@@ -1856,15 +1856,6 @@ async function loadTiptapModules() {
     const heading = (title, extraClass = "") => preview.append(visualPreviewElement("div", "firefly-visual-preview__title" + (extraClass ? " " + extraClass : ""), title));
     const paragraph = (text, className = "firefly-visual-preview__text") => {
       if (text) preview.append(visualPreviewElement("div", className, text));
-    };
-    const propertyList = (attributes, parent = preview) => {
-      if (!attributes?.length) return;
-      const wrap = visualPreviewElement("div", "firefly-visual-preview__props");
-      for (const item of attributes) {
-        const chip = visualPreviewElement("span", "firefly-visual-preview__prop", item.name + "=" + item.value);
-        wrap.append(chip);
-      }
-      parent.append(wrap);
     };
     const appendItems = (items, kind) => {
       if (!items?.length) {
@@ -1959,7 +1950,7 @@ async function loadTiptapModules() {
       formula.setAttribute("aria-label", "数学公式预览");
       renderKatexInto(formula, model.text || "", model.display);
       preview.append(formula);
-      paragraph("公式源码保留在原文中；点击“编辑语法”可修改。", "firefly-visual-preview__muted");
+      paragraph("公式已原样保留；需要调整时，点击上方“查看/修改内容”。", "firefly-visual-preview__muted");
     } else if (model.kind === "inline-math") {
       const line = visualPreviewElement("div", "firefly-visual-preview__text");
       line.style.lineHeight = "2.1";
@@ -1974,7 +1965,7 @@ async function loadTiptapModules() {
         }
       }
       preview.append(line);
-      paragraph("可视化展示保留了公式原文；如需修改，点击“编辑语法”。", "firefly-visual-preview__muted");
+      paragraph("公式和周边文字均已保留；需要调整时，可查看或修改特殊内容。", "firefly-visual-preview__muted");
     } else if (model.kind === "task-list") {
       heading(model.title);
       for (const item of model.items || []) {
@@ -2010,17 +2001,20 @@ async function loadTiptapModules() {
       preview.append(card);
     } else if (model.kind === "component") {
       const card = visualPreviewElement("div", "firefly-visual-preview__panel");
-      card.append(visualPreviewElement("div", "firefly-visual-preview__panel-head", model.title || "MDX 组件"));
-      if (model.text) card.append(visualPreviewElement("div", "firefly-visual-preview__text", model.text));
-      propertyList(model.attributes, card);
+      card.append(visualPreviewElement("div", "firefly-visual-preview__panel-head", "特殊内容组件"));
+      card.append(visualPreviewElement("div", "firefly-visual-preview__text", "这部分使用了文章的特殊展示组件。系统已保留原始设置，日常写作通常无需修改。"));
       preview.append(card);
     } else if (model.kind === "html") {
-      heading(model.title);
-      paragraph(model.text || "HTML / 主题组件语法已安全保留。");
+      heading("特殊版式内容");
+      if (/<(?:script|style|svg)\b/i.test(raw)) {
+        paragraph("这部分包含特殊展示语法，已原样保留。为避免显示程序内容，编辑器仅提供安全说明。");
+      } else {
+        paragraph(model.text || "这部分包含特殊展示语法，系统已原样保留。");
+      }
     } else {
-      heading(model.title || "扩展语法");
-      paragraph(model.text || "这种语法已安全保留，预览区隐藏了源码。点击“编辑语法”可修改原始内容。");
-      if (model.text) paragraph("保存时仍保留原始语法，不会把此预览摘要写回文章。", "firefly-visual-preview__muted");
+      heading("特殊内容");
+      paragraph("这部分使用了博客的扩展语法，系统已完整保留。日常写作无需理解或修改它；需要调整时，点击上方“查看/修改内容”。");
+      paragraph("保存时写回的是原始内容，不会把这段说明写进文章。", "firefly-visual-preview__muted");
     }
     return preview;
   }
@@ -2065,11 +2059,12 @@ async function loadTiptapModules() {
             const header = document.createElement("div");
             header.className = "firefly-protected-markdown__head";
             const label = document.createElement("span");
-            label.textContent = "保留原始语法 · " + (currentNode.attrs.reason || "扩展 Markdown");
+            label.textContent = describeProtectedSyntax(currentNode.attrs.reason) + " · 已原样保留";
             const edit = document.createElement("button");
             edit.type = "button";
             edit.className = "firefly-protected-markdown__edit";
-            edit.textContent = "编辑语法";
+            edit.textContent = "查看/修改内容";
+            edit.title = "查看或修改这段特殊内容；通常无需修改";
             edit.addEventListener("mousedown", event => event.preventDefault());
             edit.addEventListener("click", event => {
               event.preventDefault();
