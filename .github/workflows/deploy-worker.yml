@@ -43,6 +43,13 @@ jobs:
           const binding = config.kv_namespaces?.find((item) => item.binding === "FIREFLY_SESSIONS");
           if (!binding) throw new Error("FIREFLY_SESSIONS binding not found in wrangler.jsonc");
           binding.id = process.env.FIREFLY_SESSIONS_ID;
+          // Astro server output needs the Worker to handle the homepage and dynamic
+          // routes before static asset fallback. Restricting this to /admin and /api
+          // makes "/" bypass the Astro Worker and can break the public website.
+          if (config.assets) {
+            config.assets.binding = config.assets.binding || "ASSETS";
+            config.assets.run_worker_first = true;
+          }
           fs.writeFileSync(path, JSON.stringify(config, null, 2) + "\n");
           NODE
           # Use the JSONC configuration as the single source of truth for this deployment.
