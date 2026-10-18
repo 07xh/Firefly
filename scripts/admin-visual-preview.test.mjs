@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { describeProtectedSyntax, inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "../public/admin-visual-preview.js";
+import { normalizeEditorLinkAddress } from "../public/admin-link-utils.js";
 
 test("Firefly Badge component renders as a safe visual preview model", () => {
   const model = inspectProtectedMarkdown('前言 <Badge type="tip">新功能</Badge> 后记', "MDX component");
@@ -372,4 +373,32 @@ test("structured editor validation messages use plain Chinese rather than syntax
     () => serializeEditableDetails({ title: "标题", body: "**加粗**" }),
     error => error instanceof Error && /纯文本/.test(error.message) && !/Markdown|MDX|源码/.test(error.message),
   );
+});
+
+
+test("visual editor accepts safe web, email, phone, and in-site links", () => {
+  assert.equal(normalizeEditorLinkAddress(" https://example.com/guide?q=1 "), "https://example.com/guide?q=1");
+  assert.equal(normalizeEditorLinkAddress("http://example.com"), "http://example.com/");
+  assert.equal(normalizeEditorLinkAddress("mailto:editor@example.com?subject=Hello"), "mailto:editor@example.com?subject=Hello");
+  assert.equal(normalizeEditorLinkAddress("tel:+1 (555) 012-3456"), "tel:+1(555)012-3456");
+  assert.equal(normalizeEditorLinkAddress("/posts/guide/"), "/posts/guide/");
+  assert.equal(normalizeEditorLinkAddress("../guide/"), "../guide/");
+  assert.equal(normalizeEditorLinkAddress("#introduction"), "#introduction");
+});
+
+test("visual editor rejects unsafe or malformed link addresses", () => {
+  for (const address of [
+    "",
+    "javascript:alert(1)",
+    "data:text/html,<script>alert(1)</script>",
+    "//external.example/path",
+    "https://",
+    "mailto:",
+    "tel:hello",
+    "https://example.com/with\\nnewline",
+    'https://example.com/" onclick="alert(1)',
+    "/" + "a".repeat(2048),
+  ]) {
+    assert.equal(normalizeEditorLinkAddress(address), null, `expected rejection for ${JSON.stringify(address)}`);
+  }
 });
