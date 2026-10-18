@@ -388,6 +388,23 @@ export const prerender = false;
       </div>
     </section>
 
+<section class="settings-card" aria-labelledby="layoutSettingsTitle">
+  <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="layoutSettingsTitle">布局管理与响应式显示</h3><p>配置保存到 settings.json，并由下一次 Cloudflare 构建应用到前台。</p></div></div>
+  <div class="settings-grid">
+    <div class="settings-field"><label for="layoutSidebarPosition">桌面侧边栏布局</label><select id="layoutSidebarPosition" name="layoutSidebarPosition" class="settings-control"><option value="left">左侧边栏</option><option value="right">右侧边栏</option><option value="both">双侧边栏</option></select><small>单侧布局让正文更宽；双侧布局可同时展示左右辅助信息。</small></div>
+    <div class="settings-field"><label for="layoutTabletSidebar">平板端侧边栏位置</label><select id="layoutTabletSidebar" name="layoutTabletSidebar" class="settings-control"><option value="left">平板显示左侧</option><option value="right">平板显示右侧</option></select><small>仅桌面选择“双侧边栏”时有效。</small></div>
+    <div class="settings-field"><label for="layoutPostListMode">桌面文章列表布局</label><select id="layoutPostListMode" name="layoutPostListMode" class="settings-control"><option value="list">列表模式（单列）</option><option value="grid">网格模式（自适应多列）</option></select></div>
+    <div class="settings-field"><label for="layoutMobilePostListMode">移动端文章布局</label><select id="layoutMobilePostListMode" name="layoutMobilePostListMode" class="settings-control"><option value="list">列表模式</option><option value="grid">网格模式</option></select><small>极窄屏幕仍遵循主题可读性保护规则。</small></div>
+    <div class="settings-field"><label for="layoutCoverPosition">列表模式封面位置</label><select id="layoutCoverPosition" name="layoutCoverPosition" class="settings-control"><option value="right">封面在右侧</option><option value="left">封面在左侧</option></select><small>仅影响列表模式；网格封面固定在卡片顶部。</small></div>
+    <div class="settings-field"><label for="layoutGridColumnWidth">网格卡片最小宽度（px）</label><input id="layoutGridColumnWidth" name="layoutGridColumnWidth" type="number" min="220" max="460" step="10" required value="320" class="settings-control"><small>220–460px；数值越小通常可显示更多列。</small></div>
+  </div>
+  <div class="settings-switch-grid" style="margin-top:14px">
+    <label class="settings-toggle"><input id="layoutSidebarEnabled" name="layoutSidebarEnabled" type="checkbox" checked><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">启用桌面侧边栏<small>关闭后隐藏左右侧栏列；移动端底部组件仍按原配置处理。</small></span></label>
+    <label class="settings-toggle"><input id="layoutGridMasonry" name="layoutGridMasonry" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">网格瀑布流<small>仅在网格模式生效。</small></span></label>
+    <label class="settings-toggle"><input id="layoutGridCoverFullWidth" name="layoutGridCoverFullWidth" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">网格封面贴边显示<small>开启后封面铺满卡片顶部；关闭则保留内边距。</small></span></label>
+  </div>
+</section>
+
 <div class="settings-save-row" aria-label="全局配置保存操作">
       <button id="saveSettings" type="submit" class="settings-save-button" disabled>保存全局配置</button>
       <button id="discardSettings" type="button" class="btn" disabled>放弃未保存修改</button>
@@ -745,6 +762,16 @@ async function loadSettings(){
   $("showEmail").checked=data.showEmail===true;
   $("showSupportAndShare").checked=data.showSupportAndShare===true;
   $("showSourceGithub").checked=data.showSourceGithub===true;
+  const savedLayout = data.layoutSettings && typeof data.layoutSettings === "object" ? data.layoutSettings : {};
+  $("layoutSidebarEnabled").checked=savedLayout.sidebarEnabled!==false;
+  $("layoutSidebarPosition").value=["left","right","both"].includes(savedLayout.sidebarPosition)?savedLayout.sidebarPosition:"both";
+  $("layoutTabletSidebar").value=["left","right"].includes(savedLayout.tabletSidebar)?savedLayout.tabletSidebar:"left";
+  $("layoutPostListMode").value=["list","grid"].includes(savedLayout.postListMode)?savedLayout.postListMode:"list";
+  $("layoutMobilePostListMode").value=["list","grid"].includes(savedLayout.mobilePostListMode)?savedLayout.mobilePostListMode:"grid";
+  $("layoutCoverPosition").value=["left","right"].includes(savedLayout.coverPosition)?savedLayout.coverPosition:"right";
+  $("layoutGridMasonry").checked=savedLayout.gridMasonry===true;
+  $("layoutGridColumnWidth").value=Number.isInteger(savedLayout.gridColumnWidth)&&savedLayout.gridColumnWidth>=220&&savedLayout.gridColumnWidth<=460?savedLayout.gridColumnWidth:320;
+  $("layoutGridCoverFullWidth").checked=savedLayout.gridCoverFullWidth===true;
   $("showAbout").checked=data.showAbout!==false;
   $("showAboutDonation").checked=data.showAboutDonation===true;
   $("showNavSocial").checked=data.showNavSocial!==false;
@@ -819,7 +846,18 @@ $("settingsForm").addEventListener("submit",async event=>{
   showNavMy:$("showNavMy").checked,
   showNavLinks:$("showNavLinks").checked,
   showNavAbout:$("showNavAbout").checked,
-  donationQrCode:$("donationQrCode").value.trim()
+  donationQrCode:$("donationQrCode").value.trim(),
+  layoutSettings:{
+   sidebarEnabled:$("layoutSidebarEnabled").checked,
+   sidebarPosition:$("layoutSidebarPosition").value,
+   tabletSidebar:$("layoutTabletSidebar").value,
+   postListMode:$("layoutPostListMode").value,
+   mobilePostListMode:$("layoutMobilePostListMode").value,
+   coverPosition:$("layoutCoverPosition").value,
+   gridMasonry:$("layoutGridMasonry").checked,
+   gridColumnWidth:Number($("layoutGridColumnWidth").value),
+   gridCoverFullWidth:$("layoutGridCoverFullWidth").checked
+  }
  };
  if(values.backgroundColor&&!/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(values.backgroundColor)){status.textContent="背景颜色只支持 #RGB 或 #RRGGBB；留空可恢复主题默认颜色。";status.style.color="#b42318";$("backgroundColor").focus();return}
  for(const [key,label] of [["backgroundImage","背景图片"],["avatar","头像"],["githubUrl","GitHub 链接"],["backgroundMusic","背景音乐"],["sourceGithubUrl","GitHub 原文/源码链接"],["donationQrCode","打赏二维码图片"]]){
