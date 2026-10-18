@@ -100,7 +100,7 @@
       if (selected?.path === article.path) reset();
       say("阶段 2/4：删除已提交到 GitHub。" + (result.commitSha ? " Commit SHA：" + result.commitSha : ""));
       await refresh();
-      if (result.commitSha) watchDeployment(result.commitSha);
+      if (result.commitSha) watchDeployment(result.commitSha, 0, false);
     } catch (error) {
       say(error instanceof Error ? error.message : "删除失败", true);
     } finally {
@@ -172,7 +172,7 @@
   links.className = "mt-2 flex flex-wrap gap-3";
   links.innerHTML = '<a id="enhancedCommitLink" class="deploy-link" target="_blank" rel="noopener noreferrer" hidden>查看 GitHub Commit ↗</a><a id="enhancedSiteLink" class="deploy-link" target="_blank" rel="noopener noreferrer" hidden>打开线上网站验证 ↗</a>';
   $("deployLink")?.insertAdjacentElement("afterend", links);
-  watchDeployment = async function(sha, attempt = 0) {
+  watchDeployment = async function(sha, attempt = 0, isDraft = false) {
     try {
       const response = await fetch("/api/admin/deployment-status/?sha=" + encodeURIComponent(sha), { cache: "no-store" });
       if (response.status === 401) { goLogin(); return; }
@@ -185,19 +185,62 @@
       if (data.status === "success") {
         $("enhancedSiteLink").href = new URL("/", location.origin).href;
         $("enhancedSiteLink").hidden = false;
-        say("阶段 4/4：Cloudflare 构建与部署成功。请打开线上网站验证最终展示。");
+        say(isDraft ? "阶段 4/4：Cloudflare 构建与部署成功；文章仍为草稿，普通访客不可见。" : "阶段 4/4：Cloudflare 构建与部署成功。请打开线上网站验证最终展示。");
         return;
       }
       if (data.status === "failure") { say("阶段 3/4：Cloudflare 构建/部署失败，请打开部署日志检查。", true); return; }
       if (attempt >= 24) { say("阶段 3/4：GitHub 已写入，但部署仍未确认；请查看工作流日志。"); return; }
       say("阶段 3/4：" + (data.status === "running" ? "Cloudflare 正在构建/部署…" : "正在等待 Cloudflare 构建启动…") + " Commit SHA：" + sha);
-      setTimeout(() => watchDeployment(sha, attempt + 1), 12000);
+      setTimeout(() => watchDeployment(sha, attempt + 1, isDraft), 12000);
     } catch (error) {
       if (attempt >= 24) { say("阶段 3/4：已写入 GitHub，但无法确认部署状态：" + (error?.message || "未知错误"), true); return; }
       say("阶段 3/4：正在查询 Cloudflare 部署状态…");
       setTimeout(() => watchDeployment(sha, attempt + 1), 12000);
     }
   };
+
+
+  // Own the save flow so drafts and published posts both show the four stages.
+  $("editor")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const mode = event.submitter?.value === "publish" ? "publish" : "draft";
+    const isDraft = mode === "draft";
+    const title = $("title").value.trim();
+    const slug = $("slug").value.trim();
+    const published = $("published").value;
+    if (!title || title.length > 200) { say("阶段 1/4：标题不能为空且最多 200 个字符。", true); $("title").focus(); return; }
+    if (!selected && !/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(slug)) { say("阶段 1/4：文件名格式不正确。", true); $("slug").focus(); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(published) || Number.isNaN(Date.parse(published + "T00:00:00Z"))) { say("阶段 1/4：请选择有效的发布日期。", true); $("published").focus(); return; }
+    if ($("body").value.length > 500000) { say("阶段 1/4：正文超过 500 KB 限制。", true); return; }
+    if (mode === "publish" && !window.confirm("发布文章将写入 GitHub 并触发 Cloudflare 部署，确定发布吗？")) return;
+    $("draft").checked = isDraft;
+    const metadata = {
+      title, published, category: $("category").value, description: $("description").value,
+      tags: $("tags").value.split(",").map(x => x.trim()).filter(Boolean), draft: isDraft
+    };
+    const data = selected
+      ? { path: selected.path, sha: selected.sha, rawContent: $("body").value, ...metadata }
+      : { ...metadata, slug, body: $("body").value };
+    const buttons = [$("saveDraft"), $("publish")];
+    buttons.forEach(button => button.disabled = true);
+    say("阶段 1/4：本地表单校验通过，正在准备 GitHub 写入…");
+    try {
+      const result = await api(selected ? "PUT" : "POST", data);
+      if (!result.commitSha) throw new Error("GitHub 已响应，但未返回 Commit SHA，无法跟踪部署。请刷新列表确认写入结果。");
+      reset();
+      await refresh();
+      const commit = $("enhancedCommitLink");
+      commit.href = result.commitUrl || ("https://github.com/07xh/Firefly/commit/" + encodeURIComponent(result.commitSha));
+      commit.hidden = false;
+      say("阶段 2/4：已成功写入 GitHub。Commit SHA：" + result.commitSha);
+      watchDeployment(result.commitSha, 0, isDraft);
+    } catch (error) {
+      say(error instanceof Error ? error.message : "保存文章失败。", true);
+    } finally {
+      buttons.forEach(button => button.disabled = false);
+    }
+  }, true);
 
   // Refresh the filter options after the initial asynchronous article fetch.
   const initialRefresh = refresh;
