@@ -109,7 +109,7 @@ function getProtectedRanges(source) {
     "tip", "warning", "danger", "info", "success", "note", "important", "caution",
   ]);
   const calloutRanges = [];
-  const directiveOpening = /^[ \t]{0,3}:{3,}[ \t]*([A-Za-z][A-Za-z0-9_-]*)(?:[ \t]+[^\r\n]*)?[ \t]*$/;
+  const directiveOpening = /^[ \t]{0,3}:{3,}[ \t]*([A-Za-z][A-Za-z0-9_-]*)(?:\[[^\]\r\n]*\]|[ \t]+[^\r\n]*)?[ \t]*$/;
   const directiveClosing = /^[ \t]{0,3}:{3,}[ \t]*$/;
 
   for (let i = 0; i < lines.length; i += 1) {
