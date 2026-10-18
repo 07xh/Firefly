@@ -271,9 +271,9 @@ async function loadTiptapModules() {
     if (/^\s*:{3,}/m.test(withoutFences)) {
       return "正文包含主题提示块或 Markdown directive，请使用源码模式避免丢失主题语法。";
     }
-    // Recognize block math delimiters and likely TeX expressions, but not ordinary prices like $5$.
+    // Detect block math, TeX commands, and mathematical operators; avoid treating every $word$ as math.
     if (/^\s*\$\$\s*$/m.test(withoutFences) ||
-        /\$(?:\\[a-zA-Z]+|[a-zA-Z][^$\n]*|[^$\n]*\\[a-zA-Z]+)\$/.test(withoutFences)) {
+        /\$[^$\n]*(?:\\\\[a-zA-Z]+|[=+*/^_<>≤≥±×÷])[^$\n]*\$/.test(withoutFences)) {
       return "正文包含数学公式语法。请使用源码模式，以保留 KaTeX/LaTeX 公式。";
     }
     if (/(^|\n)\s*(?:[-*+]|\d+\.)\s+\[[ xX]\]\s/m.test(withoutFences)) {
