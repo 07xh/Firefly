@@ -2432,7 +2432,7 @@ async function loadTiptapModules() {
         "@media(prefers-color-scheme:dark){#firefly-image-preview-dialog .firefly-image-preview__edit{background:#202820;border-color:#405645}#firefly-image-preview-dialog .firefly-image-preview__edit label{color:#d5e4d7}#firefly-image-preview-dialog .firefly-image-preview__edit input{background:#263328;color:#e6eee7;border-color:#4c6551}#firefly-image-preview-dialog .firefly-image-preview__edit-actions button{background:#263328;color:#e6eee7;border-color:#4c6551}#firefly-image-preview-dialog .firefly-image-preview__edit-actions button[type=submit]{background:#2a965b;border-color:#2a965b}}",
         "#firefly-image-preview-dialog .firefly-image-preview__image-wrap{display:flex;align-items:center;justify-content:center;min-height:140px;max-height:calc(92vh - 62px);overflow:auto;padding:14px;background:linear-gradient(45deg,#eef2ee 25%,transparent 25%),linear-gradient(-45deg,#eef2ee 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#eef2ee 75%),linear-gradient(-45deg,transparent 75%,#eef2ee 75%);background-size:24px 24px;background-position:0 0,0 12px,12px -12px,-12px 0}",
         "#firefly-image-preview-dialog .firefly-image-preview__image{display:block;max-width:100%;max-height:calc(92vh - 100px);width:auto;height:auto;object-fit:contain;border-radius:5px;box-shadow:0 4px 24px #102e1b24}",
-        "@media(max-width:520px){#firefly-image-preview-dialog .firefly-image-preview__bar{align-items:flex-start;flex-direction:column;gap:8px}#firefly-image-preview-dialog .firefly-image-preview__actions{width:100%}#firefly-image-preview-dialog .firefly-image-preview__button{flex:1}#firefly-image-preview-dialog .firefly-image-preview__image-wrap{padding:8px}}",
+        "@media(max-width:520px){#firefly-image-preview-dialog .firefly-image-preview__bar{align-items:flex-start;flex-direction:column;gap:8px}#firefly-image-preview-dialog .firefly-image-preview__actions{width:100%}#firefly-image-preview-dialog .firefly-image-preview__button{flex:1 1 calc(50% - 8px)}#firefly-image-preview-dialog .firefly-image-preview__image-wrap{padding:8px}}",
         "@media(prefers-color-scheme:dark){#firefly-image-preview-dialog{background:#1a231b;color:#e6eee7;border-color:#405645}#firefly-image-preview-dialog .firefly-image-preview__bar{background:#202820;border-color:#405645}#firefly-image-preview-dialog .firefly-image-preview__caption{color:#e6eee7}#firefly-image-preview-dialog .firefly-image-preview__button{background:#263328;color:#e6eee7;border-color:#4c6551}}",
       ].join("\n");
       document.head.append(style);
@@ -3158,7 +3158,11 @@ async function loadTiptapModules() {
 
     const uploadButton = $("wysiwygUpload");
     const fileInput = $("wysiwygFile");
-    uploadButton?.addEventListener("click", () => fileInput?.click());
+    uploadButton?.addEventListener("click", () => {
+      pendingImageReplacementTarget = null;
+      fileInput?.click();
+    });
+    fileInput?.addEventListener("cancel", () => { pendingImageReplacementTarget = null; });
     fileInput?.addEventListener("change", () => {
       const file = fileInput.files?.[0];
       fileInput.value = "";
