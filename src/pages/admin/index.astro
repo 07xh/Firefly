@@ -495,24 +495,24 @@ export const prerender = false;
 <div id="wysiwygPane" class="rich-editor-shell">
   <div class="rich-editor-toolbar" role="toolbar" aria-label="文章格式工具栏">
     <button type="button" data-editor-action="paragraph" title="普通正文">正文</button>
-    <button type="button" data-editor-action="h1" title="一级标题">H1</button>
-    <button type="button" data-editor-action="h2" title="二级标题">H2</button>
-    <button type="button" data-editor-action="h3" title="三级标题">H3</button>
+    <button type="button" data-editor-action="h1" title="一级标题">一级标题</button>
+    <button type="button" data-editor-action="h2" title="二级标题">二级标题</button>
+    <button type="button" data-editor-action="h3" title="三级标题">三级标题</button>
     <span class="toolbar-divider" aria-hidden="true"></span>
     <button type="button" data-editor-action="bold" title="加粗"><strong>加粗</strong></button>
     <button type="button" data-editor-action="italic" title="斜体"><em>斜体</em></button>
     <button type="button" data-editor-action="underline" title="下划线"><u>下划线</u></button>
     <button type="button" data-editor-action="strike" title="删除线"><s>删除线</s></button>
     <span class="toolbar-divider" aria-hidden="true"></span>
-    <button type="button" data-editor-action="bullet" title="无序列表">• 列表</button>
-    <button type="button" data-editor-action="ordered" title="有序列表">1. 列表</button>
+    <button type="button" data-editor-action="bullet" title="插入或取消项目列表">项目列表</button>
+    <button type="button" data-editor-action="ordered" title="插入或取消编号列表">编号列表</button>
     <button type="button" data-editor-action="quote" title="引用">引用</button>
     <button type="button" data-editor-action="badge" title="插入可直接编辑的文字标签">文字标签</button>
     <button type="button" data-editor-action="callout" title="插入可编辑提示卡片">提示卡片</button>
     <button type="button" data-editor-action="code" title="插入一段代码示例">代码示例</button>
-    <button type="button" data-editor-action="rule" title="分割线">分割线</button>
+    <button type="button" data-editor-action="rule" title="插入分隔线">分隔线</button>
     <span class="toolbar-divider" aria-hidden="true"></span>
-    <button type="button" data-editor-action="link" title="插入或编辑链接">链接</button>
+    <button type="button" data-editor-action="link" title="给选中文字添加链接；也可填写显示文字来插入新链接">添加链接</button>
     <button type="button" data-editor-action="unlink" title="移除链接">取消链接</button>
     <button type="button" id="wysiwygUpload" title="上传图片">图片</button>
     <input type="file" id="wysiwygFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
@@ -534,7 +534,7 @@ export const prerender = false;
   </div>
   <div id="wysiwygNotice" class="rich-editor-notice" hidden></div>
   <div id="wysiwygEditor" class="rich-editor-canvas"></div>
-  <div class="rich-editor-help">直接输入文字并按回车分段。选中文字后，用工具栏调整标题、加粗、列表、链接、引用、图片和表格。公式与特殊版式会作为内容卡片显示并完整保留；平时只需编辑普通文字。</div>
+  <div class="rich-editor-help">直接输入文字并按回车分段。用工具栏设置标题、加粗、列表、引用和链接；添加链接时可以填写显示文字，不需要手动输入格式标记。图片、表格和其他常用内容也可以通过按钮插入。公式与特殊版式会原样保留。</div>
 </div>
 <div id="wysiwygFallback" hidden>可视化编辑器暂时无法加载，文章原文没有被修改。你可以使用“高级模式”继续编辑。</div>
 <textarea id="body" spellcheck="false" hidden placeholder="高级模式：这里直接编辑文章原文。日常写作请返回“直接编辑正文”。"></textarea>
