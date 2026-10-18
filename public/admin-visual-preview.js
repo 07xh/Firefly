@@ -1,6 +1,3 @@
-const CALLOUT_TYPES = new Set([
-  "tip", "warning", "danger", "info", "success", "note", "important", "caution",
-]);
 const BUILTIN_COMPONENTS = new Set(["Badge", "StepItem", "Steps", "TabGroup", "Timeline", "TimelineItem"]);
 
 function plainText(value) {
