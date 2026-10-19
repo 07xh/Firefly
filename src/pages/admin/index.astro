@@ -1035,30 +1035,39 @@ function setAiProviderStatus(message,bad=false){
 function resetAiProviderForm(){
  aiProviderCurrentId="";
  $("aiProviderId").readOnly=false;
- $("aiProviderName").value="";
- $("aiProviderId").value="";
+ $("aiProviderType").value="other-openai-compatible";
+ const baseId="other-openai-compatible";
+ let suffix=1;
+ let id=baseId;
+ while(aiProviderRecords.some(provider=>provider.id===id)){suffix+=1;id=baseId+"-"+suffix}
+ $("aiProviderName").value="其他 OpenAI 兼容服务商"+(suffix>1?" "+suffix:"");
+ $("aiProviderId").value=id;
  $("aiProviderBaseUrl").value="";
  $("aiProviderModel").value="";
  $("aiProviderKey").value="";
- $("aiProviderKey").required=true;
- $("aiProviderKeyHelp").textContent="新建配置必须填写 API Key；保存后输入框会清空。";
+ $("aiProviderKey").disabled=true;
+ $("aiProviderKey").required=false;
+ $("aiProviderKey").placeholder="••••••••••••";
+ $("aiProviderKeyHelp").textContent="密码框仅用于显示状态；不会接收或提交 Key。请在 Cloudflare Worker Secrets 中配置 "+"AI_API_KEY_"+id.toUpperCase().replace(/-/g,"_")+"。";
  $("aiProviderEnabled").checked=true;
- $("aiProviderSave").textContent="安全保存配置";
- setAiProviderStatus("");
+ $("aiProviderSave").textContent="保存服务配置";
+ setAiProviderStatus("新建配置默认启用；API Key 请单独保存在 Cloudflare。");
 }
 function editAiProvider(id){
  const item=aiProviderRecords.find(provider=>provider.id===id);
  if(!item)return;
  aiProviderCurrentId=item.id;
  $("aiProviderId").readOnly=true;
+ $("aiProviderType").value=item.type||"other-openai-compatible";
  $("aiProviderName").value=item.name;
  $("aiProviderId").value=item.id;
  $("aiProviderBaseUrl").value=item.baseUrl;
  $("aiProviderModel").value=item.model;
  $("aiProviderKey").value="";
+ $("aiProviderKey").disabled=true;
  $("aiProviderKey").required=false;
- $("aiProviderKeyHelp").textContent=item.hasApiKey?"已保存密钥（"+ "••••••••" +"）。留空表示保留原密钥；输入新 Key 会替换旧密钥。":"尚未保存密钥，请输入 API Key。";
- $("aiProviderKey").required=!item.hasApiKey;
+ $("aiProviderKey").placeholder=item.hasApiKey?"••••••••••••":"尚未配置";
+ $("aiProviderKeyHelp").textContent=(item.hasApiKey?"已检测到 Cloudflare Secret："+item.secretName:"尚未检测到 Cloudflare Secret："+item.secretName)+ "。此处不能输入或修改 Key；请前往 Cloudflare Worker → Settings → Variables and Secrets → Secrets。";
  $("aiProviderEnabled").checked=item.enabled;
  $("aiProviderSave").textContent="保存服务配置";
  setAiProviderStatus("正在编辑："+item.name);
@@ -1075,7 +1084,7 @@ function renderAiProviderList(data){
   const card=document.createElement("div");card.className="ai-provider-card";
   const info=document.createElement("div");info.style.minWidth="0";
   const name=document.createElement("strong");name.textContent=item.name+(data.activeId===item.id?" · 当前使用":"");
-  const meta=document.createElement("small");meta.textContent=item.model+" · "+item.baseUrl+" · API Key："+(item.hasApiKey?"已加密保存":"未配置");
+  const meta=document.createElement("small");meta.textContent=item.model+" · "+item.baseUrl+" · API Key："+(item.hasApiKey?"Cloudflare 已配置":"Cloudflare 未配置")+" · "+item.secretName;
   info.append(name,meta);
   const right=document.createElement("div");right.style.display="flex";right.style.gap="8px";right.style.alignItems="center";right.style.flexWrap="wrap";
   const badge=document.createElement("span");badge.className="ai-provider-badge"+(item.enabled?"":" off");badge.textContent=item.enabled?"已启用":"已停用";
@@ -1102,7 +1111,7 @@ async function loadAiProviders(){
 $("aiProviderNew").onclick=()=>resetAiProviderForm();
 $("aiProviderName").addEventListener("input",()=>{
  if(aiProviderCurrentId)return;
- const id=$("aiProviderName").value.trim().toLowerCase().replace(/[^a-z0-9_-]+/g,"-").replace(/^-+|-+$/g,"").slice(0,80);
+ const id=$("aiProviderName").value.trim().toLowerCase().replace(/[^a-z0-9_-]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60);
  $("aiProviderId").value=id;
 });
 $("aiProviderForm").addEventListener("submit",async event=>{
@@ -1111,13 +1120,12 @@ $("aiProviderForm").addEventListener("submit",async event=>{
  const provider={
   id:$("aiProviderId").value.trim(),
   name:$("aiProviderName").value.trim(),
+  type:$("aiProviderType").value,
   baseUrl:$("aiProviderBaseUrl").value.trim(),
   model:$("aiProviderModel").value.trim(),
-  apiKey:$("aiProviderKey").value,
   enabled:$("aiProviderEnabled").checked
  };
  if(!provider.id||!provider.name||!provider.baseUrl||!provider.model){setAiProviderStatus("请填写服务名称、配置标识、HTTPS 接口地址和模型 ID。",true);return}
- if(!aiProviderCurrentId&&!provider.apiKey){setAiProviderStatus("新建服务必须填写 API Key。",true);$("aiProviderKey").focus();return}
  aiProviderSaving=true;$("aiProviderForm").setAttribute("aria-busy","true");$("aiProviderSave").disabled=true;$("aiProviderTest").disabled=true;
  setAiProviderStatus("正在安全保存配置…");
  try{
@@ -1125,13 +1133,17 @@ $("aiProviderForm").addEventListener("submit",async event=>{
   if(response.status===401){goLogin();return}
   const data=await response.json().catch(()=>({error:"保存接口响应无法解析"}));
   if(!response.ok)throw new Error(data.error||"保存 AI 服务配置失败");
-  $("aiProviderKey").value="";
   renderAiProviderList(data.providers||{providers:[]});
   aiProviderRecords=(data.providers&&data.providers.providers)||aiProviderRecords;
   aiProviderCurrentId=provider.id;
-  $("aiProviderKey").required=false;
-  $("aiProviderKeyHelp").textContent="密钥已在服务端加密保存。留空可保留现有密钥；输入新 Key 可轮换。";
-  setAiProviderStatus(data.message||"配置已保存。");
+  const savedProvider=aiProviderRecords.find(item=>item.id===provider.id);
+  $("aiProviderKey").placeholder=savedProvider?.hasApiKey?"••••••••••••":"尚未配置";
+  $("aiProviderKeyHelp").textContent=savedProvider?.hasApiKey
+    ?"已检测到 Cloudflare Secret："+savedProvider.secretName+"。此页面不会接收或保存密钥内容。"
+    :"请在 Cloudflare Worker Secrets 中创建 "+(savedProvider?.secretName||("AI_API_KEY_"+provider.id.toUpperCase().replace(/-/g,"_")))+"；保存服务配置不会保存 Key。";
+  setAiProviderStatus(savedProvider?.hasApiKey
+    ?"服务配置已保存，Cloudflare Secret 已检测到。"
+    :"服务配置已保存；请在 Cloudflare Worker Secrets 中添加 "+(savedProvider?.secretName||("AI_API_KEY_"+provider.id.toUpperCase().replace(/-/g,"_")))+" 后测试连接。");
  }catch(error){setAiProviderStatus(error instanceof Error?error.message:"保存配置失败",true)}
  finally{aiProviderSaving=false;$("aiProviderForm").removeAttribute("aria-busy");$("aiProviderSave").disabled=false;$("aiProviderTest").disabled=false}
 });
