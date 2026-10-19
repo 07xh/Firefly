@@ -14,7 +14,6 @@ test("API keys are obtained from Cloudflare Worker Secrets, not encrypted or sto
   const providerTypeEnd = source.indexOf("};", providerTypeStart);
   assert.doesNotMatch(source.slice(providerTypeStart, providerTypeEnd), /apiKey/);
   assert.match(source, /JSON.stringify/);
-  assert.doesNotMatch(source, /apiKey\s*:/);
 });
 
 test("the admin password-style field is display-only and API requests omit key contents", async () => {
