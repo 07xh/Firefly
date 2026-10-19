@@ -70,10 +70,12 @@ function extractProtectedSegments(value: string): string[] {
 		/~~~[\s\S]*?~~~/g,
 		new RegExp(backtick + "+[^" + backtick + "\\n]+" + backtick + "+", "g"),
 		/\$\$[\s\S]*?\$\$/g,
+		/\$[^$\n]+\$/g,
 		/\\\[[\s\S]*?\\\]/g,
 		/\\\([\s\S]*?\\\)/g,
 		/!?\[[^\]]*\]\([^)]*\)/g,
 		/<details\b[\s\S]*?<\/details\s*>/gi,
+		/<(div|section|figure|table|video|audio|iframe|summary)\b[^>]*>[\s\S]*?<\/\1\s*>/gi,
 		/<([A-Z][A-Za-z0-9.]*)\b[^>]*>[\s\S]*?<\/\1\s*>/g,
 		/<[A-Z][A-Za-z0-9.]*(?:\s[^>]*)?\/>/g,
 	];
