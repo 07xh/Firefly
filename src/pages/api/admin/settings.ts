@@ -146,14 +146,14 @@ function getConfig(): GitHubConfig {
 	const repo = env?.GITHUB_CONTENTS_REPO?.trim() || "07xh/Firefly";
 	const branch = env?.GITHUB_CONTENTS_BRANCH?.trim() || "master";
 	if (!token) {
-		throw new SettingsApiError("后台尚未完成文章保存配置，请检查部署设置。", 503);
+		throw new SettingsApiError("后台还没有完成文章保存设置，请先检查后台设置后再试。", 503);
 	}
 	if (
 		repo.split("/").length !== 2 ||
 		repo.split("/").some((part) => !/^[A-Za-z0-9_.-]+$/.test(part)) ||
 		branch.split("/").some((part) => !/^[A-Za-z0-9_.-]+$/.test(part))
 	) {
-		throw new SettingsApiError("文章保存位置设置不正确，请检查后台的保存位置设置。", 503);
+		throw new SettingsApiError("文章保存位置填写不正确，请检查后台的保存位置和版本设置。", 503);
 	}
 	return { token, repo, branch };
 }
@@ -224,7 +224,7 @@ function normalizeLayoutSettings(value: unknown): LayoutSettings {
 
 function normalizeSettings(value: unknown): SettingsRecord {
 	if (!value || typeof value !== "object" || Array.isArray(value)) {
-		throw new SettingsApiError("保存的网站设置文件内容无法识别，为避免覆盖原有设置，已停止保存。", 500);
+		throw new SettingsApiError("现有的网站外观设置无法读取。为避免覆盖原有内容，本次没有保存任何更改。", 500);
 	}
 	const raw = value as Record<string, unknown>;
 	const merged = { ...DEFAULT_SETTINGS, ...raw };
@@ -283,7 +283,7 @@ async function readSettings(
 	}
 	const file = (await response.json()) as GitHubFile;
 	if (!file.sha || typeof file.content !== "string") {
-		throw new SettingsApiError("网站外观设置文件内容不完整，请检查保存位置后重试。");
+		throw new SettingsApiError("没有完整读取网站外观设置，请检查保存位置后再试。");
 	}
 	const rawContent =
 		file.encoding === "base64" ? decodeBase64(file.content) : file.content;
@@ -292,7 +292,7 @@ async function readSettings(
 		parsed = JSON.parse(rawContent);
 	} catch {
 		throw new SettingsApiError(
-			"已停止保存：网站外观设置文件格式异常。为避免覆盖原有内容，请先修复该文件再重试。",
+			"网站外观设置的内容无法识别。为避免覆盖原有内容，本次没有保存；请检查设置后再试。",
 			500,
 		);
 	}
@@ -301,7 +301,7 @@ async function readSettings(
 
 function validateMediaUrl(value: unknown, label: string): string {
 	if (typeof value !== "string") {
-		throw new SettingsApiError(label + "内容格式无法识别，请重新填写。", 400);
+		throw new SettingsApiError(label + "填写内容不正确，请重新填写。", 400);
 	}
 	const trimmed = value.trim();
 	if (trimmed.length > 2048) {
@@ -326,7 +326,7 @@ function validateText(
 	maxLength: number,
 ): string {
 	if (typeof value !== "string") {
-		throw new SettingsApiError(label + "内容格式无法识别，请重新填写。", 400);
+		throw new SettingsApiError(label + "填写内容不正确，请重新填写。", 400);
 	}
 	if (value.length > maxLength) {
 		throw new SettingsApiError(label + "不能超过 " + maxLength + " 个字符。", 400);
@@ -336,7 +336,7 @@ function validateText(
 
 function validateBackgroundColor(value: unknown): string {
 	if (typeof value !== "string") {
-		throw new SettingsApiError("背景颜色内容格式无法识别，请重新填写。", 400);
+		throw new SettingsApiError("背景颜色填写不正确，请重新选择颜色。", 400);
 	}
 	const color = value.trim();
 	if (!color) return "";
@@ -351,7 +351,7 @@ function validateBackgroundColor(value: unknown): string {
 
 function validateAnnouncement(value: unknown): string {
 	if (typeof value !== "string") {
-		throw new SettingsApiError("公告文本内容格式无法识别，请重新填写。", 400);
+		throw new SettingsApiError("公告内容不正确，请检查后再保存。", 400);
 	}
 	if (value.length > 10000) {
 		throw new SettingsApiError("公告文本不能超过 10000 个字符。", 400);
@@ -361,7 +361,7 @@ function validateAnnouncement(value: unknown): string {
 
 function validateAboutContent(value: unknown): string {
 	if (typeof value !== "string") {
-		throw new SettingsApiError("关于我正文内容格式无法识别，请重新填写。", 400);
+		throw new SettingsApiError("关于我页面的正文内容不正确，请检查填写内容。", 400);
 	}
 	if (value.length > 30000) {
 		throw new SettingsApiError("关于我正文不能超过 30000 个字符。", 400);
@@ -390,9 +390,9 @@ function validateBoolean(value: unknown, label: string): boolean {
 			showNavLinks: "是否显示链接菜单",
 			showNavAbout: "是否显示“关于”菜单",
 			showSourceGithub: "是否显示文章原文入口",
-			"layoutSettings.sidebarEnabled": "是否显示桌面侧边栏",
-			"layoutSettings.gridMasonry": "是否开启卡片错落排列",
-			"layoutSettings.gridCoverFullWidth": "是否让封面贴边显示",
+			"layoutSettings.sidebarEnabled": "是否在电脑端显示侧栏",
+			"layoutSettings.gridMasonry": "是否根据内容高度错落排列卡片",
+			"layoutSettings.gridCoverFullWidth": "是否让封面铺满卡片宽度",
 		};
 		throw new SettingsApiError((labels[label] || "该显示选项") + "设置无法识别，请重新选择。", 400);
 	}
@@ -400,13 +400,13 @@ function validateBoolean(value: unknown, label: string): boolean {
 }
 
 function applyLayoutSettings(current: LayoutSettings, value: unknown): LayoutSettings {
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new SettingsApiError("页面布局设置无法识别，请重新选择布局选项。", 400);
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new SettingsApiError("页面布局选项不正确，请重新选择。", 400);
   const input = value as Record<string, unknown>;
   const next: LayoutSettings = { ...current };
   const has = (key: keyof LayoutSettings) => Object.hasOwn(input, key);
   if (has("sidebarEnabled")) next.sidebarEnabled = validateBoolean(input.sidebarEnabled, "layoutSettings.sidebarEnabled");
   if (has("sidebarPosition")) {
-    if (input.sidebarPosition !== "left" && input.sidebarPosition !== "right" && input.sidebarPosition !== "both") throw new SettingsApiError("桌面侧边栏请选择左侧、右侧或双侧布局。", 400);
+    if (input.sidebarPosition !== "left" && input.sidebarPosition !== "right" && input.sidebarPosition !== "both") throw new SettingsApiError("电脑端侧栏请选择左侧、右侧或两侧显示。", 400);
     next.sidebarPosition = input.sidebarPosition;
   }
   if (has("tabletSidebar")) {
@@ -414,11 +414,11 @@ function applyLayoutSettings(current: LayoutSettings, value: unknown): LayoutSet
     next.tabletSidebar = input.tabletSidebar;
   }
   if (has("postListMode")) {
-    if (input.postListMode !== "list" && input.postListMode !== "grid") throw new SettingsApiError("桌面文章列表请选择列表或网格布局。", 400);
+    if (input.postListMode !== "list" && input.postListMode !== "grid") throw new SettingsApiError("电脑端文章列表请选择单列列表或多列卡片布局。", 400);
     next.postListMode = input.postListMode;
   }
   if (has("mobilePostListMode")) {
-    if (input.mobilePostListMode !== "list" && input.mobilePostListMode !== "grid") throw new SettingsApiError("移动端文章列表请选择列表或网格布局。", 400);
+    if (input.mobilePostListMode !== "list" && input.mobilePostListMode !== "grid") throw new SettingsApiError("手机端文章列表请选择单列列表或多列卡片布局。", 400);
     next.mobilePostListMode = input.mobilePostListMode;
   }
   if (has("coverPosition")) {
@@ -428,7 +428,7 @@ function applyLayoutSettings(current: LayoutSettings, value: unknown): LayoutSet
   if (has("gridMasonry")) next.gridMasonry = validateBoolean(input.gridMasonry, "layoutSettings.gridMasonry");
   if (has("gridCoverFullWidth")) next.gridCoverFullWidth = validateBoolean(input.gridCoverFullWidth, "layoutSettings.gridCoverFullWidth");
   if (has("gridColumnWidth")) {
-    if (typeof input.gridColumnWidth !== "number" || !Number.isInteger(input.gridColumnWidth) || input.gridColumnWidth < 220 || input.gridColumnWidth > 460) throw new SettingsApiError("卡片最小宽度请填写 220 到 460 之间的整数。", 400);
+    if (typeof input.gridColumnWidth !== "number" || !Number.isInteger(input.gridColumnWidth) || input.gridColumnWidth < 220 || input.gridColumnWidth > 460) throw new SettingsApiError("文章卡片宽度请填写 220 到 460 之间的整数。", 400);
     next.gridColumnWidth = input.gridColumnWidth;
   }
   return next;
@@ -561,7 +561,7 @@ async function handleSave(request: Request): Promise<Response> {
 		return json({ ok: true, settings, commitSha: result.commit?.sha ?? null });
 	} catch (error) {
 		const status = error instanceof SettingsApiError ? error.status : 502;
-		const message = error instanceof Error ? error.message : "保存全局配置失败。";
+		const message = error instanceof Error ? error.message : "网站外观设置未能保存。";
 		return json({ error: message }, status);
 	}
 }
@@ -572,7 +572,7 @@ export const GET: APIRoute = async () => {
 		return json(result.settings);
 	} catch (error) {
 		const status = error instanceof SettingsApiError ? error.status : 502;
-		const message = error instanceof Error ? error.message : "读取全局配置失败。";
+		const message = error instanceof Error ? error.message : "暂时无法读取网站外观设置。";
 		return json({ error: message }, status);
 	}
 };
