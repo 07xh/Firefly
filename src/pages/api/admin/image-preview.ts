@@ -66,14 +66,14 @@ function decodeBase64Image(value: string): Uint8Array | null {
 
 export const GET: APIRoute = async ({ url }) => {
 	const path = url.searchParams.get("path") || "";
-	if (!isAllowedImagePath(path)) return json("图片路径不合法或格式不受支持。", 400);
+	if (!isAllowedImagePath(path)) return json("图片地址不支持预览。请确认它是文章中的图片，且格式受支持。", 400);
 
 	const env = workerEnv as unknown as RuntimeEnv;
 	const token = env.FIREFLY_CONTENTS_TOKEN?.trim();
 	const repo = env.GITHUB_CONTENTS_REPO?.trim() || "07xh/Firefly";
 	const branch = env.GITHUB_CONTENTS_BRANCH?.trim() || "master";
-	if (!token) return json("图片预览服务尚未配置。", 503);
-	if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) return json("仓库配置不合法。", 503);
+	if (!token) return json("图片预览功能尚未完成配置，请检查后台设置。", 503);
+	if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) return json("图片保存位置设置不正确，请检查后台设置。", 503);
 
 	try {
 		const encodedPath = path.split("/").map(encodeURIComponent).join("/");
@@ -103,7 +103,7 @@ export const GET: APIRoute = async ({ url }) => {
 		const announcedSize = Number(response.headers.get("content-length"));
 		if (Number.isFinite(announcedSize) && announcedSize > MAX_PREVIEW_BYTES) {
 			await response.body?.cancel();
-			return json("图片超过后台预览的 12 MiB 限制；原文件未被修改。", 413);
+			return json("这张图片太大，后台暂时无法预览（最大 12 MiB）；原图片未被修改。", 413);
 		}
 
 		let bytes: Uint8Array;
@@ -111,19 +111,19 @@ export const GET: APIRoute = async ({ url }) => {
 		if (upstreamType.includes("application/json")) {
 			const payload = (await response.json()) as { content?: unknown; encoding?: unknown };
 			if (payload.encoding !== "base64" || typeof payload.content !== "string") {
-				return json("图片预览接口返回了无法识别的内容。", 502);
+				return json("暂时无法读取这张图片，请稍后重试。", 502);
 			}
 
 			const decoded = decodeBase64Image(payload.content);
-			if (!decoded) return json("图片内容解码失败。", 502);
+			if (!decoded) return json("暂时无法读取这张图片，请稍后重试。", 502);
 			bytes = decoded;
 		} else {
 			bytes = new Uint8Array(await response.arrayBuffer());
 		}
 
-		if (bytes.byteLength < 1) return json("图片文件为空。", 404);
+		if (bytes.byteLength < 1) return json("这张图片没有内容，请检查原图片文件。", 404);
 		if (bytes.byteLength > MAX_PREVIEW_BYTES) {
-			return json("图片超过后台预览的 12 MiB 限制；原文件未被修改。", 413);
+			return json("这张图片太大，后台暂时无法预览（最大 12 MiB）；原图片未被修改。", 413);
 		}
 
 		const extension = path.split("/").at(-1)?.split(".").pop()?.toLowerCase() || "";
