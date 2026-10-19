@@ -442,7 +442,7 @@ export const prerender = false;
     <input
       id="search"
       type="search"
-      placeholder="搜索文章标题或路径…"
+      placeholder="搜索文章…"
       aria-label="搜索文章"
       class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 transition hover:border-gray-300 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
     />
@@ -479,16 +479,16 @@ export const prerender = false;
 </section>
 <section class="min-w-0 rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm"><h2 id="formTitle" style="font-size:16px;margin:0 0 16px">新建文章</h2><form id="editor">
 <div class="field"><label for="title">标题 *</label><input id="title" required maxlength="200"></div>
-<div class="grid"><div class="field"><label for="slug">文章链接名称 *</label><input id="slug" required placeholder="例如：我的第一篇文章"><small>用于生成文章网址；可以写中文、字母或数字，也可以使用连字符和下划线，不需要填写完整网址。</small></div><div class="field"><label for="published">文章日期 *</label><input id="published" type="date" required></div></div>
+<div class="grid"><div class="field"><label for="slug">文章链接名称 *</label><input id="slug" required placeholder="例如：我的第一篇文章"><small>这是文章网址末尾的名称。可以使用中文、字母和数字，也可加连字符或下划线；不必填写完整网址。</small></div><div class="field"><label for="published">文章日期 *</label><input id="published" type="date" required></div></div>
 <div class="grid"><div class="field"><label for="date">计划公开时间（北京时间）</label><input id="date" type="datetime-local" step="60"><small class="muted">不填写则不设定定时公开时间；选择未来时间后，网站会在指定时间自动更新。</small></div><div class="field"><label for="articlePassword">访问密码（可选）</label><input id="articlePassword" type="password" maxlength="200" autocomplete="new-password" placeholder="留空则不启用密码保护"><small class="muted">输入后，前台将显示密码解锁页面。</small></div></div>
 <div class="field"><label for="passwordHint">密码提示（可选）</label><input id="passwordHint" maxlength="120" placeholder="例如：课程名称"></div>
 <p class="muted" style="color:#b42318">安全提醒：当前保存文章的 GitHub 项目是公开的，任何人都可能查看其中的文章文件。页面访问密码只能限制网站上的阅读入口，不能隐藏项目文件；请勿保存账号密码、身份证号等机密信息。</p>
-<div class="grid"><div class="field"><label for="category">分类</label><input id="category" maxlength="100"></div><div class="field"><label for="tags">标签（逗号分隔）</label><input id="tags" placeholder="技术, 随笔"></div></div>
+<div class="grid"><div class="field"><label for="category">文章分类</label><input id="category" maxlength="100"></div><div class="field"><label for="tags">文章标签</label><input id="tags" placeholder="技术, 随笔"><small>多个标签用逗号隔开。</small></div></div>
 <div class="field"><label for="description">摘要</label><input id="description" maxlength="500"></div>
 <div class="field">
 <label for="body">文章正文</label>
 <div class="local-recovery-row">
-  <label class="local-recovery-toggle"><input type="checkbox" id="localRecoveryCheck"> <span>启用本地恢复</span></label>
+  <label class="local-recovery-toggle"><input type="checkbox" id="localRecoveryCheck"> <span>保存临时备份</span></label>
   <button type="button" id="restoreLocalRecovery" class="btn" hidden disabled>恢复未保存内容</button>
   <span id="localRecoveryStatus" class="muted" role="status" aria-live="polite">默认关闭。开启后，会在当前浏览器临时保存一份未加密的恢复副本，不会上传到网站。</span>
 </div>
@@ -528,7 +528,7 @@ export const prerender = false;
       <button type="button" data-editor-action="taskList" title="插入待办清单，可通过表单修改事项">待办清单</button>
       <button type="button" data-editor-action="badge" title="插入可直接编辑的文字标签">文字标签</button>
       <button type="button" data-editor-action="callout" title="插入可编辑提示卡片">提示卡片</button>
-      <button type="button" data-editor-action="details" title="插入可展开的补充内容，读者可以点击展开或收起">折叠内容</button>
+      <button type="button" data-editor-action="details" title="插入可展开的补充内容，读者可以点击展开或收起">可展开内容</button>
       <button type="button" data-editor-action="code" title="插入一段代码示例">代码示例</button>
       <button type="button" data-editor-action="rule" title="插入分隔线">分隔线</button>
       <button type="button" data-editor-action="checkImages" title="检查正文中的图片能否加载">检查图片</button>
@@ -563,8 +563,8 @@ export const prerender = false;
 <div id="markdownPreview" class="markdown-preview" hidden><p class="muted">点击“预览效果”查看文章发布后的大致样子。</p></div>
 </div>
 <label class="check"><input id="draft" type="checkbox" checked> 暂不公开（勾选后保存到草稿箱；取消勾选后可公开或定时公开）</label>
-<div class="actions"><button class="btn" type="button" id="checkGitHub">检查文章保存权限</button><button class="btn" type="submit" id="saveDraft" value="save">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空表单</button></div>
-</form><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿后，文章会保存在草稿箱，不会公开显示。发布文章后，网站会自动更新；页面会显示更新进度。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看网站更新记录 ↗</a></section>
+<div class="actions"><button class="btn" type="button" id="checkGitHub">检查保存功能</button><button class="btn" type="submit" id="saveDraft" value="save">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空表单</button></div>
+</form><details id="saveDiagnostics" hidden class="muted" style="margin-top:8px;font-size:12px"><summary style="cursor:pointer">查看详细检查信息</summary><pre id="saveDiagnosticsText" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;padding:10px;background:#f5f7f5;border-radius:8px"></pre></details><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿后，文章会保存在草稿箱，不会公开显示。发布文章后，网站会自动更新；页面会显示更新进度。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看网站更新记录 ↗</a></section>
 </div>
 <section id="appearanceTabPanel" role="tabpanel" aria-labelledby="tabAppearance" class="settings-panel min-w-0" hidden>
   <div class="mb-1 text-base font-semibold text-gray-800">全局外观配置</div>
@@ -631,7 +631,7 @@ export const prerender = false;
 <section class="settings-card" aria-labelledby="aboutDonationSettingsTitle">
       <div class="settings-card-heading"><span class="settings-card-number">04</span><div><h3 id="aboutDonationSettingsTitle">关于我页面与打赏设置</h3><p>编辑“关于我”页面内容，并设置打赏卡片和二维码。</p></div></div>
 <div class="settings-switch-grid mb-4">
-        <label class="settings-toggle"><input id="showAbout" name="showAbout" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">启用“关于我”页面<small>关闭后 /about/ 会重定向到首页，导航子项也会隐藏。</small></span></label>
+        <label class="settings-toggle"><input id="showAbout" name="showAbout" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">启用“关于我”页面<small>关闭后，访客打开“关于我”页面会回到首页，菜单里的相关入口也会隐藏。</small></span></label>
         <label class="settings-toggle"><input id="showAboutDonation" name="showAboutDonation" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示关于我页面打赏卡片<small>开启后在介绍正文下方显示“支持作者”入口。</small></span></label>
       </div>
       <div class="settings-field">
@@ -681,7 +681,7 @@ export const prerender = false;
     <div class="settings-field"><label for="layoutPostListMode">桌面文章列表布局</label><select id="layoutPostListMode" name="layoutPostListMode" class="settings-control"><option value="list">列表模式（单列）</option><option value="grid">网格模式（自适应多列）</option></select></div>
     <div class="settings-field"><label for="layoutMobilePostListMode">移动端文章布局</label><select id="layoutMobilePostListMode" name="layoutMobilePostListMode" class="settings-control"><option value="list">列表模式</option><option value="grid">网格模式</option></select><small>手机屏幕较窄时，网站会优先保证正文易读。</small></div>
     <div class="settings-field"><label for="layoutCoverPosition">列表模式封面位置</label><select id="layoutCoverPosition" name="layoutCoverPosition" class="settings-control"><option value="right">封面在右侧</option><option value="left">封面在左侧</option></select><small>仅影响列表模式；网格封面固定在卡片顶部。</small></div>
-    <div class="settings-field"><label for="layoutGridColumnWidth">网格卡片最小宽度（px）</label><input id="layoutGridColumnWidth" name="layoutGridColumnWidth" type="number" min="220" max="460" step="10" required value="320" class="settings-control"><small>可填写 220–460 像素；数值越小，同一行通常能显示更多卡片。</small></div>
+    <div class="settings-field"><label for="layoutGridColumnWidth">网格卡片最小宽度（像素）</label><input id="layoutGridColumnWidth" name="layoutGridColumnWidth" type="number" min="220" max="460" step="10" required value="320" class="settings-control"><small>可填写 220–460 像素；数值越小，同一行通常能显示更多卡片。</small></div>
   </div>
   <div class="settings-switch-grid" style="margin-top:14px">
     <label class="settings-toggle"><input id="layoutSidebarEnabled" name="layoutSidebarEnabled" type="checkbox" checked><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">启用桌面侧边栏<small>关闭后隐藏左右侧栏列；移动端底部组件仍按原配置处理。</small></span></label>
@@ -802,7 +802,7 @@ function updateSaveButtonLabel() {
  $("saveDraft").textContent = draft ? "保存为草稿" : (hasFutureDate ? "保存定时文章" : (selected ? "保存修改" : "保存并公开"));
 }
 function frontmatterValue(source,key){const match=source.match(new RegExp("^"+key+":\\s*(.*?)\\s*$","m"));if(!match)return "";const raw=match[1].trim();try{const parsed=JSON.parse(raw);if(Array.isArray(parsed))return parsed.map(String).join(", ");if(typeof parsed==="string")return parsed;if(parsed===null)return ""}catch{}if(raw.startsWith("'")&&raw.endsWith("'"))return raw.slice(1,-1).replace(/''/g,"'");return raw}
-async function api(method,data){const r=await fetch("/api/admin/articles/",{method,headers:{"Content-Type":"application/json"},...(data?{body:JSON.stringify(data)}:{})});if(r.status===401){goLogin();throw new Error("登录已过期，正在跳转登录页…")}const d=await r.json().catch(()=>({error:"服务器响应无法解析"}));if(!r.ok)throw new Error(d.error||"请求失败");return d}
+async function api(method,data){const r=await fetch("/api/admin/articles/",{method,headers:{"Content-Type":"application/json"},...(data?{body:JSON.stringify(data)}:{})});if(r.status===401){goLogin();throw new Error("登录已过期，正在返回登录页面…")}const d=await r.json().catch(()=>({error:"后台返回的内容暂时无法读取，请刷新页面后重试。"}));if(!r.ok)throw new Error(d.error||"请求失败");return d}
 function render(){
  const q=$("search").value.trim().toLowerCase();
  const statusFilter=$("statusFilter").value;
@@ -817,7 +817,7 @@ function render(){
  if(!items.length){
   const empty=document.createElement("p");
   empty.className="rounded-lg px-3 py-8 text-center text-sm text-gray-400";
-  empty.textContent="没有找到文章";
+  empty.textContent="没有找到符合条件的文章";
   list.append(empty);
   return;
  }
@@ -850,7 +850,7 @@ function render(){
   item.append(titleRow,pathRow);
 
   item.onclick=()=>{
-   if(isArticleDirty()&&!confirm("当前文章有未保存修改，切换文章会丢失这些内容。是否继续？"))return;
+   if(isArticleDirty()&&!confirm("当前文章还有未保存的修改。切换后，这些修改会丢失。确定继续吗？"))return;
    selected=a;
    $("formTitle").textContent="编辑文章";
    $("slug").value=a.path.split("/").pop().replace(/\.mdx?$/,"");
@@ -913,7 +913,7 @@ function render(){
   list.append(row);
  }
 }
-async function refresh(){try{say("正在读取文章列表…");articles=await api("GET");render();say("已读取 "+articles.length+" 篇文章")}catch(e){say("暂时无法读取文章列表，请刷新页面重试。",true);$("list").textContent="读取失败，请刷新页面后重试。"}}
+async function refresh(){try{say("正在读取文章列表…");articles=await api("GET");render();say("已读取 "+articles.length+" 篇文章")}catch(e){say("暂时无法读取文章列表，请刷新页面重试。",true);$("list").textContent="加载失败，请刷新页面后重试。"}}
 function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
 function showVisualTab(){
  $("body").hidden=true;$("wysiwygPane").hidden=false;$("markdownPreview").hidden=true;
@@ -950,31 +950,54 @@ async function renderMarkdownPreview(){
   $("markdownPreview").innerHTML=d.html||"<p class=muted>暂无内容</p>";
  }catch(e){$("markdownPreview").textContent=e.message}
 }
-async function watchDeployment(sha,attempt=0,successMessage="网站已更新。"){try{const r=await fetch("/api/admin/deployment-status/?sha="+encodeURIComponent(sha),{cache:"no-store"});if(r.status===401){goLogin();return}const d=await r.json().catch(()=>({error:"无法读取部署状态"}));if(!r.ok)throw new Error("暂时无法确认网站是否更新");if(d.url){$("deployLink").href=d.url;$("deployLink").hidden=false}if(d.status==="success"){say(successMessage);return}if(d.status==="failure"){say("网站更新失败，请查看更新记录。",true);return}if(attempt>=24){say("文章已提交到 GitHub，但部署仍未确认；可查看最新工作流日志。");return}say(d.status==="running"?"文章已提交，Cloudflare 正在构建/部署…":"文章已提交，正在等待 Cloudflare 部署启动…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}catch(e){if(attempt>=24){say("文章已提交到 GitHub，但仍无法确认部署状态："+e.message,true);return}say("正在查询 Cloudflare 部署状态…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}}
+async function watchDeployment(sha,attempt=0,successMessage="网站已更新。"){try{const r=await fetch("/api/admin/deployment-status/?sha="+encodeURIComponent(sha),{cache:"no-store"});if(r.status===401){goLogin();return}const d=await r.json().catch(()=>({error:"无法读取部署状态"}));if(!r.ok)throw new Error("暂时无法确认网站是否更新");if(d.url){$("deployLink").href=d.url;$("deployLink").hidden=false}if(d.status==="success"){say(successMessage);return}if(d.status==="failure"){say("网站更新失败，请查看更新记录。",true);return}if(attempt>=24){say("文章已保存，但网站是否更新还没有确认。可以查看“网站更新记录”。");return}say(d.status==="running"?"文章已保存，网站正在更新…":"文章已保存，正在等待网站开始更新…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}catch(e){if(attempt>=24){say("文章已保存，但暂时无法确认网站是否更新："+e.message,true);return}say("正在确认网站是否更新…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}}
 async function checkGitHubPermission(){
- const button=$("checkGitHub");
- button.disabled=true;
- const originalText=button.textContent;
- button.textContent="检测中…";
- say("正在检查后台能否正常保存文章，不会创建或修改文章…");
- try{
-  const response=await fetch("/api/admin/github-check/",{cache:"no-store"});
-  const data=await response.json().catch(()=>({message:"诊断接口返回了无法解析的响应"}));
-  const pieces=[
-   "阶段："+(data.stage||"unknown"),
-   "GitHub HTTP："+(data.githubStatus??response.status),
-   data.result?"结果："+data.result:"",
-   data.githubMessage||data.message||"",
-   data.requestId?"GitHub Request ID："+data.requestId:"",
-   data.acceptedPermissions?"GitHub accepted permissions："+data.acceptedPermissions:""
-  ].filter(Boolean);
-  say(pieces.join("；"),Boolean(!data.ok));
- }catch(error){
-  say("暂时无法检查文章保存权限："+(error instanceof Error?error.message:String(error)),true);
- }finally{
-  button.disabled=false;
-  button.textContent=originalText;
- }
+  const button=$("checkGitHub");
+  button.disabled=true;
+  const originalText=button.textContent;
+  button.textContent="正在检查…";
+  say("正在测试能否保存文章，不会创建或修改任何内容…");
+  const detail=$("saveDiagnostics");
+  const detailText=$("saveDiagnosticsText");
+  if(detail) detail.hidden=true;
+  try{
+    const response=await fetch("/api/admin/github-check/",{cache:"no-store"});
+    const data=await response.json().catch(()=>({message:"后台暂时没有返回可读取的检查结果。"}));
+    const summary = data.ok && data.result==="authorized_for_write_probe"
+      ? "检查成功：后台可以访问文章存放位置，并具备保存权限。本次检查没有创建或修改文件。"
+      : data.stage==="configuration"
+        ? "后台保存功能尚未完成配置。请检查后台的文章保存设置后再试。"
+        : data.stage==="repository_access"
+          ? "暂时无法访问文章存放位置。请检查保存位置名称和访问权限。"
+          : data.stage==="branch_access"
+            ? "暂时找不到文章保存位置。请检查后台的保存分支设置。"
+            : data.result==="write_forbidden"
+              ? "后台可以读取文章，但没有保存权限。请检查保存凭据是否允许修改文章，然后重新部署后台。"
+              : data.result==="token_rejected"
+                ? "后台的保存凭据无效或已过期。请更新凭据并重新部署后台。"
+                : data.stage==="network"
+                  ? "暂时无法连接文章保存服务，请检查网络后重试。"
+                  : "暂时无法确认文章保存权限。请稍后重试；也可以展开查看详细检查信息。";
+    const diagnostics={
+      "检查阶段":data.stage||"未知",
+      "检查结果":data.result||"无",
+      "保存位置":data.repo||"未返回",
+      "保存分支":data.branch||"未返回",
+      "服务响应代码":data.githubStatus??response.status,
+      "服务说明":data.githubMessage||data.message||"",
+      "请求编号":data.requestId||"",
+      "已确认的权限":data.acceptedPermissions||""
+    };
+    if(detailText) detailText.textContent=Object.entries(diagnostics).filter(([,value])=>value!=="").map(([key,value])=>key+"："+value).join("\n");
+    if(detail) detail.hidden=false;
+    if(!data.ok) console.warn("[Firefly] 文章保存检查未通过",data);
+    say(summary,!data.ok);
+  }catch(error){
+    say("暂时无法检查文章保存功能，请检查网络后重试。",true);
+  }finally{
+    button.disabled=false;
+    button.textContent=originalText;
+  }
 }
 function setAdminTab(tab){
  const showArticles=tab==="articles";
@@ -1037,12 +1060,12 @@ async function loadSettings(){
  const status=$("settingsStatus");
  $("settingsForm").inert = true;
  updateSettingsDirtyState();
- status.textContent="正在读取网站设置…";status.style.color="#657267";
+ status.textContent="正在加载网站外观设置…";status.style.color="#657267";
  try{
   const response=await fetch("/api/admin/settings/",{credentials:"same-origin",cache:"no-store"});
   if(response.status===401){goLogin();return}
   const data=await response.json().catch(()=>({error:"配置接口返回无法解析的响应"}));
-  if(!response.ok)throw new Error("读取网站设置失败，请刷新页面后重试。");
+  if(!response.ok)throw new Error("暂时无法加载网站外观设置，请刷新页面后重试。");
   for(const id of ["bannerTitle","bannerSubtitle","backgroundImage","backgroundColor","avatar","nickname","bio","announcement","githubUrl","email","backgroundMusic","aboutContent","sourceGithubUrl","donationQrCode"]){
    $(id).value=typeof data[id]==="string"?data[id]:"";
   }
@@ -1070,10 +1093,10 @@ async function loadSettings(){
   updateImagePreview();updateAvatarPreview();updateMusicPreview();
   $("settingsForm").inert = false;
   markSettingsSaved();
-  status.textContent="网站设置已加载。";
+  status.textContent="网站外观设置已加载。";
  }catch(error){
   $("settingsForm").inert = !settingsReady;
-  status.textContent="读取网站设置失败，请刷新页面后重试。";status.style.color="#b42318";
+  status.textContent="暂时无法加载网站外观设置，请刷新页面后重试。";status.style.color="#b42318";
   updateSettingsDirtyState();
  }
 }
@@ -1082,11 +1105,11 @@ async function watchSettingsDeployment(sha,attempt=0){
   const response=await fetch("/api/admin/deployment-status/?sha="+encodeURIComponent(sha),{credentials:"same-origin",cache:"no-store"});
   if(response.status===401){goLogin();return}
   const data=await response.json().catch(()=>({error:"无法读取部署状态"}));
-  if(!response.ok)throw new Error("暂时无法确认网站是否更新。");
-  if(data.status==="success"){$("settingsStatus").textContent="网站设置已保存并生效。";$("settingsStatus").style.color="#12884f";return}
-  if(data.status==="failure"){$("settingsStatus").textContent="网站设置已保存，但网站更新失败。请查看更新记录。";$("settingsStatus").style.color="#b42318";return}
-  if(attempt>=20){$("settingsStatus").textContent="设置已保存，但网站是否更新暂未确认。可以查看更新记录。";return}
-  $("settingsStatus").textContent="网站设置已保存，正在更新网站…";
+  if(!response.ok)throw new Error("暂时无法确认网站是否已更新。");
+  if(data.status==="success"){$("settingsStatus").textContent="网站外观设置已保存并生效。";$("settingsStatus").style.color="#12884f";return}
+  if(data.status==="failure"){$("settingsStatus").textContent="设置已保存，但网站暂时没有更新成功。请查看“网站更新记录”。";$("settingsStatus").style.color="#b42318";return}
+  if(attempt>=20){$("settingsStatus").textContent="设置已保存，但网站是否更新还没有确认。可以查看“网站更新记录”。";return}
+  $("settingsStatus").textContent="网站外观设置已保存，正在应用更改…";
   setTimeout(()=>watchSettingsDeployment(sha,attempt+1),12000);
  }catch(error){
   if(attempt>=20){$("settingsStatus").textContent="网站设置已保存，但暂时无法确认网站是否更新。";return}
@@ -1104,13 +1127,13 @@ $("date").addEventListener("change", () => {
 });
 $("discardSettings").onclick=async()=>{
  if(!isSettingsDirty())return;
- if(!confirm("放弃尚未保存的网站设置，并重新读取上次保存的内容吗？"))return;
+ if(!confirm("要放弃尚未保存的网站设置，并恢复上次保存的内容吗？"))return;
  await loadSettings();
 };
 $("settingsForm").addEventListener("submit",async event=>{
  event.preventDefault();
  const status=$("settingsStatus");
- if(!settingsReady||settingsSaving){status.textContent="网站设置还没有成功加载，因此暂时不能保存，以免覆盖现有内容。";status.style.color="#b42318";return}
+ if(!settingsReady||settingsSaving){status.textContent="外观设置还没有成功加载，因此暂时不能保存，以免覆盖原有设置。";status.style.color="#b42318";return}
  const values={
   bannerTitle:$("bannerTitle").value,
   bannerSubtitle:$("bannerSubtitle").value,
@@ -1148,37 +1171,37 @@ $("settingsForm").addEventListener("submit",async event=>{
    gridCoverFullWidth:$("layoutGridCoverFullWidth").checked
   }
  };
- if(values.backgroundColor&&!/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(values.backgroundColor)){status.textContent="颜色格式不正确。请重新选择颜色，或清空后恢复主题默认颜色。";status.style.color="#b42318";$("backgroundColor").focus();return}
+ if(values.backgroundColor&&!/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(values.backgroundColor)){status.textContent="背景颜色无法识别。请重新选一个颜色，或清空后使用主题默认颜色。";status.style.color="#b42318";$("backgroundColor").focus();return}
  for(const [key,label] of [["backgroundImage","背景图片"],["avatar","头像"],["githubUrl","GitHub 链接"],["backgroundMusic","背景音乐"],["sourceGithubUrl","文章原文链接"],["donationQrCode","打赏二维码图片"]]){
-  if(values[key]&&!checkedExternalUrl(values[key])){status.textContent=label+"请填写完整的 HTTP/HTTPS 链接。";status.style.color="#b42318";$(key).focus();return}
+  if(values[key]&&!checkedExternalUrl(values[key])){status.textContent=label+"请粘贴完整的网址，网址需以 http:// 或 https:// 开头。";status.style.color="#b42318";$(key).focus();return}
  }
  if(values.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)){status.textContent="请填写有效的邮箱地址。";status.style.color="#b42318";$("email").focus();return}
- settingsSaving=true;updateSettingsDirtyState();status.style.color="#657267";status.textContent="正在保存网站设置…";
+ settingsSaving=true;updateSettingsDirtyState();status.style.color="#657267";status.textContent="正在保存网站外观设置…";
  try{
   const response=await fetch("/api/admin/settings/",{method:"PUT",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(values)});
   if(response.status===401){goLogin();return}
-  const data=await response.json().catch(()=>({error:"保存接口返回无法解析的响应"}));
-  if(!response.ok)throw new Error(data.error||"保存全局配置失败");
+  const data=await response.json().catch(()=>({error:"后台暂时没有返回可读取的保存结果。"}));
+  if(!response.ok)throw new Error(data.error||"暂时无法保存网站外观设置，请稍后重试。");
   markSettingsSaved();
-  status.textContent="网站设置已保存，正在更新网站…";
+  status.textContent="网站外观设置已保存，正在应用更改…";
   if(data.commitSha)watchSettingsDeployment(data.commitSha);
   else status.textContent="设置已保存，但暂时无法确认网站是否更新。";
  }catch(error){
-  status.textContent=error instanceof Error?error.message:"保存全局配置失败。";status.style.color="#b42318";
+  status.textContent=error instanceof Error?error.message:"暂时无法保存网站外观设置，请稍后重试。";status.style.color="#b42318";
  }finally{settingsSaving=false;updateSettingsDirtyState()}
 });
 
 $("checkGitHub").onclick=checkGitHubPermission;
 $("logout").onclick=async()=>{
  if(hasUnsavedChanges()&&!confirm("当前有未保存修改，继续退出会丢失这些内容。是否退出？"))return;
- try{const r=await fetch("/api/admin/auth/",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});if(!r.ok)throw new Error("退出登录失败，请刷新后重试");allowAdminNavigation=true;location.assign("/admin/login/")}catch(e){say(e.message,true)}
+ try{const r=await fetch("/api/admin/auth/",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});if(!r.ok)throw new Error("退出登录暂时没有成功，请刷新页面后重试。");allowAdminNavigation=true;location.assign("/admin/login/")}catch(e){say(e.message,true)}
 };
 $("new").onclick=()=>{
- if(isArticleDirty()&&!confirm("当前文章有未保存修改，进入新建文章会清空这些内容。是否继续？"))return;
- reset();setAdminTab("articles");say("已进入新建文章模式，请填写标题、文件名和正文。");
+ if(isArticleDirty()&&!confirm("当前文章还有未保存的修改。新建文章会清空当前内容，确定继续吗？"))return;
+ reset();setAdminTab("articles");say("已进入新建文章页面，请填写标题、网址名称和正文。");
  $("editor").scrollIntoView({behavior:"smooth",block:"start"});$("title").focus({preventScroll:true});
 };
-$("reset").onclick=()=>{if(isArticleDirty()&&!confirm("清空当前文章表单？未保存的修改将丢失。"))return;reset();say("文章表单已清空。")};
+$("reset").onclick=()=>{if(isArticleDirty()&&!confirm("要清空当前文章吗？尚未保存的修改会丢失。"))return;reset();say("文章填写内容已清空。")};
 $("refresh").onclick=refresh;$("search").oninput=render;$("statusFilter").onchange=render;
 $("visualTab").onclick=showVisualTab;$("editorTab").onclick=showEditorTab;$("previewTab").onclick=renderMarkdownPreview;$("body").addEventListener("input",()=>{if(!$("markdownPreview").hidden)renderMarkdownPreview()});
 // Save is handled by the single four-stage handler below. Keeping one submit
