@@ -104,11 +104,11 @@ test("折叠内容可通过中文表单结构化编辑并保持原文格式", ()
   assert.equal(model.editable, true);
 });
 
-test("unknown syntax becomes a safe component summary without evaluating expressions", () => {
+test("陌生的特殊内容使用易懂名称展示，且不会执行其中代码", () => {
   const raw = "<UnknownWidget run={dangerousFunction()}>原始说明</UnknownWidget>";
   const model = inspectProtectedMarkdown(raw, "MDX component");
   assert.equal(model.kind, "component");
-  assert.equal(model.title, "UnknownWidget");
+  assert.equal(model.title, "特殊内容模块");
   assert.equal(model.text, "原始说明");
   assert.doesNotMatch(JSON.stringify(model), /dangerousFunction/);
 });
