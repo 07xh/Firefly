@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master ] # Adjust branches as needed
   pull_request:
-    branches: [ master ] # Adjust branches as needed
+    branches: [ master, feat/ai-natural-language-authoring-20261019 ] # Include the stacked AI authoring feature base
 
 jobs:
   quality:
