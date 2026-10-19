@@ -13,6 +13,7 @@ test("API keys are obtained from Cloudflare Worker Secrets, not encrypted or sto
   const providerTypeStart = source.indexOf("type ProviderConfig =");
   const providerTypeEnd = source.indexOf("};", providerTypeStart);
   assert.doesNotMatch(source.slice(providerTypeStart, providerTypeEnd), /apiKey/);
+  assert.doesNotMatch(source, /AI_CONFIG_ENCRYPTION_KEY|encryptedKey|encryptApiKey|decryptApiKey/);
   assert.match(source, /JSON.stringify/);
 });
 
@@ -21,7 +22,7 @@ test("the admin password-style field is display-only and API requests omit key c
   assert.match(page, /id="aiProviderType"[^>]*>[\s\S]*?其他 OpenAI 兼容服务商/);
   assert.match(page, /id="aiProviderKey" type="password"[^>]*disabled/);
   assert.match(page, /本界面不会接收、读取或保存密钥内容/);
-  assert.match(page, /type="checkbox" checked/);
+  assert.match(page, /id="aiProviderEnabled" type="checkbox" checked/);
   assert.doesNotMatch(page, /apiKey:\$\("aiProviderKey"\)\.value/);
 });
 
