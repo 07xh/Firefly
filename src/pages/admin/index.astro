@@ -1033,6 +1033,7 @@ function setAiProviderStatus(message,bad=false){
 }
 function resetAiProviderForm(){
  aiProviderCurrentId="";
+ $("aiProviderId").readOnly=false;
  $("aiProviderName").value="";
  $("aiProviderId").value="";
  $("aiProviderBaseUrl").value="";
@@ -1048,6 +1049,7 @@ function editAiProvider(id){
  const item=aiProviderRecords.find(provider=>provider.id===id);
  if(!item)return;
  aiProviderCurrentId=item.id;
+ $("aiProviderId").readOnly=true;
  $("aiProviderName").value=item.name;
  $("aiProviderId").value=item.id;
  $("aiProviderBaseUrl").value=item.baseUrl;
