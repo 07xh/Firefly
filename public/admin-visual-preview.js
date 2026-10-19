@@ -244,7 +244,7 @@ export function describeProtectedSyntax(reason = "") {
 /** Data-only preview parser. It never evaluates MDX or inserts source as HTML. */
 export function inspectProtectedMarkdown(raw, reason = "") {
   const source = typeof raw === "string" ? raw : "";
-  const detail = String(reason || "扩展 Markdown");
+  const detail = String(reason || "特殊内容");
   const callout = source.match(/^\s*:{3,}\s*(tip|warning|danger|info|success|note|important|caution)(?:\[([^\]\r\n]*)\]|[ \t]+([^\r\n]*?))?[ \t]*\r?\n([\s\S]*?)\r?\n[ \t]*:{3,}[ \t]*$/i);
   if (callout) {
     const title = (callout[2] ?? callout[3] ?? "").trim();
@@ -254,7 +254,7 @@ export function inspectProtectedMarkdown(raw, reason = "") {
       && SAFE_CALLOUT_TYPES.has(type)
       && isSafeCalloutTitle(title, true)
       && isSafeCalloutBody(body);
-    return { kind: "callout", title, type, text: plainText(body), body, editable, label: "提示容器" };
+    return { kind: "callout", title, type, text: plainText(body), body, editable, label: "提示卡片" };
   }
 
   if (/latex.*display math/i.test(detail) || /^\s*\$\$[\s\S]*\$\$\s*$/.test(source)) {
@@ -300,8 +300,8 @@ export function inspectProtectedMarkdown(raw, reason = "") {
       return {
         kind: name === "Steps" ? "steps" : "timeline",
         componentName: name,
-        title: name === "Steps" ? "步骤流程" : "时间线",
-        label: "Firefly 组件 · " + name,
+        title: name === "Steps" ? "步骤清单" : "时间线",
+        label: name === "Steps" ? "步骤内容" : "时间线内容",
         editable,
         items,
       };
@@ -330,9 +330,9 @@ export function inspectProtectedMarkdown(raw, reason = "") {
         && labels.length >= 1
         && labels.length <= 20
         && labels.every(isSafeTabGroupLabel);
-      return { kind: "tabs", title: "标签页分组", label: "Firefly 组件 · TabGroup", editable, items };
+      return { kind: "tabs", title: "分组内容", label: "分组内容", editable, items };
     }
-    return { kind: "component", title: name, label: "Firefly 组件 · " + name, attributes: attrs, text: plainText(root[3]) };
+    return { kind: "component", title: ({ Badge: "文字标签", StepItem: "步骤内容", Steps: "步骤清单", TabGroup: "分组内容", Timeline: "时间线", TimelineItem: "时间点" })[name] || "特殊内容模块", label: BUILTIN_COMPONENTS.has(name) ? "博客内置内容" : "自定义展示内容", attributes: attrs, text: plainText(root[3]) };
   }
 
   const badgePattern = /<Badge\b([^>]*)>([\s\S]*?)<\/Badge\s*>/g;
@@ -348,7 +348,7 @@ export function inspectProtectedMarkdown(raw, reason = "") {
       cursor = index + match[0].length;
     }
     if (cursor < source.length) segments.push({ kind: "text", text: plainText(source.slice(cursor)) });
-    return { kind: "badges", title: "徽章组件", segments: segments.filter(item => item.text), label: "徽章预览" };
+    return { kind: "badges", title: "文字标签", segments: segments.filter(item => item.text), label: "文字标签预览" };
   }
 
   if (/^\s*[-*+]\s+\[[ xX]\]/m.test(source)) {
@@ -363,7 +363,7 @@ export function inspectProtectedMarkdown(raw, reason = "") {
       && lines.length <= 100
       && rawItems.every(item => item && isSafeTaskListText(item.text));
     return {
-      kind: "task-list", title: "任务清单", label: "Markdown 任务清单", editable,
+      kind: "task-list", title: "待办清单", label: "待办清单", editable,
       items: source.split(/\r?\n/).filter(line => /^\s*[-*+]\s+\[[ xX]\]/.test(line)).map(line => ({
         checked: /^\s*[-*+]\s+\[[xX]\]/.test(line),
         text: plainText(line.replace(/^\s*[-*+]\s+\[[ xX]\]\s*/, "")),
@@ -372,10 +372,10 @@ export function inspectProtectedMarkdown(raw, reason = "") {
   }
 
   const footnotes = [...source.matchAll(/^\s*\[\^([^\]]+)\]:\s*(.+)$/gm)].map(match => ({ title: "[^" + match[1] + "]", text: plainText(match[2]) }));
-  if (footnotes.length) return { kind: "footnotes", title: "脚注定义", label: "Markdown 脚注", items: footnotes };
+  if (footnotes.length) return { kind: "footnotes", title: "脚注定义", label: "脚注内容", items: footnotes };
 
   const wikiLinks = [...source.matchAll(/\[\[([^\]]+)\]\]/g)].map(match => ({ title: match[1].split("|")[0].trim(), text: match[1].includes("|") ? match[1].split("|").slice(1).join("|").trim() : match[1].trim() }));
-  if (wikiLinks.length) return { kind: "wiki", title: "Wiki 链接", label: "扩展链接", items: wikiLinks };
+  if (wikiLinks.length) return { kind: "wiki", title: "Wiki 链接", label: "站内链接", items: wikiLinks };
 
   const details = source.match(/<details\b[^>]*>([\s\S]*?)<\/details\s*>/i);
   if (details) {
@@ -395,7 +395,7 @@ export function inspectProtectedMarkdown(raw, reason = "") {
       text: plainText(content),
       body: content,
       editable,
-      label: "HTML 展开区块",
+      label: "可展开内容",
     };
   }
 
@@ -404,7 +404,7 @@ export function inspectProtectedMarkdown(raw, reason = "") {
     const src = readAttributes(iframe[1]).find(item => item.name.toLowerCase() === "src")?.value || "";
     let host = "";
     try { host = new URL(src).hostname; } catch { host = src ? "相对地址" : "未指定地址"; }
-    return { kind: "embed", title: "外部嵌入", host, text: "为安全起见，编辑器不执行嵌入代码。", label: "HTML / iframe" };
+    return { kind: "embed", title: "外部嵌入", host, text: "为安全起见，编辑器不执行嵌入代码。", label: "外部内容嵌入" };
   }
 
   const opening = source.match(/<\s*([A-Z][A-Za-z0-9_.]*)\b([^>]*)>/);
@@ -423,10 +423,10 @@ export function inspectProtectedMarkdown(raw, reason = "") {
   }
 
   if (/<(?:iframe|video|audio|svg|script|style|div|span|details|summary|table|img|picture|figure)\b/i.test(source)) {
-    return { kind: "html", title: "HTML / 主题标签", text: plainText(source), label: detail };
+    return { kind: "html", title: "特殊版式内容", text: plainText(source), label: detail };
   }
 
-  return { kind: "unknown", title: detail, text: plainText(source), label: "扩展语法预览" };
+  return { kind: "unknown", title: "特殊内容", text: plainText(source), label: "特殊内容预览" };
 }
 
 export function serializeEditableStepTimeline(model, values) {
