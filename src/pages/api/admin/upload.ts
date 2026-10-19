@@ -148,7 +148,10 @@ export const POST: APIRoute = async ({ request }) => {
 			} else if (response.status === 429) {
 				detail = "操作过于频繁，请稍等片刻再试。";
 			}
-			console.warn("[Firefly] 图片保存失败", { status: response.status, message: payload.message });
+			console.warn("[Firefly] 图片保存失败", {
+				status: response.status,
+				message: payload.message,
+			});
 			return json(
 				{ error: `图片未能保存。 ${detail}（错误代码 ${response.status}）` },
 				response.status === 409 ? 409 : 502,
