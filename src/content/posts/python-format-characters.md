@@ -2,9 +2,9 @@
 title: "Python 格式字符简短总结：从 %s 到 f-string"
 published: 2026-10-19
 description: "用通俗例子总结 Python 常见格式字符：%s、%d、%f、%x、%% 以及 f-string 的宽度、精度和对齐写法，适合初学者快速查阅。"
-category: "Python 入门"
+category: "Python"
 draft: false
-tags: ["Python","字符串格式化","格式字符","f-string","初学者"]
+tags: ["字符串格式化","格式字符","python"]
 slug: "python-format-characters"
 ---
 # Python 格式字符简短总结
