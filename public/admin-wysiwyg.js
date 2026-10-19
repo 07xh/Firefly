@@ -48,7 +48,8 @@ async function loadTiptapModules() {
       failures.push(provider.name + ": " + (error instanceof Error ? error.message : String(error)));
     }
   }
-  throw new Error("Tiptap 模块无法加载或导出不完整。请检查网络、CDN 拦截或依赖冲突。 " + failures.join(" | "));
+  console.warn("[Firefly] 编辑工具加载失败", failures);
+  throw new Error("正文编辑工具暂时无法加载，请检查网络后刷新页面。");
 }
 
 (() => {
@@ -363,7 +364,7 @@ async function loadTiptapModules() {
     if (notice) {
       notice.hidden = count === 0;
       notice.textContent = count
-        ? "已将 " + count + " 段特殊内容单独保护起来，避免编辑时意外改动。其他文字仍可直接编辑；通常无需查看这些内容。需要调整时，点击对应内容卡片中的“查看/修改内容”。类别：" + types + "。"
+        ? "已为 " + count + " 处特殊排版开启保护，避免误改。其他文字可以照常编辑；一般不需要动这些内容。需要调整时，点对应卡片上的“查看内容”或“编辑内容”。包含：" + types + "。"
         : "";
       notice.setAttribute("role", count ? "status" : "none");
     }
@@ -373,7 +374,7 @@ async function loadTiptapModules() {
       $("visualTab").title = "直接编辑正文；特殊版式和公式会单独显示并原样保留";
       $("visualTab").textContent = "直接编辑正文";
     }
-    if (count) status("已将 " + count + " 段特殊内容单独保留，其他文字仍可直接修改。");
+    if (count) status("已保留 " + count + " 处特殊排版，其他文字仍可直接编辑。");
   }
 
   function reportVisualLoadFailure(_error) {
@@ -389,7 +390,7 @@ async function loadTiptapModules() {
       $("visualTab").title = "请刷新页面重试，或使用高级模式";
       $("visualTab").textContent = "暂时无法直接编辑";
     }
-    status("直接编辑暂时无法使用，文章原文已保留。请刷新页面或进入“高级模式”。", true);
+    status("直接编辑暂时无法使用，文章原文已保留。请刷新页面，或选择“编辑原文”继续。", true);
   }
 
   let protectedSyntaxDialog = null;
@@ -419,13 +420,13 @@ async function loadTiptapModules() {
     const dialog = document.createElement("dialog");
     dialog.className = "firefly-protected-dialog";
     const heading = document.createElement("h3");
-    heading.textContent = "查看或修改特殊内容";
+    heading.textContent = "查看/编辑特殊内容";
     heading.style.cssText = "font-size:16px;font-weight:700;margin:0 0 8px";
     const description = document.createElement("p");
-    description.textContent = "这里显示的是文章中的特殊版式或交互内容。日常写作通常不需要修改；保存后会按原样写回文章。";
+    description.textContent = "这里是文章中较复杂的版式或交互内容。日常写作通常不用修改；确认更改后会按原样保存，系统不会执行其中的代码。";
     description.style.cssText = "font-size:13px;color:#78716c;margin:0 0 12px";
     const textarea = document.createElement("textarea");
-    textarea.setAttribute("aria-label", "特殊内容原文（高级编辑）");
+    textarea.setAttribute("aria-label", "特殊内容原文");
     const actions = document.createElement("div");
     actions.className = "firefly-protected-dialog__actions";
     const cancel = document.createElement("button");
@@ -1110,7 +1111,7 @@ async function loadTiptapModules() {
     heading.textContent = model.kind === "timeline" ? "修改时间线内容" : "修改步骤内容";
     const hint = document.createElement("p");
     hint.className = "firefly-structured-editor__hint";
-    hint.textContent = "这里可以直接修改标题、说明和简单文字。代码示例或复杂排版会保留原样；确实需要改动时，请进入“高级模式”。";
+    hint.textContent = "这里可以直接修改标题、说明和普通文字。示例代码或复杂排版会保留原样；确实需要改动时，请选择“编辑原文”。";
     const list = document.createElement("div");
     list.className = "firefly-structured-editor__list";
     const error = document.createElement("p");
@@ -1358,7 +1359,7 @@ async function loadTiptapModules() {
     heading.textContent = "修改分组内容";
     const hint = document.createElement("p");
     hint.className = "firefly-structured-editor__hint";
-    hint.textContent = "可以修改每个分组的名称、示例类型和示例内容，也可以添加或删除分组。示例内容会按原样保存，不会被执行。";
+    hint.textContent = "可以修改各分组的名称和示例内容，也可以添加或删除分组。示例内容会按原样保存，不会被执行。";
     const list = document.createElement("div");
     list.className = "firefly-structured-editor__list";
     const error = document.createElement("p");
@@ -1535,7 +1536,7 @@ async function loadTiptapModules() {
     heading.textContent = "修改提示卡片";
     const hint = document.createElement("p");
     hint.className = "firefly-structured-editor__hint";
-    hint.textContent = "这里适合修改普通文字。若正文包含加粗、列表、标题或其他复杂排版，请使用上方“查看或修改特殊内容”，以免格式丢失。";
+    hint.textContent = "这里适合修改普通文字。如果正文里有加粗、列表、标题或其他复杂排版，请先用“查看/编辑特殊内容”，避免格式被改变。";
     const typeWrap = document.createElement("div");
     typeWrap.className = "firefly-structured-editor__field";
     const typeLabel = document.createElement("label");
@@ -1620,7 +1621,7 @@ async function loadTiptapModules() {
           body: bodyInput.value,
         });
       } catch (exception) {
-        error.textContent = exception instanceof Error ? exception.message : "提示容器内容不符合可编辑格式。";
+        error.textContent = exception instanceof Error ? exception.message : "这张提示卡片包含复杂排版，暂时不能用简单表单修改；原文已保留，请使用“编辑原文”。";
         error.hidden = false;
         return;
       }
@@ -1830,7 +1831,7 @@ async function loadTiptapModules() {
     heading.textContent = "修改可展开内容";
     const hint = document.createElement("p");
     hint.className = "firefly-structured-editor__hint";
-    hint.textContent = "可以修改标题和普通文字。若内容包含加粗、列表、多段排版或其他复杂内容，请使用“查看或修改特殊内容”，以免格式丢失。";
+    hint.textContent = "可以修改标题和普通文字。如果里面有加粗、列表、多段排版等复杂内容，请先用“查看/编辑特殊内容”，避免格式被改变。";
     const titleWrap = document.createElement("div");
     titleWrap.className = "firefly-structured-editor__field";
     const titleLabel = document.createElement("label");
@@ -1891,7 +1892,7 @@ async function loadTiptapModules() {
       try {
         raw = serializeEditableDetails({ title: titleInput.value, body: bodyInput.value });
       } catch (exception) {
-        error.textContent = exception instanceof Error ? exception.message : "折叠区内容不符合可编辑格式。";
+        error.textContent = exception instanceof Error ? exception.message : "这部分可展开内容包含复杂排版，暂时不能用简单表单修改；原文已保留，请使用“编辑原文”。";
         error.hidden = false;
         return;
       }
