@@ -1,7 +1,7 @@
 import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=20261018-badge-node";
-import { describeProtectedSyntax, inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261019-language-copy";
+import { describeProtectedSyntax, inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261019-natural-copy-2";
 import { normalizeEditorLinkAddress } from "/admin-link-utils.js?v=20261018-natural-links";
-import { getAdminImagePreviewUrl } from "/admin-image-preview-utils.js?v=20261019-language-copy";
+import { getAdminImagePreviewUrl } from "/admin-image-preview-utils.js?v=20261019-natural-copy-2";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
@@ -78,6 +78,13 @@ async function loadTiptapModules() {
       target.textContent = message;
       target.style.color = isError ? "#b42318" : "#657267";
     }
+  }
+
+  function writerFriendlyError(error, fallback) {
+    const message = error instanceof Error ? error.message.trim() : "";
+    if (!message || /failed to fetch|networkerror|network request failed|load failed|fetch failed/i.test(message)
+      || !/[\u3400-\u9fff]/.test(message)) return fallback;
+    return message;
   }
 
   function currentArticlePath() {
@@ -2711,7 +2718,7 @@ async function loadTiptapModules() {
         status("图片已插入正文。保存文章后，网站才会显示这张图片。");
       }
     } catch (error) {
-      status(error instanceof Error ? error.message : "图片上传失败。", true);
+      status(writerFriendlyError(error,"图片上传未能完成，请检查网络后重试；如果不确定图片是否已保存，请先检查文章中的图片，再重新尝试。"), true);
     } finally {
       pendingUploads = Math.max(0, pendingUploads - 1);
       if (toolbar) toolbar.disabled = pendingUploads > 0;
