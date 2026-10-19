@@ -480,11 +480,11 @@ export const prerender = false;
 <section class="min-w-0 rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm"><h2 id="formTitle" style="font-size:16px;margin:0 0 16px">新建文章</h2><form id="editor">
 <div class="field"><label for="title">标题 *</label><input id="title" required maxlength="200"></div>
 <div class="grid"><div class="field"><label for="slug">文章链接名称 *</label><input id="slug" required placeholder="例如：我的第一篇文章"><small>这是文章网址末尾的名称。可以使用中文、字母和数字，也可加连字符或下划线；不必填写完整网址。</small></div><div class="field"><label for="published">文章日期 *</label><input id="published" type="date" required></div></div>
-<div class="grid"><div class="field"><label for="date">计划公开时间（北京时间）</label><input id="date" type="datetime-local" step="60"><small class="muted">不填写则不设定定时公开时间；选择未来时间后，网站会在指定时间自动更新。</small></div><div class="field"><label for="articlePassword">访问密码（可选）</label><input id="articlePassword" type="password" maxlength="200" autocomplete="new-password" placeholder="留空则不启用密码保护"><small class="muted">输入后，前台将显示密码解锁页面。</small></div></div>
-<div class="field"><label for="passwordHint">密码提示（可选）</label><input id="passwordHint" maxlength="120" placeholder="例如：课程名称"></div>
+<div class="grid"><div class="field"><label for="date">定时公开时间（北京时间）</label><input id="date" type="datetime-local" step="60"><small class="muted">留空表示不设置定时公开；选择未来时间后，文章会在该时间自动公开。</small></div><div class="field"><label for="articlePassword">访问密码（可选）</label><input id="articlePassword" type="password" maxlength="200" autocomplete="new-password" placeholder="留空则不启用密码保护"><small class="muted">开启后，访客需要输入密码才能阅读这篇文章。</small></div></div>
+<div class="field"><label for="passwordHint">密码提示（可选）</label><input id="passwordHint" maxlength="120" placeholder="例如：课程名称或老师给出的提示"></div>
 <p class="muted" style="color:#b42318">安全提醒：当前保存文章的 GitHub 项目是公开的，任何人都可能查看其中的文章文件。页面访问密码只能限制网站上的阅读入口，不能隐藏项目文件；请勿保存账号密码、身份证号等机密信息。</p>
 <div class="grid"><div class="field"><label for="category">文章分类</label><input id="category" maxlength="100"></div><div class="field"><label for="tags">文章标签</label><input id="tags" placeholder="技术, 随笔"><small>多个标签用逗号隔开。</small></div></div>
-<div class="field"><label for="description">摘要</label><input id="description" maxlength="500"></div>
+<div class="field"><label for="description">文章简介（摘要）</label><input id="description" maxlength="500"></div>
 <div class="field">
 <label for="body">文章正文</label>
 <div class="local-recovery-row">
@@ -636,12 +636,12 @@ export const prerender = false;
       </div>
       <div class="settings-field">
         <label for="aboutContent">关于我页面正文</label>
-        <textarea id="aboutContent" name="aboutContent" rows="12" maxlength="30000" placeholder="在这里填写个人介绍、关于本站、开源项目地址等内容。&#10;&#10;可以直接输入文字，也可以空一行分段。" class="settings-control"></textarea>
+        <textarea id="aboutContent" name="aboutContent" rows="12" maxlength="30000" placeholder="填写个人介绍、网站内容或项目介绍。&#10;&#10;可以直接输入文字，也可以空一行分段。" class="settings-control"></textarea>
         <small>最多 30000 个字符。可以直接输入文字，也支持标题、列表、加粗、链接、引用和表格；保存后会自动更新到网站。</small>
       </div>
       <div class="settings-field mt-4">
         <label for="donationQrCode">打赏二维码图片链接</label>
-        <input id="donationQrCode" name="donationQrCode" type="url" maxlength="2048" placeholder="https://example.com/donation-qr.png" class="settings-control">
+        <input id="donationQrCode" name="donationQrCode" type="url" maxlength="2048" placeholder="粘贴二维码图片的完整网址（例如 https://…）" class="settings-control">
         <small>填写可公开访问的图片网址；该图片会显示在“关于我”页面的打赏卡片中。</small>
       </div>
     </section>
@@ -649,7 +649,7 @@ export const prerender = false;
 <section class="settings-card" aria-labelledby="articleSocialSettingsTitle">
       <div class="settings-card-heading"><span class="settings-card-number">05</span><div><h3 id="articleSocialSettingsTitle">文章页面与分享设置</h3><p>管理社交入口、支持与分享卡片、文章原文链接及背景音乐。</p></div></div>
 <div class="settings-grid">
-        <div class="settings-field"><label for="githubUrl">GitHub 链接</label><input id="githubUrl" name="githubUrl" type="url" maxlength="2048" placeholder="https://github.com/yourname" class="settings-control"></div>
+        <div class="settings-field"><label for="githubUrl">GitHub 链接</label><input id="githubUrl" name="githubUrl" type="url" maxlength="2048" placeholder="粘贴你的项目主页网址" class="settings-control"></div>
         <div class="settings-field"><label for="email">邮箱地址</label><input id="email" name="email" type="email" maxlength="320" autocomplete="email" placeholder="you@example.com" class="settings-control"></div>
         <label class="settings-toggle"><input id="showGithub" name="showGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示 GitHub 图标<small>此项用于控制网站是否显示这个入口；保存后可打开网站确认效果。</small></span></label>
         <label class="settings-toggle"><input id="showEmail" name="showEmail" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示邮箱图标<small>此项用于控制网站是否显示邮箱入口；保存后可打开网站确认效果。</small></span></label>
@@ -657,7 +657,7 @@ export const prerender = false;
 <div class="settings-grid settings-grid-one">
         <div class="settings-field">
           <label for="sourceGithubUrl">文章原文链接</label>
-          <input id="sourceGithubUrl" name="sourceGithubUrl" type="url" maxlength="2048" placeholder="https://github.com/用户名/仓库 或具体文件路径" class="settings-control">
+          <input id="sourceGithubUrl" name="sourceGithubUrl" type="url" maxlength="2048" placeholder="粘贴项目主页网址，或某篇文章的原文网址" class="settings-control">
           <small>可以填写整个仓库地址，也可以填写某篇文章的原文地址。请使用完整的网址。</small>
         </div>
         <label class="settings-toggle"><input id="showSourceGithub" name="showSourceGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示文章原文链接<small>开启后，网站页脚会显示这条链接；关闭后只隐藏入口，不会清空地址。</small></span></label>
@@ -665,7 +665,7 @@ export const prerender = false;
 <div class="settings-grid settings-grid-one">
         <div class="settings-field">
           <label for="backgroundMusic">背景音乐地址</label>
-          <input id="backgroundMusic" name="backgroundMusic" type="url" maxlength="2048" placeholder="https://example.com/music.mp3" class="settings-control">
+          <input id="backgroundMusic" name="backgroundMusic" type="url" maxlength="2048" placeholder="粘贴可直接播放的音乐文件网址" class="settings-control">
           <audio id="backgroundMusicPreview" class="w-full" controls preload="none" hidden></audio>
           <small>请粘贴可以直接播放的音乐文件网址，点击播放键可以先试听；网站不会自动播放。</small>
         </div>
@@ -909,7 +909,7 @@ function render(){
     say("文章已删除，正在刷新列表…");
     await refresh();
    }catch(e){
-    say(e.message,true);
+    say(friendlyAdminError(e,"删除文章未能完成，请检查网络后刷新文章列表，再确认删除结果。"),true);
    }finally{
     del.disabled=false;
    }
@@ -956,7 +956,7 @@ async function renderMarkdownPreview(){
   $("markdownPreview").innerHTML=d.html||"<p class=muted>暂无内容</p>";
  }catch(e){$("markdownPreview").textContent=friendlyAdminError(e,"暂时无法生成预览，请检查网络后重试；文章原文没有被修改。")}
 }
-async function watchDeployment(sha,attempt=0,successMessage="网站已更新。"){try{const r=await fetch("/api/admin/deployment-status/?sha="+encodeURIComponent(sha),{cache:"no-store"});if(r.status===401){goLogin();return}const d=await r.json().catch(()=>({error:"暂时无法读取网站更新状态。"}));if(!r.ok)throw new Error("暂时无法确认网站是否更新");if(d.url){$("deployLink").href=d.url;$("deployLink").hidden=false}if(d.status==="success"){say(successMessage);return}if(d.status==="failure"){say("网站更新失败，请查看更新记录。",true);return}if(attempt>=24){say("文章已保存，但网站是否更新还没有确认。可以查看“网站更新记录”。");return}say(d.status==="running"?"文章已保存，网站正在更新…":"文章已保存，正在等待网站开始更新…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}catch(e){if(attempt>=24){say("文章已保存，但暂时无法确认网站是否更新："+e.message,true);return}say("正在确认网站是否更新…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}}
+async function watchDeployment(sha,attempt=0,successMessage="网站已更新。"){try{const r=await fetch("/api/admin/deployment-status/?sha="+encodeURIComponent(sha),{cache:"no-store"});if(r.status===401){goLogin();return}const d=await r.json().catch(()=>({error:"暂时无法读取网站更新状态。"}));if(!r.ok)throw new Error("暂时无法确认网站是否更新");if(d.url){$("deployLink").href=d.url;$("deployLink").hidden=false}if(d.status==="success"){say(successMessage);return}if(d.status==="failure"){say("网站更新失败，请查看更新记录。",true);return}if(attempt>=24){say("文章已保存，但网站是否更新还没有确认。可以查看“网站更新记录”。");return}say(d.status==="running"?"文章已保存，网站正在更新…":"文章已保存，正在等待网站开始更新…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}catch(e){if(attempt>=24){say("文章已保存，但暂时无法确认网站是否更新。请打开“网站更新记录”查看进度。",true);return}say("正在确认网站是否更新…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}}
 async function checkGitHubPermission(){
   const button=$("checkGitHub");
   button.disabled=true;
@@ -1289,7 +1289,7 @@ reset();refresh();loadSettings();
   // Accessible second-confirmation modal. A rejected request leaves the article untouched.
   const dialog = document.createElement("dialog");
   dialog.className = "firefly-delete-dialog";
-  dialog.innerHTML = '<form method="dialog" class="firefly-delete-card"><div aria-hidden="true" style="display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#fff0ef;color:#b42318;font-weight:900;font-size:22px">!</div><h2>确认删除文章？</h2><p>删除后会从网站移除这篇文章，网站也会自动更新；此操作无法撤销。后台不能直接撤销，但可通过 Git 历史恢复。</p><p id="fireflyDeleteTarget" style="padding:9px 11px;border-radius:8px;background:#f7f8f7"></p><div class="firefly-delete-actions"><button type="submit" value="cancel" class="btn">取消</button><button type="submit" value="confirm" class="btn danger">确认删除</button></div></form>';
+  dialog.innerHTML = '<form method="dialog" class="firefly-delete-card"><div aria-hidden="true" style="display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#fff0ef;color:#b42318;font-weight:900;font-size:22px">!</div><h2>确认删除文章？</h2><p>删除后，这篇文章会从网站移除，网站也会自动更新。此操作无法在后台撤销；如需找回，需要从项目的历史版本中恢复。</p><p id="fireflyDeleteTarget" style="padding:9px 11px;border-radius:8px;background:#f7f8f7"></p><div class="firefly-delete-actions"><button type="submit" value="cancel" class="btn">取消</button><button type="submit" value="confirm" class="btn danger">确认删除</button></div></form>';
   document.body.append(dialog);
   function confirmDelete(target) {
     $("fireflyDeleteTarget").textContent = target;
@@ -1321,7 +1321,7 @@ reset();refresh();loadSettings();
       await refresh();
       if (result.commitSha) watchDeployment(result.commitSha, 0, false);
     } catch (error) {
-      say(error instanceof Error ? error.message : "删除失败", true);
+      say(friendlyAdminError(error,"删除文章未能完成，请检查网络后刷新文章列表，再确认删除结果。"), true);
     } finally {
       button.disabled = false;
     }
