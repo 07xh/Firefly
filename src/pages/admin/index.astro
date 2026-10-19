@@ -674,7 +674,7 @@ export const prerender = false;
     </section>
 
 <section class="settings-card" aria-labelledby="layoutSettingsTitle">
-  <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="layoutSettingsTitle">页面布局</h3><p>保存后，网站会自动重新构建并应用这些设置。</p></div></div>
+  <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="layoutSettingsTitle">页面布局</h3><p>保存后，网站会自动更新并应用这些设置。</p></div></div>
   <div class="settings-grid">
     <div class="settings-field"><label for="layoutSidebarPosition">桌面侧边栏布局</label><select id="layoutSidebarPosition" name="layoutSidebarPosition" class="settings-control"><option value="left">左侧边栏</option><option value="right">右侧边栏</option><option value="both">双侧边栏</option></select><small>单侧布局让正文更宽；双侧布局可同时展示左右辅助信息。</small></div>
     <div class="settings-field"><label for="layoutTabletSidebar">平板端侧边栏位置</label><select id="layoutTabletSidebar" name="layoutTabletSidebar" class="settings-control"><option value="left">平板显示左侧</option><option value="right">平板显示右侧</option></select><small>仅桌面选择“双侧边栏”时有效。</small></div>
@@ -690,10 +690,10 @@ export const prerender = false;
   </div>
 </section>
 
-<div class="settings-save-row" aria-label="网站外观设置的保存操作">
-      <button id="saveSettings" type="submit" class="settings-save-button" disabled>保存全局配置</button>
-      <button id="discardSettings" type="button" class="btn" disabled>放弃未保存修改</button>
-      <span id="settingsDirtyState" class="settings-dirty-state" data-dirty="false" role="status" aria-live="polite">正在读取配置…</span>
+<div class="settings-save-row" aria-label="保存网站外观设置">
+      <button id="saveSettings" type="submit" class="settings-save-button" disabled>保存外观设置</button>
+      <button id="discardSettings" type="button" class="btn" disabled>放弃未保存的修改</button>
+      <span id="settingsDirtyState" class="settings-dirty-state" data-dirty="false" role="status" aria-live="polite">正在加载外观设置…</span>
       <span id="settingsStatus" class="settings-status" role="status" aria-live="polite"></span>
     </div>
   </form>
@@ -732,7 +732,7 @@ function updateSettingsDirtyState() {
   const dirty = isSettingsDirty();
   const state = $("settingsDirtyState");
   state.dataset.dirty = String(dirty);
-  state.textContent = !settingsReady ? "配置尚未加载" : dirty ? "有未保存的修改" : "所有修改均已保存";
+  state.textContent = !settingsReady ? "外观设置尚未加载" : dirty ? "有未保存的修改" : "所有修改均已保存";
   $("discardSettings").disabled = !dirty || settingsSaving;
   $("saveSettings").disabled = !settingsReady || settingsSaving;
   return dirty;
