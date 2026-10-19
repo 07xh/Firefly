@@ -9,7 +9,7 @@ API Key 只保存在 Cloudflare Worker Secrets 中；后台页面不会接收或
 1. 打开 Cloudflare Dashboard → Workers & Pages → 选择 Firefly Worker → Settings → Variables and Secrets → Secrets。
 2. 根据后台配置标识创建 Secret。命名规则是 `AI_API_KEY_` + 配置标识转大写并将连字符替换为下划线。
 3. 默认标识 `other-openai-compatible` 对应 Secret 名称 `AI_API_KEY_OTHER_OPENAI_COMPATIBLE`。
-4. 如果仍使用旧配置，`AI_API_KEY` 作为兼容回退保留；新配置建议使用独立 Secret 名称。
+4. 旧版 `AI_API_KEY` 仅在没有选定服务商配置时作为旧版写作流程的兼容回退；一旦选定服务商，必须配置该服务商对应的专属 Secret，后台不会把通用旧 Key 误报为该服务商的专属 Key。
 5. 现有 `FIREFLY_SESSIONS` KV 绑定必须存在，用于后台会话认证和保存非敏感 AI 服务配置。
 
 ## 在后台使用
