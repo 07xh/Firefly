@@ -138,15 +138,16 @@ export const POST: APIRoute = async ({ request }) => {
 			commit?: { sha?: string; html_url?: string };
 		};
 		if (!response.ok) {
-			const detail = response.status === 401 || response.status === 403
-				? "后台没有足够权限保存图片，请检查文章保存权限设置。"
-				: response.status === 404
-					? "找不到图片保存位置，请检查后台配置。"
-					: response.status === 409 || response.status === 422
-						? "图片没有成功写入，请稍后重试。"
-						: response.status === 429
-							? "操作过于频繁，请稍等片刻再试。"
-							: "请稍后重试。";
+			let detail = "请稍后重试。";
+			if (response.status === 401 || response.status === 403) {
+				detail = "后台没有足够权限保存图片，请检查文章保存权限设置。";
+			} else if (response.status === 404) {
+				detail = "找不到图片保存位置，请检查后台配置。";
+			} else if (response.status === 409 || response.status === 422) {
+				detail = "图片没有成功写入，请稍后重试。";
+			} else if (response.status === 429) {
+				detail = "操作过于频繁，请稍等片刻再试。";
+			}
 			console.warn("[Firefly] 图片保存失败", { status: response.status, message: payload.message });
 			return json(
 				{ error: `图片未能保存。 ${detail}（错误代码 ${response.status}）` },
@@ -168,9 +169,7 @@ export const POST: APIRoute = async ({ request }) => {
 			201,
 		);
 	} catch (error) {
-		return json(
-			{ error: "图片上传过程中出现问题，请稍后重试。" },
-			500,
-		);
+		console.error("[Firefly] 图片上传发生异常", error);
+		return json({ error: "图片上传过程中出现问题，请稍后重试。" }, 500);
 	}
 };
