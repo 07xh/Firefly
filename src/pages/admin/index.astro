@@ -720,26 +720,27 @@ export const prerender = false;
 
 <section id="aiProvidersTabPanel" class="settings-panel min-w-0" role="tabpanel" aria-labelledby="tabAiProviders" hidden>
   <div class="settings-card" style="margin-bottom:16px">
-    <div class="settings-card-heading"><span class="settings-card-number">AI</span><div><h2 style="margin:1px 0 4px;font-size:17px">AI 服务商管理中心</h2><p>管理兼容 OpenAI Chat Completions 的服务商。API Key 仅在保存时提交到服务端，并使用 AES-GCM 加密后存入 Cloudflare KV；后台不会再次读取或显示完整密钥。</p></div></div>
+    <div class="settings-card-heading"><span class="settings-card-number">AI</span><div><h2 style="margin:1px 0 4px;font-size:17px">AI 服务商管理中心</h2><p>管理其他 OpenAI 兼容服务商。接口地址、模型与启用状态保存在 Cloudflare KV；API Key 只在 Cloudflare Worker Secrets 中配置，本界面不会接收、读取或保存密钥内容。</p></div></div>
     <div id="aiProviderList" class="ai-provider-list" aria-live="polite"><p class="muted">正在读取 AI 服务配置…</p></div>
   </div>
   <form id="aiProviderForm" class="settings-card" autocomplete="off">
     <div class="settings-card-heading"><span class="settings-card-number">01</span><div><h3>服务配置</h3><p>可以添加多个服务商配置；同一时间只使用一个已启用的服务。</p></div></div>
     <div class="settings-grid">
-      <div class="settings-field"><label for="aiProviderName">服务商名称</label><input class="settings-control" id="aiProviderName" maxlength="100" required placeholder="例如：我的 AI 服务商"></div>
-      <div class="settings-field"><label for="aiProviderId">配置标识（英文）</label><input class="settings-control" id="aiProviderId" maxlength="80" required pattern="[A-Za-z0-9_-]{1,80}" placeholder="例如：my-provider"><small>保存后用于识别这条配置，修改已有配置时请保持不变。</small></div>
-      <div class="settings-field settings-grid-one" style="grid-column:1/-1"><label for="aiProviderBaseUrl">API 接口根地址（HTTPS）</label><input class="settings-control" id="aiProviderBaseUrl" type="url" inputmode="url" maxlength="500" required placeholder="https://api.example.com/v1"><small>填写服务商提供的兼容接口根地址，不要填写 API Key。系统会请求此地址下的 /chat/completions 接口。</small></div>
-      <div class="settings-field"><label for="aiProviderModel">模型 ID</label><input class="settings-control" id="aiProviderModel" maxlength="200" required placeholder="填写服务商提供的模型 ID"></div>
-      <div class="settings-field"><label for="aiProviderKey">API Key（密码）</label><input class="settings-control" id="aiProviderKey" type="password" autocomplete="new-password" spellcheck="false" maxlength="2000" placeholder="新建时必填；已有配置留空表示不更换"><small id="aiProviderKeyHelp">密钥只会在提交时发送到本站服务端；保存后输入框会清空。</small></div>
+      <div class="settings-field"><label for="aiProviderType">服务商类型</label><select class="settings-control" id="aiProviderType" aria-describedby="aiProviderTypeHelp"><option value="other-openai-compatible" selected>其他 OpenAI 兼容服务商</option></select><small id="aiProviderTypeHelp">当前版本使用兼容 OpenAI Chat Completions 的接口协议。</small></div>
+      <div class="settings-field"><label for="aiProviderName">服务商名称</label><input class="settings-control" id="aiProviderName" maxlength="100" required placeholder="其他 OpenAI 兼容服务商"></div>
+      <div class="settings-field"><label for="aiProviderId">配置标识（英文）</label><input class="settings-control" id="aiProviderId" maxlength="60" required pattern="[A-Za-z0-9_-]{1,60}" placeholder="other-openai-compatible"><small>对应 Cloudflare Secret 名称；例如此标识对应 AI_API_KEY_OTHER_OPENAI_COMPATIBLE。</small></div>
+      <div class="settings-field settings-grid-one" style="grid-column:1/-1"><label for="aiProviderBaseUrl">API 接口根地址（HTTPS）</label><input class="settings-control" id="aiProviderBaseUrl" type="url" inputmode="url" maxlength="500" required placeholder="待填写，例如 https://api.example.com/v1"><small>填写服务商提供的兼容接口根地址。系统会请求此地址下的 /chat/completions 接口。</small></div>
+      <div class="settings-field"><label for="aiProviderModel">模型 ID</label><input class="settings-control" id="aiProviderModel" maxlength="200" required placeholder="待填写服务商提供的模型 ID"></div>
+      <div class="settings-field"><label for="aiProviderKey">API Key 状态（密码框示意）</label><input class="settings-control" id="aiProviderKey" type="password" autocomplete="off" spellcheck="false" placeholder="••••••••••••" disabled aria-describedby="aiProviderKeyHelp"><small id="aiProviderKeyHelp">此处只展示配置状态，不接受输入。请在 Cloudflare Worker → Settings → Variables and Secrets → Secrets 中配置对应密钥。</small></div>
     </div>
-    <label class="settings-toggle" style="margin-top:14px"><input id="aiProviderEnabled" type="checkbox" checked><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">启用此服务<small>启用后会设为当前 AI 写作服务；关闭后不再用于生成文章。</small></span></label>
+    <label class="settings-toggle" style="margin-top:14px"><input id="aiProviderEnabled" type="checkbox" checked><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">启用此服务<small>启用后会设为当前 AI 写作服务；关闭后不再用于生成文章。Key 需单独在 Cloudflare Secrets 中配置。</small></span></label>
     <div class="ai-provider-actions">
       <button id="aiProviderSave" class="settings-save-button" type="submit">安全保存配置</button>
       <button id="aiProviderTest" class="btn" type="button">保存后测试连接</button>
       <button id="aiProviderNew" class="btn" type="button">新增服务配置</button>
       <span id="aiProviderStatus" class="settings-status" role="status" aria-live="polite"></span>
     </div>
-    <p class="muted" style="line-height:1.7;margin-top:12px">安全说明：配置数据存放于 Cloudflare KV；API Key 使用 Worker Secret <code>AI_CONFIG_ENCRYPTION_KEY</code> 加密。请勿将 Key 粘贴到聊天或公开仓库。更换加密 Secret 会导致既有密钥无法解密，必须先迁移或重新录入。</p>
+    <p class="muted" style="line-height:1.7;margin-top:12px">安全说明：后台只保存服务商名称、HTTPS 地址、模型 ID 和启用状态。API Key 只在 Cloudflare Worker Secrets 中保管，不发送给此页面、不写入 KV 或 GitHub 仓库，也不要粘贴到聊天。Secret 名称按配置标识生成：<code>AI_API_KEY_配置标识</code>（将连字符替换成下划线并转为大写）。例如 <code>other-openai-compatible</code> 对应 <code>AI_API_KEY_OTHER_OPENAI_COMPATIBLE</code>。旧版 <code>AI_API_KEY</code> 仍可作为兼容回退。</p>
   </form>
 </section>
 
