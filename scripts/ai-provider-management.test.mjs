@@ -10,8 +10,10 @@ test("API keys are obtained from Cloudflare Worker Secrets, not encrypted or sto
   assert.match(source, /AI_API_KEY_/);
   assert.match(source, /function getProviderSecret/);
   assert.match(source, /hasApiKey: Boolean\(getProviderSecret\(provider\)\)/);
-  assert.doesNotMatch(source, /type ProviderConfig = \\{[^}]*apiKey/);
-  assert.match(source, /JSON\\.stringify\\(store\\)/);
+  const providerTypeStart = source.indexOf("type ProviderConfig =");
+  const providerTypeEnd = source.indexOf("};", providerTypeStart);
+  assert.doesNotMatch(source.slice(providerTypeStart, providerTypeEnd), /apiKey/);
+  assert.match(source, /JSON.stringify/);
   assert.doesNotMatch(source, /apiKey\s*:/);
 });
 
