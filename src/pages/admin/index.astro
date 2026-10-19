@@ -479,8 +479,8 @@ export const prerender = false;
 </section>
 <section class="min-w-0 rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm"><h2 id="formTitle" style="font-size:16px;margin:0 0 16px">新建文章</h2><form id="editor">
 <div class="field"><label for="title">标题 *</label><input id="title" required maxlength="200"></div>
-<div class="grid"><div class="field"><label for="slug">文章链接名称 *</label><input id="slug" required placeholder="例如：我的第一篇文章"><small>这是文章网址末尾的名称。可以使用中文、字母和数字，也可加连字符或下划线；不必填写完整网址。</small></div><div class="field"><label for="published">文章日期 *</label><input id="published" type="date" required></div></div>
-<div class="grid"><div class="field"><label for="date">定时公开时间（北京时间）</label><input id="date" type="datetime-local" step="60"><small class="muted">留空表示不设置定时公开；选择未来时间后，文章会在该时间自动公开。</small></div><div class="field"><label for="articlePassword">访问密码（可选）</label><input id="articlePassword" type="password" maxlength="200" autocomplete="new-password" placeholder="留空则不启用密码保护"><small class="muted">开启后，访客需要输入密码才能阅读这篇文章。</small></div></div>
+<div class="grid"><div class="field"><label for="slug">文章网址名称 *</label><input id="slug" required placeholder="例如：我的第一篇文章"><small>这是文章网址末尾的名称。可以使用中文、字母和数字，也可加连字符或下划线；不必填写完整网址。</small></div><div class="field"><label for="published">文章日期 *</label><input id="published" type="date" required></div></div>
+<div class="grid"><div class="field"><label for="date">计划公开时间（北京时间）</label><input id="date" type="datetime-local" step="60"><small class="muted">留空表示不设置定时公开；选择未来时间后，文章会在该时间自动公开。</small></div><div class="field"><label for="articlePassword">访问密码（可选）</label><input id="articlePassword" type="password" maxlength="200" autocomplete="new-password" placeholder="留空则不启用密码保护"><small class="muted">开启后，访客需要输入密码才能阅读这篇文章。</small></div></div>
 <div class="field"><label for="passwordHint">密码提示（可选）</label><input id="passwordHint" maxlength="120" placeholder="例如：课程名称或老师给出的提示"></div>
 <p class="muted" style="color:#b42318">安全提醒：当前保存文章的 GitHub 项目是公开的，任何人都可能查看其中的文章文件。页面访问密码只能限制网站上的阅读入口，不能隐藏项目文件；请勿保存账号密码、身份证号等机密信息。</p>
 <div class="grid"><div class="field"><label for="category">文章分类</label><input id="category" maxlength="100"></div><div class="field"><label for="tags">文章标签</label><input id="tags" placeholder="技术, 随笔"><small>多个标签用逗号隔开。</small></div></div>
@@ -488,9 +488,9 @@ export const prerender = false;
 <div class="field">
 <label for="body">文章正文</label>
 <div class="local-recovery-row">
-  <label class="local-recovery-toggle"><input type="checkbox" id="localRecoveryCheck"> <span>临时保存可恢复副本</span></label>
+  <label class="local-recovery-toggle"><input type="checkbox" id="localRecoveryCheck"> <span>自动保留可恢复的草稿副本</span></label>
   <button type="button" id="restoreLocalRecovery" class="btn" hidden disabled>恢复未保存内容</button>
-  <span id="localRecoveryStatus" class="muted" role="status" aria-live="polite">默认关闭。开启后，会在当前浏览器临时保存一份未加密的恢复副本，不会上传到网站。</span>
+  <span id="localRecoveryStatus" class="muted" role="status" aria-live="polite">默认关闭。开启后只会保存在当前浏览器中，没有额外加密，也不会上传到网站。</span>
 </div>
 <div class="editor-tabs" role="tablist" aria-label="文章编辑模式">
 <button class="btn active" type="button" id="visualTab" role="tab" aria-selected="true" disabled>正在准备编辑区…</button>
@@ -563,7 +563,7 @@ export const prerender = false;
 <div id="markdownPreview" class="markdown-preview" hidden><p class="muted">点击“预览效果”查看文章发布后的大致样子。</p></div>
 </div>
 <label class="check"><input id="draft" type="checkbox" checked> 暂不公开（勾选后保存到草稿箱；取消勾选后可公开或定时公开）</label>
-<div class="actions"><button class="btn" type="button" id="checkGitHub">测试文章保存</button><button class="btn" type="submit" id="saveDraft" value="save">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空填写内容</button></div>
+<div class="actions"><button class="btn" type="button" id="checkGitHub">检查文章保存功能</button><button class="btn" type="submit" id="saveDraft" value="save">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空填写内容</button></div>
 </form><details id="saveDiagnostics" hidden class="muted" style="margin-top:8px;font-size:12px"><summary style="cursor:pointer">查看排查详情（遇到问题时再打开）</summary><pre id="saveDiagnosticsText" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;padding:10px;background:#f5f7f5;border-radius:8px"></pre></details><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿后，文章会保存在草稿箱，不会公开显示。发布文章后，网站会自动更新；页面会显示更新进度。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看网站更新记录 ↗</a></section>
 </div>
 <section id="appearanceTabPanel" role="tabpanel" aria-labelledby="tabAppearance" class="settings-panel min-w-0" hidden>
@@ -647,7 +647,7 @@ export const prerender = false;
     </section>
 
 <section class="settings-card" aria-labelledby="articleSocialSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">05</span><div><h3 id="articleSocialSettingsTitle">文章页面与分享设置</h3><p>管理社交入口、支持与分享卡片、文章原文链接及背景音乐。</p></div></div>
+      <div class="settings-card-heading"><span class="settings-card-number">05</span><div><h3 id="articleSocialSettingsTitle">文章页面与分享设置</h3><p>管理社交入口、支持与分享卡片、文章原始文件链接及背景音乐。</p></div></div>
 <div class="settings-grid">
         <div class="settings-field"><label for="githubUrl">GitHub 链接</label><input id="githubUrl" name="githubUrl" type="url" maxlength="2048" placeholder="粘贴你的项目主页网址" class="settings-control"></div>
         <div class="settings-field"><label for="email">邮箱地址</label><input id="email" name="email" type="email" maxlength="320" autocomplete="email" placeholder="you@example.com" class="settings-control"></div>
@@ -656,11 +656,11 @@ export const prerender = false;
       </div>
 <div class="settings-grid settings-grid-one">
         <div class="settings-field">
-          <label for="sourceGithubUrl">文章原文链接</label>
+          <label for="sourceGithubUrl">文章原始文件链接</label>
           <input id="sourceGithubUrl" name="sourceGithubUrl" type="url" maxlength="2048" placeholder="粘贴项目主页网址，或某篇文章的原文网址" class="settings-control">
-          <small>可以填写整个仓库地址，也可以填写某篇文章的原文地址。请使用完整的网址。</small>
+          <small>可以填写项目主页网址，也可以填写某篇文章原始文件的网址。请粘贴完整的网址。</small>
         </div>
-        <label class="settings-toggle"><input id="showSourceGithub" name="showSourceGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示文章原文链接<small>开启后，网站页脚会显示这条链接；关闭后只隐藏入口，不会清空地址。</small></span></label>
+        <label class="settings-toggle"><input id="showSourceGithub" name="showSourceGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示文章原始文件链接<small>开启后，网站页脚会显示这条链接；关闭后只隐藏入口，不会清空地址。</small></span></label>
       </div>
 <div class="settings-grid settings-grid-one">
         <div class="settings-field">
@@ -685,7 +685,7 @@ export const prerender = false;
   </div>
   <div class="settings-switch-grid" style="margin-top:14px">
     <label class="settings-toggle"><input id="layoutSidebarEnabled" name="layoutSidebarEnabled" type="checkbox" checked><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">在电脑上显示侧栏<small>关闭后会隐藏电脑端的左右侧栏；手机上的显示方式由其他设置决定。</small></span></label>
-    <label class="settings-toggle"><input id="layoutGridMasonry" name="layoutGridMasonry" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">按内容高度错落排列<small>仅在多列卡片布局中生效，会根据每张卡片的内容高度自动排列，减少空白。</small></span></label>
+    <label class="settings-toggle"><input id="layoutGridMasonry" name="layoutGridMasonry" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">卡片高低错落排列<small>仅在多列卡片布局中生效，会根据每张卡片的内容高度自动排列，减少空白。</small></span></label>
     <label class="settings-toggle"><input id="layoutGridCoverFullWidth" name="layoutGridCoverFullWidth" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">封面铺满卡片宽度<small>开启后封面会铺满卡片顶部；关闭后封面四周会留出空白。</small></span></label>
   </div>
 </section>
@@ -851,7 +851,7 @@ function render(){
   const pathRow=document.createElement("span");
   pathRow.className="mt-1 block truncate text-xs font-normal text-gray-400";
   pathRow.textContent=(a.published||"日期未设置") + " · " + ({draft:"草稿箱",scheduled:"定时公开",published:"已公开"}[articleStatus(a)]);
-   pathRow.title="文章保存位置："+a.path;
+   pathRow.title="点击文章名称即可打开并编辑";
 
   item.append(titleRow,pathRow);
 
@@ -961,8 +961,8 @@ async function checkGitHubPermission(){
   const button=$("checkGitHub");
   button.disabled=true;
   const originalText=button.textContent;
-  button.textContent="正在检查…";
-  say("正在测试能否保存文章，不会创建或修改任何内容…");
+  button.textContent="正在检查保存功能…";
+  say("正在检查文章是否可以保存，不会改动现有文章…");
   const detail=$("saveDiagnostics");
   const detailText=$("saveDiagnosticsText");
   if(detail) detail.hidden=true;
@@ -1178,7 +1178,7 @@ $("settingsForm").addEventListener("submit",async event=>{
   }
  };
  if(values.backgroundColor&&!/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(values.backgroundColor)){status.textContent="背景颜色无法识别。请重新选一个颜色，或清空后使用主题默认颜色。";status.style.color="#b42318";$("backgroundColor").focus();return}
- for(const [key,label] of [["backgroundImage","背景图片"],["avatar","头像"],["githubUrl","GitHub 链接"],["backgroundMusic","背景音乐"],["sourceGithubUrl","文章原文链接"],["donationQrCode","打赏二维码图片"]]){
+ for(const [key,label] of [["backgroundImage","背景图片"],["avatar","头像"],["githubUrl","GitHub 链接"],["backgroundMusic","背景音乐"],["sourceGithubUrl","文章原始文件链接"],["donationQrCode","打赏二维码图片"]]){
   if(values[key]&&!checkedExternalUrl(values[key])){status.textContent=label+"请粘贴完整的网址，网址需以 http:// 或 https:// 开头。";status.style.color="#b42318";$(key).focus();return}
  }
  if(values.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)){status.textContent="请填写有效的邮箱地址。";status.style.color="#b42318";$("email").focus();return}
@@ -1340,13 +1340,13 @@ reset();refresh();loadSettings();
       say("图片格式不支持，仅接受 PNG、JPEG、WebP 和 GIF。", true); return;
     }
     if (file.size < 1 || file.size > 4 * 1024 * 1024) {
-      say("图片必须大于 0 且不超过 4 MiB，请压缩后重试。", true); return;
+      say("图片不能为空，大小不能超过约 4.2 MB，请压缩后重试。", true); return;
     }
     const marker = "![上传中...](__firefly_upload_" + crypto.randomUUID() + "__)";
     insertAtCursor(marker);
     const form = new FormData();
     form.append("file", file, file.name || "pasted-image.png");
-    say("图片正在保存，请稍候；上传完成前请不要删除正文中对应的图片位置…");
+    say("图片还在保存中，请先保留文章里的“上传中”图片标记，完成后再调整位置。");
     try {
       const response = await fetch("/api/admin/upload/", { method: "POST", body: form, credentials: "same-origin" });
       if (response.status === 401) { goLogin(); throw new Error("登录已过期，请重新登录。"); }
