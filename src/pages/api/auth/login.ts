@@ -47,7 +47,7 @@ export const prerender = false;
 
 async function handleLogin({ request }: Parameters<APIRoute>[0]): Promise<Response> {
 	if (request.headers.get("Origin") !== new URL(request.url).origin) {
-		return jsonResponse({ error: "请求来源不受允许。" }, 403);
+		return jsonResponse({ error: "登录请求来源不正确，请从后台登录页面重新进入。" }, 403);
 	}
 	const contentType = request.headers
 		.get("Content-Type")
@@ -55,11 +55,11 @@ async function handleLogin({ request }: Parameters<APIRoute>[0]): Promise<Respon
 		.trim()
 		.toLowerCase();
 	if (contentType !== "application/json") {
-		return jsonResponse({ error: "登录请求必须使用 JSON。" }, 415);
+		return jsonResponse({ error: "登录信息格式不正确，请刷新页面后重试。" }, 415);
 	}
 	const announcedLength = request.headers.get("Content-Length");
 	if (announcedLength && Number(announcedLength) > 8192) {
-		return jsonResponse({ error: "登录请求过大。" }, 413);
+		return jsonResponse({ error: "登录信息过长，请重新打开登录页面后重试。" }, 413);
 	}
 
 	const runtimeEnv = workerEnv as unknown as {
@@ -72,7 +72,7 @@ async function handleLogin({ request }: Parameters<APIRoute>[0]): Promise<Respon
 		return jsonResponse(
 			{
 				error:
-					"后台认证尚未配置。请检查 Worker 密码 Secret 与 FIREFLY_SESSIONS KV 绑定。",
+					"后台登录功能尚未完成配置，请检查管理员密码和登录状态存储设置。",
 			},
 			503,
 		);
@@ -81,13 +81,13 @@ async function handleLogin({ request }: Parameters<APIRoute>[0]): Promise<Respon
 	try {
 		const raw = await request.text();
 		if (new TextEncoder().encode(raw).byteLength > 8192) {
-			return jsonResponse({ error: "登录请求过大。" }, 413);
+			return jsonResponse({ error: "登录信息过长，请重新打开登录页面后重试。" }, 413);
 		}
 		let parsed: unknown;
 		try {
 			parsed = JSON.parse(raw);
 		} catch {
-			return jsonResponse({ error: "登录请求格式无效。" }, 400);
+			return jsonResponse({ error: "登录信息无法识别，请刷新页面后重试。" }, 400);
 		}
 		if (
 			!parsed ||
@@ -135,6 +135,6 @@ export const POST: APIRoute = async (context) => {
 		return await handleLogin(context);
 	} catch (error) {
 		console.error("[Firefly] login handler failure", error instanceof Error ? error.message : String(error));
-		return jsonResponse({ error: "登录接口处理失败，请查看 Worker 日志。" }, 500);
+		return jsonResponse({ error: "登录过程中出现问题，请稍后重试；如持续失败，请检查后台运行记录。" }, 500);
 	}
 };
