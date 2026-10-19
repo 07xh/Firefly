@@ -9,6 +9,9 @@ test("API keys are obtained from Cloudflare Worker Secrets, not encrypted or sto
   assert.match(source, /function normalizeSecretName/);
   assert.match(source, /AI_API_KEY_/);
   assert.match(source, /function getProviderSecret/);
+  const providerSecretLookup = source.slice(source.indexOf("function getProviderSecret"), source.indexOf("function validBaseUrl"));
+  assert.match(providerSecretLookup, /normalizeSecretName\\(provider\\.id\\)/);
+  assert.doesNotMatch(providerSecretLookup, /AI_API_KEY(?!_)/);
   assert.match(source, /return "AI_API_KEY_" \+ id\.toUpperCase\(\)\.replace\(\/-\/g, "_"/);
   assert.match(source, /url\.protocol !== "https:"/);
   assert.match(source, /AbortSignal\.timeout\(15000\)/);
