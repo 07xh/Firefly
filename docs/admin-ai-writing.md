@@ -7,8 +7,8 @@
 打开 Cloudflare Dashboard → Workers & Pages → Firefly 对应 Worker → Settings → Variables and Secrets，添加：
 
 - `AI_API_KEY`：使用 Secret 保存服务商 API 密钥，不要放到公开仓库、前端代码或普通文本变量中。
-- `AI_MODEL`：填写服务商提供的模型 ID。
-- `AI_API_BASE_URL`：可选，填写 OpenAI Chat Completions 兼容接口的 API 根地址；默认使用 `https://api.openai.com/v1`。通常不要在末尾重复添加 `/chat/completions`。
+- `AI_MODEL`：填写服务商提供的模型 ID。建议设为 Secret，避免后续 Wrangler 自动部署与控制台变量之间发生覆盖。
+- `AI_API_BASE_URL`：可选，填写 OpenAI Chat Completions 兼容接口的 API 根地址；默认使用 `https://api.openai.com/v1`。如果需要自定义地址，建议也设为 Secret 以避免部署时变量被覆盖。通常不要在末尾重复添加 `/chat/completions`。
 
 接口必须通过 HTTPS，并兼容 `POST /chat/completions`、Bearer API key、`messages` 请求及 `choices[0].message.content` 响应。若服务商使用不同 API 协议，此实现不能直接兼容。
 
