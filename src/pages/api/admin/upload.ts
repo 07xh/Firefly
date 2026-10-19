@@ -246,7 +246,9 @@ export const GET: APIRoute = async ({ url }) => {
 					size:
 						metadata.FileSizeBytes !== undefined && metadata.FileSizeBytes !== null
 							? String(metadata.FileSizeBytes)
-							: "",
+							: typeof metadata.FileSize === "string"
+								? metadata.FileSize
+								: "",
 					timestamp:
 						typeof metadata.TimeStamp === "string"
 							? metadata.TimeStamp
@@ -350,7 +352,7 @@ export const POST: APIRoute = async ({ request }) => {
 			return json({ error: "图床返回的图片链接格式无效。" }, 502);
 		}
 		if (
-			(parsedUrl.protocol !== "https:" && parsedUrl.protocol !== "http:") ||
+			(parsedUrl.protocol !== "https:") ||
 			parsedUrl.username ||
 			parsedUrl.password
 		) {
