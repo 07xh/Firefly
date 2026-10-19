@@ -23,6 +23,9 @@ test("后台日常提示使用自然中文，技术诊断默认不直接打扰�
   assert.doesNotMatch(adminPage, /保存全局配置|配置尚未加载/);
   assert.match(adminPage, /查看排查详情/);
   assert.match(adminPage, /文章已保存，网站正在更新/);
+  assert.match(adminPage, /文章网址名称请以中文、字母或数字开头/);
+  assert.doesNotMatch(adminPage, /文件名请以|正文内容超过 500 KB/);
+  assert.match(editorScript, /图片上传未能完成，请检查网络后重试/);
   assert.match(adminPage, /pathRow\.textContent=\(a\.published\|\|"日期未设置"\)/);
   assert.doesNotMatch(adminPage, /高级模式|GitHub HTTP|GitHub Request ID|accepted permissions/);
   assert.doesNotMatch(editorScript, /高级模式|Tiptap 模块无法加载|CDN 拦截/);
