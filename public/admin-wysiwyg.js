@@ -2683,7 +2683,7 @@ async function loadTiptapModules() {
     pendingUploads += 1;
     const toolbar = $("wysiwygUpload");
     if (toolbar) toolbar.disabled = true;
-    status("正在上传图片…");
+    status("正在保存图片，请稍候…");
     const form = new FormData();
     form.append("file", file, file.name || "image.png");
     try {
