@@ -39,18 +39,18 @@ function getConfig(): { token: string; repo: string; branch: string } {
 function githubFailure(response: Response, operation: string): string {
 	const status = response.status;
 	if (status === 401 || status === 403) {
-		return `${operation}。后台没有足够权限完成这次操作，请检查文章保存权限设置。（错误代码 ${status}）`;
+		return `${operation}没有成功：后台缺少完成这项操作的权限。请检查文章保存设置后重试。`;
 	}
 	if (status === 404) {
-		return `${operation}。找不到对应的文章文件或保存位置，请刷新文章列表后重试。（错误代码 404）`;
+		return `${operation}没有成功：找不到文章或保存位置。请刷新文章列表后重试。`;
 	}
 	if (status === 409 || status === 422) {
-		return `${operation}。文章可能已被修改，或同名文章已经存在；请刷新列表确认后再试。（错误代码 ${status}）`;
+		return `${operation}没有成功：文章可能已被更新，或同名文章已经存在。请刷新列表确认后再试。`;
 	}
 	if (status === 429) {
-		return `${operation}。操作过于频繁，请稍等片刻再试。（错误代码 429）`;
+		return `${operation}没有成功：操作过于频繁，请稍等片刻再试。`;
 	}
-	return `${operation}（错误代码 ${status}），请稍后重试。`;
+	return `${operation}暂时没有成功，请稍后重试。（错误代码 ${status}）`;
 }
 
 function json(data: unknown, status = 200): Response {
@@ -193,7 +193,7 @@ async function github(path: string, config: ReturnType<typeof getConfig>, init?:
 async function findPostFiles(config: ReturnType<typeof getConfig>): Promise<GitHubEntry[]> {
 	const response = await github(`git/trees/${encodeURIComponent(config.branch)}?recursive=1`, config);
 
-	if (!response.ok) throw new Error(githubFailure(response, "读取 GitHub 文章列表失败"));
+	if (!response.ok) throw new Error(githubFailure(response, "读取文章列表失败"));
 	const data = (await response.json()) as { tree?: GitHubEntry[]; truncated?: boolean };
 	if (data.truncated) throw new Error("文章列表未能完整读取。为避免漏掉文章或误操作，请稍后刷新重试。");
 	return (data.tree ?? []).filter((entry) =>
@@ -209,7 +209,7 @@ async function readPost(path: string, config: ReturnType<typeof getConfig>): Pro
 	}
 	const response = await github(`contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(config.branch)}`, config);
 
-	if (!response.ok) throw new Error(githubFailure(response, "读取 GitHub 文章失败"));
+	if (!response.ok) throw new Error(githubFailure(response, "读取文章失败"));
 	const file = (await response.json()) as { sha: string; content: string; encoding: string; path: string };
 	return { path: file.path, sha: file.sha, content: file.encoding === "base64" ? decodeBase64(file.content) : file.content };
 }
@@ -253,7 +253,7 @@ export const POST: APIRoute = async ({ request }) => {
 		if (!slug) return json({ error: "文章网址名称请以中文、字母或数字开头；之后可使用中文、字母、数字、连字符或下划线，最多 80 个字符。" }, 400);
 		const path = `${ROOT}${slug}.${extension}`;
 		const content = makeMarkdown({ ...input, slug });
-		if (!content) return json({ error: "标题、发布日期或正文格式不合法" }, 400);
+		if (!content) return json({ error: "请检查标题、文章日期和正文是否填写正确。" }, 400);
 		const response = await github(`contents/${path}`, config, {
 			method: "PUT",
 			body: JSON.stringify({ message: `Add article: ${slug}`, content: encodeBase64(content), branch: config.branch }),
@@ -261,7 +261,7 @@ export const POST: APIRoute = async ({ request }) => {
 
 		if (response.status === 422) return json({ error: "同名文章已存在" }, 409);
 
-		if (!response.ok) return json({ error: githubFailure(response, "GitHub 写入失败") }, 502);
+		if (!response.ok) return json({ error: githubFailure(response, "保存文章失败") }, 502);
 		const written = (await response.json()) as { commit?: { sha?: string; html_url?: string } };
 		return json({ ok: true, path, commitSha: written.commit?.sha, commitUrl: written.commit?.html_url }, 201);
 	} catch (error) {
@@ -274,27 +274,27 @@ export const PUT: APIRoute = async ({ request }) => {
 		const config = getConfig();
 		const input = (await request.json()) as Record<string, unknown>;
 		const path = typeof input.path === "string" ? input.path : "";
-		if (!path.startsWith(ROOT) || !/^src\/content\/posts\/(?:[\p{L}\p{N}_-]+\/)*[\p{L}\p{N}_-]+\.mdx?$/u.test(path)) return json({ error: "文章路径不合法" }, 400);
+		if (!path.startsWith(ROOT) || !/^src\/content\/posts\/(?:[\p{L}\p{N}_-]+\/)*[\p{L}\p{N}_-]+\.mdx?$/u.test(path)) return json({ error: "文章地址不正确，请从左侧列表重新选择文章。" }, 400);
 		const current = await readPost(path, config);
 		if (typeof input.sha !== "string" || input.sha !== current.sha) return json({ error: "这篇文章刚刚被更新过。为避免覆盖新内容，请刷新列表并重新打开文章。" }, 409);
 		const slug = path.split("/").pop()?.replace(/\.mdx?$/, "") ?? "";
 		let content = typeof input.rawContent === "string" ? input.rawContent : makeMarkdown({ ...input, slug });
 		if (!content || content.length > 500_000 || (typeof input.rawContent === "string" && !/^---\r?\n/.test(content))) {
-			return json({ error: "完整文章内容不合法或超过 500 KB" }, 400);
+			return json({ error: "文章内容过长或格式不正确，请检查后再保存。" }, 400);
 		}
 		if (typeof input.rawContent === "string") {
 			const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
 			if (!frontmatter) return json({ error: "没有找到有效的文章信息区，无法保存标题、日期等信息" }, 400);
 			const title = typeof input.title === "string" ? input.title.trim() : "";
-			if (!title || title.length > 200) return json({ error: "标题不能为空且不能超过 200 个字符" }, 400);
-			if (!validDate(input.published)) return json({ error: "发布日期格式不正确" }, 400);
+			if (!title || title.length > 200) return json({ error: "请填写标题，且标题不能超过 200 个字符。" }, 400);
+			if (!validDate(input.published)) return json({ error: "文章日期不正确，请重新选择日期。" }, 400);
 			const category = typeof input.category === "string" ? input.category.slice(0, 100) : "";
 			const description = typeof input.description === "string" ? input.description.slice(0, 500) : "";
 			const scheduleDate = typeof input.date === "string" ? input.date.trim() : "";
 			const password = typeof input.password === "string" ? input.password : "";
 			const passwordHint = typeof input.passwordHint === "string" ? input.passwordHint.slice(0, 120) : "";
 			if (!validScheduleDate(scheduleDate)) return json({ error: "计划公开时间不正确，请重新选择时间后再保存" }, 400);
-			if (password.length > 200) return json({ error: "访问密码不能超过 200 个字符" }, 400);
+			if (password.length > 200) return json({ error: "访问密码不能超过 200 个字符，请缩短后再保存。" }, 400);
 			const tags = Array.isArray(input.tags)
 				? input.tags.filter((tag): tag is string => typeof tag === "string").slice(0, 20).map((tag) => tag.trim().slice(0, 50)).filter(Boolean)
 				: [];
@@ -315,7 +315,7 @@ export const PUT: APIRoute = async ({ request }) => {
 			content = passwordHint
 				? updateFrontmatterField(content, "passwordHint", scalar(passwordHint))
 				: removeFrontmatterField(content, "passwordHint");
-			if (content.length > 500_000) return json({ error: "完整文章内容不能超过 500 KB" }, 400);
+			if (content.length > 500_000) return json({ error: "文章内容太大，暂时无法保存；请删减一些内容后重试。" }, 400);
 		}
 		const response = await github(`contents/${path.split("/").map(encodeURIComponent).join("/")}`, config, {
 			method: "PUT",
@@ -323,7 +323,7 @@ export const PUT: APIRoute = async ({ request }) => {
 		});
 
 		if (!response.ok) {
-			const message = githubFailure(response, "GitHub 更新失败");
+			const message = githubFailure(response, "保存文章修改失败");
 			if (response.status === 409 || response.status === 422) {
 				return json({ error: "这篇文章在你编辑期间发生了变化。为避免覆盖新内容，你当前的编辑内容仍会保留；请重新打开最新版本后再保存。", detail: message }, 409);
 			}
@@ -341,7 +341,7 @@ export const DELETE: APIRoute = async ({ request }) => {
 		const config = getConfig();
 		const input = (await request.json()) as Record<string, unknown>;
 		const path = typeof input.path === "string" ? input.path : "";
-		if (!path.startsWith(ROOT) || !/^src\/content\/posts\/(?:[\p{L}\p{N}_-]+\/)*[\p{L}\p{N}_-]+\.mdx?$/u.test(path)) return json({ error: "文章路径不合法" }, 400);
+		if (!path.startsWith(ROOT) || !/^src\/content\/posts\/(?:[\p{L}\p{N}_-]+\/)*[\p{L}\p{N}_-]+\.mdx?$/u.test(path)) return json({ error: "文章地址不正确，请从左侧列表重新选择文章。" }, 400);
 		const current = await readPost(path, config);
 		if (typeof input.sha !== "string" || input.sha !== current.sha) return json({ error: "这篇文章刚刚被更新过。为避免覆盖新内容，请刷新列表并重新打开文章。" }, 409);
 		const response = await github(`contents/${path.split("/").map(encodeURIComponent).join("/")}`, config, {
@@ -350,7 +350,7 @@ export const DELETE: APIRoute = async ({ request }) => {
 		});
 
 		if (!response.ok) {
-			const message = githubFailure(response, "GitHub 删除失败");
+			const message = githubFailure(response, "删除文章失败");
 			if (response.status === 409 || response.status === 422) {
 				return json({ error: "这篇文章可能刚刚被修改或删除。系统没有确认删除成功，请刷新列表后重新检查。", detail: message }, 409);
 			}
