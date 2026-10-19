@@ -1355,7 +1355,7 @@ reset();refresh();loadSettings();
       const alt = (file.name || "图片").replace(/[\[\]\n\r]/g, " ").trim().slice(0, 100) || "图片";
       const markdown = "![" + alt + "](" + data.imageUrl + ")";
       const field = $("body");
-      if (!field.value.includes(marker)) throw new Error("图片已上传，但占位符不见了。请手动插入：" + data.imageUrl);
+      if (!field.value.includes(marker)) throw new Error("图片已保存，但编辑区找不到原来的插入位置。请切换到“编辑原文”，再插入这张图片的网址：" + data.imageUrl);
       field.value = field.value.replace(marker, markdown);
       field.dispatchEvent(new Event("input", { bubbles: true }));
       say("图片已插入正文。点击“保存草稿”或“发布文章”后，网站才会显示这张图片。");
@@ -1439,10 +1439,10 @@ reset();refresh();loadSettings();
     const rawSchedule = $("date").value.trim();
     let date = mode === "publish" ? "" : fromBeijingDateTimeLocal(rawSchedule);
     if (!title || title.length > 200) { say("请填写标题，最多 200 个字符。", true); $("title").focus(); return; }
-    if (!selected && !/^[\p{L}\p{N}][\p{L}\p{N}_-]{0,79}$/u.test(slug)) { say("文件名请以字母、数字或中文开头；可以使用字母、数字、连字符和下划线。", true); $("slug").focus(); return; }
+    if (!selected && !/^[\p{L}\p{N}][\p{L}\p{N}_-]{0,79}$/u.test(slug)) { say("文章网址名称请以中文、字母或数字开头；之后可使用中文、字母、数字、连字符或下划线。", true); $("slug").focus(); return; }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(published) || Number.isNaN(Date.parse(published + "T00:00:00Z"))) { say("请选择有效的发布日期。", true); $("published").focus(); return; }
     if (rawSchedule && mode !== "publish" && !date) { say("定时发布时间无效，请重新选择。", true); $("date").focus(); return; }
-    if ($("body").value.length > 500000) { say("正文内容超过 500 KB，请删减后再保存。", true); return; }
+    if ($("body").value.length > 500000) { say("正文内容过长，暂时无法保存。请删减一些内容后重试。", true); return; }
     if (mode === "publish" && !window.confirm("直接发布会立即公开文章，并清除定时发布时间。确定继续吗？")) return;
     if (mode === "publish") $("date").value = "";
     const isDraft = mode === "publish" ? false : $("draft").checked;
