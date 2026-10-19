@@ -802,7 +802,7 @@ function updateSaveButtonLabel() {
  $("saveDraft").textContent = draft ? "保存为草稿" : (hasFutureDate ? "保存定时文章" : (selected ? "保存修改" : "保存并公开"));
 }
 function frontmatterValue(source,key){const match=source.match(new RegExp("^"+key+":\\s*(.*?)\\s*$","m"));if(!match)return "";const raw=match[1].trim();try{const parsed=JSON.parse(raw);if(Array.isArray(parsed))return parsed.map(String).join(", ");if(typeof parsed==="string")return parsed;if(parsed===null)return ""}catch{}if(raw.startsWith("'")&&raw.endsWith("'"))return raw.slice(1,-1).replace(/''/g,"'");return raw}
-async function api(method,data){const r=await fetch("/api/admin/articles/",{method,headers:{"Content-Type":"application/json"},...(data?{body:JSON.stringify(data)}:{})});if(r.status===401){goLogin();throw new Error("登录已过期，正在返回登录页面…")}const d=await r.json().catch(()=>({error:"后台返回的内容暂时无法读取，请刷新页面后重试。"}));if(!r.ok)throw new Error(d.error||"请求失败");return d}
+async function api(method,data){const r=await fetch("/api/admin/articles/",{method,headers:{"Content-Type":"application/json"},...(data?{body:JSON.stringify(data)}:{})});if(r.status===401){goLogin();throw new Error("登录已过期，正在返回登录页面…")}const d=await r.json().catch(()=>({error:"后台返回的内容暂时无法读取，请刷新页面后重试。"}));if(!r.ok)throw new Error(d.error||"操作未能完成，请稍后重试。");return d}
 function render(){
  const q=$("search").value.trim().toLowerCase();
  const statusFilter=$("statusFilter").value;
@@ -914,7 +914,7 @@ function render(){
   list.append(row);
  }
 }
-async function refresh(){try{say("正在读取文章列表…");articles=await api("GET");render();say("已读取 "+articles.length+" 篇文章")}catch(e){say("暂时无法读取文章列表，请刷新页面重试。",true);$("list").textContent="加载失败，请刷新页面后重试。"}}
+async function refresh(){try{say("正在加载文章列表…");articles=await api("GET");render();say("已显示 "+articles.length+" 篇文章")}catch(e){say("暂时无法读取文章列表，请刷新页面重试。",true);$("list").textContent="加载失败，请刷新页面后重试。"}}
 function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
 function showVisualTab(){
  $("body").hidden=true;$("wysiwygPane").hidden=false;$("markdownPreview").hidden=true;
@@ -951,7 +951,7 @@ async function renderMarkdownPreview(){
   $("markdownPreview").innerHTML=d.html||"<p class=muted>暂无内容</p>";
  }catch(e){$("markdownPreview").textContent=e.message}
 }
-async function watchDeployment(sha,attempt=0,successMessage="网站已更新。"){try{const r=await fetch("/api/admin/deployment-status/?sha="+encodeURIComponent(sha),{cache:"no-store"});if(r.status===401){goLogin();return}const d=await r.json().catch(()=>({error:"无法读取部署状态"}));if(!r.ok)throw new Error("暂时无法确认网站是否更新");if(d.url){$("deployLink").href=d.url;$("deployLink").hidden=false}if(d.status==="success"){say(successMessage);return}if(d.status==="failure"){say("网站更新失败，请查看更新记录。",true);return}if(attempt>=24){say("文章已保存，但网站是否更新还没有确认。可以查看“网站更新记录”。");return}say(d.status==="running"?"文章已保存，网站正在更新…":"文章已保存，正在等待网站开始更新…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}catch(e){if(attempt>=24){say("文章已保存，但暂时无法确认网站是否更新："+e.message,true);return}say("正在确认网站是否更新…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}}
+async function watchDeployment(sha,attempt=0,successMessage="网站已更新。"){try{const r=await fetch("/api/admin/deployment-status/?sha="+encodeURIComponent(sha),{cache:"no-store"});if(r.status===401){goLogin();return}const d=await r.json().catch(()=>({error:"暂时无法读取网站更新状态。"}));if(!r.ok)throw new Error("暂时无法确认网站是否更新");if(d.url){$("deployLink").href=d.url;$("deployLink").hidden=false}if(d.status==="success"){say(successMessage);return}if(d.status==="failure"){say("网站更新失败，请查看更新记录。",true);return}if(attempt>=24){say("文章已保存，但网站是否更新还没有确认。可以查看“网站更新记录”。");return}say(d.status==="running"?"文章已保存，网站正在更新…":"文章已保存，正在等待网站开始更新…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}catch(e){if(attempt>=24){say("文章已保存，但暂时无法确认网站是否更新："+e.message,true);return}say("正在确认网站是否更新…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}}
 async function checkGitHubPermission(){
   const button=$("checkGitHub");
   button.disabled=true;
@@ -1065,7 +1065,7 @@ async function loadSettings(){
  try{
   const response=await fetch("/api/admin/settings/",{credentials:"same-origin",cache:"no-store"});
   if(response.status===401){goLogin();return}
-  const data=await response.json().catch(()=>({error:"配置接口返回无法解析的响应"}));
+  const data=await response.json().catch(()=>({error:"后台暂时没有返回可读取的设置内容。"}));
   if(!response.ok)throw new Error("暂时无法加载网站外观设置，请刷新页面后重试。");
   for(const id of ["bannerTitle","bannerSubtitle","backgroundImage","backgroundColor","avatar","nickname","bio","announcement","githubUrl","email","backgroundMusic","aboutContent","sourceGithubUrl","donationQrCode"]){
    $(id).value=typeof data[id]==="string"?data[id]:"";
@@ -1105,7 +1105,7 @@ async function watchSettingsDeployment(sha,attempt=0){
  try{
   const response=await fetch("/api/admin/deployment-status/?sha="+encodeURIComponent(sha),{credentials:"same-origin",cache:"no-store"});
   if(response.status===401){goLogin();return}
-  const data=await response.json().catch(()=>({error:"无法读取部署状态"}));
+  const data=await response.json().catch(()=>({error:"暂时无法读取网站更新状态。"}));
   if(!response.ok)throw new Error("暂时无法确认网站是否已更新。");
   if(data.status==="success"){$("settingsStatus").textContent="网站外观设置已保存并生效。";$("settingsStatus").style.color="#12884f";return}
   if(data.status==="failure"){$("settingsStatus").textContent="设置已保存，但网站暂时没有更新成功。请查看“网站更新记录”。";$("settingsStatus").style.color="#b42318";return}
@@ -1341,26 +1341,26 @@ reset();refresh();loadSettings();
     insertAtCursor(marker);
     const form = new FormData();
     form.append("file", file, file.name || "pasted-image.png");
-    say("图片正在上传到 GitHub，上传期间请勿删除正文中的占位符…");
+    say("图片正在保存，请稍候；上传完成前请不要删除正文中对应的图片位置…");
     try {
       const response = await fetch("/api/admin/upload/", { method: "POST", body: form, credentials: "same-origin" });
       if (response.status === 401) { goLogin(); throw new Error("登录已过期，请重新登录。"); }
       const data = await response.json().catch(() => ({ error: "图片上传接口响应无法解析" }));
-      if (!response.ok) throw new Error(data.error || "图片上传失败");
+      if (!response.ok) throw new Error(data.error || "图片未能保存，请稍后重试。");
       const alt = (file.name || "图片").replace(/[\[\]\n\r]/g, " ").trim().slice(0, 100) || "图片";
       const markdown = "![" + alt + "](" + data.imageUrl + ")";
       const field = $("body");
       if (!field.value.includes(marker)) throw new Error("图片已上传，但占位符不见了。请手动插入：" + data.imageUrl);
       field.value = field.value.replace(marker, markdown);
       field.dispatchEvent(new Event("input", { bubbles: true }));
-      say("图片已上传并插入正文。保存文章后，网站就会显示这张图片。");
+      say("图片已插入正文。点击“保存草稿”或“发布文章”后，网站才会显示这张图片。");
     } catch (error) {
       const field = $("body");
       if (field.value.includes(marker)) {
         field.value = field.value.replace(marker, "");
         field.dispatchEvent(new Event("input", { bubbles: true }));
       }
-      say(error instanceof Error ? error.message : "图片上传失败", true);
+      say(error instanceof Error ? error.message : "图片未能保存，请稍后重试。", true);
     }
   }
   $("body")?.addEventListener("paste", event => {
@@ -1390,7 +1390,7 @@ reset();refresh();loadSettings();
     try {
       const response = await fetch("/api/admin/deployment-status/?sha=" + encodeURIComponent(sha), { cache: "no-store" });
       if (response.status === 401) { goLogin(); return; }
-      const data = await response.json().catch(() => ({ error: "无法读取部署状态" }));
+      const data = await response.json().catch(() => ({ error: "暂时无法读取网站更新状态。" }));
       if (!response.ok) throw new Error(data.error || "暂时无法查询部署状态");
       const commit = $("enhancedCommitLink");
       commit.href = "https://github.com/07xh/Firefly/commit/" + encodeURIComponent(sha);
