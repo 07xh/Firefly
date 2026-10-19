@@ -1112,7 +1112,12 @@ $("aiProviderNew").onclick=()=>resetAiProviderForm();
 $("aiProviderName").addEventListener("input",()=>{
  if(aiProviderCurrentId)return;
  const id=$("aiProviderName").value.trim().toLowerCase().replace(/[^a-z0-9_-]+/g,"-").replace(/^-+|-+$/g,"").slice(0,60);
- if(id) $("aiProviderId").value=id;
+ if(id){ $("aiProviderId").value=id; $("aiProviderKeyHelp").textContent="请在 Cloudflare Worker Secrets 中配置 AI_API_KEY_"+id.toUpperCase().replace(/-/g,"_")+"；本界面不会接收或保存 Key。"; }
+});
+$("aiProviderId").addEventListener("input",()=>{
+ if(aiProviderCurrentId)return;
+ const id=$("aiProviderId").value.trim();
+ $("aiProviderKeyHelp").textContent="请在 Cloudflare Worker Secrets 中配置 AI_API_KEY_"+id.toUpperCase().replace(/-/g,"_")+"；本界面不会接收或保存 Key。";
 });
 $("aiProviderForm").addEventListener("submit",async event=>{
  event.preventDefault();
@@ -1150,6 +1155,11 @@ $("aiProviderForm").addEventListener("submit",async event=>{
 $("aiProviderTest").onclick=async()=>{
  const id=$("aiProviderId").value.trim();
  if(!id){setAiProviderStatus("请先填写配置标识并保存。",true);return}
+ const savedProvider=aiProviderRecords.find(item=>item.id===id);
+ if(!savedProvider){setAiProviderStatus("请先保存服务配置，再测试连接。",true);return}
+ if(savedProvider.name!==$("aiProviderName").value.trim()||savedProvider.baseUrl!==$("aiProviderBaseUrl").value.trim()||savedProvider.model!==$("aiProviderModel").value.trim()||savedProvider.enabled!==$("aiProviderEnabled").checked){
+  setAiProviderStatus("当前表单有未保存修改，请先点击“保存服务配置”，再测试连接。",true);return;
+ }
  $("aiProviderTest").disabled=true;setAiProviderStatus("正在测试服务连接…");
  try{
   const response=await fetch("/api/admin/ai-providers/",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"test",id})});
