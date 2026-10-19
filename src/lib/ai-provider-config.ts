@@ -139,7 +139,7 @@ export async function testAiProvider(input: unknown): Promise<{ ok: true; model:
   try {
     response = await fetch(endpoint, {
       method: "POST", headers: { authorization: "Bearer " + apiKey, "content-type": "application/json", accept: "application/json" },
-      body: JSON.stringify({ model: provider.model, messages: [{ role: "user", content: "Reply with exactly: OK" }], max_tokens: 8 }),
+      body: JSON.stringify({ model: provider.model, messages: [{ role: "user", content: "Reply with exactly: OK" }], max_tokens: 128 }),
       signal: AbortSignal.timeout(15000),
     });
   } catch { throw new Error("连接失败或超时。请检查 HTTPS 地址、网络和服务商状态；密钥不会返回给浏览器。"); }
@@ -150,8 +150,36 @@ export async function testAiProvider(input: unknown): Promise<{ ok: true; model:
     if (status === 429) throw new Error("请求过多或额度不足（HTTP 429）。");
     throw new Error("服务商返回 HTTP " + status + "。未读取或回传响应中的敏感内容。");
   }
-  const payload = await response.json().catch(() => null) as { choices?: Array<{ message?: { content?: unknown } }> } | null;
-  const answer = payload?.choices?.[0]?.message?.content;
-  if (typeof answer !== "string" || !answer.trim()) throw new Error("连接成功，但响应格式不符合 Chat Completions。");
+  const payload = await response.json().catch(() => null) as {
+    choices?: Array<{ message?: { content?: unknown; reasoning_content?: unknown }; finish_reason?: unknown }>;
+    error?: { message?: unknown; type?: unknown; code?: unknown };
+  } | null;
+  const message = payload?.choices?.[0]?.message;
+  const answer = message?.content;
+  const contentText = typeof answer === "string"
+    ? answer.trim()
+    : Array.isArray(answer)
+      ? answer.map((part) => {
+          if (!part || typeof part !== "object") return "";
+          const item = part as { text?: unknown };
+          return typeof item.text === "string" ? item.text : "";
+        }).join("").trim()
+      : "";
+  if (!contentText) {
+    // Some reasoning-capable models may spend a tiny token budget on reasoning
+    // and return no user-facing content. Keep the probe generous enough to test
+    // a real completion, without returning upstream payloads or secrets.
+    const hasReasoning = typeof message?.reasoning_content === "string" && message.reasoning_content.trim().length > 0;
+    if (hasReasoning) throw new Error("服务已响应，但模型只返回了推理内容，没有生成可见回答。请稍后重试；连接测试已调整为提供更充足的输出额度。");
+    const upstreamError = payload?.error;
+    if (upstreamError && typeof upstreamError === "object") {
+      const errorRecord = upstreamError as { type?: unknown; code?: unknown };
+      const code = [errorRecord.type, errorRecord.code].find((value) => typeof value === "string");
+      if (typeof code === "string" && /^[A-Za-z0-9_-]{1,80}$/.test(code)) {
+        throw new Error("服务商返回了无法识别的 Chat Completions 响应（错误代码：" + code + "）。请检查模型 ID 与服务商接口兼容性。");
+      }
+    }
+    throw new Error("连接成功，但响应中没有可见回答。请检查模型 ID 与 Chat Completions 兼容性。");
+  }
   return { ok: true, model: provider.model, elapsedMs: Date.now() - started };
 }

@@ -49,3 +49,11 @@ test("AI drafting uses the selected provider but keeps a legacy Worker Secret fa
   assert.match(route, /env\.AI_API_KEY/);
   assert.match(route, /Worker Secret 与 FIREFLY_SESSIONS KV 绑定/);
 });
+
+
+test("DeepSeek connection probe allows enough output tokens and handles content-part arrays", async () => {
+  const source = await read("../src/lib/ai-provider-config.ts");
+  assert.match(source, /max_tokens: 128/);
+  assert.match(source, /Array\.isArray\(answer\)/);
+  assert.match(source, /reasoning_content/);
+});
