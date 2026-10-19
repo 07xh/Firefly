@@ -12,16 +12,24 @@ test("后台日常提示使用自然中文，技术诊断默认不直接打扰�
   const settingsApi = readFileSync(new URL("../src/pages/api/admin/settings.ts", import.meta.url), "utf8");
   const articlesApi = readFileSync(new URL("../src/pages/api/admin/articles.ts", import.meta.url), "utf8");
 
-  assert.match(adminPage, /检查保存功能/);
+  assert.match(adminPage, /测试文章保存/);
+  assert.match(adminPage, /网站外观与布局/);
+  assert.match(adminPage, /正文文字大小/);
+  assert.match(adminPage, /文章卡片最小宽度/);
+  assert.match(adminPage, /按内容高度错落排列/);
+  assert.match(adminPage, /查看排查详情（遇到问题时再打开）/);
+  assert.match(adminPage, /function friendlyAdminError/);
   assert.match(adminPage, /保存外观设置/);
   assert.doesNotMatch(adminPage, /保存全局配置|配置尚未加载/);
-  assert.match(adminPage, /查看详细检查信息/);
+  assert.match(adminPage, /查看排查详情/);
   assert.match(adminPage, /文章已保存，网站正在更新/);
   assert.match(adminPage, /pathRow\.textContent=\(a\.published\|\|"日期未设置"\)/);
   assert.doesNotMatch(adminPage, /高级模式|GitHub HTTP|GitHub Request ID|accepted permissions/);
   assert.doesNotMatch(editorScript, /高级模式|Tiptap 模块无法加载|CDN 拦截/);
   assert.match(editorScript, /临时备份/);
-  assert.match(settingsApi, /后台尚未完成文章保存配置/);
+  assert.match(settingsApi, /后台还没有完成文章保存设置/);
+  assert.match(settingsApi, /现有的网站外观设置无法读取/);
+  assert.match(settingsApi, /电脑端文章列表请选择单列列表或多列卡片布局/);
   assert.doesNotMatch(settingsApi, /Worker 未配置|settings\.json 必须是 JSON 对象|left、right 或 both/);
   assert.match(articlesApi, /权限问题。请检查文章保存设置后重试/);
   assert.doesNotMatch(articlesApi, /Internal error|Invalid article path|GitHub 写入失败/);
