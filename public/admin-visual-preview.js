@@ -415,8 +415,8 @@ export function inspectProtectedMarkdown(raw, reason = "") {
     const body = close ? source.slice((opening.index || 0) + opening[0].length, (opening.index || 0) + opening[0].length + close.index) : "";
     return {
       kind: "component",
-      title: name,
-      label: BUILTIN_COMPONENTS.has(name) ? "Firefly 组件 · " + name : "自定义 MDX 组件 · " + name,
+      title: ({ Badge: "文字标签", StepItem: "步骤内容", Steps: "步骤清单", TabGroup: "分组内容", Timeline: "时间线", TimelineItem: "时间点" })[name] || "特殊内容模块",
+      label: BUILTIN_COMPONENTS.has(name) ? "博客内置内容" : "自定义展示内容",
       attributes: readAttributes(opening[2]),
       text: plainText(body),
     };
