@@ -1236,7 +1236,7 @@ async function requestAiDraft(mode) {
       method: "POST",
       credentials: "same-origin",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode, prompt, existing, body: currentBody })
+      body: JSON.stringify({ mode, prompt, existing: mode === "generate" ? {} : existing, body: currentBody })
     });
     if (response.status === 401) {
       goLogin();
