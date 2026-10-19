@@ -418,9 +418,9 @@ export const prerender = false;
 </style></head>
 <body>
 <header><h1>✦ Firefly 管理后台</h1><div style="display:flex;gap:12px;align-items:center"><a href="/" style="color:#16864f;font-size:13px">返回网站 ↗</a><button class="btn" id="logout" type="button">退出登录</button></div></header>
-<nav class="admin-tabs" role="tablist" aria-label="后台管理模块">
+<nav class="admin-tabs" role="tablist" aria-label="后台功能">
   <button id="tabArticles" class="admin-tab" type="button" role="tab" aria-selected="true" aria-controls="articlesTabPanel">📝 文章管理</button>
-  <button id="tabAppearance" class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="appearanceTabPanel" tabindex="-1">🎨 全局外观配置</button>
+  <button id="tabAppearance" class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="appearanceTabPanel" tabindex="-1">🎨 网站外观与布局</button>
 </nav>
 <main class="wrap">
 <div id="articlesTabPanel" class="articles-grid" role="tabpanel" aria-labelledby="tabArticles">
@@ -488,7 +488,7 @@ export const prerender = false;
 <div class="field">
 <label for="body">文章正文</label>
 <div class="local-recovery-row">
-  <label class="local-recovery-toggle"><input type="checkbox" id="localRecoveryCheck"> <span>保存临时备份</span></label>
+  <label class="local-recovery-toggle"><input type="checkbox" id="localRecoveryCheck"> <span>临时保存可恢复副本</span></label>
   <button type="button" id="restoreLocalRecovery" class="btn" hidden disabled>恢复未保存内容</button>
   <span id="localRecoveryStatus" class="muted" role="status" aria-live="polite">默认关闭。开启后，会在当前浏览器临时保存一份未加密的恢复副本，不会上传到网站。</span>
 </div>
@@ -497,11 +497,11 @@ export const prerender = false;
 <button class="btn" type="button" id="editorTab" role="tab" aria-selected="false" title="需要直接修改特殊排版时使用">编辑原文</button>
 <button class="btn" type="button" id="previewTab" role="tab" aria-selected="false">预览效果</button>
 </div>
-<div class="editor-reading-controls" id="editorReadingControls" aria-label="阅读字号设置">
-  <span class="editor-reading-controls__label">阅读字号</span>
-  <button type="button" id="editorReadingSmaller" aria-label="缩小阅读字号" title="缩小字号">A−</button>
-  <output id="editorReadingSizeValue" aria-live="polite">16 px</output>
-  <button type="button" id="editorReadingLarger" aria-label="放大阅读字号" title="放大字号">A+</button>
+<div class="editor-reading-controls" id="editorReadingControls" aria-label="正文文字大小设置">
+  <span class="editor-reading-controls__label">正文文字大小</span>
+  <button type="button" id="editorReadingSmaller" aria-label="缩小正文文字大小" title="缩小字号">A−</button>
+  <output id="editorReadingSizeValue" aria-live="polite">16 像素</output>
+  <button type="button" id="editorReadingLarger" aria-label="放大正文文字大小" title="放大字号">A+</button>
   <button type="button" id="editorReadingReset" title="恢复默认字号">默认</button>
   <span class="editor-reading-controls__hint">只影响当前标签页的显示，不会修改文章内容</span>
 </div>
@@ -563,38 +563,38 @@ export const prerender = false;
 <div id="markdownPreview" class="markdown-preview" hidden><p class="muted">点击“预览效果”查看文章发布后的大致样子。</p></div>
 </div>
 <label class="check"><input id="draft" type="checkbox" checked> 暂不公开（勾选后保存到草稿箱；取消勾选后可公开或定时公开）</label>
-<div class="actions"><button class="btn" type="button" id="checkGitHub">检查保存功能</button><button class="btn" type="submit" id="saveDraft" value="save">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空表单</button></div>
-</form><details id="saveDiagnostics" hidden class="muted" style="margin-top:8px;font-size:12px"><summary style="cursor:pointer">查看详细检查信息</summary><pre id="saveDiagnosticsText" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;padding:10px;background:#f5f7f5;border-radius:8px"></pre></details><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿后，文章会保存在草稿箱，不会公开显示。发布文章后，网站会自动更新；页面会显示更新进度。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看网站更新记录 ↗</a></section>
+<div class="actions"><button class="btn" type="button" id="checkGitHub">测试文章保存</button><button class="btn" type="submit" id="saveDraft" value="save">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空填写内容</button></div>
+</form><details id="saveDiagnostics" hidden class="muted" style="margin-top:8px;font-size:12px"><summary style="cursor:pointer">查看排查详情（遇到问题时再打开）</summary><pre id="saveDiagnosticsText" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;padding:10px;background:#f5f7f5;border-radius:8px"></pre></details><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿后，文章会保存在草稿箱，不会公开显示。发布文章后，网站会自动更新；页面会显示更新进度。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看网站更新记录 ↗</a></section>
 </div>
 <section id="appearanceTabPanel" role="tabpanel" aria-labelledby="tabAppearance" class="settings-panel min-w-0" hidden>
-  <div class="mb-1 text-base font-semibold text-gray-800">全局外观配置</div>
+  <div class="mb-1 text-base font-semibold text-gray-800">网站外观与布局</div>
   <p class="mb-5 text-sm leading-6 text-gray-500">
     网站外观设置会自动保存在后台；保存后会更新网站。
     保存后，网站会自动更新；原有文章管理和登录保护保持不变。
   </p>
   <form id="settingsForm" class="settings-cards">
 <section class="settings-card" aria-labelledby="appearanceBannerTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">01</span><div><h3 id="appearanceBannerTitle">全站背景与首页横幅</h3><p>设置网站背景颜色或图片，以及首页横幅的主标题和副标题。</p></div></div>
+      <div class="settings-card-heading"><span class="settings-card-number">01</span><div><h3 id="appearanceBannerTitle">网站背景与首页横幅</h3><p>设置网站背景颜色或图片，以及首页横幅的主标题和副标题。</p></div></div>
 <div class="settings-grid">
         <div class="settings-field" style="grid-column:1/-1">
-          <label for="backgroundColor">全局背景颜色</label>
+          <label for="backgroundColor">网站背景颜色</label>
           <div class="settings-color-row">
-            <input id="backgroundColorPicker" type="color" value="#f3f6f3" aria-label="选择全局背景颜色" class="settings-color-picker">
+            <input id="backgroundColorPicker" type="color" value="#f3f6f3" aria-label="选择网站背景颜色" class="settings-color-picker">
             <input id="backgroundColor" name="backgroundColor" type="text" maxlength="7" autocomplete="off" placeholder="点击左侧色块选择颜色；清空后恢复默认配色" class="settings-control">
           </div>
           <small>点击左侧色块即可选择颜色；清空后保存会恢复主题默认配色。</small>
         </div>
       </div>
 <div class="settings-grid">
-        <div class="settings-field"><label for="bannerTitle">主标题</label><input id="bannerTitle" name="bannerTitle" type="text" maxlength="200" placeholder="Lovely firefly!" class="settings-control"></div>
-        <div class="settings-field"><label for="bannerSubtitle">副标题</label><input id="bannerSubtitle" name="bannerSubtitle" type="text" maxlength="500" placeholder="In Reddened Chrysalis, I Once Rest" class="settings-control"></div>
+        <div class="settings-field"><label for="bannerTitle">主标题</label><input id="bannerTitle" name="bannerTitle" type="text" maxlength="200" placeholder="例如：欢迎来到我的博客" class="settings-control"></div>
+        <div class="settings-field"><label for="bannerSubtitle">副标题</label><input id="bannerSubtitle" name="bannerSubtitle" type="text" maxlength="500" placeholder="例如：记录学习、生活与技术探索" class="settings-control"></div>
         <div class="settings-field" style="grid-column:1/-1">
-          <label for="backgroundImage">背景图片链接</label>
-          <input id="backgroundImage" name="backgroundImage" type="url" maxlength="2048" autocomplete="url" placeholder="粘贴背景图片网址" class="settings-control">
+          <label for="backgroundImage">网站背景图片地址</label>
+          <input id="backgroundImage" name="backgroundImage" type="url" maxlength="2048" autocomplete="url" placeholder="粘贴可公开访问的图片网址" class="settings-control">
           <div class="settings-preview" id="backgroundImagePreviewBox">
             <img id="backgroundImagePreview" alt="背景图片缩略预览" hidden>
             <span id="backgroundImagePreviewEmpty" class="settings-preview-note">填写图片网址后，可在此预览。</span>
-            <span id="backgroundImagePreviewError" class="settings-preview-note" hidden>图片加载失败，请检查链接是否可公开访问。</span>
+            <span id="backgroundImagePreviewError" class="settings-preview-note" hidden>图片暂时无法显示，请确认网址可以直接打开。</span>
           </div>
           <small>清空时保留主题默认背景图。预览仅用于检查链接是否可访问。</small>
         </div>
@@ -604,8 +604,8 @@ export const prerender = false;
 <section class="settings-card" aria-labelledby="profileAnnouncementTitle">
       <div class="settings-card-heading"><span class="settings-card-number">02</span><div><h3 id="profileAnnouncementTitle">个人名片与公告</h3><p>配置头像、昵称、个人签名和侧栏多行公告。</p></div></div>
 <div class="settings-grid">
-        <div class="settings-field"><label for="avatar">头像链接</label><input id="avatar" name="avatar" type="url" maxlength="2048" placeholder="粘贴头像图片网址" class="settings-control"></div>
-        <div class="settings-field"><label for="nickname">昵称 / 用户名</label><input id="nickname" name="nickname" type="text" maxlength="120" placeholder="XiaYe" class="settings-control"></div>
+        <div class="settings-field"><label for="avatar">头像图片地址</label><input id="avatar" name="avatar" type="url" maxlength="2048" placeholder="粘贴可公开访问的头像图片网址" class="settings-control"></div>
+        <div class="settings-field"><label for="nickname">网站显示昵称</label><input id="nickname" name="nickname" type="text" maxlength="120" placeholder="例如：萤火客" class="settings-control"></div>
         <div class="settings-field" style="grid-column:1/-1">
           <div class="settings-preview is-avatar" id="avatarPreviewBox">
             <img id="avatarPreview" alt="个人头像预览" hidden>
@@ -613,7 +613,7 @@ export const prerender = false;
             <span id="avatarPreviewError" class="settings-preview-note" hidden>头像加载失败，请确认图片链接可公开访问。</span>
           </div>
         </div>
-        <div class="settings-field" style="grid-column:1/-1"><label for="bio">个人签名 / 简介</label><textarea id="bio" name="bio" rows="3" maxlength="5000" placeholder="Hello, I'm XiaYe." class="settings-control"></textarea><small>最多 5000 个字符。</small></div>
+        <div class="settings-field" style="grid-column:1/-1"><label for="bio">个人介绍</label><textarea id="bio" name="bio" rows="3" maxlength="5000" placeholder="简单介绍一下自己，也可以留空。" class="settings-control"></textarea><small>最多 5000 个字符。</small></div>
       </div>
 <div class="settings-field"><label for="announcement">公告内容</label><textarea id="announcement" name="announcement" rows="4" maxlength="10000" placeholder="欢迎来到我的博客！&#10;更新与通知可以分行填写。" class="settings-control"></textarea><small>最多 10000 个字符，保存时会保留换行。</small></div>
     </section>
@@ -664,7 +664,7 @@ export const prerender = false;
       </div>
 <div class="settings-grid settings-grid-one">
         <div class="settings-field">
-          <label for="backgroundMusic">背景音乐外链</label>
+          <label for="backgroundMusic">背景音乐地址</label>
           <input id="backgroundMusic" name="backgroundMusic" type="url" maxlength="2048" placeholder="https://example.com/music.mp3" class="settings-control">
           <audio id="backgroundMusicPreview" class="w-full" controls preload="none" hidden></audio>
           <small>请粘贴可以直接播放的音乐文件网址，点击播放键可以先试听；网站不会自动播放。</small>
@@ -674,26 +674,26 @@ export const prerender = false;
     </section>
 
 <section class="settings-card" aria-labelledby="layoutSettingsTitle">
-  <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="layoutSettingsTitle">页面布局</h3><p>保存后，网站会自动更新并应用这些设置。</p></div></div>
+  <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="layoutSettingsTitle">页面布局</h3><p>保存后，网站会自动更新并应用这些外观与布局设置。</p></div></div>
   <div class="settings-grid">
-    <div class="settings-field"><label for="layoutSidebarPosition">桌面侧边栏布局</label><select id="layoutSidebarPosition" name="layoutSidebarPosition" class="settings-control"><option value="left">左侧边栏</option><option value="right">右侧边栏</option><option value="both">双侧边栏</option></select><small>单侧布局让正文更宽；双侧布局可同时展示左右辅助信息。</small></div>
+    <div class="settings-field"><label for="layoutSidebarPosition">电脑端侧栏位置</label><select id="layoutSidebarPosition" name="layoutSidebarPosition" class="settings-control"><option value="left">左侧边栏</option><option value="right">右侧边栏</option><option value="both">双侧边栏</option></select><small>单侧布局让正文更宽；双侧布局可同时展示左右辅助信息。</small></div>
     <div class="settings-field"><label for="layoutTabletSidebar">平板端侧边栏位置</label><select id="layoutTabletSidebar" name="layoutTabletSidebar" class="settings-control"><option value="left">平板显示左侧</option><option value="right">平板显示右侧</option></select><small>仅桌面选择“双侧边栏”时有效。</small></div>
-    <div class="settings-field"><label for="layoutPostListMode">桌面文章列表布局</label><select id="layoutPostListMode" name="layoutPostListMode" class="settings-control"><option value="list">列表模式（单列）</option><option value="grid">网格模式（自适应多列）</option></select></div>
-    <div class="settings-field"><label for="layoutMobilePostListMode">移动端文章布局</label><select id="layoutMobilePostListMode" name="layoutMobilePostListMode" class="settings-control"><option value="list">列表模式</option><option value="grid">网格模式</option></select><small>手机屏幕较窄时，网站会优先保证正文易读。</small></div>
+    <div class="settings-field"><label for="layoutPostListMode">电脑端文章列表样式</label><select id="layoutPostListMode" name="layoutPostListMode" class="settings-control"><option value="list">列表模式（单列）</option><option value="grid">多列卡片布局（列数随屏幕宽度调整）</option></select></div>
+    <div class="settings-field"><label for="layoutMobilePostListMode">手机端文章列表样式</label><select id="layoutMobilePostListMode" name="layoutMobilePostListMode" class="settings-control"><option value="list">列表模式</option><option value="grid">网格模式</option></select><small>手机屏幕较窄时，网站会优先保证正文易读。</small></div>
     <div class="settings-field"><label for="layoutCoverPosition">列表模式封面位置</label><select id="layoutCoverPosition" name="layoutCoverPosition" class="settings-control"><option value="right">封面在右侧</option><option value="left">封面在左侧</option></select><small>仅影响列表模式；网格封面固定在卡片顶部。</small></div>
-    <div class="settings-field"><label for="layoutGridColumnWidth">网格卡片最小宽度（像素）</label><input id="layoutGridColumnWidth" name="layoutGridColumnWidth" type="number" min="220" max="460" step="10" required value="320" class="settings-control"><small>可填写 220–460 像素；数值越小，同一行通常能显示更多卡片。</small></div>
+    <div class="settings-field"><label for="layoutGridColumnWidth">文章卡片最小宽度</label><input id="layoutGridColumnWidth" name="layoutGridColumnWidth" type="number" min="220" max="460" step="10" required value="320" class="settings-control"><small>可填写 220–460 像素；数值越小，同一行通常能显示更多卡片。</small></div>
   </div>
   <div class="settings-switch-grid" style="margin-top:14px">
-    <label class="settings-toggle"><input id="layoutSidebarEnabled" name="layoutSidebarEnabled" type="checkbox" checked><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">启用桌面侧边栏<small>关闭后隐藏左右侧栏列；移动端底部组件仍按原配置处理。</small></span></label>
-    <label class="settings-toggle"><input id="layoutGridMasonry" name="layoutGridMasonry" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">卡片错落排列（瀑布流）<small>仅在网格模式生效，会根据卡片内容高度自动错落排列，减少空白。</small></span></label>
-    <label class="settings-toggle"><input id="layoutGridCoverFullWidth" name="layoutGridCoverFullWidth" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">网格封面贴边显示<small>开启后封面铺满卡片顶部；关闭则保留内边距。</small></span></label>
+    <label class="settings-toggle"><input id="layoutSidebarEnabled" name="layoutSidebarEnabled" type="checkbox" checked><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">在电脑上显示侧栏<small>关闭后会隐藏电脑端的左右侧栏；手机上的显示方式由其他设置决定。</small></span></label>
+    <label class="settings-toggle"><input id="layoutGridMasonry" name="layoutGridMasonry" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">按内容高度错落排列<small>仅在多列卡片布局中生效，会根据每张卡片的内容高度自动排列，减少空白。</small></span></label>
+    <label class="settings-toggle"><input id="layoutGridCoverFullWidth" name="layoutGridCoverFullWidth" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">封面铺满卡片宽度<small>开启后封面会铺满卡片顶部；关闭后封面四周会留出空白。</small></span></label>
   </div>
 </section>
 
 <div class="settings-save-row" aria-label="保存网站外观设置">
       <button id="saveSettings" type="submit" class="settings-save-button" disabled>保存外观设置</button>
       <button id="discardSettings" type="button" class="btn" disabled>放弃未保存的修改</button>
-      <span id="settingsDirtyState" class="settings-dirty-state" data-dirty="false" role="status" aria-live="polite">正在加载外观设置…</span>
+      <span id="settingsDirtyState" class="settings-dirty-state" data-dirty="false" role="status" aria-live="polite">正在读取网站外观设置…</span>
       <span id="settingsStatus" class="settings-status" role="status" aria-live="polite"></span>
     </div>
   </form>
@@ -732,7 +732,7 @@ function updateSettingsDirtyState() {
   const dirty = isSettingsDirty();
   const state = $("settingsDirtyState");
   state.dataset.dirty = String(dirty);
-  state.textContent = !settingsReady ? "外观设置尚未加载" : dirty ? "有未保存的修改" : "所有修改均已保存";
+  state.textContent = !settingsReady ? "网站外观设置尚未加载" : dirty ? "有未保存的修改" : "所有更改均已保存";
   $("discardSettings").disabled = !dirty || settingsSaving;
   $("saveSettings").disabled = !settingsReady || settingsSaving;
   return dirty;
@@ -771,6 +771,11 @@ window.addEventListener("beforeunload", event => {
 });
 
 function say(s,bad=false){$("status").textContent=s;$("status").style.color=bad?"#b42318":"#657267"}
+function friendlyAdminError(error,fallback){
+ const message=error instanceof Error?error.message.trim():"";
+ if(!message||/failed to fetch|networkerror|network request failed|load failed|fetch failed/i.test(message)||!/[\u3400-\u9fff]/.test(message))return fallback;
+ return message;
+}
 function todayInBeijing() {
  const parts = new Intl.DateTimeFormat("en-CA", { timeZone:"Asia/Shanghai", year:"numeric", month:"2-digit", day:"2-digit" }).formatToParts(new Date());
  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
@@ -949,7 +954,7 @@ async function renderMarkdownPreview(){
   const d=await r.json().catch(()=>({error:"预览响应无法解析"}));
   if(!r.ok)throw new Error(d.error||"文章预览失败");
   $("markdownPreview").innerHTML=d.html||"<p class=muted>暂无内容</p>";
- }catch(e){$("markdownPreview").textContent=e.message}
+ }catch(e){$("markdownPreview").textContent=friendlyAdminError(e,"暂时无法生成预览，请检查网络后重试；文章原文没有被修改。")}
 }
 async function watchDeployment(sha,attempt=0,successMessage="网站已更新。"){try{const r=await fetch("/api/admin/deployment-status/?sha="+encodeURIComponent(sha),{cache:"no-store"});if(r.status===401){goLogin();return}const d=await r.json().catch(()=>({error:"暂时无法读取网站更新状态。"}));if(!r.ok)throw new Error("暂时无法确认网站是否更新");if(d.url){$("deployLink").href=d.url;$("deployLink").hidden=false}if(d.status==="success"){say(successMessage);return}if(d.status==="failure"){say("网站更新失败，请查看更新记录。",true);return}if(attempt>=24){say("文章已保存，但网站是否更新还没有确认。可以查看“网站更新记录”。");return}say(d.status==="running"?"文章已保存，网站正在更新…":"文章已保存，正在等待网站开始更新…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}catch(e){if(attempt>=24){say("文章已保存，但暂时无法确认网站是否更新："+e.message,true);return}say("正在确认网站是否更新…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}}
 async function checkGitHubPermission(){
@@ -971,23 +976,23 @@ async function checkGitHubPermission(){
         : data.stage==="repository_access"
           ? "暂时无法访问文章存放位置。请检查保存位置名称和访问权限。"
           : data.stage==="branch_access"
-            ? "暂时找不到文章保存位置。请检查后台的保存分支设置。"
+            ? "暂时无法找到文章保存版本。请检查后台的文章保存设置。"
             : data.result==="write_forbidden"
-              ? "后台可以读取文章，但没有保存权限。请检查保存凭据是否允许修改文章，然后重新部署后台。"
+              ? "后台能读取文章，但目前不能保存修改。请检查文章保存权限；更新相关设置后，需要重新发布后台才能生效。"
               : data.result==="token_rejected"
-                ? "后台的保存凭据无效或已过期。请更新凭据并重新部署后台。"
+                ? "后台用于保存文章的授权信息无效或已过期。请更新授权信息，再重新发布后台。"
                 : data.stage==="network"
                   ? "暂时无法连接文章保存服务，请检查网络后重试。"
-                  : "暂时无法确认文章保存权限。请稍后重试；也可以展开查看详细检查信息。";
+                  : "暂时无法确认文章保存权限。请稍后重试；也可以展开查看排查详情（遇到问题时再打开）。";
     const diagnostics={
-      "检查阶段":data.stage||"未知",
+      "检查进度":data.stage||"未知",
       "检查结果":data.result||"无",
       "保存位置":data.repo||"未返回",
-      "保存分支":data.branch||"未返回",
-      "服务响应代码":data.githubStatus??response.status,
-      "服务说明":data.githubMessage||data.message||"",
-      "请求编号":data.requestId||"",
-      "已确认的权限":data.acceptedPermissions||""
+      "文章保存版本":data.branch||"未返回",
+      "服务返回编号":data.githubStatus??response.status,
+      "补充说明":data.githubMessage||data.message||"",
+      "本次检查编号":data.requestId||"",
+      "已确认的保存权限":data.acceptedPermissions||""
     };
     if(detailText) detailText.textContent=Object.entries(diagnostics).filter(([,value])=>value!=="").map(([key,value])=>key+"："+value).join("\n");
     if(detail) detail.hidden=false;
@@ -1188,14 +1193,14 @@ $("settingsForm").addEventListener("submit",async event=>{
   if(data.commitSha)watchSettingsDeployment(data.commitSha);
   else status.textContent="设置已保存，但暂时无法确认网站是否更新。";
  }catch(error){
-  status.textContent=error instanceof Error?error.message:"暂时无法保存网站外观设置，请稍后重试。";status.style.color="#b42318";
+  status.textContent=friendlyAdminError(error,"这次保存没有顺利完成。请检查网络后重试；如果不确定是否保存成功，请重新读取当前设置后再决定是否重试。");status.style.color="#b42318";
  }finally{settingsSaving=false;updateSettingsDirtyState()}
 });
 
 $("checkGitHub").onclick=checkGitHubPermission;
 $("logout").onclick=async()=>{
  if(hasUnsavedChanges()&&!confirm("当前有未保存修改，继续退出会丢失这些内容。是否退出？"))return;
- try{const r=await fetch("/api/admin/auth/",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});if(!r.ok)throw new Error("退出登录暂时没有成功，请刷新页面后重试。");allowAdminNavigation=true;location.assign("/admin/login/")}catch(e){say(e.message,true)}
+ try{const r=await fetch("/api/admin/auth/",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});if(!r.ok)throw new Error("退出登录暂时没有成功，请刷新页面后重试。");allowAdminNavigation=true;location.assign("/admin/login/")}catch(e){say(friendlyAdminError(e,"操作没有顺利完成，请检查网络后重试。"),true)}
 };
 $("new").onclick=()=>{
  if(isArticleDirty()&&!confirm("当前文章还有未保存的修改。新建文章会清空当前内容，确定继续吗？"))return;
@@ -1208,7 +1213,7 @@ $("visualTab").onclick=showVisualTab;$("editorTab").onclick=showEditorTab;$("pre
 // Save is handled by the single four-stage handler below. Keeping one submit
 // listener prevents duplicate GitHub writes from competing event handlers.
 
-$("delete").onclick=async()=>{if(!selected||!confirm("确定删除“"+selected.title+"”？删除后文章会从网站移除。"))return;$("delete").disabled=true;try{await api("DELETE",{path:selected.path,sha:selected.sha});say("文章已删除");reset();await refresh()}catch(e){say(e.message,true)}finally{$("delete").disabled=false}};
+$("delete").onclick=async()=>{if(!selected||!confirm("确定删除“"+selected.title+"”？删除后文章会从网站移除。"))return;$("delete").disabled=true;try{await api("DELETE",{path:selected.path,sha:selected.sha});say("文章已删除");reset();await refresh()}catch(e){say(friendlyAdminError(e,"操作没有顺利完成，请检查网络后重试。"),true)}finally{$("delete").disabled=false}};
 reset();refresh();loadSettings();
 /* Firefly admin editor enhancements: image paste/drop, filters, accessible delete modal, deployment stages. */
 (() => {
@@ -1360,7 +1365,7 @@ reset();refresh();loadSettings();
         field.value = field.value.replace(marker, "");
         field.dispatchEvent(new Event("input", { bubbles: true }));
       }
-      say(error instanceof Error ? error.message : "图片未能保存，请稍后重试。", true);
+      say(friendlyAdminError(error,"图片未能保存，请检查网络后重试；如果不确定图片是否已保存，请先检查再重新上传。"), true);
     }
   }
   $("body")?.addEventListener("paste", event => {
@@ -1415,7 +1420,7 @@ reset();refresh();loadSettings();
       say(data.status === "running" ? "文章已保存，网站正在更新…" : "文章已保存，正在等待网站更新开始…");
       setTimeout(() => watchDeployment(sha, attempt + 1, isDraft, isScheduled), 12000);
     } catch (error) {
-      if (attempt >= 24) { say("文章已保存，但暂时无法确认网站是否更新：" + (error?.message || "暂时无法读取更新状态"), true); return; }
+      if (attempt >= 24) { say("文章已保存，但暂时无法确认网站是否更新。请打开“网站更新记录”查看进度。", true); return; }
       say("正在确认网站是否更新…");
       setTimeout(() => watchDeployment(sha, attempt + 1, isDraft, isScheduled), 12000);
     }
@@ -1475,7 +1480,7 @@ reset();refresh();loadSettings();
       else say("文章已保存，正在更新网站…");
       watchDeployment(result.commitSha, 0, isDraft, scheduled);
     } catch (error) {
-      say(error instanceof Error ? error.message : "保存文章失败。", true);
+      say(friendlyAdminError(error,"文章暂时未能保存。请检查网络后刷新文章列表，确认是否保存成功，再决定是否重试，避免重复创建。"), true);
     } finally {
       buttons.forEach(button => button.disabled = false);
     }
@@ -1508,7 +1513,7 @@ reset();refresh();loadSettings();
         "--firefly-reading-code-size",
         Math.max(12, Math.min(16, readingSize - 3)) + "px",
       );
-      if (sizeOutput) sizeOutput.textContent = readingSize + " px";
+      if (sizeOutput) sizeOutput.textContent = readingSize + " 像素";
       if (smallerButton) smallerButton.disabled = readingSize <= minReadingSize;
       if (largerButton) largerButton.disabled = readingSize >= maxReadingSize;
       if (persist) {
@@ -1542,4 +1547,4 @@ reset();refresh();loadSettings();
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=20261019-natural-language-4"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=20261019-natural-copy-2"></script></body></html>
