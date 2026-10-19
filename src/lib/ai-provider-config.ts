@@ -25,11 +25,8 @@ function normalizeSecretName(id: string): string {
 }
 
 function getProviderSecret(provider: ProviderConfig): string {
-  const bindings = env();
-  const dedicated = bindings[normalizeSecretName(provider.id)];
-  if (typeof dedicated === "string" && dedicated.trim()) return dedicated.trim();
-  // Compatibility with the existing single-provider Worker Secret.
-  return typeof bindings.AI_API_KEY === "string" ? bindings.AI_API_KEY.trim() : "";
+  const dedicated = env()[normalizeSecretName(provider.id)];
+  return typeof dedicated === "string" ? dedicated.trim() : "";
 }
 
 function validBaseUrl(value: unknown): string {
