@@ -51,8 +51,8 @@ function validBaseUrl(value: unknown): string {
   if (url.protocol !== "https:" || url.username || url.password || url.hash || url.search) {
     throw new Error("API 地址必须使用 HTTPS，且不能包含用户名、密码、查询参数或片段。");
   }
-  const host = url.hostname.toLowerCase().replace(/^\\[|\\]$/g, "");
-  const ipv4 = host.match(/^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$/);
+  const host = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  const ipv4 = host.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
   const privateIpv4 = ipv4 && ipv4.slice(1).every(part => Number(part) <= 255) && (
     Number(ipv4[1]) === 0 || Number(ipv4[1]) === 10 ||
     Number(ipv4[1]) === 127 || Number(ipv4[1]) === 169 && Number(ipv4[2]) === 254 ||
