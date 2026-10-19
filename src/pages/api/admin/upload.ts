@@ -244,10 +244,14 @@ export const GET: APIRoute = async ({ url }) => {
 					url: imageUrl(config.base, file.name),
 					type: mime || "image/*",
 					size:
-						metadata.FileSizeBytes !== undefined && metadata.FileSizeBytes !== null
+						metadata.FileSizeBytes !== undefined &&
+						metadata.FileSizeBytes !== null
 							? String(metadata.FileSizeBytes)
-							: typeof metadata.FileSize === "string"
-								? metadata.FileSize
+							: typeof metadata.FileSize === "string" &&
+									Number.isFinite(Number(metadata.FileSize))
+								? String(
+										Math.round(Number(metadata.FileSize) * 1024 * 1024),
+									)
 								: "",
 					timestamp:
 						typeof metadata.TimeStamp === "string"
@@ -362,10 +366,18 @@ export const POST: APIRoute = async ({ request }) => {
 			);
 		}
 
-		const path =
-			typeof data.src === "string"
-				? data.src.replace(/^\/file\//, "")
-				: file.name;
+		let path = file.name;
+		try {
+			const sourceUrl = new URL(
+				typeof data.src === "string" ? data.src : parsedUrl.toString(),
+				config.base,
+			);
+			if (sourceUrl.pathname.startsWith("/file/")) {
+				path = sourceUrl.pathname.slice("/file/".length);
+			}
+		} catch {
+			// Keep the original filename as a safe fallback.
+		}
 		return json(
 			{
 				ok: true,
