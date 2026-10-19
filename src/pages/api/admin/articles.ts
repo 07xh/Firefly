@@ -39,18 +39,18 @@ function getConfig(): { token: string; repo: string; branch: string } {
 function githubFailure(response: Response, operation: string): string {
 	const status = response.status;
 	if (status === 401 || status === 403) {
-		return `${operation}没有成功：后台缺少完成这项操作的权限。请检查文章保存设置后重试。`;
+		return `${operation}时遇到权限问题。请检查文章保存设置后重试。`;
 	}
 	if (status === 404) {
-		return `${operation}没有成功：找不到文章或保存位置。请刷新文章列表后重试。`;
+		return `${operation}时没有找到文章或保存位置。请刷新文章列表后重试。`;
 	}
 	if (status === 409 || status === 422) {
-		return `${operation}没有成功：文章可能已被更新，或同名文章已经存在。请刷新列表确认后再试。`;
+		return `${operation}时发现文章可能已被更新，或同名文章已经存在。请刷新列表确认后再试。`;
 	}
 	if (status === 429) {
-		return `${operation}没有成功：操作过于频繁，请稍等片刻再试。`;
+		return `${operation}请求过于频繁，请稍等片刻再试。`;
 	}
-	return `${operation}暂时没有成功，请稍后重试。（错误代码 ${status}）`;
+	return `${operation}暂时没有完成，请稍后重试。（错误代码 ${status}）`;
 }
 
 function json(data: unknown, status = 200): Response {
@@ -193,7 +193,7 @@ async function github(path: string, config: ReturnType<typeof getConfig>, init?:
 async function findPostFiles(config: ReturnType<typeof getConfig>): Promise<GitHubEntry[]> {
 	const response = await github(`git/trees/${encodeURIComponent(config.branch)}?recursive=1`, config);
 
-	if (!response.ok) throw new Error(githubFailure(response, "读取文章列表失败"));
+	if (!response.ok) throw new Error(githubFailure(response, "读取文章列表"));
 	const data = (await response.json()) as { tree?: GitHubEntry[]; truncated?: boolean };
 	if (data.truncated) throw new Error("文章列表未能完整读取。为避免漏掉文章或误操作，请稍后刷新重试。");
 	return (data.tree ?? []).filter((entry) =>
@@ -209,7 +209,7 @@ async function readPost(path: string, config: ReturnType<typeof getConfig>): Pro
 	}
 	const response = await github(`contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(config.branch)}`, config);
 
-	if (!response.ok) throw new Error(githubFailure(response, "读取文章失败"));
+	if (!response.ok) throw new Error(githubFailure(response, "读取文章"));
 	const file = (await response.json()) as { sha: string; content: string; encoding: string; path: string };
 	return { path: file.path, sha: file.sha, content: file.encoding === "base64" ? decodeBase64(file.content) : file.content };
 }
@@ -261,7 +261,7 @@ export const POST: APIRoute = async ({ request }) => {
 
 		if (response.status === 422) return json({ error: "同名文章已存在" }, 409);
 
-		if (!response.ok) return json({ error: githubFailure(response, "保存文章失败") }, 502);
+		if (!response.ok) return json({ error: githubFailure(response, "保存文章") }, 502);
 		const written = (await response.json()) as { commit?: { sha?: string; html_url?: string } };
 		return json({ ok: true, path, commitSha: written.commit?.sha, commitUrl: written.commit?.html_url }, 201);
 	} catch (error) {
@@ -323,7 +323,7 @@ export const PUT: APIRoute = async ({ request }) => {
 		});
 
 		if (!response.ok) {
-			const message = githubFailure(response, "保存文章修改失败");
+			const message = githubFailure(response, "保存文章修改");
 			if (response.status === 409 || response.status === 422) {
 				return json({ error: "这篇文章在你编辑期间发生了变化。为避免覆盖新内容，你当前的编辑内容仍会保留；请重新打开最新版本后再保存。", detail: message }, 409);
 			}
@@ -350,7 +350,7 @@ export const DELETE: APIRoute = async ({ request }) => {
 		});
 
 		if (!response.ok) {
-			const message = githubFailure(response, "删除文章失败");
+			const message = githubFailure(response, "删除文章");
 			if (response.status === 409 || response.status === 422) {
 				return json({ error: "这篇文章可能刚刚被修改或删除。系统没有确认删除成功，请刷新列表后重新检查。", detail: message }, 409);
 			}
