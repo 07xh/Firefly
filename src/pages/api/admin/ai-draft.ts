@@ -72,7 +72,7 @@ function extractProtectedSegments(value: string): string[] {
 		/\$\$[\s\S]*?\$\$/g,
 		/\\\[[\s\S]*?\\\]/g,
 		/\\\([\s\S]*?\\\)/g,
-		/!?\\[[^\\]]*\\]\\([^)]*\\)/g,
+		/!?\[[^\]]*\]\([^)]*\)/g,
 		/<details\b[\s\S]*?<\/details\s*>/gi,
 		/<([A-Z][A-Za-z0-9.]*)\b[^>]*>[\s\S]*?<\/\1\s*>/g,
 		/<[A-Z][A-Za-z0-9.]*(?:\s[^>]*)?\/>/g,
