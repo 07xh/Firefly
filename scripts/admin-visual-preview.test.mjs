@@ -23,7 +23,7 @@ test("后台日常提示使用自然中文，技术诊断默认不直接打扰�
   assert.match(editorScript, /临时备份/);
   assert.match(settingsApi, /后台尚未完成文章保存配置/);
   assert.doesNotMatch(settingsApi, /Worker 未配置|settings\.json 必须是 JSON 对象|left、right 或 both/);
-  assert.match(articlesApi, /后台缺少完成这项操作的权限/);
+  assert.match(articlesApi, /权限问题。请检查文章保存设置后重试/);
   assert.doesNotMatch(articlesApi, /Internal error|Invalid article path|GitHub 写入失败/);
 });
 
