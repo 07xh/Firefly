@@ -464,7 +464,34 @@ export const prerender = false;
     </p>
   </div>
 </section>
-<section class="min-w-0 rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm"><h2 id="formTitle" style="font-size:16px;margin:0 0 16px">新建文章</h2><form id="editor">
+<section class="min-w-0 rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm"><h2 id="formTitle" style="font-size:16px;margin:0 0 16px">新建文章</h2>
+<details id="aiWriterPanel" class="mb-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
+  <summary class="cursor-pointer list-inside font-semibold text-emerald-900">✨ AI 自然语言写作助手</summary>
+  <div class="mt-3 space-y-3">
+    <p class="text-sm leading-6 text-gray-600">用中文描述你想写的文章，或说明希望怎样修改当前正文。AI 只生成待审核内容，不会自动保存或发布；确认后仍使用下方现有的预览、保存和发布流程。</p>
+    <div class="field">
+      <label for="aiPrompt">写作要求 / 修改指令</label>
+      <textarea id="aiPrompt" rows="4" maxlength="8000" class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20" placeholder="例如：写一篇面向零基础学生的 Python 列表入门文章，包含生活化例子、常见错误和练习题。"></textarea>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      <button type="button" id="aiGenerate" class="btn primary">生成新文章草稿</button>
+      <button type="button" id="aiRewrite" class="btn">按指令修改当前文章</button>
+    </div>
+    <p class="muted">生成新文章时，若当前表单已有未保存内容，应用结果前会请你确认。修改现有文章时，只替换正文，保留标题、文件名和其他文章信息。</p>
+    <p id="aiStatus" class="status" role="status" aria-live="polite" hidden></p>
+    <section id="aiResult" class="rounded-lg border border-emerald-200 bg-white p-3" hidden>
+      <h3 class="text-sm font-semibold text-gray-800">待审核的 AI 草稿</h3>
+      <p id="aiResultTitle" class="mt-2 font-medium text-gray-900"></p>
+      <p id="aiResultMeta" class="mt-1 text-xs text-gray-500"></p>
+      <pre id="aiResultBody" class="mt-3 max-h-64 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-gray-50 p-3 text-xs leading-6 text-gray-700"></pre>
+      <div class="mt-3 flex flex-wrap gap-2">
+        <button type="button" id="aiApply" class="btn primary">填入编辑器并预览</button>
+        <button type="button" id="aiDiscard" class="btn">放弃这份草稿</button>
+      </div>
+    </section>
+  </div>
+</details>
+<form id="editor">
 <div class="field"><label for="title">标题 *</label><input id="title" required maxlength="200"></div>
 <div class="grid"><div class="field"><label for="slug">文件名 *</label><input id="slug" required placeholder="my-post"></div><div class="field"><label for="published">展示发布日期 *</label><input id="published" type="date" required></div></div>
 <div class="grid"><div class="field"><label for="date">定时发布时间（北京时间）</label><input id="date" type="datetime-local" step="60"><small class="muted">留空表示立即生效；填写未来时间后，系统会自动安排重建。</small></div><div class="field"><label for="articlePassword">访问密码（可选）</label><input id="articlePassword" type="password" maxlength="200" autocomplete="new-password" placeholder="留空则不启用密码保护"><small class="muted">输入后，前台将显示密码解锁页面。</small></div></div>
@@ -1163,6 +1190,111 @@ $("visualTab").onclick=showVisualTab;$("editorTab").onclick=showEditorTab;$("pre
 // listener prevents duplicate GitHub writes from competing event handlers.
 
 $("delete").onclick=async()=>{if(!selected||!confirm("确定删除 "+selected.title+"？此操作会提交到 GitHub。"))return;$("delete").disabled=true;try{await api("DELETE",{path:selected.path,sha:selected.sha});say("文章已删除");reset();await refresh()}catch(e){say(e.message,true)}finally{$("delete").disabled=false}};
+
+let aiDraftResult = null;
+function setAiStatus(message, isError = false) {
+  const status = $("aiStatus");
+  status.hidden = false;
+  status.textContent = message;
+  status.style.color = isError ? "#b42318" : "#657267";
+}
+function setAiBusy(busy) {
+  $("aiGenerate").disabled = busy;
+  $("aiRewrite").disabled = busy;
+  $("aiApply").disabled = busy;
+  $("aiGenerate").textContent = busy ? "正在处理…" : "生成新文章草稿";
+  $("aiRewrite").textContent = busy ? "正在处理…" : "按指令修改当前文章";
+}
+async function requestAiDraft(mode) {
+  const prompt = $("aiPrompt").value.trim();
+  if (!prompt) {
+    setAiStatus("请先用中文写下文章要求或修改指令。", true);
+    $("aiPrompt").focus();
+    return;
+  }
+  let currentBody = "";
+  if (mode === "rewrite") {
+    showEditorTab();
+    currentBody = $("body").value.replace(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/, "").trim();
+    if (!currentBody) {
+      setAiStatus("当前正文为空。请先选择一篇文章或填写正文，再使用修改功能。", true);
+      return;
+    }
+  }
+  const existing = {
+    title: $("title").value.trim(),
+    slug: $("slug").value.trim(),
+    description: $("description").value.trim(),
+    category: $("category").value.trim(),
+    tags: $("tags").value.split(",").map(tag => tag.trim()).filter(Boolean)
+  };
+  setAiBusy(true);
+  $("aiResult").hidden = true;
+  setAiStatus(mode === "generate" ? "正在生成草稿，这不会保存或发布文章…" : "正在按要求修改正文，这不会保存或发布文章…");
+  try {
+    const response = await fetch("/api/admin/ai-draft/", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mode, prompt, existing, body: currentBody })
+    });
+    if (response.status === 401) {
+      goLogin();
+      return;
+    }
+    const data = await response.json().catch(() => ({ error: "AI 接口返回的响应无法解析。" }));
+    if (!response.ok) throw new Error(data.error || "AI 写作没有完成，请稍后重试。");
+    if (!data.draft || typeof data.draft.body !== "string") throw new Error("AI 返回结果缺少正文，请调整要求后重试。");
+    aiDraftResult = { ...data.draft, mode };
+    $("aiResultTitle").textContent = aiDraftResult.title || existing.title || "正文修改稿";
+    const meta = [];
+    if (aiDraftResult.category) meta.push("分类：" + aiDraftResult.category);
+    if (Array.isArray(aiDraftResult.tags) && aiDraftResult.tags.length) meta.push("标签：" + aiDraftResult.tags.join("、"));
+    if (aiDraftResult.slug) meta.push("文件名：" + aiDraftResult.slug);
+    $("aiResultMeta").textContent = meta.join(" · ");
+    const preview = aiDraftResult.body;
+    $("aiResultBody").textContent = preview.length > 5000 ? preview.slice(0, 5000) + "\n\n（这里只显示前 5000 个字符；填入后可查看完整预览。）" : preview;
+    $("aiResult").hidden = false;
+    setAiStatus("草稿已生成。请先检查内容，再选择是否填入编辑器。");
+  } catch (error) {
+    setAiStatus(error instanceof Error ? error.message : "AI 写作请求失败，请检查网络或 Worker 配置。", true);
+  } finally {
+    setAiBusy(false);
+  }
+}
+$("aiGenerate").onclick = () => requestAiDraft("generate");
+$("aiRewrite").onclick = () => requestAiDraft("rewrite");
+$("aiDiscard").onclick = () => {
+  aiDraftResult = null;
+  $("aiResult").hidden = true;
+  setAiStatus("已放弃这份 AI 草稿；文章表单没有被修改。");
+};
+$("aiApply").onclick = async () => {
+  if (!aiDraftResult) return;
+  const draft = aiDraftResult;
+  if (draft.mode === "generate") {
+    if ((selected || isArticleDirty()) && !confirm("应用 AI 新文章会清空当前表单内容；未保存的修改可能丢失。是否继续？")) return;
+    if (selected || isArticleDirty()) reset();
+    $("slug").disabled = false;
+    $("title").value = draft.title || "";
+    $("slug").value = draft.slug || "";
+    $("description").value = draft.description || "";
+    $("category").value = draft.category || "";
+    $("tags").value = Array.isArray(draft.tags) ? draft.tags.join(", ") : "";
+    $("published").value = $("published").value || todayInBeijing();
+    $("draft").checked = true;
+    updateSaveButtonLabel();
+  } else {
+    if (!confirm("使用 AI 修改稿会替换当前正文。其他文章信息将保持不变。是否继续？")) return;
+  }
+  $("body").value = draft.body;
+  window.dispatchEvent(new CustomEvent("firefly:source-loaded"));
+  showVisualTab();
+  updateArticleDirtyState();
+  say("AI 内容已填入编辑器，尚未保存或发布。请检查预览与正文后再操作。");
+  await renderMarkdownPreview();
+};
+
 reset();refresh();loadSettings();
 /* Firefly admin editor enhancements: image paste/drop, filters, accessible delete modal, deployment stages. */
 (() => {
