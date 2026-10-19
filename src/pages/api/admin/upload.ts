@@ -445,10 +445,14 @@ export const DELETE: APIRoute = async ({ request }) => {
 		}
 
 		// ImgBed's delete API uses GET; Firefly exposes deletion as protected DELETE.
+		const deletePath = name
+			.split("/")
+			.map((part) => encodeURIComponent(part))
+			.join(",");
 		const deleteResponse = await upstream(
 			config.base,
 			config.token,
-			`/api/manage/delete/${encodedPath(name)}`,
+			`/api/manage/delete/${deletePath}`,
 			{ method: "GET" },
 		);
 		const deletePayload = await readPayload(deleteResponse);
