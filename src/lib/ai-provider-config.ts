@@ -48,13 +48,21 @@ function validBaseUrl(value: unknown): string {
   } catch {
     throw new Error("API 地址必须是完整的 HTTPS URL。");
   }
-  if (url.protocol !== "https:" || url.username || url.password || url.hash) {
-    throw new Error("API 地址必须使用 HTTPS，且不能包含用户名、密码或片段。");
+  if (url.protocol !== "https:" || url.username || url.password || url.hash || url.search) {
+    throw new Error("API 地址必须使用 HTTPS，且不能包含用户名、密码、查询参数或片段。");
   }
-  if (url.hostname === "localhost" || url.hostname.endsWith(".localhost") ||
-      url.hostname === "127.0.0.1" || url.hostname === "::1" ||
-      url.hostname === "0.0.0.0" || url.hostname.endsWith(".local")) {
-    throw new Error("不允许使用本地或内网主机地址。");
+  const host = url.hostname.toLowerCase().replace(/^\\[|\\]$/g, "");
+  const ipv4 = host.match(/^(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})\\.(\\d{1,3})$/);
+  const privateIpv4 = ipv4 && ipv4.slice(1).every(part => Number(part) <= 255) && (
+    Number(ipv4[1]) === 0 || Number(ipv4[1]) === 10 ||
+    Number(ipv4[1]) === 127 || Number(ipv4[1]) === 169 && Number(ipv4[2]) === 254 ||
+    Number(ipv4[1]) === 192 && Number(ipv4[2]) === 168 ||
+    Number(ipv4[1]) === 172 && Number(ipv4[2]) >= 16 && Number(ipv4[2]) <= 31
+  );
+  if (privateIpv4 || host === "localhost" || host.endsWith(".localhost") ||
+      host === "::1" || host === "0.0.0.0" || host.endsWith(".local") ||
+      host.endsWith(".internal") || host === "metadata.google.internal") {
+    throw new Error("不允许使用本地、内网或云元数据主机地址。");
   }
   if (url.pathname.endsWith("/chat/completions")) {
     url.pathname = url.pathname.slice(0, -"/chat/completions".length) || "/";
