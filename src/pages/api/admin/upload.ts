@@ -233,8 +233,8 @@ export const GET: APIRoute = async ({ url }) => {
 					? (file.metadata as Record<string, unknown>)
 					: {};
 			const mime =
-				typeof metadata["File-Mime"] === "string"
-					? metadata["File-Mime"]
+				typeof metadata.FileType === "string"
+					? metadata.FileType
 					: "";
 			if (!mime.startsWith("image/")) return [];
 
@@ -244,8 +244,8 @@ export const GET: APIRoute = async ({ url }) => {
 					url: imageUrl(config.base, file.name),
 					type: mime || "image/*",
 					size:
-						typeof metadata["File-Size"] === "string"
-							? metadata["File-Size"]
+						metadata.FileSizeBytes !== undefined && metadata.FileSizeBytes !== null
+							? String(metadata.FileSizeBytes)
 							: "",
 					timestamp:
 						typeof metadata.TimeStamp === "string"
@@ -438,7 +438,7 @@ export const DELETE: APIRoute = async ({ request }) => {
 		const metadata = (match as Record<string, unknown>).metadata;
 		const mime =
 			metadata && typeof metadata === "object"
-				? (metadata as Record<string, unknown>)["File-Mime"]
+				? (metadata as Record<string, unknown>).FileType
 				: "";
 		if (typeof mime !== "string" || !mime.startsWith("image/")) {
 			return json({ error: "该文件不是图片，已拒绝删除。" }, 415);
