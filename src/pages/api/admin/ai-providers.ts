@@ -49,7 +49,7 @@ export const POST: APIRoute = async ({ request }) => {
   try {
     if (input.action === "save") {
       await saveAiProviders(input.provider);
-      return json({ ok: true, message: "服务配置已安全保存。", providers: await listAiProviders() });
+      return json({ ok: true, message: "服务配置已保存；API Key 需单独在 Cloudflare Worker Secrets 中配置。", providers: await listAiProviders() });
     }
     if (input.action === "test") {
       const result = await testAiProvider(input);
