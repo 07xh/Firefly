@@ -477,7 +477,7 @@ export const prerender = false;
       <button type="button" id="aiGenerate" class="btn primary">生成新文章草稿</button>
       <button type="button" id="aiRewrite" class="btn">按指令修改当前文章</button>
     </div>
-    <p class="muted">生成新文章时，若当前表单已有未保存内容，应用结果前会请你确认。修改现有文章时，只替换正文，保留标题、文件名和其他文章信息。</p>
+    <p class="muted">生成新文章时，若当前表单已有未保存内容，应用结果前会请你确认。修改现有文章时，只替换正文并保留标题、文件名和其他文章信息；若 AI 改动代码块、公式、图片、链接或特殊组件，系统会阻止应用以保护原文。</p>
     <p id="aiStatus" class="status" role="status" aria-live="polite" hidden></p>
     <section id="aiResult" class="rounded-lg border border-emerald-200 bg-white p-3" hidden>
       <h3 class="text-sm font-semibold text-gray-800">待审核的 AI 草稿</h3>
