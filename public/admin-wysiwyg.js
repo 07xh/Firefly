@@ -2373,7 +2373,7 @@ async function loadTiptapModules() {
     pendingUploads += 1;
     const toolbar = $("wysiwygUpload");
     if (toolbar) toolbar.disabled = true;
-    status("正在上传图片到 GitHub，请稍候…");
+    status("正在上传图片到图床，请稍候…");
     const form = new FormData();
     form.append("file", file, file.name || "image.png");
     try {
@@ -2391,7 +2391,7 @@ async function loadTiptapModules() {
         alt: file.name || "文章图片",
         title: file.name || "",
       }).run();
-      status("图片已上传并插入正文。图片文件已单独提交到 GitHub；文章正文仍需保存。");
+      status("图片已上传到图床并插入正文。请继续保存文章；图片文件独立存储，不会提交到 GitHub 仓库。");
     } catch (error) {
       status(error instanceof Error ? error.message : "图片上传失败。", true);
     } finally {
