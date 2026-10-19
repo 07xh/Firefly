@@ -1,5 +1,6 @@
 import { env as workerEnv } from "cloudflare:workers";
 import type { APIRoute } from "astro";
+import { getActiveAiProvider } from "../../../lib/ai-provider-config";
 
 export const prerender = false;
 
@@ -147,14 +148,20 @@ export const POST: APIRoute = async ({ request }) => {
 	}
 
 	const env = workerEnv as unknown as RuntimeEnv;
-	const apiKey = env.AI_API_KEY?.trim();
-	const model = env.AI_MODEL?.trim();
-	const baseUrl = (env.AI_API_BASE_URL || "https://api.openai.com/v1").trim().replace(/\/+$/, "");
+	let provider: { apiKey: string; baseUrl: string; model: string } | null = null;
+	try {
+		provider = await getActiveAiProvider();
+	} catch {
+		// Legacy Worker secrets remain a compatibility fallback during migration.
+	}
+	const apiKey = provider?.apiKey || env.AI_API_KEY?.trim() || "";
+	const model = provider?.model || env.AI_MODEL?.trim() || "";
+	const baseUrl = (provider?.baseUrl || env.AI_API_BASE_URL || "https://api.openai.com/v1").trim().replace(/\/+$/, "");
 	if (!apiKey || !model) {
 		return json(
 			{
 				error:
-					"AI 写作尚未配置。请在 Cloudflare Worker 中设置 AI_API_KEY（Secret）和 AI_MODEL；AI_API_BASE_URL 可按服务商填写。",
+					"AI 写作尚未配置。请先在后台“AI 服务管理”中保存并启用一个服务商，或使用旧版 Worker Secret 配置 AI_API_KEY 与 AI_MODEL。",
 			},
 			503,
 		);
