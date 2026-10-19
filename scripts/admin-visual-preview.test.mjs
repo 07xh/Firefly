@@ -11,12 +11,14 @@ test("后台日常提示使用自然中文，技术诊断默认不直接打扰�
   const editorScript = readFileSync(new URL("../public/admin-wysiwyg.js", import.meta.url), "utf8");
   const settingsApi = readFileSync(new URL("../src/pages/api/admin/settings.ts", import.meta.url), "utf8");
   const articlesApi = readFileSync(new URL("../src/pages/api/admin/articles.ts", import.meta.url), "utf8");
+  const loginPage = readFileSync(new URL("../src/pages/admin/login.astro", import.meta.url), "utf8");
+  const loginApi = readFileSync(new URL("../src/pages/api/auth/login.ts", import.meta.url), "utf8");
 
-  assert.match(adminPage, /测试文章保存/);
+  assert.match(adminPage, /检查文章保存功能/);
   assert.match(adminPage, /网站外观与布局/);
   assert.match(adminPage, /正文文字大小/);
   assert.match(adminPage, /文章卡片最小宽度/);
-  assert.match(adminPage, /按内容高度错落排列/);
+  assert.match(adminPage, /卡片高低错落排列/);
   assert.match(adminPage, /查看排查详情（遇到问题时再打开）/);
   assert.match(adminPage, /function friendlyAdminError/);
   assert.match(adminPage, /保存外观设置/);
@@ -30,6 +32,13 @@ test("后台日常提示使用自然中文，技术诊断默认不直接打扰�
   assert.doesNotMatch(adminPage, /高级模式|GitHub HTTP|GitHub Request ID|accepted permissions/);
   assert.doesNotMatch(editorScript, /高级模式|Tiptap 模块无法加载|CDN 拦截/);
   assert.match(editorScript, /临时备份/);
+  assert.match(adminPage, /自动保留可恢复的草稿副本/);
+  assert.doesNotMatch(adminPage, /pathRow\.title="文章保存位置："/);
+  assert.match(adminPage, /文章原始文件链接/);
+  assert.match(loginPage, /登录状态由网站安全管理/);
+  assert.doesNotMatch(loginPage, /Cloudflare Access|API 路由|Worker 部署/);
+  assert.match(loginApi, /后台登录功能尚未完成配置/);
+  assert.doesNotMatch(loginApi, /Worker 密码 Secret|KV 绑定|登录接口处理失败/);
   assert.match(settingsApi, /后台还没有完成文章保存设置/);
   assert.match(settingsApi, /现有的网站外观设置无法读取/);
   assert.match(settingsApi, /电脑端文章列表请选择单列列表或多列卡片布局/);
