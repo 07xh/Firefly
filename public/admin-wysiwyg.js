@@ -94,12 +94,12 @@ async function loadTiptapModules() {
     const failed = Array.from(editorElement.querySelectorAll("img")).filter(item => item.complete && item.naturalWidth === 0);
     const label = image.alt?.trim() || "未命名图片";
     status(
-      "图片“" + label + "”无法加载。已保留文章中的原始引用；请检查图片路径或仓库读取权限，也可以点选图片后替换。",
+      "图片“" + label + "”无法显示。原图片引用已保留；请检查图片地址或保存位置的读取权限，也可以点选图片后替换。",
       true,
     );
     if (notice) {
       notice.hidden = false;
-      notice.textContent = "检测到 " + Math.max(1, failed.length) + " 张图片无法加载。文章原文没有被删除或改写；可点选图片查看，或通过“图片”工具重新上传后替换。";
+      notice.textContent = "检测到 " + Math.max(1, failed.length) + " 张图片无法显示。文章内容没有被删除或改写；可点选图片查看，或使用“图片”工具重新上传并替换。";
       notice.setAttribute("role", "status");
     }
   }
@@ -259,7 +259,7 @@ async function loadTiptapModules() {
     if (!$("localRecoveryCheck")?.checked) return;
     const source = sourceField.value || "";
     if (isPasswordProtectedSource(source)) {
-      setRecoveryStatus("检测到文章启用了密码保护。为避免保存受保护正文，已跳过本次本地恢复。");
+      setRecoveryStatus("这篇文章启用了访问密码。为保护正文内容，本次没有恢复临时备份。");
       return;
     }
 
@@ -1784,7 +1784,7 @@ async function loadTiptapModules() {
       }
       const current = activeEditor.state.doc.nodeAt(position);
       if (!current || current.type.name !== "protectedMarkdownBlock") {
-        showError("无法定位原始清单，已取消修改。");
+        showError("没有找到这份待办清单，已取消修改。");
         return;
       }
       activeEditor.view.dispatch(activeEditor.state.tr.setNodeMarkup(position, undefined, {
@@ -2164,12 +2164,12 @@ async function loadTiptapModules() {
     } else if (model.kind === "component") {
       const card = visualPreviewElement("div", "firefly-visual-preview__panel");
       card.append(visualPreviewElement("div", "firefly-visual-preview__panel-head", "特殊内容组件"));
-      card.append(visualPreviewElement("div", "firefly-visual-preview__text", "这部分使用了文章的特殊展示组件。系统已保留原始设置，日常写作通常无需修改。"));
+      card.append(visualPreviewElement("div", "firefly-visual-preview__text", "这部分使用了特殊展示样式。系统已完整保留，日常写作通常不需要修改。"));
       preview.append(card);
     } else if (model.kind === "html") {
       heading("特殊版式内容");
       if (/<(?:script|style|svg)\b/i.test(raw)) {
-        paragraph("这部分属于特殊展示内容，已完整保留。为避免显示无关原文，编辑器只显示说明。");
+        paragraph("这部分属于特殊展示内容，已完整保留。为避免误改，编辑器只显示说明。");
       } else {
         paragraph(model.text || "这部分包含特殊展示语法，系统已原样保留。");
       }
@@ -2981,7 +2981,7 @@ async function loadTiptapModules() {
 
   function runAction(action) {
     if (!editor || visualLoadFailed) {
-      status("正文暂时无法直接打开，请刷新页面，或选择“编辑原文”继续。文章原文未被修改。", true);
+      status("正文暂时无法打开。请刷新页面，或选择“编辑原文”继续；文章原文没有被修改。", true);
       return;
     }
     const chain = editor.chain().focus();
