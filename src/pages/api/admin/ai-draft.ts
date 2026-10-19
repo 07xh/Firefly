@@ -152,7 +152,7 @@ export const POST: APIRoute = async ({ request }) => {
 	try {
 		provider = await getActiveAiProvider();
 	} catch {
-		return json({ error: "AI 服务配置无法安全读取，请检查 AI_CONFIG_ENCRYPTION_KEY 和 FIREFLY_SESSIONS KV 绑定。" }, 503);
+		return json({ error: "AI 服务配置无法读取，请检查 Worker Secret 与 FIREFLY_SESSIONS KV 绑定。" }, 503);
 	}
 	const apiKey = provider?.apiKey || env.AI_API_KEY?.trim() || "";
 	const model = provider?.model || env.AI_MODEL?.trim() || "";
