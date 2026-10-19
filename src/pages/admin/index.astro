@@ -1228,6 +1228,8 @@ async function requestAiDraft(mode) {
     category: $("category").value.trim(),
     tags: $("tags").value.split(",").map(tag => tag.trim()).filter(Boolean)
   };
+  const sourceSnapshot = mode === "rewrite" ? currentArticleSnapshot() : "";
+  const targetPath = mode === "rewrite" ? (selected?.path || null) : null;
   setAiBusy(true);
   $("aiResult").hidden = true;
   setAiStatus(mode === "generate" ? "正在生成草稿，这不会保存或发布文章…" : "正在按要求修改正文，这不会保存或发布文章…");
@@ -1245,7 +1247,7 @@ async function requestAiDraft(mode) {
     const data = await response.json().catch(() => ({ error: "AI 接口返回的响应无法解析。" }));
     if (!response.ok) throw new Error(data.error || "AI 写作没有完成，请稍后重试。");
     if (!data.draft || typeof data.draft.body !== "string") throw new Error("AI 返回结果缺少正文，请调整要求后重试。");
-    aiDraftResult = { ...data.draft, mode };
+    aiDraftResult = { ...data.draft, mode, sourceSnapshot, targetPath };
     $("aiResultTitle").textContent = aiDraftResult.title || existing.title || "正文修改稿";
     const meta = [];
     if (aiDraftResult.category) meta.push("分类：" + aiDraftResult.category);
@@ -1285,6 +1287,12 @@ $("aiApply").onclick = async () => {
     $("draft").checked = true;
     updateSaveButtonLabel();
   } else {
+    if ((selected?.path || null) !== draft.targetPath || currentArticleSnapshot() !== draft.sourceSnapshot) {
+      aiDraftResult = null;
+      $("aiResult").hidden = true;
+      setAiStatus("生成草稿后，当前文章或正文状态发生了变化。为避免覆盖其他内容，请重新生成修改稿。", true);
+      return;
+    }
     if (!confirm("使用 AI 修改稿会替换当前正文。其他文章信息将保持不变。是否继续？")) return;
   }
   $("body").value = draft.body;
