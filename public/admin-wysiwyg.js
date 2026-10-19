@@ -2670,7 +2670,7 @@ async function loadTiptapModules() {
       return;
     }
     if (file.size <= 0 || file.size > 4 * 1024 * 1024) {
-      status("图片必须大于 0 且不超过 4 MiB，请压缩后重试。", true);
+      status("图片太大，请压缩后重试；单张图片上限约为 4 MB。", true);
       return;
     }
     if (replacementTarget) {
@@ -2694,8 +2694,8 @@ async function loadTiptapModules() {
       });
       if (response.status === 401) throw new Error("登录已过期，请重新登录。");
       const data = await response.json().catch(() => ({ error: "图片上传响应无法解析" }));
-      if (!response.ok) throw new Error(data.error || "图片上传失败");
-      if (!data.imageUrl) throw new Error("上传接口未返回图片地址，图片没有插入正文。");
+      if (!response.ok) throw new Error(data.error || "图片未能保存，请稍后重试。");
+      if (!data.imageUrl) throw new Error("图片已保存，但没有收到图片网址，暂时无法插入正文。请重试；如果仍失败，请联系后台维护者。");
       const uploadedAlt = file.name || "文章图片";
       if (replacementTarget) {
         const current = editor?.state.doc.nodeAt(replacementTarget.position);
