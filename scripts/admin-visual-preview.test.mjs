@@ -1,9 +1,28 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 
 import { describeProtectedSyntax, inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "../public/admin-visual-preview.js";
 import { normalizeEditorLinkAddress } from "../public/admin-link-utils.js";
 import { getAdminImagePreviewUrl, resolveRepositoryImagePath } from "../public/admin-image-preview-utils.js";
+
+test("后台日常提示使用自然中文，技术诊断默认不直接打扰编辑者", () => {
+  const adminPage = readFileSync(new URL("../src/pages/admin/index.astro", import.meta.url), "utf8");
+  const editorScript = readFileSync(new URL("../public/admin-wysiwyg.js", import.meta.url), "utf8");
+  const settingsApi = readFileSync(new URL("../src/pages/api/admin/settings.ts", import.meta.url), "utf8");
+  const articlesApi = readFileSync(new URL("../src/pages/api/admin/articles.ts", import.meta.url), "utf8");
+
+  assert.match(adminPage, /检查保存功能/);
+  assert.match(adminPage, /查看详细检查信息/);
+  assert.match(adminPage, /文章已保存，网站正在更新/);
+  assert.doesNotMatch(adminPage, /高级模式|GitHub HTTP|GitHub Request ID|accepted permissions/);
+  assert.doesNotMatch(editorScript, /高级模式|Tiptap 模块无法加载|CDN 拦截/);
+  assert.match(editorScript, /临时备份/);
+  assert.match(settingsApi, /后台尚未完成文章保存配置/);
+  assert.doesNotMatch(settingsApi, /Worker 未配置|settings\\.json 必须是 JSON 对象|left、right 或 both/);
+  assert.match(articlesApi, /后台缺少完成这项操作的权限/);
+  assert.doesNotMatch(articlesApi, /Internal error|Invalid article path|GitHub 写入失败/);
+});
 
 test("相对图片预览路径按文章源文件目录解析，不按后台地址解析", () => {
   assert.equal(
