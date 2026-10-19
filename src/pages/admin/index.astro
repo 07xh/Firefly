@@ -482,7 +482,7 @@ export const prerender = false;
 <div class="grid"><div class="field"><label for="slug">文章链接名称 *</label><input id="slug" required placeholder="例如：我的第一篇文章"><small>用于生成文章网址；可以写中文、字母或数字，也可以使用连字符和下划线，不需要填写完整网址。</small></div><div class="field"><label for="published">文章日期 *</label><input id="published" type="date" required></div></div>
 <div class="grid"><div class="field"><label for="date">计划公开时间（北京时间）</label><input id="date" type="datetime-local" step="60"><small class="muted">不填写则不设定定时公开时间；选择未来时间后，网站会在指定时间自动更新。</small></div><div class="field"><label for="articlePassword">访问密码（可选）</label><input id="articlePassword" type="password" maxlength="200" autocomplete="new-password" placeholder="留空则不启用密码保护"><small class="muted">输入后，前台将显示密码解锁页面。</small></div></div>
 <div class="field"><label for="passwordHint">密码提示（可选）</label><input id="passwordHint" maxlength="120" placeholder="例如：课程名称"></div>
-<p class="muted" style="color:#b42318">安全提醒：当前文章仓库是公开的，任何人都可能查看文章文件。页面访问密码不能隐藏仓库中的文件，请不要在文章里保存账号密码、身份证号等机密信息。</p>
+<p class="muted" style="color:#b42318">安全提醒：当前保存文章的 GitHub 项目是公开的，任何人都可能查看其中的文章文件。页面访问密码只能限制网站上的阅读入口，不能隐藏项目文件；请勿保存账号密码、身份证号等机密信息。</p>
 <div class="grid"><div class="field"><label for="category">分类</label><input id="category" maxlength="100"></div><div class="field"><label for="tags">标签（逗号分隔）</label><input id="tags" placeholder="技术, 随笔"></div></div>
 <div class="field"><label for="description">摘要</label><input id="description" maxlength="500"></div>
 <div class="field">
@@ -574,7 +574,7 @@ export const prerender = false;
   </p>
   <form id="settingsForm" class="settings-cards">
 <section class="settings-card" aria-labelledby="appearanceBannerTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">01</span><div><h3 id="appearanceBannerTitle">全站背景与首页 Banner</h3><p>设置全站页面背景颜色/图片，以及首页顶部 Banner 的标题与副标题。</p></div></div>
+      <div class="settings-card-heading"><span class="settings-card-number">01</span><div><h3 id="appearanceBannerTitle">全站背景与首页横幅</h3><p>设置网站背景颜色或图片，以及首页横幅的主标题和副标题。</p></div></div>
 <div class="settings-grid">
         <div class="settings-field" style="grid-column:1/-1">
           <label for="backgroundColor">全局背景颜色</label>
@@ -619,7 +619,7 @@ export const prerender = false;
     </section>
 
 <section class="settings-card" aria-labelledby="navVisibilitySettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">03</span><div><h3 id="navVisibilitySettingsTitle">顶部导航栏分类与子菜单显隐</h3><p>统一控制社交、我的、链接和关于四个导航分组。</p></div></div>
+      <div class="settings-card-heading"><span class="settings-card-number">03</span><div><h3 id="navVisibilitySettingsTitle">顶部菜单显示设置</h3><p>选择网站顶部菜单中要显示的分类。</p></div></div>
 <div class="settings-switch-grid">
         <label class="settings-toggle"><input id="showNavSocial" name="showNavSocial" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示“社交”菜单<small>控制友链、留言等菜单分组入口。</small></span></label>
         <label class="settings-toggle"><input id="showNavMy" name="showNavMy" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示“我的”菜单<small>控制动态、项目、相册等菜单分组入口。</small></span></label>
@@ -629,7 +629,7 @@ export const prerender = false;
     </section>
 
 <section class="settings-card" aria-labelledby="aboutDonationSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">04</span><div><h3 id="aboutDonationSettingsTitle">关于我页面与打赏设置</h3><p>编辑 About Me 正文，控制页面访问、打赏模块和二维码。</p></div></div>
+      <div class="settings-card-heading"><span class="settings-card-number">04</span><div><h3 id="aboutDonationSettingsTitle">关于我页面与打赏设置</h3><p>编辑“关于我”页面内容，并设置打赏卡片和二维码。</p></div></div>
 <div class="settings-switch-grid mb-4">
         <label class="settings-toggle"><input id="showAbout" name="showAbout" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">启用“关于我”页面<small>关闭后 /about/ 会重定向到首页，导航子项也会隐藏。</small></span></label>
         <label class="settings-toggle"><input id="showAboutDonation" name="showAboutDonation" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示关于我页面打赏卡片<small>开启后在介绍正文下方显示“支持作者”入口。</small></span></label>
@@ -651,8 +651,8 @@ export const prerender = false;
 <div class="settings-grid">
         <div class="settings-field"><label for="githubUrl">GitHub 链接</label><input id="githubUrl" name="githubUrl" type="url" maxlength="2048" placeholder="https://github.com/yourname" class="settings-control"></div>
         <div class="settings-field"><label for="email">邮箱地址</label><input id="email" name="email" type="email" maxlength="320" autocomplete="email" placeholder="you@example.com" class="settings-control"></div>
-        <label class="settings-toggle"><input id="showGithub" name="showGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示 GitHub 图标<small>关闭后前台不显示该入口（需组件读取此项）。</small></span></label>
-        <label class="settings-toggle"><input id="showEmail" name="showEmail" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示邮箱图标<small>关闭后前台不显示邮箱入口（需组件读取此项）。</small></span></label>
+        <label class="settings-toggle"><input id="showGithub" name="showGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示 GitHub 图标<small>此项用于控制网站是否显示这个入口；保存后可打开网站确认效果。</small></span></label>
+        <label class="settings-toggle"><input id="showEmail" name="showEmail" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示邮箱图标<small>此项用于控制网站是否显示邮箱入口；保存后可打开网站确认效果。</small></span></label>
       </div>
 <div class="settings-grid settings-grid-one">
         <div class="settings-field">
@@ -667,9 +667,9 @@ export const prerender = false;
           <label for="backgroundMusic">背景音乐外链</label>
           <input id="backgroundMusic" name="backgroundMusic" type="url" maxlength="2048" placeholder="https://example.com/music.mp3" class="settings-control">
           <audio id="backgroundMusicPreview" class="w-full" controls preload="none" hidden></audio>
-          <small>请填写可直接播放的音乐网址。可以先点播放键试听，网站不会自动播放。</small>
+          <small>请粘贴可以直接播放的音乐文件网址，点击播放键可以先试听；网站不会自动播放。</small>
         </div>
-        <label class="settings-toggle"><input id="showSupportAndShare" name="showSupportAndShare" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">开启文章页“支持与分享”模块<small>关闭后，接入该配置的文章组件应隐藏支持与分享卡片。</small></span></label>
+        <label class="settings-toggle"><input id="showSupportAndShare" name="showSupportAndShare" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">开启文章页“支持与分享”模块<small>用于控制文章页面是否显示“支持与分享”卡片。</small></span></label>
       </div>
     </section>
 
@@ -681,16 +681,16 @@ export const prerender = false;
     <div class="settings-field"><label for="layoutPostListMode">桌面文章列表布局</label><select id="layoutPostListMode" name="layoutPostListMode" class="settings-control"><option value="list">列表模式（单列）</option><option value="grid">网格模式（自适应多列）</option></select></div>
     <div class="settings-field"><label for="layoutMobilePostListMode">移动端文章布局</label><select id="layoutMobilePostListMode" name="layoutMobilePostListMode" class="settings-control"><option value="list">列表模式</option><option value="grid">网格模式</option></select><small>手机屏幕较窄时，网站会优先保证正文易读。</small></div>
     <div class="settings-field"><label for="layoutCoverPosition">列表模式封面位置</label><select id="layoutCoverPosition" name="layoutCoverPosition" class="settings-control"><option value="right">封面在右侧</option><option value="left">封面在左侧</option></select><small>仅影响列表模式；网格封面固定在卡片顶部。</small></div>
-    <div class="settings-field"><label for="layoutGridColumnWidth">网格卡片最小宽度（px）</label><input id="layoutGridColumnWidth" name="layoutGridColumnWidth" type="number" min="220" max="460" step="10" required value="320" class="settings-control"><small>220–460px；数值越小通常可显示更多列。</small></div>
+    <div class="settings-field"><label for="layoutGridColumnWidth">网格卡片最小宽度（px）</label><input id="layoutGridColumnWidth" name="layoutGridColumnWidth" type="number" min="220" max="460" step="10" required value="320" class="settings-control"><small>可填写 220–460 像素；数值越小，同一行通常能显示更多卡片。</small></div>
   </div>
   <div class="settings-switch-grid" style="margin-top:14px">
     <label class="settings-toggle"><input id="layoutSidebarEnabled" name="layoutSidebarEnabled" type="checkbox" checked><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">启用桌面侧边栏<small>关闭后隐藏左右侧栏列；移动端底部组件仍按原配置处理。</small></span></label>
-    <label class="settings-toggle"><input id="layoutGridMasonry" name="layoutGridMasonry" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">网格瀑布流<small>仅在网格模式生效。</small></span></label>
+    <label class="settings-toggle"><input id="layoutGridMasonry" name="layoutGridMasonry" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">卡片错落排列（瀑布流）<small>仅在网格模式生效，会根据卡片内容高度自动错落排列，减少空白。</small></span></label>
     <label class="settings-toggle"><input id="layoutGridCoverFullWidth" name="layoutGridCoverFullWidth" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">网格封面贴边显示<small>开启后封面铺满卡片顶部；关闭则保留内边距。</small></span></label>
   </div>
 </section>
 
-<div class="settings-save-row" aria-label="全局配置保存操作">
+<div class="settings-save-row" aria-label="网站外观设置的保存操作">
       <button id="saveSettings" type="submit" class="settings-save-button" disabled>保存全局配置</button>
       <button id="discardSettings" type="button" class="btn" disabled>放弃未保存修改</button>
       <span id="settingsDirtyState" class="settings-dirty-state" data-dirty="false" role="status" aria-live="polite">正在读取配置…</span>
