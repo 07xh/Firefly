@@ -229,7 +229,7 @@ async function loadTiptapModules() {
     if (!sameArticle) {
       button.textContent = "恢复其他文章的副本";
       setRecoveryStatus(snapshot.path
-        ? "发现其他文章的恢复副本。请先选择该文章；若远端 SHA 已变化，为避免覆盖新版本，将禁止恢复。"
+        ? "发现另一篇文章的临时备份。请先打开那篇文章；如果文章已有更新，为避免覆盖新内容，系统会阻止恢复。"
         : "发现新文章恢复副本。请回到新建文章模式后再恢复。");
       return;
     }
@@ -238,7 +238,7 @@ async function loadTiptapModules() {
     const savedAt = snapshot.savedAt
       ? new Date(snapshot.savedAt).toLocaleString("zh-CN", { hour12: false })
       : "时间未知";
-    setRecoveryStatus("发现 " + savedAt + " 的本地恢复副本。恢复会覆盖当前表单内容并标记为未保存修改。");
+    setRecoveryStatus("发现 " + savedAt + " 保存的临时备份。恢复后会替换当前填写的内容，并标记为尚未保存。");
   }
 
   function clearRecovery(detail = {}) {
@@ -289,7 +289,7 @@ async function loadTiptapModules() {
         new Date(snapshot.savedAt).toLocaleTimeString("zh-CN", { hour12: false }) + "）。");
       refreshRecoveryAvailability();
     } catch {
-      setRecoveryStatus("浏览器无法保存本地恢复副本；当前内容仍在编辑器中，请及时保存到 GitHub。");
+      setRecoveryStatus("浏览器暂时无法保存临时备份；当前内容仍在编辑器中，请尽快保存文章。");
     }
   }
 
@@ -309,7 +309,7 @@ async function loadTiptapModules() {
 
     const context = currentContext();
     if (snapshot.path && (snapshot.path !== context.path || snapshot.sha !== context.sha)) {
-      setRecoveryStatus("恢复已取消：文章版本已变化，请重新载入并比较远端内容。");
+      setRecoveryStatus("恢复已取消：文章已有更新。请重新打开最新版本，确认内容后再恢复。");
       return;
     }
     if (isPasswordProtectedSource(snapshot.body || "")) {
@@ -338,7 +338,7 @@ async function loadTiptapModules() {
     $("draft").dispatchEvent(new Event("change", { bubbles: true }));
     window.dispatchEvent(new CustomEvent("firefly:source-loaded"));
     window.dispatchEvent(new CustomEvent("firefly:mode", { detail: { mode: "visual" } }));
-    setRecoveryStatus("恢复完成。内容尚未写入 GitHub；请检查后手动保存。");
+    setRecoveryStatus("临时备份已恢复，但还没有保存到文章仓库。请检查内容后，再点击“保存草稿”或“发布文章”。");
   }
 
 
@@ -381,13 +381,13 @@ async function loadTiptapModules() {
     visualLoadFailed = true;
     if (notice) {
       notice.hidden = false;
-      notice.textContent = "这篇文章暂时无法使用直接编辑。文章原文没有被改动，请刷新页面后重试；也可以进入“高级模式”继续编辑。";
+      notice.textContent = "这篇文章暂时无法使用直接编辑。文章原文没有被改动，请刷新页面后重试；也可以选择“编辑原文”继续。";
       notice.setAttribute("role", "alert");
     }
     if ($("visualTab")) {
       $("visualTab").disabled = true;
       $("visualTab").setAttribute("aria-disabled", "true");
-      $("visualTab").title = "请刷新页面重试，或使用高级模式";
+      $("visualTab").title = "请刷新页面重试，或选择“编辑原文”";
       $("visualTab").textContent = "暂时无法直接编辑";
     }
     status("直接编辑暂时无法使用，文章原文已保留。请刷新页面，或选择“编辑原文”继续。", true);
@@ -446,13 +446,13 @@ async function loadTiptapModules() {
       const pos = target.getPos();
       if (typeof pos !== "number") {
         dialog.close();
-        status("这段内容已从文章中移除，请重新选择后再修改。", true);
+        status("这部分内容已不在文章中，请关闭窗口后重新选择。", true);
         return;
       }
       const current = target.editor.state.doc.nodeAt(pos);
       if (!current || current.type.name !== "protectedMarkdownBlock") {
         dialog.close();
-        status("找不到这段内容，已取消修改。", true);
+        status("没有找到对应内容，已取消这次修改。", true);
         return;
       }
       target.editor.view.dispatch(
@@ -1301,7 +1301,7 @@ async function loadTiptapModules() {
       }
       const current = activeEditor.state.doc.nodeAt(position);
       if (!current || current.type.name !== "protectedMarkdownBlock") {
-        showError("找不到这段内容，已取消修改。");
+        showError("没有找到对应内容，已取消这次修改。");
         return;
       }
       activeEditor.view.dispatch(activeEditor.state.tr.setNodeMarkup(position, undefined, {
@@ -1488,7 +1488,7 @@ async function loadTiptapModules() {
       }
       const current = activeEditor.state.doc.nodeAt(position);
       if (!current || current.type.name !== "protectedMarkdownBlock") {
-        showError("找不到这段内容，已取消修改。");
+        showError("没有找到对应内容，已取消这次修改。");
         return;
       }
       activeEditor.view.dispatch(activeEditor.state.tr.setNodeMarkup(position, undefined, {
@@ -1633,7 +1633,7 @@ async function loadTiptapModules() {
       }
       const current = activeEditor.state.doc.nodeAt(position);
       if (!current || current.type.name !== "protectedMarkdownBlock") {
-        error.textContent = "找不到这段内容，已取消修改。";
+        error.textContent = "没有找到对应内容，已取消这次修改。";
         error.hidden = false;
         return;
       }
@@ -1904,7 +1904,7 @@ async function loadTiptapModules() {
       }
       const current = activeEditor.state.doc.nodeAt(position);
       if (!current || current.type.name !== "protectedMarkdownBlock") {
-        error.textContent = "找不到这段内容，已取消修改。";
+        error.textContent = "没有找到对应内容，已取消这次修改。";
         error.hidden = false;
         return;
       }
@@ -2398,7 +2398,7 @@ async function loadTiptapModules() {
       lastLoadedSource = sourceField.value || current;
       reportProtected(prepared.records);
       if (migrated.removed) {
-        status("已清理 " + migrated.removed + " 处重复引用。点击“保存文章”后，清理结果才会保存。");
+        status("已整理 " + migrated.removed + " 处重复内容引用。点击“保存草稿”或“发布文章”后，修改才会保存。");
         if (notice) {
           notice.hidden = false;
           notice.textContent = (notice.textContent ? notice.textContent + " " : "")
@@ -2506,7 +2506,7 @@ async function loadTiptapModules() {
       editPanel.className = "firefly-image-preview__edit";
       editPanel.hidden = true;
       const altLabel = document.createElement("label");
-      altLabel.textContent = "图片替代文字（描述图片内容）";
+      altLabel.textContent = "图片说明文字（描述图片内容）";
       const altInput = document.createElement("input");
       altInput.type = "text";
       altInput.maxLength = 500;
@@ -2546,7 +2546,7 @@ async function loadTiptapModules() {
         const altValue = altInput.value.trim();
         const titleValue = titleInput.value.trim();
         if (altValue.length > 500 || titleValue.length > 200) {
-          status("图片替代文字最多 500 个字符，提示标题最多 200 个字符。", true);
+          status("图片说明文字最多 500 个字符，图片提示标题最多 200 个字符。", true);
           return;
         }
         editor.view.dispatch(editor.state.tr.setNodeMarkup(target.position, current.type, {
@@ -2981,7 +2981,7 @@ async function loadTiptapModules() {
 
   function runAction(action) {
     if (!editor || visualLoadFailed) {
-      status("正文暂时无法直接打开，请刷新页面，或进入“高级模式”继续。文章原文未被修改。", true);
+      status("正文暂时无法直接打开，请刷新页面，或选择“编辑原文”继续。文章原文未被修改。", true);
       return;
     }
     const chain = editor.chain().focus();
@@ -3268,16 +3268,16 @@ async function loadTiptapModules() {
         try {
           if (recoveryToggle.checked) {
             sessionStorage.setItem(recoveryEnabledKey, "1");
-            setRecoveryStatus("已开启本地恢复；带访问密码的文章不会保存到恢复区。");
+            setRecoveryStatus("临时备份已开启；带访问密码的文章不会被保存到备份中。");
             queueRecovery();
           } else {
             sessionStorage.removeItem(recoveryEnabledKey);
             sessionStorage.removeItem(recoveryKey);
-            setRecoveryStatus("已关闭，当前本地恢复副本已删除。");
+            setRecoveryStatus("临时备份已关闭，当前保存的备份也已删除。");
             refreshRecoveryAvailability();
           }
         } catch {
-          setRecoveryStatus("浏览器不允许使用 sessionStorage，无法启用本地恢复。");
+          setRecoveryStatus("浏览器不允许保存临时备份，因此无法开启这项功能。");
         }
       });
     }
@@ -3316,9 +3316,9 @@ async function loadTiptapModules() {
     if ($("visualTab")) { $("visualTab").disabled = true; $("visualTab").textContent = "暂时无法直接编辑"; }
     $("wysiwygFallback") && ($("wysiwygFallback").hidden = false);
     window.dispatchEvent(new CustomEvent("firefly:wysiwyg-ready", { detail: { ok: false } }));
-    status("正文编辑暂时无法启动，文章原文没有被修改。请刷新页面后重试，或进入“高级模式”。", true);
+    status("正文编辑工具暂时无法启动，文章原文没有被修改。请刷新页面后重试，或选择“编辑原文”继续。", true);
     if ($("wysiwygFallback")) {
-      $("wysiwygFallback").textContent = "正文编辑暂时无法启动，文章原文没有被修改。请刷新页面后重试；必要时可进入“高级模式”继续编辑。";
+      $("wysiwygFallback").textContent = "正文编辑工具暂时无法启动，文章原文没有被修改。请刷新页面后重试；必要时可选择“编辑原文”继续编辑。";
     }
   });
 })();
