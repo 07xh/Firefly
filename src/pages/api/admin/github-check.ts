@@ -40,14 +40,14 @@ export const GET: APIRoute = async () => {
     return json({
       ok: false,
       stage: "configuration",
-      message: "Worker 未配置 FIREFLY_CONTENTS_TOKEN。",
+      message: "后台尚未完成文章保存配置，请检查部署设置。",
     }, 503);
   }
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo) || !/^[\w./-]+$/.test(branch)) {
     return json({
       ok: false,
       stage: "configuration",
-      message: "GITHUB_CONTENTS_REPO 或 GITHUB_CONTENTS_BRANCH 配置格式不合法。",
+      message: "文章保存位置设置不正确，请检查部署设置。",
     }, 503);
   }
 
@@ -121,7 +121,7 @@ export const GET: APIRoute = async () => {
         ok: true,
         stage: "write_authorization",
         result: "authorized_for_write_probe",
-        message: "GitHub authenticated the request and rejected the deliberately incomplete payload. No test file was created. If the article publish request still returns 403, compare its exact response and verify the Worker is routed to this deployment.",
+        message: "已确认后台能够访问文章保存位置，并可以进行保存检查。本次检查没有创建或修改任何文件。",
         ...base,
       });
     }
@@ -130,7 +130,7 @@ export const GET: APIRoute = async () => {
         ok: false,
         stage: "write_authorization",
         result: "write_forbidden",
-        message: "The live Worker token can read the repository but GitHub denied the write probe. Check that this exact token is active and has Contents: Read and write for the selected repository; no file was created.",
+        message: "后台可以读取文章，但没有保存权限。请确认保存凭据仍然有效，并允许修改文章；本次检查没有创建文件。",
         ...base,
       }, 403);
     }
@@ -139,7 +139,7 @@ export const GET: APIRoute = async () => {
         ok: false,
         stage: "authentication",
         result: "token_rejected",
-        message: "GitHub rejected the token used by the live Worker. Replace the Actions secret with a newly generated active token and redeploy.",
+        message: "后台使用的保存凭据无效或已过期。请更新保存凭据并重新部署后台。",
         ...base,
       }, 502);
     }
@@ -147,14 +147,14 @@ export const GET: APIRoute = async () => {
       ok: false,
       stage: "write_authorization",
       result: "unexpected_response",
-      message: "GitHub returned an unexpected response to the no-write probe; inspect githubStatus and githubMessage. No valid content was sent.",
+      message: "收到无法识别的检查结果。请展开“查看详细检查信息”查看原因；本次检查没有写入文件。",
       ...base,
     }, 502);
   } catch (error) {
     return json({
       ok: false,
       stage: "network",
-      message: error instanceof Error ? error.message : "GitHub diagnostic request failed.",
+      message: error instanceof Error ? error.message : "暂时无法连接文章保存服务，请检查网络后重试。",
     }, 502);
   }
 };
