@@ -124,21 +124,7 @@ async function readStore(): Promise<ProviderStore> {
     };
   }
 
-  const legacy = env();
-  const legacyKey = safeText(legacy.AI_API_KEY, 2000);
-  const legacyModel = safeText(legacy.AI_MODEL, 200);
-  if (legacyKey && legacyModel) {
-    const encrypted = await encryptApiKey(legacyKey);
-    const provider: ProviderInput = {
-      id: "legacy-openai-compatible",
-      name: "现有 Worker 配置",
-      baseUrl: validBaseUrl(legacy.AI_API_BASE_URL || "https://api.openai.com/v1"),
-      model: legacyModel,
-      enabled: true,
-      ...encrypted,
-    };
-    return { activeId: provider.id, providers: [provider], updatedAt: "" };
-  }
+
   return { activeId: "", providers: [], updatedAt: "" };
 }
 
