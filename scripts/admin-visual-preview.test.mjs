@@ -13,6 +13,8 @@ test("后台日常提示使用自然中文，技术诊断默认不直接打扰�
   const articlesApi = readFileSync(new URL("../src/pages/api/admin/articles.ts", import.meta.url), "utf8");
 
   assert.match(adminPage, /检查保存功能/);
+  assert.match(adminPage, /保存外观设置/);
+  assert.doesNotMatch(adminPage, /保存全局配置|配置尚未加载/);
   assert.match(adminPage, /查看详细检查信息/);
   assert.match(adminPage, /文章已保存，网站正在更新/);
   assert.match(adminPage, /pathRow\.textContent=\(a\.published\|\|"日期未设置"\)/);
