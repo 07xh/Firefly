@@ -417,12 +417,11 @@ export const prerender = false;
 
 </style></head>
 <body>
-<header><h1>✦ Firefly 管理后台</h1><div style="display:flex;gap:12px;align-items:center"><a href="/" style="color:#16864f;font-size:13px">返回网站 ↗</a><button class="btn" id="logout" type="button">退出登录</button></div></header>
+<header><h1>✦ Firefly 管理后台</h1><div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><a href="/admin/images/" style="color:#16864f;font-size:13px">🖼️ 图片库</a><a href="/" style="color:#16864f;font-size:13px">返回网站 ↗</a><button class="btn" id="logout" type="button">退出登录</button></div></header>
 <nav class="admin-tabs" role="tablist" aria-label="后台管理模块">
   <button id="tabArticles" class="admin-tab" type="button" role="tab" aria-selected="true" aria-controls="articlesTabPanel">📝 文章管理</button>
   <button id="tabAppearance" class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="appearanceTabPanel" tabindex="-1">🎨 全局外观配置</button>
   <button id="tabAiProviders" class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="aiProvidersTabPanel" tabindex="-1">🤖 AI 服务管理</button>
-  <a class="admin-tab" href="/admin/images/" style="text-decoration:none">🖼️ 图片库</a>
 </nav>
 <main class="wrap">
 <div id="articlesTabPanel" class="articles-grid" role="tabpanel" aria-labelledby="tabArticles">
