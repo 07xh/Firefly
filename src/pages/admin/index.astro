@@ -845,7 +845,8 @@ function render(){
 
   const pathRow=document.createElement("span");
   pathRow.className="mt-1 block truncate text-xs font-normal text-gray-400";
-  pathRow.textContent=a.path + " · " + ({draft:"草稿箱",scheduled:"定时发布",published:"已发布"}[articleStatus(a)]);
+  pathRow.textContent=(a.published||"日期未设置") + " · " + ({draft:"草稿箱",scheduled:"定时公开",published:"已公开"}[articleStatus(a)]);
+   pathRow.title="文章保存位置："+a.path;
 
   item.append(titleRow,pathRow);
 
