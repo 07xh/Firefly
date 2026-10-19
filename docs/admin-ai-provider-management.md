@@ -1,6 +1,6 @@
 # Firefly AI 服务商管理中心
 
-后台新增“AI 服务管理”标签页，支持管理 OpenAI Chat Completions 兼容服务商、保存非敏感配置、启用当前服务和测试连接。AI 写作依旧只生成待审核草稿，不会绕过现有文章保存/发布流程。
+后台新增“AI 服务管理”标签页，支持管理 OpenAI Chat Completions 兼容服务商、保存非敏感配置、启用当前服务和测试连接。AI 写作只生成待审核草稿，不会绕过现有文章保存/发布流程。
 
 ## 首次配置 Cloudflare Secret
 
@@ -15,7 +15,7 @@ API Key 只保存在 Cloudflare Worker Secrets 中；后台页面不会接收或
 ## 在后台使用
 
 1. 登录后台并打开“AI 服务管理”。
-2. 服务商类型为“其他 OpenAI 兼容服务商”。
+2. 服务商类型选择“其他 OpenAI 兼容服务商”。
 3. 填写服务商名称、HTTPS API 根地址和模型 ID；启用开关默认开启。
 4. 点击“保存服务配置”。此操作只保存非敏感的服务配置，不保存 API Key。
 5. 查看 API Key 状态：密码框只显示掩码状态，并标记“Cloudflare 已配置/未配置”，不会读取或返回密钥原文。
@@ -29,4 +29,9 @@ API Key 只保存在 Cloudflare Worker Secrets 中；后台页面不会接收或
 - API 地址必须是 HTTPS 公网域名；不允许 URL 凭据、查询参数、片段、IP 地址、本地域名或常见内网主机后缀。
 - 测试请求有 15 秒超时，且不会将服务商原始响应正文发送回后台。
 - 仅支持兼容 OpenAI Chat Completions 的服务。其他协议需要单独适配。
-- 此功能仍在独立开发分支和草稿 PR 中；合并前应在预览环境测试保存配置、Secret 状态、连接测试、服务切换及 AI 草稿生成。
+
+## 上线验证状态（2026-10-19）
+
+AI 服务管理中心已合并到 `master`，正式 Worker 部署工作流通过。部署烟测确认首页 HTTP 200、登录页 HTTP 200、未登录后台重定向至登录页（HTTP 302）、未登录后台 API 返回 HTTP 401，AI 服务商管理 API 也确认受到后台会话保护；自定义域名 `0701000.xyz` 已确认路由至 Firefly Worker。
+
+**注意：** 上述结果验证了部署与后台保护，并不等同于已成功连接实际 AI 服务商。保存服务配置、连接测试、切换服务和生成 AI 草稿的端到端测试，需要先在 Cloudflare Worker Secrets 中添加 `AI_API_KEY_OTHER_OPENAI_COMPATIBLE`，再登录后台填写正确的 HTTPS API 根地址与模型 ID 后执行。
