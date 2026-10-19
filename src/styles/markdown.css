@@ -135,6 +135,14 @@
     overscroll-behavior-x: contain;
   }
 
+  /* 正文图片保留原始比例，不统一压低长图高度；图片网格会单独应用裁剪规则。 */
+  img {
+    display: block;
+    max-width: 100%;
+    max-height: none;
+    height: auto;
+  }
+
   .image-grid {
     @apply items-stretch;
     

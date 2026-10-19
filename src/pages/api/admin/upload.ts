@@ -78,9 +78,9 @@ export const POST: APIRoute = async ({ request }) => {
 		const repo = env.GITHUB_CONTENTS_REPO?.trim() || "07xh/Firefly";
 		const branch = env.GITHUB_CONTENTS_BRANCH?.trim() || "master";
 		if (!token)
-			return json({ error: "FIREFLY_CONTENTS_TOKEN 尚未配置。" }, 503);
+			return json({ error: "图片保存功能尚未完成配置，请检查后台设置。" }, 503);
 		if (!/^[\w.-]+\/[\w.-]+$/.test(repo))
-			return json({ error: "仓库配置不合法。" }, 503);
+			return json({ error: "图片保存位置设置不正确，请检查后台配置。" }, 503);
 
 		const contentLength = request.headers.get("Content-Length");
 		if (
@@ -138,12 +138,22 @@ export const POST: APIRoute = async ({ request }) => {
 			commit?: { sha?: string; html_url?: string };
 		};
 		if (!response.ok) {
-			const message =
-				typeof payload.message === "string"
-					? payload.message.slice(0, 200)
-					: "GitHub 图片上传失败";
+			let detail = "请稍后重试。";
+			if (response.status === 401 || response.status === 403) {
+				detail = "后台没有足够权限保存图片，请检查文章保存权限设置。";
+			} else if (response.status === 404) {
+				detail = "找不到图片保存位置，请检查后台配置。";
+			} else if (response.status === 409 || response.status === 422) {
+				detail = "图片没有成功写入，请稍后重试。";
+			} else if (response.status === 429) {
+				detail = "操作过于频繁，请稍等片刻再试。";
+			}
+			console.warn("[Firefly] 图片保存失败", {
+				status: response.status,
+				message: payload.message,
+			});
 			return json(
-				{ error: `GitHub 图片上传失败 (${response.status})：${message}` },
+				{ error: `图片未能保存。 ${detail}（错误代码 ${response.status}）` },
 				response.status === 409 ? 409 : 502,
 			);
 		}
@@ -162,9 +172,7 @@ export const POST: APIRoute = async ({ request }) => {
 			201,
 		);
 	} catch (error) {
-		return json(
-			{ error: error instanceof Error ? error.message : "图片上传失败。" },
-			500,
-		);
+		console.error("[Firefly] 图片上传发生异常", error);
+		return json({ error: "图片上传过程中出现问题，请稍后重试。" }, 500);
 	}
 };

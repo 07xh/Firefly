@@ -146,14 +146,14 @@ function getConfig(): GitHubConfig {
 	const repo = env?.GITHUB_CONTENTS_REPO?.trim() || "07xh/Firefly";
 	const branch = env?.GITHUB_CONTENTS_BRANCH?.trim() || "master";
 	if (!token) {
-		throw new SettingsApiError("Worker 未配置 FIREFLY_CONTENTS_TOKEN。", 503);
+		throw new SettingsApiError("后台还没有完成文章保存设置，请先检查后台设置后再试。", 503);
 	}
 	if (
 		repo.split("/").length !== 2 ||
 		repo.split("/").some((part) => !/^[A-Za-z0-9_.-]+$/.test(part)) ||
 		branch.split("/").some((part) => !/^[A-Za-z0-9_.-]+$/.test(part))
 	) {
-		throw new SettingsApiError("GitHub 仓库或分支配置格式不合法。", 503);
+		throw new SettingsApiError("文章保存位置填写不正确，请检查后台的保存位置和版本设置。", 503);
 	}
 	return { token, repo, branch };
 }
@@ -189,26 +189,21 @@ function decodeBase64(value: string): string {
 	return new TextDecoder().decode(bytes);
 }
 
-async function githubError(
-	response: Response,
-	operation: string,
-): Promise<string> {
-	let message = "";
-	try {
-		const payload = (await response.clone().json()) as { message?: unknown };
-		if (typeof payload.message === "string") {
-			message = payload.message.trim().slice(0, 180);
-		}
-	} catch {
-		// Keep the HTTP status if GitHub returned a non-JSON body.
+function githubError(response: Response, operation: string): string {
+	const status = response.status;
+	if (status === 401 || status === 403) {
+		return `${operation}失败：后台没有足够权限，请检查保存权限设置。`;
 	}
-	return (
-		operation +
-		"（HTTP " +
-		response.status +
-		"）" +
-		(message ? "：" + message : "")
-	);
+	if (status === 404) {
+		return `${operation}失败：找不到保存位置，请检查后台设置。`;
+	}
+	if (status === 409 || status === 422) {
+		return `${operation}失败：设置可能已被其他操作修改。请重新加载后再保存。`;
+	}
+	if (status === 429) {
+		return `${operation}失败：操作过于频繁，请稍等片刻再试。`;
+	}
+	return `${operation}暂时没有成功，请稍后重试。（错误代码 ${status}）`;
 }
 
 function normalizeLayoutSettings(value: unknown): LayoutSettings {
@@ -229,7 +224,7 @@ function normalizeLayoutSettings(value: unknown): LayoutSettings {
 
 function normalizeSettings(value: unknown): SettingsRecord {
 	if (!value || typeof value !== "object" || Array.isArray(value)) {
-		throw new SettingsApiError("settings.json 必须是 JSON 对象。", 500);
+		throw new SettingsApiError("现有的网站外观设置无法读取。为避免覆盖原有内容，本次没有保存任何更改。", 500);
 	}
 	const raw = value as Record<string, unknown>;
 	const merged = { ...DEFAULT_SETTINGS, ...raw };
@@ -283,12 +278,12 @@ async function readSettings(
 	}
 	if (!response.ok) {
 		throw new SettingsApiError(
-			await githubError(response, "读取 settings.json 失败"),
+			githubError(response, "读取网站外观设置失败"),
 		);
 	}
 	const file = (await response.json()) as GitHubFile;
 	if (!file.sha || typeof file.content !== "string") {
-		throw new SettingsApiError("GitHub 返回的 settings.json 文件数据不完整。");
+		throw new SettingsApiError("没有完整读取网站外观设置，请检查保存位置后再试。");
 	}
 	const rawContent =
 		file.encoding === "base64" ? decodeBase64(file.content) : file.content;
@@ -297,7 +292,7 @@ async function readSettings(
 		parsed = JSON.parse(rawContent);
 	} catch {
 		throw new SettingsApiError(
-			"仓库中的 settings.json 不是有效 JSON，已停止写入以避免覆盖数据。",
+			"网站外观设置的内容无法识别。为避免覆盖原有内容，本次没有保存；请检查设置后再试。",
 			500,
 		);
 	}
@@ -306,7 +301,7 @@ async function readSettings(
 
 function validateMediaUrl(value: unknown, label: string): string {
 	if (typeof value !== "string") {
-		throw new SettingsApiError(label + "必须是字符串。", 400);
+		throw new SettingsApiError(label + "填写内容不正确，请重新填写。", 400);
 	}
 	const trimmed = value.trim();
 	if (trimmed.length > 2048) {
@@ -317,10 +312,10 @@ function validateMediaUrl(value: unknown, label: string): string {
 	try {
 		parsed = new URL(trimmed);
 	} catch {
-		throw new SettingsApiError(label + "必须是完整的 HTTP/HTTPS 链接。", 400);
+		throw new SettingsApiError(label + "请粘贴完整的网址，网址需以 http:// 或 https:// 开头。", 400);
 	}
 	if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-		throw new SettingsApiError(label + "仅支持 HTTP 或 HTTPS 链接。", 400);
+		throw new SettingsApiError(label + "网址需以 http:// 或 https:// 开头。", 400);
 	}
 	return parsed.toString();
 }
@@ -331,7 +326,7 @@ function validateText(
 	maxLength: number,
 ): string {
 	if (typeof value !== "string") {
-		throw new SettingsApiError(label + "必须是字符串。", 400);
+		throw new SettingsApiError(label + "填写内容不正确，请重新填写。", 400);
 	}
 	if (value.length > maxLength) {
 		throw new SettingsApiError(label + "不能超过 " + maxLength + " 个字符。", 400);
@@ -341,13 +336,13 @@ function validateText(
 
 function validateBackgroundColor(value: unknown): string {
 	if (typeof value !== "string") {
-		throw new SettingsApiError("背景颜色必须是字符串。", 400);
+		throw new SettingsApiError("背景颜色填写不正确，请重新选择颜色。", 400);
 	}
 	const color = value.trim();
 	if (!color) return "";
 	if (!/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(color)) {
 		throw new SettingsApiError(
-			"背景颜色只支持 #RGB 或 #RRGGBB 格式；留空则使用主题默认颜色。",
+			"请选择有效的背景颜色；留空会恢复主题默认颜色。",
 			400,
 		);
 	}
@@ -356,7 +351,7 @@ function validateBackgroundColor(value: unknown): string {
 
 function validateAnnouncement(value: unknown): string {
 	if (typeof value !== "string") {
-		throw new SettingsApiError("公告文本必须是字符串。", 400);
+		throw new SettingsApiError("公告内容不正确，请检查后再保存。", 400);
 	}
 	if (value.length > 10000) {
 		throw new SettingsApiError("公告文本不能超过 10000 个字符。", 400);
@@ -366,7 +361,7 @@ function validateAnnouncement(value: unknown): string {
 
 function validateAboutContent(value: unknown): string {
 	if (typeof value !== "string") {
-		throw new SettingsApiError("关于我正文必须是字符串。", 400);
+		throw new SettingsApiError("关于我页面的正文内容不正确，请检查填写内容。", 400);
 	}
 	if (value.length > 30000) {
 		throw new SettingsApiError("关于我正文不能超过 30000 个字符。", 400);
@@ -384,41 +379,56 @@ function validateEmail(value: unknown): string {
 
 function validateBoolean(value: unknown, label: string): boolean {
 	if (typeof value !== "boolean") {
-		throw new SettingsApiError(label + "必须是布尔值 true 或 false。", 400);
+		const labels: Record<string, string> = {
+			showGithub: "是否显示 GitHub 入口",
+			showEmail: "是否显示邮箱入口",
+			showSupportAndShare: "是否显示文章页的支持与分享卡片",
+			showAbout: "是否启用“关于我”页面",
+			showAboutDonation: "是否显示关于我页面的打赏卡片",
+			showNavSocial: "是否显示社交菜单",
+			showNavMy: "是否显示“我的”菜单",
+			showNavLinks: "是否显示链接菜单",
+			showNavAbout: "是否显示“关于”菜单",
+			showSourceGithub: "是否显示文章原文入口",
+			"layoutSettings.sidebarEnabled": "是否在电脑端显示侧栏",
+			"layoutSettings.gridMasonry": "是否根据内容高度错落排列卡片",
+			"layoutSettings.gridCoverFullWidth": "是否让封面铺满卡片宽度",
+		};
+		throw new SettingsApiError((labels[label] || "该显示选项") + "设置无法识别，请重新选择。", 400);
 	}
 	return value;
 }
 
 function applyLayoutSettings(current: LayoutSettings, value: unknown): LayoutSettings {
-  if (!value || typeof value !== "object" || Array.isArray(value)) throw new SettingsApiError("layoutSettings 必须是 JSON 对象。", 400);
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new SettingsApiError("页面布局选项不正确，请重新选择。", 400);
   const input = value as Record<string, unknown>;
   const next: LayoutSettings = { ...current };
   const has = (key: keyof LayoutSettings) => Object.hasOwn(input, key);
   if (has("sidebarEnabled")) next.sidebarEnabled = validateBoolean(input.sidebarEnabled, "layoutSettings.sidebarEnabled");
   if (has("sidebarPosition")) {
-    if (input.sidebarPosition !== "left" && input.sidebarPosition !== "right" && input.sidebarPosition !== "both") throw new SettingsApiError("侧边栏布局必须选择 left、right 或 both。", 400);
+    if (input.sidebarPosition !== "left" && input.sidebarPosition !== "right" && input.sidebarPosition !== "both") throw new SettingsApiError("电脑端侧栏请选择左侧、右侧或两侧显示。", 400);
     next.sidebarPosition = input.sidebarPosition;
   }
   if (has("tabletSidebar")) {
-    if (input.tabletSidebar !== "left" && input.tabletSidebar !== "right") throw new SettingsApiError("平板端侧边栏位置必须选择 left 或 right。", 400);
+    if (input.tabletSidebar !== "left" && input.tabletSidebar !== "right") throw new SettingsApiError("平板端侧边栏请选择左侧或右侧。", 400);
     next.tabletSidebar = input.tabletSidebar;
   }
   if (has("postListMode")) {
-    if (input.postListMode !== "list" && input.postListMode !== "grid") throw new SettingsApiError("桌面文章布局必须选择 list 或 grid。", 400);
+    if (input.postListMode !== "list" && input.postListMode !== "grid") throw new SettingsApiError("电脑端文章列表请选择单列列表或多列卡片布局。", 400);
     next.postListMode = input.postListMode;
   }
   if (has("mobilePostListMode")) {
-    if (input.mobilePostListMode !== "list" && input.mobilePostListMode !== "grid") throw new SettingsApiError("移动端文章布局必须选择 list 或 grid。", 400);
+    if (input.mobilePostListMode !== "list" && input.mobilePostListMode !== "grid") throw new SettingsApiError("手机端文章列表请选择单列列表或多列卡片布局。", 400);
     next.mobilePostListMode = input.mobilePostListMode;
   }
   if (has("coverPosition")) {
-    if (input.coverPosition !== "left" && input.coverPosition !== "right") throw new SettingsApiError("列表封面位置必须选择 left 或 right。", 400);
+    if (input.coverPosition !== "left" && input.coverPosition !== "right") throw new SettingsApiError("文章封面请选择显示在左侧或右侧。", 400);
     next.coverPosition = input.coverPosition;
   }
   if (has("gridMasonry")) next.gridMasonry = validateBoolean(input.gridMasonry, "layoutSettings.gridMasonry");
   if (has("gridCoverFullWidth")) next.gridCoverFullWidth = validateBoolean(input.gridCoverFullWidth, "layoutSettings.gridCoverFullWidth");
   if (has("gridColumnWidth")) {
-    if (typeof input.gridColumnWidth !== "number" || !Number.isInteger(input.gridColumnWidth) || input.gridColumnWidth < 220 || input.gridColumnWidth > 460) throw new SettingsApiError("网格卡片最小宽度必须是 220–460 之间的整数。", 400);
+    if (typeof input.gridColumnWidth !== "number" || !Number.isInteger(input.gridColumnWidth) || input.gridColumnWidth < 220 || input.gridColumnWidth > 460) throw new SettingsApiError("文章卡片宽度请填写 220 到 460 之间的整数。", 400);
     next.gridColumnWidth = input.gridColumnWidth;
   }
   return next;
@@ -514,10 +524,10 @@ async function handleSave(request: Request): Promise<Response> {
 	try {
 		input = await request.json();
 	} catch {
-		return json({ error: "请求正文必须是有效 JSON。" }, 400);
+		return json({ error: "提交的设置内容无法读取，请刷新页面后重试。" }, 400);
 	}
 	if (!input || typeof input !== "object" || Array.isArray(input)) {
-		return json({ error: "请求正文必须是 JSON 对象。" }, 400);
+		return json({ error: "提交的设置内容不完整，请刷新页面后重试。" }, 400);
 	}
 
 	try {
@@ -543,7 +553,7 @@ async function handleSave(request: Request): Promise<Response> {
 			const status =
 				response.status === 409 || response.status === 422 ? 409 : 502;
 			throw new SettingsApiError(
-				await githubError(response, "写入 settings.json 失败"),
+				githubError(response, "保存网站外观设置失败"),
 				status,
 			);
 		}
@@ -551,7 +561,7 @@ async function handleSave(request: Request): Promise<Response> {
 		return json({ ok: true, settings, commitSha: result.commit?.sha ?? null });
 	} catch (error) {
 		const status = error instanceof SettingsApiError ? error.status : 502;
-		const message = error instanceof Error ? error.message : "保存全局配置失败。";
+		const message = error instanceof Error ? error.message : "网站外观设置未能保存。";
 		return json({ error: message }, status);
 	}
 }
@@ -562,7 +572,7 @@ export const GET: APIRoute = async () => {
 		return json(result.settings);
 	} catch (error) {
 		const status = error instanceof SettingsApiError ? error.status : 502;
-		const message = error instanceof Error ? error.message : "读取全局配置失败。";
+		const message = error instanceof Error ? error.message : "暂时无法读取网站外观设置。";
 		return json({ error: message }, status);
 	}
 };

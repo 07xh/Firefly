@@ -131,6 +131,13 @@ export const prerender = false;
 .rich-editor-toolbar button:hover,.rich-editor-toolbar button.is-active { background:#e7f7ed; border-color:#8dc9a1; color:#087a43; }
 .rich-editor-toolbar button:disabled { opacity:.55; cursor:wait; }
 .rich-editor-toolbar .toolbar-divider { width:1px; height:25px; background:#dce5dd; margin:0 2px; }
+.rich-editor-toolbar-group { display:flex; flex:1 1 auto; flex-wrap:wrap; align-items:center; gap:5px; max-width:100%; border:1px solid #dce5dd; border-radius:10px; background:#f0f7f1; padding:3px; }
+.rich-editor-toolbar-group > summary { display:inline-flex; align-items:center; gap:6px; min-height:36px; padding:6px 10px; border:1px solid #dce5dd; border-radius:8px; background:#fff; color:#35443a; font-size:12px; font-weight:650; cursor:pointer; list-style:none; }
+.rich-editor-toolbar-group > summary::-webkit-details-marker { display:none; }
+.rich-editor-toolbar-group > summary::after { content:"＋"; font-size:11px; color:#63816b; }
+.rich-editor-toolbar-group[open] > summary::after { content:"−"; }
+.rich-editor-toolbar-group > summary:focus-visible { outline:2px solid #16834c; outline-offset:2px; }
+.rich-editor-toolbar-group[open] > summary { background:#e7f7ed; border-color:#8dc9a1; }
 .table-editor-tools { display:flex; flex-wrap:wrap; align-items:center; gap:5px; padding:3px 5px; border:1px solid #dce7de; border-radius:10px; background:#f0f7f1; }
 .table-editor-tools[hidden] { display:none!important; }
 .table-editor-tools button { min-height:32px; padding:5px 8px; font-size:11px; }
@@ -236,10 +243,10 @@ export const prerender = false;
 .firefly-prosemirror-content a:hover { color:#075e35; }
 .firefly-prosemirror-content img {
   display:block;
+  width:auto;
   max-width:100%;
-  max-height:520px;
   height:auto;
-  object-fit:contain;
+  max-height:none;
   margin:1.1em auto;
   border-radius:9px;
   background:#f6f8f6;
@@ -249,6 +256,7 @@ export const prerender = false;
 .firefly-prosemirror-content img:hover { box-shadow:0 0 0 3px #16834c33; }
 .rich-editor-toolbar { position:relative; }
 .rich-editor-toolbar button:focus-visible,
+.rich-editor-toolbar-group > summary:focus-visible,
 .table-editor-tools button:focus-visible {
   outline:2px solid #16834c;
   outline-offset:2px;
@@ -303,7 +311,7 @@ export const prerender = false;
 .markdown-preview pre { overflow:auto; background:#f5f8f5; border:1px solid #e3ebe4; padding:14px 16px; border-radius:10px; font:var(--firefly-reading-code-size,13px)/1.75 ui-monospace,SFMono-Regular,monospace; tab-size:2; }
 .markdown-preview code { font:.9em ui-monospace,SFMono-Regular,monospace; background:#f1f5f2; border:1px solid #e8eee9; padding:2px 5px; border-radius:5px; overflow-wrap:anywhere; }
 .markdown-preview pre code { padding:0; border:0; background:transparent; overflow-wrap:normal; }
-.markdown-preview img { display:block; max-width:100%; max-height:520px; height:auto; object-fit:contain; margin:1.1em auto; border-radius:9px; background:#f6f8f6; cursor:zoom-in; }
+.markdown-preview img { display:block; width:auto; max-width:100%; height:auto; max-height:none; margin:1.1em auto; border-radius:9px; background:#f6f8f6; cursor:zoom-in; }
 .markdown-preview table { border-collapse:collapse; min-width:420px; width:100%; max-width:100%; display:block; overflow:auto; margin:1.2em 0; }
 .markdown-preview th,.markdown-preview td { border:1px solid #d8e1d8; padding:9px 11px; text-align:left; vertical-align:top; }
 .markdown-preview th { background:#f1f7f2; font-weight:700; }
@@ -329,9 +337,12 @@ export const prerender = false;
  .firefly-prosemirror-content { min-height:250px; max-width:100%; font-size:var(--firefly-reading-size,16px); line-height:1.9; }
  .firefly-prosemirror-content h1,.markdown-preview h1 { font-size:1.65em; }
  .firefly-prosemirror-content h2,.markdown-preview h2 { font-size:1.4em; }
- .firefly-prosemirror-content img,.markdown-preview img { max-height:360px; }
+ .firefly-prosemirror-content img,.markdown-preview img { max-width:100%; max-height:none; height:auto; }
  .rich-editor-toolbar { gap:5px; padding:7px; }
  .rich-editor-toolbar button { min-height:42px; min-width:42px; padding:6px 8px; }
+ .rich-editor-toolbar-group > summary { min-height:42px; }
+ .rich-editor-toolbar-group[open] { flex:1 1 100%; }
+ .table-editor-tools { flex:1 1 100%; }
  .rich-editor-help { font-size:12px; }
  .markdown-preview { padding:16px; font-size:var(--firefly-reading-size,16px); }
  .field #body:not([hidden]) { min-height:300px; padding:12px; font-size:var(--firefly-reading-source-size,14px); }
@@ -398,6 +409,8 @@ export const prerender = false;
   line-height:1.5;
 }
 @media(max-width:640px) {
+  .rich-editor-toolbar-group { width:auto; }
+  .rich-editor-toolbar-group[open] { width:100%; }
   .editor-reading-controls { gap:6px; padding:8px; }
   .editor-reading-controls__hint { flex:1 0 100%; margin-left:0; }
   .editor-reading-controls button { min-height:40px; min-width:40px; }
@@ -405,9 +418,9 @@ export const prerender = false;
 </style></head>
 <body>
 <header><h1>✦ Firefly 管理后台</h1><div style="display:flex;gap:12px;align-items:center"><a href="/" style="color:#16864f;font-size:13px">返回网站 ↗</a><button class="btn" id="logout" type="button">退出登录</button></div></header>
-<nav class="admin-tabs" role="tablist" aria-label="后台管理模块">
+<nav class="admin-tabs" role="tablist" aria-label="后台功能">
   <button id="tabArticles" class="admin-tab" type="button" role="tab" aria-selected="true" aria-controls="articlesTabPanel">📝 文章管理</button>
-  <button id="tabAppearance" class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="appearanceTabPanel" tabindex="-1">🎨 全局外观配置</button>
+  <button id="tabAppearance" class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="appearanceTabPanel" tabindex="-1">🎨 网站外观与布局</button>
 </nav>
 <main class="wrap">
 <div id="articlesTabPanel" class="articles-grid" role="tabpanel" aria-labelledby="tabArticles">
@@ -429,7 +442,7 @@ export const prerender = false;
     <input
       id="search"
       type="search"
-      placeholder="搜索文章标题或路径…"
+      placeholder="搜索文章…"
       aria-label="搜索文章"
       class="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-800 placeholder:text-gray-400 transition hover:border-gray-300 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
     />
@@ -466,54 +479,63 @@ export const prerender = false;
 </section>
 <section class="min-w-0 rounded-xl border border-gray-200/80 bg-white p-4 shadow-sm"><h2 id="formTitle" style="font-size:16px;margin:0 0 16px">新建文章</h2><form id="editor">
 <div class="field"><label for="title">标题 *</label><input id="title" required maxlength="200"></div>
-<div class="grid"><div class="field"><label for="slug">文件名 *</label><input id="slug" required placeholder="my-post"></div><div class="field"><label for="published">展示发布日期 *</label><input id="published" type="date" required></div></div>
-<div class="grid"><div class="field"><label for="date">定时发布时间（北京时间）</label><input id="date" type="datetime-local" step="60"><small class="muted">留空表示立即生效；填写未来时间后，系统会自动安排重建。</small></div><div class="field"><label for="articlePassword">访问密码（可选）</label><input id="articlePassword" type="password" maxlength="200" autocomplete="new-password" placeholder="留空则不启用密码保护"><small class="muted">输入后，前台将显示密码解锁页面。</small></div></div>
-<div class="field"><label for="passwordHint">密码提示（可选）</label><input id="passwordHint" maxlength="120" placeholder="例如：课程名称"></div>
-<p class="muted" style="color:#b42318">安全提醒：当前 GitHub 仓库是公开的，Markdown 原文和 password 字段都可能被直接读取。现有密码保护只加密构建后的网页，不能保护公开仓库中的原文和密码；不要在此保存真正机密的内容。</p>
-<div class="grid"><div class="field"><label for="category">分类</label><input id="category" maxlength="100"></div><div class="field"><label for="tags">标签（逗号分隔）</label><input id="tags" placeholder="技术, 随笔"></div></div>
-<div class="field"><label for="description">摘要</label><input id="description" maxlength="500"></div>
+<div class="grid"><div class="field"><label for="slug">文章网址名称 *</label><input id="slug" required placeholder="例如：我的第一篇文章"><small>这是文章网址末尾的名称。可以使用中文、字母和数字，也可加连字符或下划线；不必填写完整网址。</small></div><div class="field"><label for="published">文章日期 *</label><input id="published" type="date" required></div></div>
+<div class="grid"><div class="field"><label for="date">计划公开时间（北京时间）</label><input id="date" type="datetime-local" step="60"><small class="muted">留空表示不设置定时公开；选择未来时间后，文章会在该时间自动公开。</small></div><div class="field"><label for="articlePassword">访问密码（可选）</label><input id="articlePassword" type="password" maxlength="200" autocomplete="new-password" placeholder="留空则不启用密码保护"><small class="muted">开启后，访客需要输入密码才能阅读这篇文章。</small></div></div>
+<div class="field"><label for="passwordHint">密码提示（可选）</label><input id="passwordHint" maxlength="120" placeholder="例如：课程名称或老师给出的提示"></div>
+<p class="muted" style="color:#b42318">安全提醒：当前保存文章的 GitHub 项目是公开的，任何人都可能查看其中的文章文件。页面访问密码只能限制网站上的阅读入口，不能隐藏项目文件；请勿保存账号密码、身份证号等机密信息。</p>
+<div class="grid"><div class="field"><label for="category">文章分类</label><input id="category" maxlength="100"></div><div class="field"><label for="tags">文章标签</label><input id="tags" placeholder="技术, 随笔"><small>多个标签用逗号隔开。</small></div></div>
+<div class="field"><label for="description">文章简介（摘要）</label><input id="description" maxlength="500"></div>
 <div class="field">
 <label for="body">文章正文</label>
 <div class="local-recovery-row">
-  <label class="local-recovery-toggle"><input type="checkbox" id="localRecoveryCheck"> <span>启用本地恢复</span></label>
+  <label class="local-recovery-toggle"><input type="checkbox" id="localRecoveryCheck"> <span>自动保留可恢复的草稿副本</span></label>
   <button type="button" id="restoreLocalRecovery" class="btn" hidden disabled>恢复未保存内容</button>
-  <span id="localRecoveryStatus" class="muted" role="status" aria-live="polite">默认关闭。开启后仅在当前浏览器标签页保存未加密文章的恢复副本。</span>
+  <span id="localRecoveryStatus" class="muted" role="status" aria-live="polite">默认关闭。开启后只会保存在当前浏览器中，没有额外加密，也不会上传到网站。</span>
 </div>
 <div class="editor-tabs" role="tablist" aria-label="文章编辑模式">
-<button class="btn active" type="button" id="visualTab" role="tab" aria-selected="true" disabled>可视化编辑器加载中…</button>
-<button class="btn" type="button" id="editorTab" role="tab" aria-selected="false">Markdown 源码</button>
-<button class="btn" type="button" id="previewTab" role="tab" aria-selected="false">预览</button>
+<button class="btn active" type="button" id="visualTab" role="tab" aria-selected="true" disabled>正在准备编辑区…</button>
+<button class="btn" type="button" id="editorTab" role="tab" aria-selected="false" title="需要直接修改特殊排版时使用">编辑原文</button>
+<button class="btn" type="button" id="previewTab" role="tab" aria-selected="false">预览效果</button>
 </div>
-<div class="editor-reading-controls" id="editorReadingControls" aria-label="阅读字号设置">
-  <span class="editor-reading-controls__label">阅读字号</span>
-  <button type="button" id="editorReadingSmaller" aria-label="缩小阅读字号" title="缩小字号">A−</button>
-  <output id="editorReadingSizeValue" aria-live="polite">16 px</output>
-  <button type="button" id="editorReadingLarger" aria-label="放大阅读字号" title="放大字号">A+</button>
+<div class="editor-reading-controls" id="editorReadingControls" aria-label="正文文字大小设置">
+  <span class="editor-reading-controls__label">正文文字大小</span>
+  <button type="button" id="editorReadingSmaller" aria-label="缩小正文文字大小" title="缩小字号">A−</button>
+  <output id="editorReadingSizeValue" aria-live="polite">16 像素</output>
+  <button type="button" id="editorReadingLarger" aria-label="放大正文文字大小" title="放大字号">A+</button>
   <button type="button" id="editorReadingReset" title="恢复默认字号">默认</button>
   <span class="editor-reading-controls__hint">只影响当前标签页的显示，不会修改文章内容</span>
 </div>
 <div id="wysiwygPane" class="rich-editor-shell">
   <div class="rich-editor-toolbar" role="toolbar" aria-label="文章格式工具栏">
     <button type="button" data-editor-action="paragraph" title="普通正文">正文</button>
-    <button type="button" data-editor-action="h1" title="一级标题">H1</button>
-    <button type="button" data-editor-action="h2" title="二级标题">H2</button>
-    <button type="button" data-editor-action="h3" title="三级标题">H3</button>
+    <details class="rich-editor-toolbar-group" data-toolbar-group="text" open>
+      <summary aria-label="展开标题与文字格式">标题与格式</summary>
+      <button type="button" data-editor-action="h1" title="一级标题">一级标题</button>
+      <button type="button" data-editor-action="h2" title="二级标题">二级标题</button>
+      <button type="button" data-editor-action="h3" title="三级标题">三级标题</button>
+      <button type="button" data-editor-action="underline" title="下划线"><u>下划线</u></button>
+      <button type="button" data-editor-action="strike" title="删除线"><s>删除线</s></button>
+    </details>
     <span class="toolbar-divider" aria-hidden="true"></span>
     <button type="button" data-editor-action="bold" title="加粗"><strong>加粗</strong></button>
     <button type="button" data-editor-action="italic" title="斜体"><em>斜体</em></button>
-    <button type="button" data-editor-action="underline" title="下划线"><u>下划线</u></button>
-    <button type="button" data-editor-action="strike" title="删除线"><s>删除线</s></button>
     <span class="toolbar-divider" aria-hidden="true"></span>
-    <button type="button" data-editor-action="bullet" title="无序列表">• 列表</button>
-    <button type="button" data-editor-action="ordered" title="有序列表">1. 列表</button>
+    <button type="button" data-editor-action="bullet" title="插入或取消项目列表">项目列表</button>
+    <button type="button" data-editor-action="ordered" title="插入或取消编号列表">编号列表</button>
     <button type="button" data-editor-action="quote" title="引用">引用</button>
-    <button type="button" data-editor-action="badge" title="插入可直接编辑的徽章组件">徽章</button>
-    <button type="button" data-editor-action="callout" title="插入可编辑提示卡片">提示卡片</button>
-    <button type="button" data-editor-action="code" title="代码块">代码</button>
-    <button type="button" data-editor-action="rule" title="分割线">分割线</button>
+    <details class="rich-editor-toolbar-group" data-toolbar-group="insert" open>
+      <summary aria-label="展开更多内容插入工具">插入内容</summary>
+      <button type="button" data-editor-action="taskList" title="插入待办清单，可通过表单修改事项">待办清单</button>
+      <button type="button" data-editor-action="badge" title="插入可直接编辑的文字标签">文字标签</button>
+      <button type="button" data-editor-action="callout" title="插入可编辑提示卡片">提示卡片</button>
+      <button type="button" data-editor-action="details" title="插入可展开的补充内容，读者可以点击展开或收起">可展开内容</button>
+      <button type="button" data-editor-action="code" title="插入一段代码示例">代码示例</button>
+      <button type="button" data-editor-action="rule" title="插入分隔线">分隔线</button>
+      <button type="button" data-editor-action="checkImages" title="检查正文中的图片能否加载">检查图片</button>
+      <button type="button" data-editor-action="unlink" title="移除选中文字的链接">取消链接</button>
+    </details>
     <span class="toolbar-divider" aria-hidden="true"></span>
-    <button type="button" data-editor-action="link" title="插入或编辑链接">链接</button>
-    <button type="button" data-editor-action="unlink" title="移除链接">取消链接</button>
+    <button type="button" data-editor-action="link" title="给选中文字添加链接；也可填写显示文字来插入新链接">添加链接</button>
     <button type="button" id="wysiwygUpload" title="上传图片">图片</button>
     <input type="file" id="wysiwygFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
     <button type="button" data-editor-action="table" title="选择行数、列数和表头后插入表格">插入表格</button>
@@ -534,45 +556,45 @@ export const prerender = false;
   </div>
   <div id="wysiwygNotice" class="rich-editor-notice" hidden></div>
   <div id="wysiwygEditor" class="rich-editor-canvas"></div>
-  <div class="rich-editor-help">直接输入中文并按回车分段。选中文字后使用工具栏格式化；支持图片粘贴/拖入；点击图片可放大预览，键盘聚焦后按 Enter 或空格也可预览。还支持链接、列表、引用、代码块和表格。包含无法无损转换的 MDX/HTML 特殊语法时，会自动切换回源码模式保护原文。</div>
+  <div class="rich-editor-help">直接输入文字并按回车分段。用工具栏设置标题、加粗、列表、引用和链接；添加链接时可以填写显示文字，不需要手动输入格式标记。图片、表格和其他常用内容也可以通过按钮插入。公式与特殊版式会原样保留。</div>
 </div>
-<div id="wysiwygFallback" hidden>可视化编辑器加载失败，正文将保持原样。你仍可在 Markdown 源码模式下继续编辑。</div>
-<textarea id="body" spellcheck="false" hidden placeholder="在此编辑 Markdown / MDX 源文件。含特殊组件的文章会默认使用源码模式。"></textarea>
-<div id="markdownPreview" class="markdown-preview" hidden><p class="muted">点击“预览”查看当前正文。</p></div>
+<div id="wysiwygFallback" hidden>直接编辑工具暂时不可用，文章原文没有被修改。请刷新页面后重试，也可以选择“编辑原文”继续。</div>
+<textarea id="body" spellcheck="false" hidden placeholder="这里会显示文章原文。通常不需要修改；日常写作请使用“直接编辑正文”。"></textarea>
+<div id="markdownPreview" class="markdown-preview" hidden><p class="muted">点击“预览效果”查看文章发布后的大致样子。</p></div>
 </div>
-<label class="check"><input id="draft" type="checkbox" checked> 草稿箱状态（勾选后保存为草稿；取消勾选可保存已发布文章）</label>
-<div class="actions"><button class="btn" type="button" id="checkGitHub">检查 GitHub 写入权限</button><button class="btn" type="submit" id="saveDraft" value="save">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空表单</button></div>
-</form><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿会将文章写入 GitHub 并触发构建，但保持草稿状态；发布文章会将 draft 设为 false，提交到 GitHub，并跟踪 Cloudflare 部署结果。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看 Cloudflare 部署日志 ↗</a></section>
+<label class="check"><input id="draft" type="checkbox" checked> 暂不公开（勾选后保存到草稿箱；取消勾选后可公开或定时公开）</label>
+<div class="actions"><button class="btn" type="button" id="checkGitHub">检查文章保存功能</button><button class="btn" type="submit" id="saveDraft" value="save">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空填写内容</button></div>
+</form><details id="saveDiagnostics" hidden class="muted" style="margin-top:8px;font-size:12px"><summary style="cursor:pointer">查看排查详情（遇到问题时再打开）</summary><pre id="saveDiagnosticsText" style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;padding:10px;background:#f5f7f5;border-radius:8px"></pre></details><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿后，文章会保存在草稿箱，不会公开显示。发布文章后，网站会自动更新；页面会显示更新进度。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看网站更新记录 ↗</a></section>
 </div>
 <section id="appearanceTabPanel" role="tabpanel" aria-labelledby="tabAppearance" class="settings-panel min-w-0" hidden>
-  <div class="mb-1 text-base font-semibold text-gray-800">全局外观配置</div>
+  <div class="mb-1 text-base font-semibold text-gray-800">网站外观与布局</div>
   <p class="mb-5 text-sm leading-6 text-gray-500">
-    配置统一保存在仓库的 <code class="rounded bg-gray-100 px-1.5 py-0.5 text-xs">src/data/settings.json</code>。
-    保存后会提交到 GitHub，并触发 Cloudflare 构建与部署；原有文章管理和登录保护保持不变。
+    网站外观设置会自动保存在后台；保存后会更新网站。
+    保存后，网站会自动更新；原有文章管理和登录保护保持不变。
   </p>
   <form id="settingsForm" class="settings-cards">
 <section class="settings-card" aria-labelledby="appearanceBannerTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">01</span><div><h3 id="appearanceBannerTitle">全站背景与首页 Banner</h3><p>设置全站页面背景颜色/图片，以及首页顶部 Banner 的标题与副标题。</p></div></div>
+      <div class="settings-card-heading"><span class="settings-card-number">01</span><div><h3 id="appearanceBannerTitle">网站背景与首页横幅</h3><p>设置网站背景颜色或图片，以及首页横幅的主标题和副标题。</p></div></div>
 <div class="settings-grid">
         <div class="settings-field" style="grid-column:1/-1">
-          <label for="backgroundColor">全局背景颜色</label>
+          <label for="backgroundColor">网站背景颜色</label>
           <div class="settings-color-row">
-            <input id="backgroundColorPicker" type="color" value="#f3f6f3" aria-label="选择全局背景颜色" class="settings-color-picker">
-            <input id="backgroundColor" name="backgroundColor" type="text" maxlength="7" autocomplete="off" placeholder="留空使用主题默认颜色，例如 #f3f6f3" class="settings-control">
+            <input id="backgroundColorPicker" type="color" value="#f3f6f3" aria-label="选择网站背景颜色" class="settings-color-picker">
+            <input id="backgroundColor" name="backgroundColor" type="text" maxlength="7" autocomplete="off" placeholder="点击左侧色块选择颜色；清空后恢复默认配色" class="settings-control">
           </div>
-          <small>支持 #RGB 或 #RRGGBB。选择颜色会自动填写色值；清空文本框后保存则恢复主题默认配色。</small>
+          <small>点击左侧色块即可选择颜色；清空后保存会恢复主题默认配色。</small>
         </div>
       </div>
 <div class="settings-grid">
-        <div class="settings-field"><label for="bannerTitle">主标题</label><input id="bannerTitle" name="bannerTitle" type="text" maxlength="200" placeholder="Lovely firefly!" class="settings-control"></div>
-        <div class="settings-field"><label for="bannerSubtitle">副标题</label><input id="bannerSubtitle" name="bannerSubtitle" type="text" maxlength="500" placeholder="In Reddened Chrysalis, I Once Rest" class="settings-control"></div>
+        <div class="settings-field"><label for="bannerTitle">主标题</label><input id="bannerTitle" name="bannerTitle" type="text" maxlength="200" placeholder="例如：欢迎来到我的博客" class="settings-control"></div>
+        <div class="settings-field"><label for="bannerSubtitle">副标题</label><input id="bannerSubtitle" name="bannerSubtitle" type="text" maxlength="500" placeholder="例如：记录学习、生活与技术探索" class="settings-control"></div>
         <div class="settings-field" style="grid-column:1/-1">
-          <label for="backgroundImage">背景图片链接</label>
-          <input id="backgroundImage" name="backgroundImage" type="url" maxlength="2048" autocomplete="url" placeholder="https://example.com/background.jpg" class="settings-control">
+          <label for="backgroundImage">网站背景图片地址</label>
+          <input id="backgroundImage" name="backgroundImage" type="url" maxlength="2048" autocomplete="url" placeholder="粘贴可公开访问的图片网址" class="settings-control">
           <div class="settings-preview" id="backgroundImagePreviewBox">
             <img id="backgroundImagePreview" alt="背景图片缩略预览" hidden>
-            <span id="backgroundImagePreviewEmpty" class="settings-preview-note">填写 HTTP/HTTPS 图片链接后，可在此预览。</span>
-            <span id="backgroundImagePreviewError" class="settings-preview-note" hidden>图片加载失败，请检查链接是否可公开访问。</span>
+            <span id="backgroundImagePreviewEmpty" class="settings-preview-note">填写图片网址后，可在此预览。</span>
+            <span id="backgroundImagePreviewError" class="settings-preview-note" hidden>图片暂时无法显示，请确认网址可以直接打开。</span>
           </div>
           <small>清空时保留主题默认背景图。预览仅用于检查链接是否可访问。</small>
         </div>
@@ -582,22 +604,22 @@ export const prerender = false;
 <section class="settings-card" aria-labelledby="profileAnnouncementTitle">
       <div class="settings-card-heading"><span class="settings-card-number">02</span><div><h3 id="profileAnnouncementTitle">个人名片与公告</h3><p>配置头像、昵称、个人签名和侧栏多行公告。</p></div></div>
 <div class="settings-grid">
-        <div class="settings-field"><label for="avatar">头像链接</label><input id="avatar" name="avatar" type="url" maxlength="2048" placeholder="https://example.com/avatar.png" class="settings-control"></div>
-        <div class="settings-field"><label for="nickname">昵称 / 用户名</label><input id="nickname" name="nickname" type="text" maxlength="120" placeholder="XiaYe" class="settings-control"></div>
+        <div class="settings-field"><label for="avatar">头像图片地址</label><input id="avatar" name="avatar" type="url" maxlength="2048" placeholder="粘贴可公开访问的头像图片网址" class="settings-control"></div>
+        <div class="settings-field"><label for="nickname">网站显示昵称</label><input id="nickname" name="nickname" type="text" maxlength="120" placeholder="例如：萤火客" class="settings-control"></div>
         <div class="settings-field" style="grid-column:1/-1">
           <div class="settings-preview is-avatar" id="avatarPreviewBox">
             <img id="avatarPreview" alt="个人头像预览" hidden>
-            <span id="avatarPreviewEmpty" class="settings-preview-note">填写头像链接后，可在此查看头像预览。</span>
+            <span id="avatarPreviewEmpty" class="settings-preview-note">填写头像图片网址后，可在此查看预览。</span>
             <span id="avatarPreviewError" class="settings-preview-note" hidden>头像加载失败，请确认图片链接可公开访问。</span>
           </div>
         </div>
-        <div class="settings-field" style="grid-column:1/-1"><label for="bio">个人签名 / 简介</label><textarea id="bio" name="bio" rows="3" maxlength="5000" placeholder="Hello, I'm XiaYe." class="settings-control"></textarea><small>最多 5000 个字符。</small></div>
+        <div class="settings-field" style="grid-column:1/-1"><label for="bio">个人介绍</label><textarea id="bio" name="bio" rows="3" maxlength="5000" placeholder="简单介绍一下自己，也可以留空。" class="settings-control"></textarea><small>最多 5000 个字符。</small></div>
       </div>
 <div class="settings-field"><label for="announcement">公告内容</label><textarea id="announcement" name="announcement" rows="4" maxlength="10000" placeholder="欢迎来到我的博客！&#10;更新与通知可以分行填写。" class="settings-control"></textarea><small>最多 10000 个字符，保存时会保留换行。</small></div>
     </section>
 
 <section class="settings-card" aria-labelledby="navVisibilitySettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">03</span><div><h3 id="navVisibilitySettingsTitle">顶部导航栏分类与子菜单显隐</h3><p>统一控制社交、我的、链接和关于四个导航分组。</p></div></div>
+      <div class="settings-card-heading"><span class="settings-card-number">03</span><div><h3 id="navVisibilitySettingsTitle">顶部菜单显示设置</h3><p>选择网站顶部菜单中要显示的分类。</p></div></div>
 <div class="settings-switch-grid">
         <label class="settings-toggle"><input id="showNavSocial" name="showNavSocial" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示“社交”菜单<small>控制友链、留言等菜单分组入口。</small></span></label>
         <label class="settings-toggle"><input id="showNavMy" name="showNavMy" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示“我的”菜单<small>控制动态、项目、相册等菜单分组入口。</small></span></label>
@@ -607,71 +629,71 @@ export const prerender = false;
     </section>
 
 <section class="settings-card" aria-labelledby="aboutDonationSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">04</span><div><h3 id="aboutDonationSettingsTitle">关于我页面与打赏设置</h3><p>编辑 About Me 正文，控制页面访问、打赏模块和二维码。</p></div></div>
+      <div class="settings-card-heading"><span class="settings-card-number">04</span><div><h3 id="aboutDonationSettingsTitle">关于我页面与打赏设置</h3><p>编辑“关于我”页面内容，并设置打赏卡片和二维码。</p></div></div>
 <div class="settings-switch-grid mb-4">
-        <label class="settings-toggle"><input id="showAbout" name="showAbout" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">启用“关于我”页面<small>关闭后 /about/ 会重定向到首页，导航子项也会隐藏。</small></span></label>
+        <label class="settings-toggle"><input id="showAbout" name="showAbout" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">启用“关于我”页面<small>关闭后，访客打开“关于我”页面会回到首页，菜单里的相关入口也会隐藏。</small></span></label>
         <label class="settings-toggle"><input id="showAboutDonation" name="showAboutDonation" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示关于我页面打赏卡片<small>开启后在介绍正文下方显示“支持作者”入口。</small></span></label>
       </div>
       <div class="settings-field">
         <label for="aboutContent">关于我页面正文</label>
-        <textarea id="aboutContent" name="aboutContent" rows="12" maxlength="30000" placeholder="# 关于我 / About Me&#10;&#10;在这里填写个人介绍、关于本站、GitHub 开源地址等内容。" class="settings-control"></textarea>
-        <small>最多 30000 个字符。支持标题、列表、粗体、链接、引用、代码和普通 Markdown 表格；保存后随网站重新部署生效。</small>
+        <textarea id="aboutContent" name="aboutContent" rows="12" maxlength="30000" placeholder="填写个人介绍、网站内容或项目介绍。&#10;&#10;可以直接输入文字，也可以空一行分段。" class="settings-control"></textarea>
+        <small>最多 30000 个字符。可以直接输入文字，也支持标题、列表、加粗、链接、引用和表格；保存后会自动更新到网站。</small>
       </div>
       <div class="settings-field mt-4">
         <label for="donationQrCode">打赏二维码图片链接</label>
-        <input id="donationQrCode" name="donationQrCode" type="url" maxlength="2048" placeholder="https://example.com/donation-qr.png" class="settings-control">
-        <small>填写可公开访问的 HTTP/HTTPS 图片地址；该图片会在关于页面的打赏卡片中显示。</small>
+        <input id="donationQrCode" name="donationQrCode" type="url" maxlength="2048" placeholder="粘贴二维码图片的完整网址（例如 https://…）" class="settings-control">
+        <small>填写可公开访问的图片网址；该图片会显示在“关于我”页面的打赏卡片中。</small>
       </div>
     </section>
 
 <section class="settings-card" aria-labelledby="articleSocialSettingsTitle">
-      <div class="settings-card-heading"><span class="settings-card-number">05</span><div><h3 id="articleSocialSettingsTitle">文章页功能与源码链接</h3><p>管理社交入口、文章页支持与分享卡片、源码链接及背景音乐。</p></div></div>
+      <div class="settings-card-heading"><span class="settings-card-number">05</span><div><h3 id="articleSocialSettingsTitle">文章页面与分享设置</h3><p>管理社交入口、支持与分享卡片、文章原始文件链接及背景音乐。</p></div></div>
 <div class="settings-grid">
-        <div class="settings-field"><label for="githubUrl">GitHub 链接</label><input id="githubUrl" name="githubUrl" type="url" maxlength="2048" placeholder="https://github.com/yourname" class="settings-control"></div>
+        <div class="settings-field"><label for="githubUrl">GitHub 链接</label><input id="githubUrl" name="githubUrl" type="url" maxlength="2048" placeholder="粘贴你的项目主页网址" class="settings-control"></div>
         <div class="settings-field"><label for="email">邮箱地址</label><input id="email" name="email" type="email" maxlength="320" autocomplete="email" placeholder="you@example.com" class="settings-control"></div>
-        <label class="settings-toggle"><input id="showGithub" name="showGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示 GitHub 图标<small>关闭后前台不显示该入口（需组件读取此项）。</small></span></label>
-        <label class="settings-toggle"><input id="showEmail" name="showEmail" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示邮箱图标<small>关闭后前台不显示邮箱入口（需组件读取此项）。</small></span></label>
+        <label class="settings-toggle"><input id="showGithub" name="showGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示 GitHub 图标<small>此项用于控制网站是否显示这个入口；保存后可打开网站确认效果。</small></span></label>
+        <label class="settings-toggle"><input id="showEmail" name="showEmail" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示邮箱图标<small>此项用于控制网站是否显示邮箱入口；保存后可打开网站确认效果。</small></span></label>
       </div>
 <div class="settings-grid settings-grid-one">
         <div class="settings-field">
-          <label for="sourceGithubUrl">原文 / 源码 GitHub 地址</label>
-          <input id="sourceGithubUrl" name="sourceGithubUrl" type="url" maxlength="2048" placeholder="https://github.com/用户名/仓库 或具体文件路径" class="settings-control">
-          <small>填写仓库、Markdown 原文或 GitHub 文件地址均可；必须是完整的 HTTP/HTTPS 链接。</small>
+          <label for="sourceGithubUrl">文章原始文件链接</label>
+          <input id="sourceGithubUrl" name="sourceGithubUrl" type="url" maxlength="2048" placeholder="粘贴项目主页网址，或某篇文章的原文网址" class="settings-control">
+          <small>可以填写项目主页网址，也可以填写某篇文章原始文件的网址。请粘贴完整的网址。</small>
         </div>
-        <label class="settings-toggle"><input id="showSourceGithub" name="showSourceGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示 GitHub 原文 / 源码链接<small>开启后在网站页脚显示；关闭后隐藏，但不会清空上面的地址。</small></span></label>
+        <label class="settings-toggle"><input id="showSourceGithub" name="showSourceGithub" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">显示文章原始文件链接<small>开启后，网站页脚会显示这条链接；关闭后只隐藏入口，不会清空地址。</small></span></label>
       </div>
 <div class="settings-grid settings-grid-one">
         <div class="settings-field">
-          <label for="backgroundMusic">背景音乐外链</label>
-          <input id="backgroundMusic" name="backgroundMusic" type="url" maxlength="2048" placeholder="https://example.com/music.mp3" class="settings-control">
+          <label for="backgroundMusic">背景音乐地址</label>
+          <input id="backgroundMusic" name="backgroundMusic" type="url" maxlength="2048" placeholder="粘贴可直接播放的音乐文件网址" class="settings-control">
           <audio id="backgroundMusicPreview" class="w-full" controls preload="none" hidden></audio>
-          <small>请使用可直接播放的 HTTP/HTTPS 音频地址。这里仅作预览，不会自动播放。</small>
+          <small>请粘贴可以直接播放的音乐文件网址，点击播放键可以先试听；网站不会自动播放。</small>
         </div>
-        <label class="settings-toggle"><input id="showSupportAndShare" name="showSupportAndShare" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">开启文章页“支持与分享”模块<small>关闭后，接入该配置的文章组件应隐藏支持与分享卡片。</small></span></label>
+        <label class="settings-toggle"><input id="showSupportAndShare" name="showSupportAndShare" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">开启文章页“支持与分享”模块<small>用于控制文章页面是否显示“支持与分享”卡片。</small></span></label>
       </div>
     </section>
 
 <section class="settings-card" aria-labelledby="layoutSettingsTitle">
-  <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="layoutSettingsTitle">布局管理与响应式显示</h3><p>配置保存到 settings.json，并由下一次 Cloudflare 构建应用到前台。</p></div></div>
+  <div class="settings-card-heading"><span class="settings-card-number">06</span><div><h3 id="layoutSettingsTitle">页面布局</h3><p>保存后，网站会自动更新并应用这些外观与布局设置。</p></div></div>
   <div class="settings-grid">
-    <div class="settings-field"><label for="layoutSidebarPosition">桌面侧边栏布局</label><select id="layoutSidebarPosition" name="layoutSidebarPosition" class="settings-control"><option value="left">左侧边栏</option><option value="right">右侧边栏</option><option value="both">双侧边栏</option></select><small>单侧布局让正文更宽；双侧布局可同时展示左右辅助信息。</small></div>
+    <div class="settings-field"><label for="layoutSidebarPosition">电脑端侧栏位置</label><select id="layoutSidebarPosition" name="layoutSidebarPosition" class="settings-control"><option value="left">左侧边栏</option><option value="right">右侧边栏</option><option value="both">双侧边栏</option></select><small>单侧布局让正文更宽；双侧布局可同时展示左右辅助信息。</small></div>
     <div class="settings-field"><label for="layoutTabletSidebar">平板端侧边栏位置</label><select id="layoutTabletSidebar" name="layoutTabletSidebar" class="settings-control"><option value="left">平板显示左侧</option><option value="right">平板显示右侧</option></select><small>仅桌面选择“双侧边栏”时有效。</small></div>
-    <div class="settings-field"><label for="layoutPostListMode">桌面文章列表布局</label><select id="layoutPostListMode" name="layoutPostListMode" class="settings-control"><option value="list">列表模式（单列）</option><option value="grid">网格模式（自适应多列）</option></select></div>
-    <div class="settings-field"><label for="layoutMobilePostListMode">移动端文章布局</label><select id="layoutMobilePostListMode" name="layoutMobilePostListMode" class="settings-control"><option value="list">列表模式</option><option value="grid">网格模式</option></select><small>极窄屏幕仍遵循主题可读性保护规则。</small></div>
+    <div class="settings-field"><label for="layoutPostListMode">电脑端文章列表样式</label><select id="layoutPostListMode" name="layoutPostListMode" class="settings-control"><option value="list">列表模式（单列）</option><option value="grid">多列卡片布局（列数随屏幕宽度调整）</option></select></div>
+    <div class="settings-field"><label for="layoutMobilePostListMode">手机端文章列表样式</label><select id="layoutMobilePostListMode" name="layoutMobilePostListMode" class="settings-control"><option value="list">列表模式</option><option value="grid">网格模式</option></select><small>手机屏幕较窄时，网站会优先保证正文易读。</small></div>
     <div class="settings-field"><label for="layoutCoverPosition">列表模式封面位置</label><select id="layoutCoverPosition" name="layoutCoverPosition" class="settings-control"><option value="right">封面在右侧</option><option value="left">封面在左侧</option></select><small>仅影响列表模式；网格封面固定在卡片顶部。</small></div>
-    <div class="settings-field"><label for="layoutGridColumnWidth">网格卡片最小宽度（px）</label><input id="layoutGridColumnWidth" name="layoutGridColumnWidth" type="number" min="220" max="460" step="10" required value="320" class="settings-control"><small>220–460px；数值越小通常可显示更多列。</small></div>
+    <div class="settings-field"><label for="layoutGridColumnWidth">文章卡片最小宽度</label><input id="layoutGridColumnWidth" name="layoutGridColumnWidth" type="number" min="220" max="460" step="10" required value="320" class="settings-control"><small>可填写 220–460 像素；数值越小，同一行通常能显示更多卡片。</small></div>
   </div>
   <div class="settings-switch-grid" style="margin-top:14px">
-    <label class="settings-toggle"><input id="layoutSidebarEnabled" name="layoutSidebarEnabled" type="checkbox" checked><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">启用桌面侧边栏<small>关闭后隐藏左右侧栏列；移动端底部组件仍按原配置处理。</small></span></label>
-    <label class="settings-toggle"><input id="layoutGridMasonry" name="layoutGridMasonry" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">网格瀑布流<small>仅在网格模式生效。</small></span></label>
-    <label class="settings-toggle"><input id="layoutGridCoverFullWidth" name="layoutGridCoverFullWidth" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">网格封面贴边显示<small>开启后封面铺满卡片顶部；关闭则保留内边距。</small></span></label>
+    <label class="settings-toggle"><input id="layoutSidebarEnabled" name="layoutSidebarEnabled" type="checkbox" checked><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">在电脑上显示侧栏<small>关闭后会隐藏电脑端的左右侧栏；手机上的显示方式由其他设置决定。</small></span></label>
+    <label class="settings-toggle"><input id="layoutGridMasonry" name="layoutGridMasonry" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">卡片高低错落排列<small>仅在多列卡片布局中生效，会根据每张卡片的内容高度自动排列，减少空白。</small></span></label>
+    <label class="settings-toggle"><input id="layoutGridCoverFullWidth" name="layoutGridCoverFullWidth" type="checkbox"><span class="settings-toggle-track" aria-hidden="true"></span><span class="settings-toggle-label">封面铺满卡片宽度<small>开启后封面会铺满卡片顶部；关闭后封面四周会留出空白。</small></span></label>
   </div>
 </section>
 
-<div class="settings-save-row" aria-label="全局配置保存操作">
-      <button id="saveSettings" type="submit" class="settings-save-button" disabled>保存全局配置</button>
-      <button id="discardSettings" type="button" class="btn" disabled>放弃未保存修改</button>
-      <span id="settingsDirtyState" class="settings-dirty-state" data-dirty="false" role="status" aria-live="polite">正在读取配置…</span>
+<div class="settings-save-row" aria-label="保存网站外观设置">
+      <button id="saveSettings" type="submit" class="settings-save-button" disabled>保存外观设置</button>
+      <button id="discardSettings" type="button" class="btn" disabled>放弃未保存的修改</button>
+      <span id="settingsDirtyState" class="settings-dirty-state" data-dirty="false" role="status" aria-live="polite">正在读取网站外观设置…</span>
       <span id="settingsStatus" class="settings-status" role="status" aria-live="polite"></span>
     </div>
   </form>
@@ -710,7 +732,7 @@ function updateSettingsDirtyState() {
   const dirty = isSettingsDirty();
   const state = $("settingsDirtyState");
   state.dataset.dirty = String(dirty);
-  state.textContent = !settingsReady ? "配置尚未加载" : dirty ? "有未保存的修改" : "所有修改均已保存";
+  state.textContent = !settingsReady ? "网站外观设置尚未加载" : dirty ? "有未保存的修改" : "所有更改均已保存";
   $("discardSettings").disabled = !dirty || settingsSaving;
   $("saveSettings").disabled = !settingsReady || settingsSaving;
   return dirty;
@@ -749,6 +771,11 @@ window.addEventListener("beforeunload", event => {
 });
 
 function say(s,bad=false){$("status").textContent=s;$("status").style.color=bad?"#b42318":"#657267"}
+function friendlyAdminError(error,fallback){
+ const message=error instanceof Error?error.message.trim():"";
+ if(!message||/failed to fetch|networkerror|network request failed|load failed|fetch failed/i.test(message)||!/[\u3400-\u9fff]/.test(message))return fallback;
+ return message;
+}
 function todayInBeijing() {
  const parts = new Intl.DateTimeFormat("en-CA", { timeZone:"Asia/Shanghai", year:"numeric", month:"2-digit", day:"2-digit" }).formatToParts(new Date());
  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
@@ -780,7 +807,7 @@ function updateSaveButtonLabel() {
  $("saveDraft").textContent = draft ? "保存为草稿" : (hasFutureDate ? "保存定时文章" : (selected ? "保存修改" : "保存并公开"));
 }
 function frontmatterValue(source,key){const match=source.match(new RegExp("^"+key+":\\s*(.*?)\\s*$","m"));if(!match)return "";const raw=match[1].trim();try{const parsed=JSON.parse(raw);if(Array.isArray(parsed))return parsed.map(String).join(", ");if(typeof parsed==="string")return parsed;if(parsed===null)return ""}catch{}if(raw.startsWith("'")&&raw.endsWith("'"))return raw.slice(1,-1).replace(/''/g,"'");return raw}
-async function api(method,data){const r=await fetch("/api/admin/articles/",{method,headers:{"Content-Type":"application/json"},...(data?{body:JSON.stringify(data)}:{})});if(r.status===401){goLogin();throw new Error("登录已过期，正在跳转登录页…")}const d=await r.json().catch(()=>({error:"服务器响应无法解析"}));if(!r.ok)throw new Error(d.error||"请求失败");return d}
+async function api(method,data){const r=await fetch("/api/admin/articles/",{method,headers:{"Content-Type":"application/json"},...(data?{body:JSON.stringify(data)}:{})});if(r.status===401){goLogin();throw new Error("登录已过期，正在返回登录页面…")}const d=await r.json().catch(()=>({error:"后台返回的内容暂时无法读取，请刷新页面后重试。"}));if(!r.ok)throw new Error(d.error||"操作未能完成，请稍后重试。");return d}
 function render(){
  const q=$("search").value.trim().toLowerCase();
  const statusFilter=$("statusFilter").value;
@@ -795,7 +822,7 @@ function render(){
  if(!items.length){
   const empty=document.createElement("p");
   empty.className="rounded-lg px-3 py-8 text-center text-sm text-gray-400";
-  empty.textContent="没有找到文章";
+  empty.textContent="没有找到符合条件的文章";
   list.append(empty);
   return;
  }
@@ -823,12 +850,13 @@ function render(){
 
   const pathRow=document.createElement("span");
   pathRow.className="mt-1 block truncate text-xs font-normal text-gray-400";
-  pathRow.textContent=a.path + " · " + ({draft:"草稿箱",scheduled:"定时发布",published:"已发布"}[articleStatus(a)]);
+  pathRow.textContent=(a.published||"日期未设置") + " · " + ({draft:"草稿箱",scheduled:"定时公开",published:"已公开"}[articleStatus(a)]);
+   pathRow.title="点击文章名称即可打开并编辑";
 
   item.append(titleRow,pathRow);
 
   item.onclick=()=>{
-   if(isArticleDirty()&&!confirm("当前文章有未保存修改，切换文章会丢失这些内容。是否继续？"))return;
+   if(isArticleDirty()&&!confirm("当前文章还有未保存的修改。切换后，这些修改会丢失。确定继续吗？"))return;
    selected=a;
    $("formTitle").textContent="编辑文章";
    $("slug").value=a.path.split("/").pop().replace(/\.mdx?$/,"");
@@ -873,7 +901,7 @@ function render(){
 
   del.onclick=async event=>{
    event.stopPropagation();
-   if(!confirm("确定删除“"+a.title+"”？此操作会提交到 GitHub 并触发部署。"))return;
+   if(!confirm("确定删除“"+a.title+"”？删除后文章会从网站移除，网站也会自动更新。"))return;
    del.disabled=true;
    try{
     await api("DELETE",{path:a.path,sha:a.sha});
@@ -881,7 +909,7 @@ function render(){
     say("文章已删除，正在刷新列表…");
     await refresh();
    }catch(e){
-    say(e.message,true);
+    say(friendlyAdminError(e,"删除文章未能完成，请检查网络后刷新文章列表，再确认删除结果。"),true);
    }finally{
     del.disabled=false;
    }
@@ -891,7 +919,7 @@ function render(){
   list.append(row);
  }
 }
-async function refresh(){try{say("正在读取 GitHub…");articles=await api("GET");render();say("已读取 "+articles.length+" 篇文章")}catch(e){say(e.message,true);$("list").textContent="读取失败，请确认服务端令牌和仓库权限已配置。"}}
+async function refresh(){try{say("正在加载文章列表…");articles=await api("GET");render();say("已显示 "+articles.length+" 篇文章")}catch(e){say("暂时无法读取文章列表，请刷新页面重试。",true);$("list").textContent="加载失败，请刷新页面后重试。"}}
 function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
 function showVisualTab(){
  $("body").hidden=true;$("wysiwygPane").hidden=false;$("markdownPreview").hidden=true;
@@ -900,7 +928,7 @@ function showVisualTab(){
  window.dispatchEvent(new CustomEvent("firefly:mode",{detail:{mode:"visual"}}));
  if(window.FireflyRichEditor?.hasUnsupportedSyntax()){
   showEditorTab();
-  say("当前文章包含 MDX/HTML 特殊语法，已保留源码编辑以避免内容损坏。");
+  say("这篇文章包含暂时无法直接编辑的特殊排版，已切换到“编辑原文”。文章内容没有被改动。");
  }
 }
 function showEditorTab(){
@@ -924,35 +952,58 @@ async function renderMarkdownPreview(){
   const r=await fetch("/api/admin/preview/",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({markdown})});
   if(r.status===401){goLogin();return}
   const d=await r.json().catch(()=>({error:"预览响应无法解析"}));
-  if(!r.ok)throw new Error(d.error||"Markdown 预览失败");
+  if(!r.ok)throw new Error(d.error||"文章预览失败");
   $("markdownPreview").innerHTML=d.html||"<p class=muted>暂无内容</p>";
- }catch(e){$("markdownPreview").textContent=e.message}
+ }catch(e){$("markdownPreview").textContent=friendlyAdminError(e,"暂时无法生成预览，请检查网络后重试；文章原文没有被修改。")}
 }
-async function watchDeployment(sha,attempt=0,successMessage="Cloudflare 部署成功，正式网站已更新。"){try{const r=await fetch("/api/admin/deployment-status/?sha="+encodeURIComponent(sha),{cache:"no-store"});if(r.status===401){goLogin();return}const d=await r.json().catch(()=>({error:"无法读取部署状态"}));if(!r.ok)throw new Error(d.error||"暂时无法查询部署状态");if(d.url){$("deployLink").href=d.url;$("deployLink").hidden=false}if(d.status==="success"){say(successMessage);return}if(d.status==="failure"){say("Cloudflare 部署失败，请打开部署日志检查。",true);return}if(attempt>=24){say("文章已提交到 GitHub，但部署仍未确认；可查看最新工作流日志。");return}say(d.status==="running"?"文章已提交，Cloudflare 正在构建/部署…":"文章已提交，正在等待 Cloudflare 部署启动…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}catch(e){if(attempt>=24){say("文章已提交到 GitHub，但仍无法确认部署状态："+e.message,true);return}say("正在查询 Cloudflare 部署状态…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}}
+async function watchDeployment(sha,attempt=0,successMessage="网站已更新。"){try{const r=await fetch("/api/admin/deployment-status/?sha="+encodeURIComponent(sha),{cache:"no-store"});if(r.status===401){goLogin();return}const d=await r.json().catch(()=>({error:"暂时无法读取网站更新状态。"}));if(!r.ok)throw new Error("暂时无法确认网站是否更新");if(d.url){$("deployLink").href=d.url;$("deployLink").hidden=false}if(d.status==="success"){say(successMessage);return}if(d.status==="failure"){say("网站更新失败，请查看更新记录。",true);return}if(attempt>=24){say("文章已保存，但网站是否更新还没有确认。可以查看“网站更新记录”。");return}say(d.status==="running"?"文章已保存，网站正在更新…":"文章已保存，正在等待网站开始更新…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}catch(e){if(attempt>=24){say("文章已保存，但暂时无法确认网站是否更新。请打开“网站更新记录”查看进度。",true);return}say("正在确认网站是否更新…");setTimeout(()=>watchDeployment(sha,attempt+1,successMessage),12000)}}
 async function checkGitHubPermission(){
- const button=$("checkGitHub");
- button.disabled=true;
- const originalText=button.textContent;
- button.textContent="检测中…";
- say("正在用 Worker 当前配置的 Token 检查 GitHub 权限，不会创建文章…");
- try{
-  const response=await fetch("/api/admin/github-check/",{cache:"no-store"});
-  const data=await response.json().catch(()=>({message:"诊断接口返回了无法解析的响应"}));
-  const pieces=[
-   "阶段："+(data.stage||"unknown"),
-   "GitHub HTTP："+(data.githubStatus??response.status),
-   data.result?"结果："+data.result:"",
-   data.githubMessage||data.message||"",
-   data.requestId?"GitHub Request ID："+data.requestId:"",
-   data.acceptedPermissions?"GitHub accepted permissions："+data.acceptedPermissions:""
-  ].filter(Boolean);
-  say(pieces.join("；"),Boolean(!data.ok));
- }catch(error){
-  say("无法运行 GitHub 权限诊断："+(error instanceof Error?error.message:String(error)),true);
- }finally{
-  button.disabled=false;
-  button.textContent=originalText;
- }
+  const button=$("checkGitHub");
+  button.disabled=true;
+  const originalText=button.textContent;
+  button.textContent="正在检查保存功能…";
+  say("正在检查文章是否可以保存，不会改动现有文章…");
+  const detail=$("saveDiagnostics");
+  const detailText=$("saveDiagnosticsText");
+  if(detail) detail.hidden=true;
+  try{
+    const response=await fetch("/api/admin/github-check/",{cache:"no-store"});
+    const data=await response.json().catch(()=>({message:"后台暂时没有返回可读取的检查结果。"}));
+    const summary = data.ok && data.result==="authorized_for_write_probe"
+      ? "检查成功：后台可以访问文章存放位置，并具备保存权限。本次检查没有创建或修改文件。"
+      : data.stage==="configuration"
+        ? "后台保存功能尚未完成配置。请检查后台的文章保存设置后再试。"
+        : data.stage==="repository_access"
+          ? "暂时无法访问文章存放位置。请检查保存位置名称和访问权限。"
+          : data.stage==="branch_access"
+            ? "暂时无法找到文章保存版本。请检查后台的文章保存设置。"
+            : data.result==="write_forbidden"
+              ? "后台能读取文章，但目前不能保存修改。请检查文章保存权限；更新相关设置后，需要重新发布后台才能生效。"
+              : data.result==="token_rejected"
+                ? "后台用于保存文章的授权信息无效或已过期。请更新授权信息，再重新发布后台。"
+                : data.stage==="network"
+                  ? "暂时无法连接文章保存服务，请检查网络后重试。"
+                  : "暂时无法确认文章保存权限。请稍后重试；也可以展开查看排查详情（遇到问题时再打开）。";
+    const diagnostics={
+      "检查进度":data.stage||"未知",
+      "检查结果":data.result||"无",
+      "保存位置":data.repo||"未返回",
+      "文章保存版本":data.branch||"未返回",
+      "服务返回编号":data.githubStatus??response.status,
+      "补充说明":data.githubMessage||data.message||"",
+      "本次检查编号":data.requestId||"",
+      "已确认的保存权限":data.acceptedPermissions||""
+    };
+    if(detailText) detailText.textContent=Object.entries(diagnostics).filter(([,value])=>value!=="").map(([key,value])=>key+"："+value).join("\n");
+    if(detail) detail.hidden=false;
+    if(!data.ok) console.warn("[Firefly] 文章保存检查未通过",data);
+    say(summary,!data.ok);
+  }catch(error){
+    say("暂时无法检查文章保存功能，请检查网络后重试。",true);
+  }finally{
+    button.disabled=false;
+    button.textContent=originalText;
+  }
 }
 function setAdminTab(tab){
  const showArticles=tab==="articles";
@@ -1015,12 +1066,12 @@ async function loadSettings(){
  const status=$("settingsStatus");
  $("settingsForm").inert = true;
  updateSettingsDirtyState();
- status.textContent="正在读取全局配置…";status.style.color="#657267";
+ status.textContent="正在加载网站外观设置…";status.style.color="#657267";
  try{
   const response=await fetch("/api/admin/settings/",{credentials:"same-origin",cache:"no-store"});
   if(response.status===401){goLogin();return}
-  const data=await response.json().catch(()=>({error:"配置接口返回无法解析的响应"}));
-  if(!response.ok)throw new Error(data.error||"读取全局配置失败");
+  const data=await response.json().catch(()=>({error:"后台暂时没有返回可读取的设置内容。"}));
+  if(!response.ok)throw new Error("暂时无法加载网站外观设置，请刷新页面后重试。");
   for(const id of ["bannerTitle","bannerSubtitle","backgroundImage","backgroundColor","avatar","nickname","bio","announcement","githubUrl","email","backgroundMusic","aboutContent","sourceGithubUrl","donationQrCode"]){
    $(id).value=typeof data[id]==="string"?data[id]:"";
   }
@@ -1048,10 +1099,10 @@ async function loadSettings(){
   updateImagePreview();updateAvatarPreview();updateMusicPreview();
   $("settingsForm").inert = false;
   markSettingsSaved();
-  status.textContent="已加载仓库中的配置。";
+  status.textContent="网站外观设置已加载。";
  }catch(error){
   $("settingsForm").inert = !settingsReady;
-  status.textContent=error instanceof Error?error.message:"读取全局配置失败。";status.style.color="#b42318";
+  status.textContent="暂时无法加载网站外观设置，请刷新页面后重试。";status.style.color="#b42318";
   updateSettingsDirtyState();
  }
 }
@@ -1059,15 +1110,15 @@ async function watchSettingsDeployment(sha,attempt=0){
  try{
   const response=await fetch("/api/admin/deployment-status/?sha="+encodeURIComponent(sha),{credentials:"same-origin",cache:"no-store"});
   if(response.status===401){goLogin();return}
-  const data=await response.json().catch(()=>({error:"无法读取部署状态"}));
-  if(!response.ok)throw new Error(data.error||"无法查询部署状态");
-  if(data.status==="success"){$("settingsStatus").textContent="配置已保存，正式网站部署成功。";$("settingsStatus").style.color="#12884f";return}
-  if(data.status==="failure"){$("settingsStatus").textContent="配置已写入 GitHub，但部署失败，请查看工作流日志。";$("settingsStatus").style.color="#b42318";return}
-  if(attempt>=20){$("settingsStatus").textContent="配置已保存到 GitHub，部署仍未确认；可稍后检查 Actions。";return}
-  $("settingsStatus").textContent="配置已保存，正在等待正式网站构建与部署…";
+  const data=await response.json().catch(()=>({error:"暂时无法读取网站更新状态。"}));
+  if(!response.ok)throw new Error("暂时无法确认网站是否已更新。");
+  if(data.status==="success"){$("settingsStatus").textContent="网站外观设置已保存并生效。";$("settingsStatus").style.color="#12884f";return}
+  if(data.status==="failure"){$("settingsStatus").textContent="设置已保存，但网站暂时没有更新成功。请查看“网站更新记录”。";$("settingsStatus").style.color="#b42318";return}
+  if(attempt>=20){$("settingsStatus").textContent="设置已保存，但网站是否更新还没有确认。可以查看“网站更新记录”。";return}
+  $("settingsStatus").textContent="网站外观设置已保存，正在应用更改…";
   setTimeout(()=>watchSettingsDeployment(sha,attempt+1),12000);
  }catch(error){
-  if(attempt>=20){$("settingsStatus").textContent="配置已保存，但暂时无法确认部署状态："+(error instanceof Error?error.message:"未知错误");return}
+  if(attempt>=20){$("settingsStatus").textContent="网站设置已保存，但暂时无法确认网站是否更新。";return}
   setTimeout(()=>watchSettingsDeployment(sha,attempt+1),12000);
  }
 }
@@ -1082,13 +1133,13 @@ $("date").addEventListener("change", () => {
 });
 $("discardSettings").onclick=async()=>{
  if(!isSettingsDirty())return;
- if(!confirm("放弃未保存的全局配置修改，并重新读取 GitHub 中已保存的配置吗？"))return;
+ if(!confirm("要放弃尚未保存的网站设置，并恢复上次保存的内容吗？"))return;
  await loadSettings();
 };
 $("settingsForm").addEventListener("submit",async event=>{
  event.preventDefault();
  const status=$("settingsStatus");
- if(!settingsReady||settingsSaving){status.textContent="配置尚未成功读取，已阻止保存，避免覆盖仓库中的现有设置。";status.style.color="#b42318";return}
+ if(!settingsReady||settingsSaving){status.textContent="外观设置还没有成功加载，因此暂时不能保存，以免覆盖原有设置。";status.style.color="#b42318";return}
  const values={
   bannerTitle:$("bannerTitle").value,
   bannerSubtitle:$("bannerSubtitle").value,
@@ -1126,43 +1177,43 @@ $("settingsForm").addEventListener("submit",async event=>{
    gridCoverFullWidth:$("layoutGridCoverFullWidth").checked
   }
  };
- if(values.backgroundColor&&!/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(values.backgroundColor)){status.textContent="背景颜色只支持 #RGB 或 #RRGGBB；留空可恢复主题默认颜色。";status.style.color="#b42318";$("backgroundColor").focus();return}
- for(const [key,label] of [["backgroundImage","背景图片"],["avatar","头像"],["githubUrl","GitHub 链接"],["backgroundMusic","背景音乐"],["sourceGithubUrl","GitHub 原文/源码链接"],["donationQrCode","打赏二维码图片"]]){
-  if(values[key]&&!checkedExternalUrl(values[key])){status.textContent=label+"请填写完整的 HTTP/HTTPS 链接。";status.style.color="#b42318";$(key).focus();return}
+ if(values.backgroundColor&&!/^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(values.backgroundColor)){status.textContent="背景颜色无法识别。请重新选一个颜色，或清空后使用主题默认颜色。";status.style.color="#b42318";$("backgroundColor").focus();return}
+ for(const [key,label] of [["backgroundImage","背景图片"],["avatar","头像"],["githubUrl","GitHub 链接"],["backgroundMusic","背景音乐"],["sourceGithubUrl","文章原始文件链接"],["donationQrCode","打赏二维码图片"]]){
+  if(values[key]&&!checkedExternalUrl(values[key])){status.textContent=label+"请粘贴完整的网址，网址需以 http:// 或 https:// 开头。";status.style.color="#b42318";$(key).focus();return}
  }
  if(values.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)){status.textContent="请填写有效的邮箱地址。";status.style.color="#b42318";$("email").focus();return}
- settingsSaving=true;updateSettingsDirtyState();status.style.color="#657267";status.textContent="正在保存到 GitHub…";
+ settingsSaving=true;updateSettingsDirtyState();status.style.color="#657267";status.textContent="正在保存网站外观设置…";
  try{
   const response=await fetch("/api/admin/settings/",{method:"PUT",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(values)});
   if(response.status===401){goLogin();return}
-  const data=await response.json().catch(()=>({error:"保存接口返回无法解析的响应"}));
-  if(!response.ok)throw new Error(data.error||"保存全局配置失败");
+  const data=await response.json().catch(()=>({error:"后台暂时没有返回可读取的保存结果。"}));
+  if(!response.ok)throw new Error(data.error||"暂时无法保存网站外观设置，请稍后重试。");
   markSettingsSaved();
-  status.textContent="配置已写入 GitHub，正在触发部署…";
+  status.textContent="网站外观设置已保存，正在应用更改…";
   if(data.commitSha)watchSettingsDeployment(data.commitSha);
-  else status.textContent="配置已保存，但接口未返回提交号，暂时无法跟踪部署。";
+  else status.textContent="设置已保存，但暂时无法确认网站是否更新。";
  }catch(error){
-  status.textContent=error instanceof Error?error.message:"保存全局配置失败。";status.style.color="#b42318";
+  status.textContent=friendlyAdminError(error,"这次保存没有顺利完成。请检查网络后重试；如果不确定是否保存成功，请重新读取当前设置后再决定是否重试。");status.style.color="#b42318";
  }finally{settingsSaving=false;updateSettingsDirtyState()}
 });
 
 $("checkGitHub").onclick=checkGitHubPermission;
 $("logout").onclick=async()=>{
  if(hasUnsavedChanges()&&!confirm("当前有未保存修改，继续退出会丢失这些内容。是否退出？"))return;
- try{const r=await fetch("/api/admin/auth/",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});if(!r.ok)throw new Error("退出登录失败，请刷新后重试");allowAdminNavigation=true;location.assign("/admin/login/")}catch(e){say(e.message,true)}
+ try{const r=await fetch("/api/admin/auth/",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"});if(!r.ok)throw new Error("退出登录暂时没有成功，请刷新页面后重试。");allowAdminNavigation=true;location.assign("/admin/login/")}catch(e){say(friendlyAdminError(e,"操作没有顺利完成，请检查网络后重试。"),true)}
 };
 $("new").onclick=()=>{
- if(isArticleDirty()&&!confirm("当前文章有未保存修改，进入新建文章会清空这些内容。是否继续？"))return;
- reset();setAdminTab("articles");say("已进入新建文章模式，请填写标题、文件名和正文。");
+ if(isArticleDirty()&&!confirm("当前文章还有未保存的修改。新建文章会清空当前内容，确定继续吗？"))return;
+ reset();setAdminTab("articles");say("已进入新建文章页面，请填写标题、网址名称和正文。");
  $("editor").scrollIntoView({behavior:"smooth",block:"start"});$("title").focus({preventScroll:true});
 };
-$("reset").onclick=()=>{if(isArticleDirty()&&!confirm("清空当前文章表单？未保存的修改将丢失。"))return;reset();say("文章表单已清空。")};
+$("reset").onclick=()=>{if(isArticleDirty()&&!confirm("要清空当前文章吗？尚未保存的修改会丢失。"))return;reset();say("文章填写内容已清空。")};
 $("refresh").onclick=refresh;$("search").oninput=render;$("statusFilter").onchange=render;
 $("visualTab").onclick=showVisualTab;$("editorTab").onclick=showEditorTab;$("previewTab").onclick=renderMarkdownPreview;$("body").addEventListener("input",()=>{if(!$("markdownPreview").hidden)renderMarkdownPreview()});
 // Save is handled by the single four-stage handler below. Keeping one submit
 // listener prevents duplicate GitHub writes from competing event handlers.
 
-$("delete").onclick=async()=>{if(!selected||!confirm("确定删除 "+selected.title+"？此操作会提交到 GitHub。"))return;$("delete").disabled=true;try{await api("DELETE",{path:selected.path,sha:selected.sha});say("文章已删除");reset();await refresh()}catch(e){say(e.message,true)}finally{$("delete").disabled=false}};
+$("delete").onclick=async()=>{if(!selected||!confirm("确定删除“"+selected.title+"”？删除后文章会从网站移除。"))return;$("delete").disabled=true;try{await api("DELETE",{path:selected.path,sha:selected.sha});say("文章已删除");reset();await refresh()}catch(e){say(friendlyAdminError(e,"操作没有顺利完成，请检查网络后重试。"),true)}finally{$("delete").disabled=false}};
 reset();refresh();loadSettings();
 /* Firefly admin editor enhancements: image paste/drop, filters, accessible delete modal, deployment stages. */
 (() => {
@@ -1238,7 +1289,7 @@ reset();refresh();loadSettings();
   // Accessible second-confirmation modal. A rejected request leaves the article untouched.
   const dialog = document.createElement("dialog");
   dialog.className = "firefly-delete-dialog";
-  dialog.innerHTML = '<form method="dialog" class="firefly-delete-card"><div aria-hidden="true" style="display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#fff0ef;color:#b42318;font-weight:900;font-size:22px">!</div><h2>确认删除文章？</h2><p>删除会提交到 GitHub 并触发 Cloudflare 重新部署。后台不能直接撤销，但可通过 Git 历史恢复。</p><p id="fireflyDeleteTarget" style="padding:9px 11px;border-radius:8px;background:#f7f8f7"></p><div class="firefly-delete-actions"><button type="submit" value="cancel" class="btn">取消</button><button type="submit" value="confirm" class="btn danger">确认删除</button></div></form>';
+  dialog.innerHTML = '<form method="dialog" class="firefly-delete-card"><div aria-hidden="true" style="display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#fff0ef;color:#b42318;font-weight:900;font-size:22px">!</div><h2>确认删除文章？</h2><p>删除后，这篇文章会从网站移除，网站也会自动更新。此操作无法在后台撤销；如需找回，需要从项目的历史版本中恢复。</p><p id="fireflyDeleteTarget" style="padding:9px 11px;border-radius:8px;background:#f7f8f7"></p><div class="firefly-delete-actions"><button type="submit" value="cancel" class="btn">取消</button><button type="submit" value="confirm" class="btn danger">确认删除</button></div></form>';
   document.body.append(dialog);
   function confirmDelete(target) {
     $("fireflyDeleteTarget").textContent = target;
@@ -1266,11 +1317,11 @@ reset();refresh();loadSettings();
       const result = await api("DELETE", { path: article.path, sha: article.sha });
       window.dispatchEvent(new CustomEvent("firefly:clear-recovery", { detail: { path: article.path } }));
       if (selected?.path === article.path) reset();
-      say("阶段 2/4：删除已提交到 GitHub。" + (result.commitSha ? " Commit SHA：" + result.commitSha : ""));
+      say("文章已删除，正在更新网站…");
       await refresh();
       if (result.commitSha) watchDeployment(result.commitSha, 0, false);
     } catch (error) {
-      say(error instanceof Error ? error.message : "删除失败", true);
+      say(friendlyAdminError(error,"删除文章未能完成，请检查网络后刷新文章列表，再确认删除结果。"), true);
     } finally {
       button.disabled = false;
     }
@@ -1289,32 +1340,32 @@ reset();refresh();loadSettings();
       say("图片格式不支持，仅接受 PNG、JPEG、WebP 和 GIF。", true); return;
     }
     if (file.size < 1 || file.size > 4 * 1024 * 1024) {
-      say("图片必须大于 0 且不超过 4 MiB，请压缩后重试。", true); return;
+      say("图片不能为空，大小不能超过约 4.2 MB，请压缩后重试。", true); return;
     }
     const marker = "![上传中...](__firefly_upload_" + crypto.randomUUID() + "__)";
     insertAtCursor(marker);
     const form = new FormData();
     form.append("file", file, file.name || "pasted-image.png");
-    say("图片正在上传到 GitHub，上传期间请勿删除正文中的占位符…");
+    say("图片还在保存中，请先保留文章里的“上传中”图片标记，完成后再调整位置。");
     try {
       const response = await fetch("/api/admin/upload/", { method: "POST", body: form, credentials: "same-origin" });
       if (response.status === 401) { goLogin(); throw new Error("登录已过期，请重新登录。"); }
       const data = await response.json().catch(() => ({ error: "图片上传接口响应无法解析" }));
-      if (!response.ok) throw new Error(data.error || "图片上传失败");
+      if (!response.ok) throw new Error(data.error || "图片未能保存，请稍后重试。");
       const alt = (file.name || "图片").replace(/[\[\]\n\r]/g, " ").trim().slice(0, 100) || "图片";
       const markdown = "![" + alt + "](" + data.imageUrl + ")";
       const field = $("body");
-      if (!field.value.includes(marker)) throw new Error("图片已上传，但占位符不见了。请手动插入：" + data.imageUrl);
+      if (!field.value.includes(marker)) throw new Error("图片已保存，但编辑区找不到原来的插入位置。请切换到“编辑原文”，再插入这张图片的网址：" + data.imageUrl);
       field.value = field.value.replace(marker, markdown);
       field.dispatchEvent(new Event("input", { bubbles: true }));
-      say("图片上传成功并已插入 Markdown。图片 Commit SHA：" + (data.commitSha || "未返回"));
+      say("图片已插入正文。点击“保存草稿”或“发布文章”后，网站才会显示这张图片。");
     } catch (error) {
       const field = $("body");
       if (field.value.includes(marker)) {
         field.value = field.value.replace(marker, "");
         field.dispatchEvent(new Event("input", { bubbles: true }));
       }
-      say(error instanceof Error ? error.message : "图片上传失败", true);
+      say(friendlyAdminError(error,"图片未能保存，请检查网络后重试；如果不确定图片是否已保存，请先检查再重新上传。"), true);
     }
   }
   $("body")?.addEventListener("paste", event => {
@@ -1338,13 +1389,13 @@ reset();refresh();loadSettings();
   // Four-stage deployment status, with explicit commit and site verification links.
   const links = document.createElement("div");
   links.className = "mt-2 flex flex-wrap gap-3";
-  links.innerHTML = '<a id="enhancedCommitLink" class="deploy-link" target="_blank" rel="noopener noreferrer" hidden>查看 GitHub Commit ↗</a><a id="enhancedSiteLink" class="deploy-link" target="_blank" rel="noopener noreferrer" hidden>打开线上网站验证 ↗</a>';
+  links.innerHTML = '<a id="enhancedCommitLink" class="deploy-link" target="_blank" rel="noopener noreferrer" hidden>查看本次保存记录 ↗</a><a id="enhancedSiteLink" class="deploy-link" target="_blank" rel="noopener noreferrer" hidden>打开网站检查效果 ↗</a>';
   $("deployLink")?.insertAdjacentElement("afterend", links);
   watchDeployment = async function(sha, attempt = 0, isDraft = false, isScheduled = false) {
     try {
       const response = await fetch("/api/admin/deployment-status/?sha=" + encodeURIComponent(sha), { cache: "no-store" });
       if (response.status === 401) { goLogin(); return; }
-      const data = await response.json().catch(() => ({ error: "无法读取部署状态" }));
+      const data = await response.json().catch(() => ({ error: "暂时无法读取网站更新状态。" }));
       if (!response.ok) throw new Error(data.error || "暂时无法查询部署状态");
       const commit = $("enhancedCommitLink");
       commit.href = "https://github.com/07xh/Firefly/commit/" + encodeURIComponent(sha);
@@ -1358,19 +1409,19 @@ reset();refresh();loadSettings();
           $("enhancedSiteLink").hidden = false;
         }
         say(isDraft
-          ? "阶段 4/4：Cloudflare 构建与部署成功；文章仍为草稿，普通访客不可见。"
+          ? "草稿已保存，网站构建成功；文章暂不对访客公开。"
           : isScheduled
-            ? "阶段 4/4：定时配置部署成功；当前部署不会提前公开文章，到期后由定时工作流触发再次构建。"
-            : "阶段 4/4：Cloudflare 构建与部署成功。请打开线上网站验证最终展示。");
+            ? "定时发布已设置成功。文章会在指定时间更新，不会提前公开。"
+            : "文章发布成功，网站已更新。请打开网站检查最终显示。");
         return;
       }
-      if (data.status === "failure") { say("阶段 3/4：Cloudflare 构建/部署失败，请打开部署日志检查。", true); return; }
-      if (attempt >= 24) { say("阶段 3/4：GitHub 已写入，但部署仍未确认；请查看工作流日志。"); return; }
-      say("阶段 3/4：" + (data.status === "running" ? "Cloudflare 正在构建/部署…" : "正在等待 Cloudflare 构建启动…") + " Commit SHA：" + sha);
+      if (data.status === "failure") { say("网站更新失败，请打开“查看网站更新记录”查看原因。", true); return; }
+      if (attempt >= 24) { say("文章已保存，但网站是否更新暂未确认。可以查看网站更新记录。"); return; }
+      say(data.status === "running" ? "文章已保存，网站正在更新…" : "文章已保存，正在等待网站更新开始…");
       setTimeout(() => watchDeployment(sha, attempt + 1, isDraft, isScheduled), 12000);
     } catch (error) {
-      if (attempt >= 24) { say("阶段 3/4：已写入 GitHub，但无法确认部署状态：" + (error?.message || "未知错误"), true); return; }
-      say("阶段 3/4：正在查询 Cloudflare 部署状态…");
+      if (attempt >= 24) { say("文章已保存，但暂时无法确认网站是否更新。请打开“网站更新记录”查看进度。", true); return; }
+      say("正在确认网站是否更新…");
       setTimeout(() => watchDeployment(sha, attempt + 1, isDraft, isScheduled), 12000);
     }
   };
@@ -1387,20 +1438,20 @@ reset();refresh();loadSettings();
     const published = $("published").value;
     const rawSchedule = $("date").value.trim();
     let date = mode === "publish" ? "" : fromBeijingDateTimeLocal(rawSchedule);
-    if (!title || title.length > 200) { say("阶段 1/4：标题不能为空且最多 200 个字符。", true); $("title").focus(); return; }
-    if (!selected && !/^[\p{L}\p{N}][\p{L}\p{N}_-]{0,79}$/u.test(slug)) { say("阶段 1/4：文件名须以字母或数字开头，且仅包含字母、数字、连字符或下划线；支持中文。", true); $("slug").focus(); return; }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(published) || Number.isNaN(Date.parse(published + "T00:00:00Z"))) { say("阶段 1/4：请选择有效的发布日期。", true); $("published").focus(); return; }
-    if (rawSchedule && mode !== "publish" && !date) { say("阶段 1/4：定时发布时间无效，请重新选择。", true); $("date").focus(); return; }
-    if ($("body").value.length > 500000) { say("阶段 1/4：正文超过 500 KB 限制。", true); return; }
+    if (!title || title.length > 200) { say("请填写标题，最多 200 个字符。", true); $("title").focus(); return; }
+    if (!selected && !/^[\p{L}\p{N}][\p{L}\p{N}_-]{0,79}$/u.test(slug)) { say("文章网址名称请以中文、字母或数字开头；之后可使用中文、字母、数字、连字符或下划线。", true); $("slug").focus(); return; }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(published) || Number.isNaN(Date.parse(published + "T00:00:00Z"))) { say("请选择有效的发布日期。", true); $("published").focus(); return; }
+    if (rawSchedule && mode !== "publish" && !date) { say("定时发布时间无效，请重新选择。", true); $("date").focus(); return; }
+    if ($("body").value.length > 500000) { say("正文内容过长，暂时无法保存。请删减一些内容后重试。", true); return; }
     if (mode === "publish" && !window.confirm("直接发布会立即公开文章，并清除定时发布时间。确定继续吗？")) return;
     if (mode === "publish") $("date").value = "";
     const isDraft = mode === "publish" ? false : $("draft").checked;
     $("draft").checked = isDraft;
     const password = $("articlePassword").value;
     const passwordHint = $("passwordHint").value;
-    if (password.length > 200 || passwordHint.length > 120) { say("阶段 1/4：密码最多 200 个字符，密码提示最多 120 个字符。", true); return; }
+    if (password.length > 200 || passwordHint.length > 120) { say("访问密码最多 200 个字符，密码提示最多 120 个字符。", true); return; }
     if (date && Date.parse(date) <= Date.now() && !isDraft && mode !== "publish") {
-      say("阶段 1/4：所选发布时间已到，请直接发布或选择未来时间。", true); $("date").focus(); return;
+      say("所选发布时间已经过去，请直接发布或重新选择未来时间。", true); $("date").focus(); return;
     }
     const metadata = {
       title, published, date, password, passwordHint,
@@ -1412,10 +1463,10 @@ reset();refresh();loadSettings();
       : { ...metadata, slug, body: $("body").value };
     const buttons = [$("saveDraft"), $("publish")];
     buttons.forEach(button => button.disabled = true);
-    say("阶段 1/4：本地表单校验通过，正在准备 GitHub 写入…");
+    say("填写内容已检查，正在保存文章…");
     try {
       const result = await api(selected ? "PUT" : "POST", data);
-      if (!result.commitSha) throw new Error("GitHub 已响应，但未返回 Commit SHA，无法跟踪部署。请刷新列表确认写入结果。");
+      if (!result.commitSha) throw new Error("保存请求已提交，但系统未返回保存记录。请刷新文章列表确认是否保存成功。");
       const scheduled = !isDraft && Boolean(date && Date.parse(date) > Date.now());
       const savedPath = selected?.path || ("src/content/posts/" + slug + ".md");
       window.dispatchEvent(new CustomEvent("firefly:save-complete", { detail: { path: savedPath, slug } }));
@@ -1424,12 +1475,12 @@ reset();refresh();loadSettings();
       const commit = $("enhancedCommitLink");
       commit.href = result.commitUrl || ("https://github.com/07xh/Firefly/commit/" + encodeURIComponent(result.commitSha));
       commit.hidden = false;
-      if (isDraft) say("阶段 2/4：已成功写入 GitHub，文章保留在草稿箱。Commit SHA：" + result.commitSha);
-      else if (scheduled) say("阶段 2/4：定时文章已写入 GitHub，等待指定时间到达后自动重建。Commit SHA：" + result.commitSha);
-      else say("阶段 2/4：已成功写入 GitHub。Commit SHA：" + result.commitSha);
+      if (isDraft) say("文章已保存到草稿箱，正在确认网站状态…");
+      else if (scheduled) say("文章已保存，系统会在指定时间自动更新网站。");
+      else say("文章已保存，正在更新网站…");
       watchDeployment(result.commitSha, 0, isDraft, scheduled);
     } catch (error) {
-      say(error instanceof Error ? error.message : "保存文章失败。", true);
+      say(friendlyAdminError(error,"文章暂时未能保存。请检查网络后刷新文章列表，确认是否保存成功，再决定是否重试，避免重复创建。"), true);
     } finally {
       buttons.forEach(button => button.disabled = false);
     }
@@ -1462,7 +1513,7 @@ reset();refresh();loadSettings();
         "--firefly-reading-code-size",
         Math.max(12, Math.min(16, readingSize - 3)) + "px",
       );
-      if (sizeOutput) sizeOutput.textContent = readingSize + " px";
+      if (sizeOutput) sizeOutput.textContent = readingSize + " 像素";
       if (smallerButton) smallerButton.disabled = readingSize <= minReadingSize;
       if (largerButton) largerButton.disabled = readingSize >= maxReadingSize;
       if (persist) {
@@ -1496,4 +1547,4 @@ reset();refresh();loadSettings();
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=20261018-editor-reading-controls"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=20261019-natural-copy-3"></script></body></html>

@@ -15,7 +15,7 @@ export const prerender = false;
 		<main class="card">
 			<h1>✦ Firefly 管理后台</h1>
 			<p class="sub">
-				请输入管理员密码以继续。登录会创建安全的服务端会话，不使用 Cloudflare Access。
+				请输入管理员密码以继续。登录状态由网站安全管理，不会把密码保存在此页面。
 			</p>
 			<form id="loginForm">
 				<label for="password">管理员密码</label>
@@ -31,7 +31,7 @@ export const prerender = false;
 				<button id="submit" class="button" type="submit">登录</button>
 				<p id="status" class="status" role="status" aria-live="polite"></p>
 			</form>
-			<div class="foot">会话有效期为 8 小时。请勿在公共设备上保存密码。</div>
+			<div class="foot">登录状态会保持 8 小时。请勿在公共设备上保存密码。</div>
 		</main>
 		<script>
 			const form = document.querySelector<HTMLFormElement>("#loginForm");
@@ -71,7 +71,7 @@ export const prerender = false;
 			form.addEventListener("submit", async (event) => {
 				event.preventDefault();
 				submit.disabled = true;
-				status.textContent = "正在验证…";
+				status.textContent = "正在验证登录信息…";
 				try {
 					const response = await fetch("/api/auth/login/", {
 						method: "POST",
@@ -81,7 +81,10 @@ export const prerender = false;
 					});
 					const data = await response
 						.json()
-						.catch(() => ({ error: "服务器响应无法解析（HTTP " + response.status + "）。请检查后台 API 路由和 Worker 部署。" }));
+						.catch(() => {
+						console.warn("[Firefly] 登录响应无法解析", response.status);
+						return { error: "登录服务暂时没有正常回应（编号 " + response.status + "），请刷新页面后重试。" };
+					});
 					if (!response.ok) throw new Error(data.error || "登录失败。");
 					location.assign(destination());
 				} catch (error) {

@@ -1,7 +1,88 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { readFileSync } from "node:fs";
 
-import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "../public/admin-visual-preview.js";
+import { describeProtectedSyntax, inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "../public/admin-visual-preview.js";
+import { normalizeEditorLinkAddress } from "../public/admin-link-utils.js";
+import { getAdminImagePreviewUrl, resolveRepositoryImagePath } from "../public/admin-image-preview-utils.js";
+
+test("后台日常提示使用自然中文，技术诊断默认不直接打扰编辑者", () => {
+  const adminPage = readFileSync(new URL("../src/pages/admin/index.astro", import.meta.url), "utf8");
+  const editorScript = readFileSync(new URL("../public/admin-wysiwyg.js", import.meta.url), "utf8");
+  const settingsApi = readFileSync(new URL("../src/pages/api/admin/settings.ts", import.meta.url), "utf8");
+  const articlesApi = readFileSync(new URL("../src/pages/api/admin/articles.ts", import.meta.url), "utf8");
+  const loginPage = readFileSync(new URL("../src/pages/admin/login.astro", import.meta.url), "utf8");
+  const loginApi = readFileSync(new URL("../src/pages/api/auth/login.ts", import.meta.url), "utf8");
+
+  assert.match(adminPage, /检查文章保存功能/);
+  assert.match(adminPage, /网站外观与布局/);
+  assert.match(adminPage, /正文文字大小/);
+  assert.match(adminPage, /文章卡片最小宽度/);
+  assert.match(adminPage, /卡片高低错落排列/);
+  assert.match(adminPage, /查看排查详情（遇到问题时再打开）/);
+  assert.match(adminPage, /function friendlyAdminError/);
+  assert.match(adminPage, /保存外观设置/);
+  assert.doesNotMatch(adminPage, /保存全局配置|配置尚未加载/);
+  assert.match(adminPage, /查看排查详情/);
+  assert.match(adminPage, /文章已保存，网站正在更新/);
+  assert.match(adminPage, /文章网址名称请以中文、字母或数字开头/);
+  assert.doesNotMatch(adminPage, /文件名请以|正文内容超过 500 KB/);
+  assert.match(editorScript, /图片上传未能完成，请检查网络后重试/);
+  assert.match(adminPage, /pathRow\.textContent=\(a\.published\|\|"日期未设置"\)/);
+  assert.doesNotMatch(adminPage, /高级模式|GitHub HTTP|GitHub Request ID|accepted permissions/);
+  assert.doesNotMatch(editorScript, /高级模式|Tiptap 模块无法加载|CDN 拦截/);
+  assert.match(editorScript, /临时备份/);
+  assert.match(adminPage, /自动保留可恢复的草稿副本/);
+  assert.doesNotMatch(adminPage, /pathRow\.title="文章保存位置："/);
+  assert.match(adminPage, /文章原始文件链接/);
+  assert.match(loginPage, /登录状态由网站安全管理/);
+  assert.doesNotMatch(loginPage, /Cloudflare Access|API 路由|Worker 部署/);
+  assert.match(loginApi, /后台登录功能尚未完成配置/);
+  assert.doesNotMatch(loginApi, /Worker 密码 Secret|KV 绑定|登录接口处理失败/);
+  assert.match(settingsApi, /后台还没有完成文章保存设置/);
+  assert.match(settingsApi, /现有的网站外观设置无法读取/);
+  assert.match(settingsApi, /电脑端文章列表请选择单列列表或多列卡片布局/);
+  assert.doesNotMatch(settingsApi, /Worker 未配置|settings\.json 必须是 JSON 对象|left、right 或 both/);
+  assert.match(articlesApi, /权限问题。请检查文章保存设置后重试/);
+  assert.doesNotMatch(articlesApi, /Internal error|Invalid article path|GitHub 写入失败/);
+});
+
+test("相对图片预览路径按文章源文件目录解析，不按后台地址解析", () => {
+  assert.equal(
+    resolveRepositoryImagePath("src/content/posts/firefly.md", "./images/1.avif"),
+    "src/content/posts/images/1.avif",
+  );
+  assert.equal(
+    resolveRepositoryImagePath("src/content/posts/guide/firefly-layout-system.md", "../images/left-list.avif"),
+    "src/content/posts/images/left-list.avif",
+  );
+  assert.equal(
+    getAdminImagePreviewUrl("src/content/posts/firefly.md", "./images/1.avif"),
+    "/api/admin/image-preview/?path=src%2Fcontent%2Fposts%2Fimages%2F1.avif",
+  );
+  assert.equal(
+    resolveRepositoryImagePath("src/content/posts/firefly.md", "./images/a%20b.webp?width=2#preview"),
+    "src/content/posts/images/a b.webp",
+  );
+});
+
+test("相对图片预览拒绝外部地址、非图片与越界路径", () => {
+  const article = "src/content/posts/guide/firefly-layout-system.md";
+  for (const source of [
+    "https://example.com/image.png",
+    "//example.com/image.png",
+    "/images/image.png",
+    "data:image/png;base64,AAAA",
+    "#section",
+    "../../../../../secrets.png",
+    "./readme.md",
+    "./images/%2F%2Fevil.png",
+    "./images/%ZZ.avif",
+  ]) {
+    assert.equal(resolveRepositoryImagePath(article, source), null, source);
+    assert.equal(getAdminImagePreviewUrl(article, source), null, source);
+  }
+});
 
 test("Firefly Badge component renders as a safe visual preview model", () => {
   const model = inspectProtectedMarkdown('前言 <Badge type="tip">新功能</Badge> 后记', "MDX component");
@@ -55,11 +136,21 @@ test("extended callouts, task lists, math, and iframe have safe preview models",
   assert.equal(embed.host, "example.com");
 });
 
-test("unknown syntax becomes a safe component summary without evaluating expressions", () => {
+test("折叠内容可通过中文表单结构化编辑并保持原文格式", () => {
+  const raw = serializeEditableDetails({ title: "更多信息", body: "这里是补充内容。" });
+  assert.equal(raw, "<details>\n<summary>更多信息</summary>\n这里是补充内容。\n</details>");
+  const model = inspectProtectedMarkdown(raw, "HTML or theme tag");
+  assert.equal(model.kind, "details");
+  assert.equal(model.title, "更多信息");
+  assert.equal(model.text, "这里是补充内容。");
+  assert.equal(model.editable, true);
+});
+
+test("陌生的特殊内容使用易懂名称展示，且不会执行其中代码", () => {
   const raw = "<UnknownWidget run={dangerousFunction()}>原始说明</UnknownWidget>";
   const model = inspectProtectedMarkdown(raw, "MDX component");
   assert.equal(model.kind, "component");
-  assert.equal(model.title, "UnknownWidget");
+  assert.equal(model.title, "特殊内容模块");
   assert.equal(model.text, "原始说明");
   assert.doesNotMatch(JSON.stringify(model), /dangerousFunction/);
 });
@@ -148,7 +239,7 @@ test("structured serializer rejects nested markup, expressions, and invalid comp
   assert.throws(() => serializeEditableStepTimeline({ kind: "timeline" }, [
     { date: "2026", title: "Okay", text: "Details.", icon: "unknown" },
   ]), /图标名称/);
-  assert.throws(() => serializeEditableStepTimeline({ kind: "steps" }, []), /1 到 30 项/);
+  assert.throws(() => serializeEditableStepTimeline({ kind: "steps" }, []), /1 到 30 个步骤或时间点/);
 });
 
 
@@ -208,7 +299,7 @@ test("TabGroup serializer rejects unsafe labels, languages, and oversized conten
   assert.throws(() => serializeEditableTabGroup({ kind: "tabs" }, [{ title: 'bad"label', language: "js", text: "x" }]), /标签名称/);
   assert.throws(() => serializeEditableTabGroup({ kind: "tabs" }, [{ title: "JS", language: "{run()}", text: "x" }]), /代码语言/);
   assert.throws(() => serializeEditableTabGroup({ kind: "tabs" }, [{ title: "JS", language: "js", text: "x".repeat(50001) }]), /50000/);
-  assert.throws(() => serializeEditableTabGroup({ kind: "tabs" }, []), /1 到 20 项/);
+  assert.throws(() => serializeEditableTabGroup({ kind: "tabs" }, []), /1 到 20 个之间/);
 });
 
 
@@ -251,7 +342,7 @@ test("callout serializer round-trips type, title, and multiline plain text", () 
 });
 
 test("callout serializer rejects unsupported types and Markdown/MDX bodies", () => {
-  assert.throws(() => serializeEditableCallout({ kind: "callout" }, { type: "script", title: "", body: "普通文字" }), /有效的提示容器类型/);
+  assert.throws(() => serializeEditableCallout({ kind: "callout" }, { type: "script", title: "", body: "普通文字" }), /有效的提示样式/);
   assert.throws(() => serializeEditableCallout({ kind: "callout" }, { type: "tip", title: "标题", body: "**加粗**" }), /纯文本/);
   assert.throws(() => serializeEditableCallout({ kind: "callout" }, { type: "tip", title: "", body: "::: nested" }), /纯文本/);
 });
@@ -340,4 +431,64 @@ test("details serializer validates title and body to protect Markdown/MDX", () =
   assert.throws(() => serializeEditableDetails({ title: "", body: "普通文字" }), /标题不能为空/);
   assert.throws(() => serializeEditableDetails({ title: "标题", body: "**加粗**" }), /纯文本/);
   assert.throws(() => serializeEditableDetails({ title: "标题", body: ":::tip nested" }), /纯文本/);
+});
+
+
+test("internal syntax reasons are shown to writers as plain Chinese", () => {
+  assert.equal(describeProtectedSyntax("LaTeX display math"), "数学公式");
+  assert.equal(describeProtectedSyntax("LaTeX inline math"), "含公式的正文");
+  assert.equal(describeProtectedSyntax("Callout with extended Markdown/MDX"), "提示卡片");
+  assert.equal(describeProtectedSyntax("Task list"), "待办清单");
+  assert.equal(describeProtectedSyntax("MDX component"), "特殊内容组件");
+  assert.equal(describeProtectedSyntax("HTML or theme tag"), "特殊版式内容");
+  assert.equal(describeProtectedSyntax("MDX import/export"), "组件引用设置");
+  assert.equal(describeProtectedSyntax("unrecognized internal label"), "特殊内容");
+});
+
+
+test("structured editor validation messages use plain Chinese rather than syntax jargon", () => {
+  assert.throws(
+    () => serializeEditableStepTimeline({ kind: "steps" }, [{ title: "示例", text: "{runCode()}" }]),
+    error => error instanceof Error && /正文不能为空/.test(error.message) && !/Markdown|MDX/.test(error.message),
+  );
+  assert.throws(
+    () => serializeEditableCallout({ kind: "callout" }, { type: "tip", title: "提示", body: "**加粗**" }),
+    error => error instanceof Error && /纯文本/.test(error.message) && !/Markdown|MDX|源码/.test(error.message),
+  );
+  assert.throws(
+    () => serializeEditableTaskList([{ checked: false, text: "**加粗**" }]),
+    error => error instanceof Error && /纯文字/.test(error.message) && !/Markdown|MDX/.test(error.message),
+  );
+  assert.throws(
+    () => serializeEditableDetails({ title: "标题", body: "**加粗**" }),
+    error => error instanceof Error && /纯文本/.test(error.message) && !/Markdown|MDX|源码/.test(error.message),
+  );
+});
+
+
+test("visual editor accepts safe web, email, phone, and in-site links", () => {
+  assert.equal(normalizeEditorLinkAddress(" https://example.com/guide?q=1 "), "https://example.com/guide?q=1");
+  assert.equal(normalizeEditorLinkAddress("http://example.com"), "http://example.com/");
+  assert.equal(normalizeEditorLinkAddress("mailto:editor@example.com?subject=Hello"), "mailto:editor@example.com?subject=Hello");
+  assert.equal(normalizeEditorLinkAddress("tel:+1 (555) 012-3456"), "tel:+1(555)012-3456");
+  assert.equal(normalizeEditorLinkAddress("/posts/guide/"), "/posts/guide/");
+  assert.equal(normalizeEditorLinkAddress("../guide/"), "../guide/");
+  assert.equal(normalizeEditorLinkAddress("#introduction"), "#introduction");
+});
+
+test("visual editor rejects unsafe or malformed link addresses", () => {
+  for (const address of [
+    "",
+    "javascript:alert(1)",
+    "data:text/html,<script>alert(1)</script>",
+    "//external.example/path",
+    "https://",
+    "mailto:",
+    "tel:hello",
+    "https://example.com/with\nnewline",
+    'https://example.com/" onclick="alert(1)',
+    "/" + "a".repeat(2048),
+  ]) {
+    assert.equal(normalizeEditorLinkAddress(address), null, `expected rejection for ${JSON.stringify(address)}`);
+  }
 });

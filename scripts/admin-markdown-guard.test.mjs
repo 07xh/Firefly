@@ -219,3 +219,38 @@ test("普通 Markdown 表格保留为可视化编辑内容，不被包装成源�
   assert.equal(result.records.length, 0);
   assert.equal(result.markdown, source);
 });
+
+
+test("multiple protected formulas and special components survive marker restoration without reordering", () => {
+  const inlineFormula = "欧拉公式 $e^{i\\pi} + 1 = 0$ 是例子。";
+  const customDirective = ":::spoiler[保留说明]\n保留 **原始格式**。\n:::";
+  const dynamicComponent = '<Badge type={badgeType}>动态标签</Badge>';
+  const blockFormula = "$$\n\\frac{a}{b} + \\sqrt{x}\n$$";
+  const source = [
+    "前言。",
+    "",
+    inlineFormula,
+    "",
+    customDirective,
+    "",
+    dynamicComponent,
+    "",
+    blockFormula,
+    "",
+    "后记。",
+  ].join("\n");
+
+  const prepared = prepareMarkdownForVisualEditing(source);
+  const restored = restoreProtectedMarkdown(prepared.markdown, prepared.records);
+  const expectedBlocks = [inlineFormula, customDirective, dynamicComponent, blockFormula];
+
+  for (const raw of expectedBlocks) {
+    assert.equal(prepared.records.some(record => record.raw === raw), true, raw);
+    assert.equal(restored.includes(raw), true, raw);
+  }
+  assert.doesNotMatch(restored, /FIREFLYRAWBLOCK\d+END/);
+  const positions = expectedBlocks.map(raw => restored.indexOf(raw));
+  assert.deepEqual(positions, [...positions].sort((a, b) => a - b));
+  assert.ok(restored.indexOf("前言。") < positions[0]);
+  assert.ok(restored.indexOf("后记。") > positions.at(-1));
+});
