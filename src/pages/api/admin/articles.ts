@@ -31,22 +31,26 @@ function getConfig(): { token: string; repo: string; branch: string } {
 	const token = env?.FIREFLY_CONTENTS_TOKEN?.trim();
 	const repo = env?.GITHUB_CONTENTS_REPO?.trim() || "07xh/Firefly";
 	const branch = env?.GITHUB_CONTENTS_BRANCH?.trim() || "master";
-	if (!token) throw new Error("FIREFLY_CONTENTS_TOKEN is not configured");
-	if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error("Invalid repository configuration");
+	if (!token) throw new Error("文章保存功能尚未完成配置，请检查后台设置。");
+	if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) throw new Error("文章保存位置设置不正确，请检查后台配置。");
 	return { token, repo, branch };
 }
 
-async function githubFailure(response: Response, operation: string): Promise<string> {
-	let message = "";
-	try {
-		const payload = (await response.clone().json()) as { message?: unknown };
-		if (typeof payload.message === "string") {
-			message = payload.message.replace(/\s+/g, " ").trim().slice(0, 240);
-		}
-	} catch {
-		// GitHub may return a non-JSON error body; keep the HTTP status either way.
+function githubFailure(response: Response, operation: string): string {
+	const status = response.status;
+	if (status === 401 || status === 403) {
+		return `${operation}。后台没有足够权限完成这次操作，请检查文章保存权限设置。（错误代码 ${status}）`;
 	}
-	return `${operation} (${response.status})${message ? `：${message}` : ""}`;
+	if (status === 404) {
+		return `${operation}。找不到对应的文章文件或保存位置，请刷新文章列表后重试。（错误代码 404）`;
+	}
+	if (status === 409 || status === 422) {
+		return `${operation}。文章可能已被修改，或同名文章已经存在；请刷新列表确认后再试。（错误代码 ${status}）`;
+	}
+	if (status === 429) {
+		return `${operation}。操作过于频繁，请稍等片刻再试。（错误代码 429）`;
+	}
+	return `${operation}（错误代码 ${status}），请稍后重试。`;
 }
 
 function json(data: unknown, status = 200): Response {
@@ -89,14 +93,14 @@ function replaceFrontmatterField(frontmatter: string, key: string, value: string
 
 function updateFrontmatterField(content: string, key: string, value: string): string {
 	const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-	if (!match) throw new Error("未找到有效的 frontmatter，无法保存文章元数据");
+	if (!match) throw new Error("没有找到有效的文章信息区，无法保存标题、日期等信息");
 	const updated = replaceFrontmatterField(match[1], key, value);
 	return content.replace(match[0], "---\n" + updated + "\n---");
 }
 
 function removeFrontmatterField(content: string, key: string): string {
 	const match = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-	if (!match) throw new Error("未找到有效的 frontmatter，无法保存文章元数据");
+	if (!match) throw new Error("没有找到有效的文章信息区，无法保存标题、日期等信息");
 	const field = new RegExp("^" + key + ":\\s*.*$", "m");
 	const updated = match[1].split(/\r?\n/).filter((line) => !field.test(line)).join("\n");
 	return content.replace(match[0], "---\n" + updated + "\n---");
@@ -189,9 +193,9 @@ async function github(path: string, config: ReturnType<typeof getConfig>, init?:
 async function findPostFiles(config: ReturnType<typeof getConfig>): Promise<GitHubEntry[]> {
 	const response = await github(`git/trees/${encodeURIComponent(config.branch)}?recursive=1`, config);
 
-	if (!response.ok) throw new Error(await githubFailure(response, "读取 GitHub 文章列表失败"));
+	if (!response.ok) throw new Error(githubFailure(response, "读取 GitHub 文章列表失败"));
 	const data = (await response.json()) as { tree?: GitHubEntry[]; truncated?: boolean };
-	if (data.truncated) throw new Error("Repository tree is truncated; refusing an incomplete article list");
+	if (data.truncated) throw new Error("文章列表未能完整读取。为避免漏掉文章或误操作，请稍后刷新重试。");
 	return (data.tree ?? []).filter((entry) =>
 		entry.type === "blob" &&
 		entry.path.startsWith(ROOT) &&
@@ -201,11 +205,11 @@ async function findPostFiles(config: ReturnType<typeof getConfig>): Promise<GitH
 
 async function readPost(path: string, config: ReturnType<typeof getConfig>): Promise<{ path: string; sha: string; content: string }> {
 	if (!path.startsWith(ROOT) || !/^src\/content\/posts\/(?:[\p{L}\p{N}_-]+\/)*[\p{L}\p{N}_-]+\.mdx?$/u.test(path)) {
-		throw new Error("Invalid article path");
+		throw new Error("文章地址不正确，请从左侧列表重新选择文章。");
 	}
 	const response = await github(`contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(config.branch)}`, config);
 
-	if (!response.ok) throw new Error(await githubFailure(response, "读取 GitHub 文章失败"));
+	if (!response.ok) throw new Error(githubFailure(response, "读取 GitHub 文章失败"));
 	const file = (await response.json()) as { sha: string; content: string; encoding: string; path: string };
 	return { path: file.path, sha: file.sha, content: file.encoding === "base64" ? decodeBase64(file.content) : file.content };
 }
@@ -236,7 +240,7 @@ export const GET: APIRoute = async () => {
 		}));
 		return json(posts.sort((a, b) => b.published.localeCompare(a.published)));
 	} catch (error) {
-		return json({ error: error instanceof Error ? error.message : "Internal error" }, 503);
+		return json({ error: error instanceof Error ? error.message : "暂时无法完成操作，请稍后重试。" }, 503);
 	}
 };
 
@@ -246,7 +250,7 @@ export const POST: APIRoute = async ({ request }) => {
 		const input = (await request.json()) as Record<string, unknown>;
 		const slug = safeSlug(input.slug);
 		const extension = input.extension === "mdx" ? "mdx" : "md";
-		if (!slug) return json({ error: "slug 仅允许字母、数字、连字符和下划线" }, 400);
+		if (!slug) return json({ error: "文章网址名称请以中文、字母或数字开头；之后可使用中文、字母、数字、连字符或下划线，最多 80 个字符。" }, 400);
 		const path = `${ROOT}${slug}.${extension}`;
 		const content = makeMarkdown({ ...input, slug });
 		if (!content) return json({ error: "标题、发布日期或正文格式不合法" }, 400);
@@ -257,11 +261,11 @@ export const POST: APIRoute = async ({ request }) => {
 
 		if (response.status === 422) return json({ error: "同名文章已存在" }, 409);
 
-		if (!response.ok) return json({ error: await githubFailure(response, "GitHub 写入失败") }, 502);
+		if (!response.ok) return json({ error: githubFailure(response, "GitHub 写入失败") }, 502);
 		const written = (await response.json()) as { commit?: { sha?: string; html_url?: string } };
 		return json({ ok: true, path, commitSha: written.commit?.sha, commitUrl: written.commit?.html_url }, 201);
 	} catch (error) {
-		return json({ error: error instanceof Error ? error.message : "Internal error" }, 503);
+		return json({ error: error instanceof Error ? error.message : "暂时无法完成操作，请稍后重试。" }, 503);
 	}
 };
 
@@ -272,7 +276,7 @@ export const PUT: APIRoute = async ({ request }) => {
 		const path = typeof input.path === "string" ? input.path : "";
 		if (!path.startsWith(ROOT) || !/^src\/content\/posts\/(?:[\p{L}\p{N}_-]+\/)*[\p{L}\p{N}_-]+\.mdx?$/u.test(path)) return json({ error: "文章路径不合法" }, 400);
 		const current = await readPost(path, config);
-		if (typeof input.sha !== "string" || input.sha !== current.sha) return json({ error: "文章已被其他操作修改，请刷新后重试" }, 409);
+		if (typeof input.sha !== "string" || input.sha !== current.sha) return json({ error: "这篇文章刚刚被更新过。为避免覆盖新内容，请刷新列表并重新打开文章。" }, 409);
 		const slug = path.split("/").pop()?.replace(/\.mdx?$/, "") ?? "";
 		let content = typeof input.rawContent === "string" ? input.rawContent : makeMarkdown({ ...input, slug });
 		if (!content || content.length > 500_000 || (typeof input.rawContent === "string" && !/^---\r?\n/.test(content))) {
@@ -280,7 +284,7 @@ export const PUT: APIRoute = async ({ request }) => {
 		}
 		if (typeof input.rawContent === "string") {
 			const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
-			if (!frontmatter) return json({ error: "未找到有效的 frontmatter，无法保存文章元数据" }, 400);
+			if (!frontmatter) return json({ error: "没有找到有效的文章信息区，无法保存标题、日期等信息" }, 400);
 			const title = typeof input.title === "string" ? input.title.trim() : "";
 			if (!title || title.length > 200) return json({ error: "标题不能为空且不能超过 200 个字符" }, 400);
 			if (!validDate(input.published)) return json({ error: "发布日期格式不正确" }, 400);
@@ -289,7 +293,7 @@ export const PUT: APIRoute = async ({ request }) => {
 			const scheduleDate = typeof input.date === "string" ? input.date.trim() : "";
 			const password = typeof input.password === "string" ? input.password : "";
 			const passwordHint = typeof input.passwordHint === "string" ? input.passwordHint.slice(0, 120) : "";
-			if (!validScheduleDate(scheduleDate)) return json({ error: "定时发布时间必须包含时区，例如 2026-10-20T09:00:00+08:00" }, 400);
+			if (!validScheduleDate(scheduleDate)) return json({ error: "计划公开时间不正确，请重新选择时间后再保存" }, 400);
 			if (password.length > 200) return json({ error: "访问密码不能超过 200 个字符" }, 400);
 			const tags = Array.isArray(input.tags)
 				? input.tags.filter((tag): tag is string => typeof tag === "string").slice(0, 20).map((tag) => tag.trim().slice(0, 50)).filter(Boolean)
@@ -319,16 +323,16 @@ export const PUT: APIRoute = async ({ request }) => {
 		});
 
 		if (!response.ok) {
-			const message = await githubFailure(response, "GitHub 更新失败");
+			const message = githubFailure(response, "GitHub 更新失败");
 			if (response.status === 409 || response.status === 422) {
-				return json({ error: "GitHub 检测到并发修改或内容冲突。当前编辑内容仍保留，请重新载入最新版本后比较再保存。", detail: message }, 409);
+				return json({ error: "这篇文章在你编辑期间发生了变化。为避免覆盖新内容，你当前的编辑内容仍会保留；请重新打开最新版本后再保存。", detail: message }, 409);
 			}
 			return json({ error: message }, 502);
 		}
 		const written = (await response.json()) as { commit?: { sha?: string; html_url?: string } };
 		return json({ ok: true, path, commitSha: written.commit?.sha, commitUrl: written.commit?.html_url });
 	} catch (error) {
-		return json({ error: error instanceof Error ? error.message : "Internal error" }, 503);
+		return json({ error: error instanceof Error ? error.message : "暂时无法完成操作，请稍后重试。" }, 503);
 	}
 };
 
@@ -339,22 +343,22 @@ export const DELETE: APIRoute = async ({ request }) => {
 		const path = typeof input.path === "string" ? input.path : "";
 		if (!path.startsWith(ROOT) || !/^src\/content\/posts\/(?:[\p{L}\p{N}_-]+\/)*[\p{L}\p{N}_-]+\.mdx?$/u.test(path)) return json({ error: "文章路径不合法" }, 400);
 		const current = await readPost(path, config);
-		if (typeof input.sha !== "string" || input.sha !== current.sha) return json({ error: "文章已被其他操作修改，请刷新后重试" }, 409);
+		if (typeof input.sha !== "string" || input.sha !== current.sha) return json({ error: "这篇文章刚刚被更新过。为避免覆盖新内容，请刷新列表并重新打开文章。" }, 409);
 		const response = await github(`contents/${path.split("/").map(encodeURIComponent).join("/")}`, config, {
 			method: "DELETE",
 			body: JSON.stringify({ message: `Delete article: ${path.split("/").pop()}`, sha: current.sha, branch: config.branch }),
 		});
 
 		if (!response.ok) {
-			const message = await githubFailure(response, "GitHub 删除失败");
+			const message = githubFailure(response, "GitHub 删除失败");
 			if (response.status === 409 || response.status === 422) {
-				return json({ error: "GitHub 检测到并发修改或删除冲突。文章未确认删除，请刷新列表后重新检查。", detail: message }, 409);
+				return json({ error: "这篇文章可能刚刚被修改或删除。系统没有确认删除成功，请刷新列表后重新检查。", detail: message }, 409);
 			}
 			return json({ error: message }, 502);
 		}
 		const written = (await response.json()) as { commit?: { sha?: string; html_url?: string } };
 		return json({ ok: true, path, commitSha: written.commit?.sha, commitUrl: written.commit?.html_url });
 	} catch (error) {
-		return json({ error: error instanceof Error ? error.message : "Internal error" }, 503);
+		return json({ error: error instanceof Error ? error.message : "暂时无法完成操作，请稍后重试。" }, 503);
 	}
 };
