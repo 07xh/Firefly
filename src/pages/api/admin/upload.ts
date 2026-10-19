@@ -448,7 +448,7 @@ export const DELETE: APIRoute = async ({ request }) => {
 		const deleteResponse = await upstream(
 			config.base,
 			config.token,
-			`/api/manage/delete/${encodedPath(name)}`,
+			`/api/manage/delete/${name.split("/").map((part) => encodeURIComponent(part)).join(",")}`,
 			{ method: "GET" },
 		);
 		const deletePayload = await readPayload(deleteResponse);
