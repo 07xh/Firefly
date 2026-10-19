@@ -1,7 +1,7 @@
 import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=20261018-badge-node";
-import { describeProtectedSyntax, inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261018-natural-language";
+import { describeProtectedSyntax, inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261019-language-copy";
 import { normalizeEditorLinkAddress } from "/admin-link-utils.js?v=20261018-natural-links";
-import { getAdminImagePreviewUrl } from "/admin-image-preview-utils.js?v=20261018-relative-image-preview";
+import { getAdminImagePreviewUrl } from "/admin-image-preview-utils.js?v=20261019-language-copy";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
