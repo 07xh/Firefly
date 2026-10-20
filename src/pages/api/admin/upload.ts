@@ -1,5 +1,7 @@
 import { env as workerEnv } from "cloudflare:workers";
 import type { APIRoute } from "astro";
+import { assertImageNotReferenced } from "../../../lib/imgbed-reference-guard";
+import { createImgBedReferenceSources } from "../../../lib/imgbed-reference-sources";
 
 export const prerender = false;
 
@@ -456,6 +458,22 @@ export const DELETE: APIRoute = async ({ request }) => {
 				: "";
 		if (typeof mime !== "string" || !mime.startsWith("image/")) {
 			return json({ error: "该文件不是图片，已拒绝删除。" }, 415);
+		}
+
+		// Server-side confirmation: deletion cannot rely on a browser warning.
+		try {
+			await assertImageNotReferenced(
+				createImgBedReferenceSources(workerEnv),
+				config.base.toString(),
+				name,
+			);
+		} catch (error) {
+			const message =
+				error instanceof Error ? error.message : "图片引用检查失败。";
+			return json(
+				{ error: message },
+				message.includes("仍被文章或草稿引用") ? 409 : 503,
+			);
 		}
 
 		// ImgBed's delete API uses GET; Firefly exposes deletion as protected DELETE.
