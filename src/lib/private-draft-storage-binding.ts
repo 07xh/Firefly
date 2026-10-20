@@ -14,7 +14,9 @@ export type PrivateDraftRuntime = {
  * Explicitly select the D1 backend ONLY after a verified manual migration.
  * Default remains KV; merely binding D1 does not change where drafts live.
  */
-export function resolvePrivateDraftStore(runtime: PrivateDraftRuntime): PrivateDraftKV {
+export function resolvePrivateDraftStore(
+	runtime: PrivateDraftRuntime,
+): PrivateDraftKV {
 	const backend = runtime.FIREFLY_PRIVATE_DRAFT_BACKEND?.trim() || "kv";
 	if (backend === "d1") {
 		if (!runtime.FIREFLY_PRIVATE_DRAFT_DB) {
@@ -23,7 +25,10 @@ export function resolvePrivateDraftStore(runtime: PrivateDraftRuntime): PrivateD
 		return createD1PrivateDraftStore(runtime.FIREFLY_PRIVATE_DRAFT_DB);
 	}
 	if (backend !== "kv") {
-		throw new PrivateDraftError("私人草稿存储模式无效，请检查 Worker 配置。", 503);
+		throw new PrivateDraftError(
+			"私人草稿存储模式无效，请检查 Worker 配置。",
+			503,
+		);
 	}
 	if (!runtime.FIREFLY_PRIVATE_DRAFTS) {
 		throw new PrivateDraftError(
