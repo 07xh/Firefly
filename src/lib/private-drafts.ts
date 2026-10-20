@@ -48,6 +48,8 @@ export class PrivateDraftError extends Error {
 }
 
 const PREFIX = "draft:v1:";
+const REVISION_PREFIX = "draft-history:v1:";
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_DRAFT_BYTES = 500_000;
 const encoder = new TextEncoder();
 const validSlug = (slug: string): boolean =>
@@ -62,6 +64,21 @@ function requireSlug(value: unknown): string {
 
 function draftKey(slug: string): string {
 	return PREFIX + requireSlug(slug);
+}
+
+function revisionPrefix(slug: string): string {
+	return REVISION_PREFIX + requireSlug(slug) + ":";
+}
+
+function revisionKey(slug: string, version: string): string {
+	if (!UUID_RE.test(version)) throw new PrivateDraftError("历史版本编号无效。", 400);
+	return revisionPrefix(slug) + version;
+}
+
+function validateCursor(cursor?: string): void {
+	if (cursor && (cursor.length > 1024 || !/^[A-Za-z0-9_+\-/=]+$/.test(cursor))) {
+		throw new PrivateDraftError("分页参数无效。", 400);
+	}
 }
 
 function draftTitle(content: string): string {
@@ -131,6 +148,91 @@ async function readRecord(
 	};
 }
 
+
+/** History is stored in the SAME namespace, NOT an independent disaster backup. */
+async function ensureRevision(store: PrivateDraftKV, record: DraftRecord): Promise<void> {
+	const key = revisionKey(record.slug, record.version);
+	const raw = JSON.stringify(record);
+	const old = await store.get(key, "text");
+	if (old !== null) {
+		if (old !== raw) throw new PrivateDraftError("历史版本内容冲突；已阻止覆盖旧备份。", 409);
+		return;
+	}
+	await store.put(key, raw, {
+		metadata: {
+			extension: record.extension,
+			version: record.version,
+			updatedAt: record.updatedAt,
+			title: draftTitle(record.content),
+		},
+	});
+}
+
+export async function listPrivateDraftRevisions(
+	store: PrivateDraftKV,
+	slug: string,
+	cursor?: string,
+) {
+	validateCursor(cursor);
+	const result = await store.list({
+		prefix: revisionPrefix(slug),
+		limit: 100,
+		...(cursor ? { cursor } : {}),
+	});
+	return {
+		slug,
+		items: result.keys.map((item) => ({
+			version: item.name.slice(revisionPrefix(slug).length),
+			updatedAt: item.metadata?.updatedAt ?? "",
+			title: item.metadata?.title ?? "私人草稿",
+			extension: item.metadata?.extension === "mdx" ? "mdx" : "md",
+		})),
+		cursor: result.list_complete ? null : result.cursor || null,
+	};
+}
+
+export async function getPrivateDraftRevision(
+	store: PrivateDraftKV,
+	slug: string,
+	version: string,
+): Promise<DraftRecord> {
+	const raw = await store.get(revisionKey(slug, version), "text");
+	if (raw === null) throw new PrivateDraftError("指定历史版本不存在。", 404);
+	let record: unknown;
+	try {
+		record = JSON.parse(raw);
+	} catch {
+		throw new PrivateDraftError("历史版本数据损坏；已停止恢复。", 500);
+	}
+	if (
+		!record || typeof record !== "object" ||
+		!("schema" in record) || record.schema !== 1 ||
+		!("slug" in record) || record.slug !== slug ||
+		!("version" in record) || record.version !== version ||
+		!("updatedAt" in record) || typeof record.updatedAt !== "string" ||
+		!("content" in record) || typeof record.content !== "string"
+	) {
+		throw new PrivateDraftError("历史版本校验失败；已停止恢复。", 500);
+	}
+	const stored = record as DraftRecord;
+	return { ...stored, extension: stored.extension === "mdx" ? "mdx" : "md" };
+}
+
+export async function restorePrivateDraftRevision(
+	store: PrivateDraftKV,
+	input: { slug: string; revision: string; expectedVersion?: unknown },
+) {
+	const slug = requireSlug(input.slug);
+	const source = await getPrivateDraftRevision(store, slug, input.revision);
+	// This creates a fresh revision and does not modify the source snapshot.
+	return savePrivateDraft(store, {
+		slug,
+		content: source.content,
+		extension: source.extension,
+		expectedVersion: input.expectedVersion,
+	});
+}
+
 export async function getPrivateDraft(store: PrivateDraftKV, slug: string) {
 	const record = await readRecord(store, slug);
 	if (!record) throw new PrivateDraftError("私人草稿不存在。", 404);
@@ -141,12 +243,7 @@ export async function listPrivateDrafts(
 	store: PrivateDraftKV,
 	cursor?: string,
 ) {
-	if (
-		cursor &&
-		(cursor.length > 1024 || !/^[A-Za-z0-9_+\-/=]+$/.test(cursor))
-	) {
-		throw new PrivateDraftError("分页参数无效。", 400);
-	}
+	validateCursor(cursor);
 	const result = await store.list({
 		prefix: PREFIX,
 		limit: 100,
@@ -210,7 +307,11 @@ export async function savePrivateDraft(
 		updatedAt: new Date().toISOString(),
 		content,
 	};
-	// Existing values remain untouched until KV confirms a successful write.
+	// Persist immutable revision copies BEFORE touching the mutable current key.
+	// On failure the current article remains unchanged; an orphaned new revision
+	// remains recoverable. Legacy records receive a snapshot on their first edit.
+	if (prior) await ensureRevision(store, prior);
+	await ensureRevision(store, record);
 	await store.put(draftKey(slug), JSON.stringify(record), {
 		metadata: {
 			extension,
@@ -237,6 +338,7 @@ export async function deletePrivateDraft(
 	if (!expectedVersion || expectedVersion !== prior.version) {
 		throw new PrivateDraftError("草稿版本已变化，请刷新后确认删除。", 409);
 	}
+	await ensureRevision(store, prior);
 	await store.delete(draftKey(slug));
-	return { slug, deleted: true };
+	return { slug, deleted: true, recoveryVersion: prior.version };
 }
