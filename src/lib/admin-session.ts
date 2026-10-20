@@ -59,7 +59,10 @@ export function createSessionToken(): string {
 	return base64Url(crypto.getRandomValues(new Uint8Array(32)));
 }
 
-async function adminSessionAuthTag(token: string, adminPassword: string): Promise<string> {
+async function adminSessionAuthTag(
+	token: string,
+	adminPassword: string,
+): Promise<string> {
 	const encoder = new TextEncoder();
 	const key = await crypto.subtle.importKey(
 		"raw",
