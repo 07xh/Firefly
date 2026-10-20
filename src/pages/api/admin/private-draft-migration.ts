@@ -6,15 +6,14 @@ import {
 	type PrivateDraftD1Database,
 } from "../../../lib/private-draft-d1";
 import {
-	ensurePrivateR2Backup,
 	PrivateBackupError,
 	type PrivateDraftBackupBucket,
 } from "../../../lib/private-draft-r2-backup";
+import { copyPrivateDraftWithHistory } from "../../../lib/private-draft-migration-copy";
 import {
 	getPrivateDraft,
 	PrivateDraftError,
 	type PrivateDraftKV,
-	savePrivateDraft,
 } from "../../../lib/private-drafts";
 
 export const prerender = false;
@@ -120,44 +119,14 @@ export const POST: APIRoute = async ({ request }) => {
 		) {
 			return response({ error: "必须提供草稿文件名和当前 KV 版本号。" }, 400);
 		}
-		const source = await getPrivateDraft(legacy, details.slug);
-		if (source.version !== details.version) {
-			return response(
-				{ error: "KV 草稿版本已变化，拒绝使用过期快照迁移。" },
-				409,
-			);
-		}
-		if (await d1.get("draft:v1:" + details.slug, "text")) {
-			return response(
-				{ error: "D1 已有同名草稿，迁移不能覆盖。请先比对数据。" },
-				409,
-			);
-		}
-		// Preserve the original version in independently stored R2 first.
-		await ensurePrivateR2Backup(r2, source);
-		const copied = await savePrivateDraft(
+		const result = await copyPrivateDraftWithHistory(
+			legacy,
 			d1,
-			{
-				slug: details.slug,
-				content: source.content,
-				extension: source.extension,
-			},
 			r2,
+			details.slug,
+			details.version,
 		);
-		const after = await d1.get("draft:v1:" + details.slug, "text");
-		if (!after || JSON.parse(after).content !== source.content) {
-			throw new PrivateDraftError(
-				"D1 迁移后校验失败。旧 KV 原稿仍然保留。",
-				503,
-			);
-		}
-		return response({
-			ok: true,
-			slug: details.slug,
-			sourceVersion: source.version,
-			newVersion: copied.version,
-			kvSourcePreserved: true,
-		});
+		return response(result);
 	} catch (error) {
 		return handle(error);
 	}
