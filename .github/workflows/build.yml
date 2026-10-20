@@ -42,6 +42,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Test admin session security and password rotation
+        run: node --import tsx --test scripts/admin-session.test.mjs
       - name: Run Astro Check
         run: pnpm astro check
 
