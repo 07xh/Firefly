@@ -7,7 +7,8 @@ export function privateDraftPath(slug) {
 
 export function editorSlugForArticle(article) {
 	if (article?.isPrivate) return String(article.slug ?? "");
-	return String(article?.path ?? "").split("/").pop().replace(/\\.mdx?$/, "");
+	const filename = String(article?.path ?? "").split("/").pop() ?? "";
+	return filename.replace(/\.mdx?$/, "");
 }
 
 export function draftListEntry(item) {
