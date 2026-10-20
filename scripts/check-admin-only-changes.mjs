@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
 /**
  * Conservative, file-level freeze for the visitor-facing Firefly site.
@@ -75,7 +76,7 @@ function main() {
 	console.log("PASS: " + paths.length + " modified files; no visitor-facing Firefly UI files.");
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
 	try {
 		main();
 	} catch (error) {
