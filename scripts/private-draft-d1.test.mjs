@@ -7,6 +7,8 @@ import test from "node:test";
 if (!globalThis.crypto) globalThis.crypto = webcrypto;
 
 const { createD1PrivateDraftStore } = await import("../src/lib/private-draft-d1.ts");
+const { copyPrivateDraftWithHistory } = await import("../src/lib/private-draft-migration-copy.ts");
+const { privateBackupKey } = await import("../src/lib/private-draft-r2-backup.ts");
 const { resolvePrivateDraftStore } = await import("../src/lib/private-draft-storage-binding.ts");
 const {
 	savePrivateDraft,
@@ -130,7 +132,65 @@ test("D1 does not activate unless explicitly selected; legacy KV remains default
 test("migration is guarded and never deletes original KV records",()=>{
 	const source=readFileSync(new URL("../src/pages/api/admin/private-draft-migration.ts",import.meta.url),"utf8");
 	assert.ok(source.includes('FIREFLY_PRIVATE_DRAFT_MIGRATION_MODE !== "true"'));
-	assert.ok(source.includes("source.version !== details.version"));
-	assert.ok(source.includes("await ensurePrivateR2Backup(r2, source)"));
+	assert.ok(source.includes("copyPrivateDraftWithHistory("));
+	assert.ok(!source.includes("savePrivateDraft(d1,"));
 	assert.ok(!source.includes("legacy.delete("));
+});
+
+test("KV-to-D1 transfer retains every historical revision and R2-only orphan",async()=>{
+	const source=createD1PrivateDraftStore(mockD1());
+	const destination=createD1PrivateDraftStore(mockD1());
+	const r2=mockR2();
+	const first=await savePrivateDraft(source,{slug:"study",content:VALID},r2);
+	const second=await savePrivateDraft(source,{
+		slug:"study",content:VALID+"\nSECOND",expectedVersion:first.version,
+	},r2);
+	const orphan={
+		schema:1,slug:"study",version:crypto.randomUUID(),updatedAt:new Date().toISOString(),
+		content:VALID+"\nORPHAN_IN_R2_ONLY",extension:"md"
+	};
+	r2.objects.set(privateBackupKey(orphan.slug,orphan.version),JSON.stringify(orphan));
+	const migrated=await copyPrivateDraftWithHistory(source,destination,r2,"study",second.version);
+	assert.equal(migrated.historyVersionsCopied,3);
+	assert.equal(migrated.kvSourcePreserved,true);
+	assert.equal((await getPrivateDraft(source,"study")).version,second.version);
+	assert.equal((await getPrivateDraft(destination,"study")).content,VALID+"\nSECOND");
+	assert.equal((await getPrivateDraftRevision(destination,"study",first.version)).content,VALID);
+	assert.equal((await getPrivateDraftRevision(destination,"study",second.version)).content,VALID+"\nSECOND");
+	assert.equal((await getPrivateDraftRevision(destination,"study",orphan.version)).content,orphan.content);
+	assert.equal((await listPrivateDraftRevisions(destination,"study")).items.length,4);
+	await rejects409(()=>copyPrivateDraftWithHistory(source,destination,r2,"study",second.version));
+});
+
+test("KV/R2 history mismatch aborts before creating the D1 live record",async()=>{
+	const source=createD1PrivateDraftStore(mockD1());
+	const destination=createD1PrivateDraftStore(mockD1());
+	const r2=mockR2();
+	const one=await savePrivateDraft(source,{slug:"mismatch",content:VALID},r2);
+	const key=privateBackupKey("mismatch",one.version);
+	const tampered={...JSON.parse(r2.objects.get(key)),content:VALID+"\nCHANGED"};
+	r2.objects.set(key,JSON.stringify(tampered));
+	await rejects409(()=>copyPrivateDraftWithHistory(source,destination,r2,"mismatch",one.version));
+	assert.equal(await destination.get("draft:v1:mismatch","text"),null);
+	assert.equal((await getPrivateDraft(source,"mismatch")).version,one.version);
+});
+
+test("history-copy failure preserves old KV source and prevents D1 main record",async()=>{
+	const source=createD1PrivateDraftStore(mockD1());
+	const destination=createD1PrivateDraftStore(mockD1());
+	const r2=mockR2();
+	const one=await savePrivateDraft(source,{slug:"failure",content:VALID},r2);
+	const failDest={
+		...destination,
+		async put(key,value,options){
+			if(key.startsWith("draft-history:"))throw new Error("simulated D1 outage");
+			return destination.put(key,value,options);
+		},
+	};
+	await assert.rejects(
+		()=>copyPrivateDraftWithHistory(source,failDest,r2,"failure",one.version),
+		/simulated D1 outage/,
+	);
+	assert.equal(await destination.get("draft:v1:failure","text"),null);
+	assert.equal((await getPrivateDraft(source,"failure")).content,VALID);
 });
