@@ -1,3 +1,8 @@
+import {
+	ensurePrivateR2Backup,
+	type PrivateDraftBackupBucket,
+} from "./private-draft-r2-backup";
+
 /**
  * Private, admin-only draft storage. No writes from this module go to GitHub.
  *
@@ -235,6 +240,7 @@ export async function getPrivateDraftRevision(
 export async function restorePrivateDraftRevision(
 	store: PrivateDraftKV,
 	input: { slug: string; revision: string; expectedVersion?: unknown },
+	backup?: PrivateDraftBackupBucket,
 ) {
 	const slug = requireSlug(input.slug);
 	const source = await getPrivateDraftRevision(store, slug, input.revision);
@@ -244,7 +250,7 @@ export async function restorePrivateDraftRevision(
 		content: source.content,
 		extension: source.extension,
 		expectedVersion: input.expectedVersion,
-	});
+	}, backup);
 }
 
 export async function getPrivateDraft(store: PrivateDraftKV, slug: string) {
@@ -285,6 +291,7 @@ export async function savePrivateDraft(
 		expectedVersion?: unknown;
 		extension?: unknown;
 	},
+	backup?: PrivateDraftBackupBucket,
 ) {
 	const slug = requireSlug(input.slug);
 	const content = requireDraftContent(input.content);
@@ -324,6 +331,10 @@ export async function savePrivateDraft(
 	// Persist immutable revision copies BEFORE touching the mutable current key.
 	// On failure the current article remains unchanged; an orphaned new revision
 	// remains recoverable. Legacy records receive a snapshot on their first edit.
+	if (backup) {
+		if (prior) await ensurePrivateR2Backup(backup, prior);
+		await ensurePrivateR2Backup(backup, record);
+	}
 	if (prior) await ensureRevision(store, prior);
 	await ensureRevision(store, record);
 	await store.put(draftKey(slug), JSON.stringify(record), {
@@ -346,12 +357,14 @@ export async function deletePrivateDraft(
 	store: PrivateDraftKV,
 	slug: string,
 	expectedVersion: string,
+	backup?: PrivateDraftBackupBucket,
 ) {
 	const prior = await readRecord(store, slug);
 	if (!prior) throw new PrivateDraftError("私人草稿不存在。", 404);
 	if (!expectedVersion || expectedVersion !== prior.version) {
 		throw new PrivateDraftError("草稿版本已变化，请刷新后确认删除。", 409);
 	}
+	if (backup) await ensurePrivateR2Backup(backup, prior);
 	await ensureRevision(store, prior);
 	await store.delete(draftKey(slug));
 	return { slug, deleted: true, recoveryVersion: prior.version };
