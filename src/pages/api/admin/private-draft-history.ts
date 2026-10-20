@@ -1,7 +1,10 @@
 import { env as workerEnv } from "cloudflare:workers";
 
 import type { APIRoute } from "astro";
-import { resolvePrivateDraftStore, type PrivateDraftRuntime } from "../../../lib/private-draft-storage-binding";
+import {
+	resolvePrivateDraftStore,
+	type PrivateDraftRuntime,
+} from "../../../lib/private-draft-storage-binding";
 import {
 	PrivateBackupError,
 	type PrivateDraftBackupBucket,
@@ -17,13 +20,16 @@ import {
 export const prerender = false;
 
 function guardMigrationWrites(): void {
-	const flags = workerEnv as unknown as { FIREFLY_PRIVATE_DRAFT_MIGRATION_MODE?: string };
+	const flags = workerEnv as unknown as {
+		FIREFLY_PRIVATE_DRAFT_MIGRATION_MODE?: string;
+	};
 	if (flags.FIREFLY_PRIVATE_DRAFT_MIGRATION_MODE === "true") {
-		throw new PrivateDraftError("私人草稿正在迁移，请先完成核对再恢复编辑。", 503);
+		throw new PrivateDraftError(
+			"私人草稿正在迁移，请先完成核对再恢复编辑。",
+			503,
+		);
 	}
 }
-
-
 
 function json(data: unknown, status = 200): Response {
 	return new Response(JSON.stringify(data), {
