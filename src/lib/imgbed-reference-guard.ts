@@ -13,10 +13,17 @@ export interface ImgBedReferenceSource {
 
 export function imageReferenceTokens(baseUrl: string, name: string): string[] {
 	const base = new URL(baseUrl);
-	const parts = name.split("/").map((part) => encodeURIComponent(part)).join("/");
+	const parts = name
+		.split("/")
+		.map((part) => encodeURIComponent(part))
+		.join("/");
 	const canonical = new URL("file/" + parts, base).toString();
 	let decoded = canonical;
-	try { decoded = decodeURIComponent(canonical); } catch { /* keep encoded URL */ }
+	try {
+		decoded = decodeURIComponent(canonical);
+	} catch {
+		/* keep encoded URL */
+	}
 	return [...new Set([canonical, decoded, "/file/" + parts, "/file/" + name])];
 }
 
