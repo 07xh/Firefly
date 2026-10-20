@@ -1803,7 +1803,7 @@ reset();refresh();loadSettings();
     const list=$("privateHistoryList");
     list.replaceChildren();
     $("privateHistoryPreview").hidden=true;
-    if(!/^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,79}$/u.test(slug)){
+    if(!/^[\p{L}\p{N}][\p{L}\p{N}_-]{0,79}$/u.test(slug)){
       privateHistoryStatus("请输入合法的私人草稿文件名。",true);
       return;
     }
