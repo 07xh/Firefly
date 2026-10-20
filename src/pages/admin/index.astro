@@ -510,6 +510,7 @@ export const prerender = false;
 <div class="field"><label for="title">标题 *</label><input id="title" required maxlength="200"></div>
 <div class="grid"><div class="field"><label for="slug">文件名 *</label><input id="slug" required placeholder="my-post"></div><div class="field"><label for="published">展示发布日期 *</label><input id="published" type="date" required></div></div>
 <div class="grid"><div class="field"><label for="date">定时发布时间（北京时间）</label><input id="date" type="datetime-local" step="60"><small class="muted">留空表示立即生效；填写未来时间后，系统会自动安排重建。</small></div><div class="field"><label for="articlePassword">访问密码（可选）</label><input id="articlePassword" type="password" maxlength="200" autocomplete="new-password" placeholder="留空则不启用密码保护"><small class="muted">输入后，前台将显示密码解锁页面。</small></div></div>
+<div class="field"><label for="privateDraftFormat">文章格式</label><select id="privateDraftFormat"><option value="md">Markdown (.md)</option><option value="mdx">MDX (.mdx)</option></select><small class="muted">复杂 MDX 文章请选择 MDX；保存私人草稿时会保留该格式。</small></div>
 <div class="field"><label for="passwordHint">密码提示（可选）</label><input id="passwordHint" maxlength="120" placeholder="例如：课程名称"></div>
 <p class="muted" style="color:#b42318">安全提醒：当前 GitHub 仓库是公开的，Markdown 原文和 password 字段都可能被直接读取。现有密码保护只加密构建后的网页，不能保护公开仓库中的原文和密码；不要在此保存真正机密的内容。</p>
 <div class="grid"><div class="field"><label for="category">分类</label><input id="category" maxlength="100"></div><div class="field"><label for="tags">标签（逗号分隔）</label><input id="tags" placeholder="技术, 随笔"></div></div>
@@ -912,6 +913,8 @@ function render(){
    $("formTitle").textContent=a.isPrivate?"编辑私人草稿":"编辑文章";
    $("slug").value=a.path.split("/").pop().replace(/\.mdx?$/,"");
    $("slug").disabled=true;
+   $("privateDraftFormat").value=a.isPrivate?(a.extension==="mdx"?"mdx":"md"):(a.path.endsWith(".mdx")?"mdx":"md");
+   $("privateDraftFormat").disabled=!a.isPrivate;
    $("body").value=a.content||"";
    window.dispatchEvent(new CustomEvent("firefly:source-loaded"));
    $("title").value=frontmatterValue(a.content||"","title")||a.title;
@@ -990,7 +993,7 @@ async function refresh(){
   say("已读取 "+publicArticles.length+" 篇公开仓库文章、"+privateEntries.length+" 篇私人草稿。");
  }catch(error){say(error instanceof Error?error.message:String(error),true);$("list").textContent="读取失败，请检查后台 GitHub 权限。";}
 }
-function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;$("exportPrivateDraft").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
+function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("privateDraftFormat").value="md";$("privateDraftFormat").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;$("exportPrivateDraft").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
 function showVisualTab(){
  $("body").hidden=true;$("wysiwygPane").hidden=false;$("markdownPreview").hidden=true;
  $("visualTab").classList.add("active");$("editorTab").classList.remove("active");$("previewTab").classList.remove("active");
@@ -1785,7 +1788,7 @@ reset();refresh();loadSettings();
       tags: $("tags").value.split(",").map(x => x.trim()).filter(Boolean), draft: isDraft
     };
     const data = selected?.isPrivate
-      ? { ...metadata, slug, body: stripArticleFrontmatter($("body").value) }
+      ? { ...metadata, slug, extension:$("privateDraftFormat").value, body: stripArticleFrontmatter($("body").value) }
       : selected
         ? { path: selected.path, sha: selected.sha, rawContent: $("body").value, ...metadata }
         : { ...metadata, slug, body: $("body").value };
@@ -1798,7 +1801,7 @@ reset();refresh();loadSettings();
         if(selected && !selected.isPrivate && !window.confirm("当前文章已位于公开 GitHub。将另外保存私人副本，原公开文件及历史记录不会被删除。确定继续吗？")) return;
         const content=buildPrivateDraftContent($("body").value,metadata);
         const saved=await privateDraftRequest(selected?.isPrivate?"PUT":"POST",{
-          slug,content,...(selected?.isPrivate?{version:selected.sha}:{})
+          slug,content,extension:$("privateDraftFormat").value,...(selected?.isPrivate?{version:selected.sha}:{})
         });
         window.dispatchEvent(new CustomEvent("firefly:save-complete",{detail:{path:"private:"+slug,slug}}));
         reset();
@@ -1814,7 +1817,7 @@ reset();refresh();loadSettings();
       if (!result.commitSha) throw new Error("GitHub 已响应，但未返回 Commit SHA，无法跟踪部署。请刷新列表确认写入结果。");
       const scheduled = !isDraft && Boolean(date && Date.parse(date) > Date.now());
       const publishedFromPrivate=Boolean(selected?.isPrivate);
-      const savedPath=publishedFromPrivate?("src/content/posts/"+slug+".md"):(selected?.path||("src/content/posts/"+slug+".md"));
+      const savedPath=publishedFromPrivate?("src/content/posts/"+slug+"."+$("privateDraftFormat").value):(selected?.path||("src/content/posts/"+slug+"."+$("privateDraftFormat").value));
       window.dispatchEvent(new CustomEvent("firefly:save-complete",{detail:{path:savedPath,slug}}));
       reset();
       await refresh();
