@@ -1,6 +1,7 @@
 import { env as workerEnv } from "cloudflare:workers";
 
 import type { APIRoute } from "astro";
+import { resolvePrivateDraftStore, type PrivateDraftRuntime } from "../../../lib/private-draft-storage-binding";
 import {
 	getPrivateR2Backup,
 	listPrivateR2Backups,
@@ -27,7 +28,7 @@ function reply(data: unknown, status = 200): Response {
 }
 
 function bindings() {
-	const env = workerEnv as unknown as {
+	const env = workerEnv as unknown as PrivateDraftRuntime & {
 		FIREFLY_PRIVATE_DRAFTS?: PrivateDraftKV;
 		FIREFLY_PRIVATE_DRAFT_BACKUPS?: PrivateDraftBackupBucket;
 	};
@@ -76,7 +77,7 @@ export const POST: APIRoute = async ({ request }) => {
 	try {
 		const bound = bindings();
 		const bucket = bound.FIREFLY_PRIVATE_DRAFT_BACKUPS;
-		const store = bound.FIREFLY_PRIVATE_DRAFTS;
+		const store = resolvePrivateDraftStore(bound);
 		if (!bucket || !store) {
 			throw new PrivateBackupError(
 				"KV 主存储与 R2 备份均需绑定才能安全恢复。",
