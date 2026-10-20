@@ -33,12 +33,15 @@ function safeRepo(value: string): boolean {
 
 function decodeBase64(raw: string): string {
 	const binary = atob(raw.replace(/\s/g, ""));
-	return new TextDecoder().decode(Uint8Array.from(binary, (char) => char.charCodeAt(0)));
+	return new TextDecoder().decode(
+		Uint8Array.from(binary, (char) => char.charCodeAt(0)),
+	);
 }
 
 async function publicArticles(runtime: ImageReferenceRuntime) {
 	const token = runtime.FIREFLY_CONTENTS_TOKEN?.trim();
-	if (!token) throw new Error("无法检查 GitHub 文章引用：缺少服务端 GitHub 令牌。");
+	if (!token)
+		throw new Error("无法检查 GitHub 文章引用：缺少服务端 GitHub 令牌。");
 	const repo = runtime.GITHUB_CONTENTS_REPO?.trim() || "07xh/Firefly";
 	const branch = runtime.GITHUB_CONTENTS_BRANCH?.trim() || "master";
 	if (!safeRepo(repo) || !/^[\w./-]{1,100}$/.test(branch)) {
@@ -51,10 +54,15 @@ async function publicArticles(runtime: ImageReferenceRuntime) {
 		"X-GitHub-Api-Version": "2022-11-28",
 	};
 	const treeResponse = await fetch(
-		"https://api.github.com/repos/" + repo + "/git/trees/" + encodeURIComponent(branch) + "?recursive=1",
+		"https://api.github.com/repos/" +
+			repo +
+			"/git/trees/" +
+			encodeURIComponent(branch) +
+			"?recursive=1",
 		{ headers },
 	);
-	if (!treeResponse.ok) throw new Error("GitHub 文章目录读取失败，禁止删除图片。");
+	if (!treeResponse.ok)
+		throw new Error("GitHub 文章目录读取失败，禁止删除图片。");
 	const tree = (await treeResponse.json()) as {
 		tree?: Array<{ type: string; path: string }>;
 		truncated?: boolean;
@@ -63,29 +71,47 @@ async function publicArticles(runtime: ImageReferenceRuntime) {
 		throw new Error("GitHub 文章目录不完整，无法安全确认图片引用。");
 	}
 	const paths = tree.tree
-		.filter((x) => x.type === "blob" && x.path.startsWith(ARTICLES_ROOT) && /\.mdx?$/i.test(x.path))
+		.filter(
+			(x) =>
+				x.type === "blob" &&
+				x.path.startsWith(ARTICLES_ROOT) &&
+				/\.mdx?$/i.test(x.path),
+		)
 		.map((x) => x.path);
 	if (paths.length > MAX_POSTS) {
 		throw new Error("文章数量超过当前删除引用检查上限，已停止删除。");
 	}
-	const contents: Array<{ path: string; content: string }> = new Array(paths.length);
+	const contents: Array<{ path: string; content: string }> = new Array(
+		paths.length,
+	);
 	let next = 0;
 	async function reader() {
 		while (next < paths.length) {
 			const i = next++;
 			const path = paths[i];
-			const url = "https://api.github.com/repos/" + repo + "/contents/" +
-				path.split("/").map(encodeURIComponent).join("/") + "?ref=" + encodeURIComponent(branch);
+			const url =
+				"https://api.github.com/repos/" +
+				repo +
+				"/contents/" +
+				path.split("/").map(encodeURIComponent).join("/") +
+				"?ref=" +
+				encodeURIComponent(branch);
 			const result = await fetch(url, { headers });
-			if (!result.ok) throw new Error("文章原文读取不完整，无法确认是否引用图片。");
-			const data = (await result.json()) as { content?: string; encoding?: string };
+			if (!result.ok)
+				throw new Error("文章原文读取不完整，无法确认是否引用图片。");
+			const data = (await result.json()) as {
+				content?: string;
+				encoding?: string;
+			};
 			if (typeof data.content !== "string" || data.encoding !== "base64") {
 				throw new Error("GitHub 文章内容格式异常，禁止删除图片。");
 			}
 			contents[i] = { path, content: decodeBase64(data.content) };
 		}
 	}
-	await Promise.all(Array.from({ length: Math.min(5, paths.length) }, () => reader()));
+	await Promise.all(
+		Array.from({ length: Math.min(5, paths.length) }, () => reader()),
+	);
 	return contents;
 }
 
@@ -104,16 +130,24 @@ async function kvDrafts(runtime: ImageReferenceRuntime) {
 		let cursor: string | undefined;
 		const seen = new Set<string>();
 		for (let page = 0; page < 20; page++) {
-			const listing = await kv.list({ prefix, limit: 100, ...(cursor ? { cursor } : {}) });
+			const listing = await kv.list({
+				prefix,
+				limit: 100,
+				...(cursor ? { cursor } : {}),
+			});
 			if (entries.length + listing.keys.length > MAX_SNAPSHOTS) {
 				throw new Error("私人草稿历史数量超过安全检查上限，已保护性禁止删除。");
 			}
 			for (const item of listing.keys) {
 				const raw = await kv.get(item.name, "text");
-				if (!raw) throw new Error("私人草稿历史数据读取不完整，已阻止图片删除。");
+				if (!raw)
+					throw new Error("私人草稿历史数据读取不完整，已阻止图片删除。");
 				let record: { content?: unknown };
-				try { record = JSON.parse(raw); }
-				catch { throw new Error("私人草稿历史数据损坏，禁止删除图片。"); }
+				try {
+					record = JSON.parse(raw);
+				} catch {
+					throw new Error("私人草稿历史数据损坏，禁止删除图片。");
+				}
 				if (typeof record.content !== "string") {
 					throw new Error("私人草稿历史内容缺失，禁止删除图片。");
 				}
@@ -149,8 +183,11 @@ async function r2Archives(runtime: ImageReferenceRuntime) {
 			const saved = await bucket.get(object.key);
 			if (!saved) throw new Error("R2 历史备份读取失败，禁止删除图床文件。");
 			let record: { content?: unknown };
-			try { record = JSON.parse(await saved.text()); }
-			catch { throw new Error("R2 备份数据异常，禁止删除图床文件。"); }
+			try {
+				record = JSON.parse(await saved.text());
+			} catch {
+				throw new Error("R2 备份数据异常，禁止删除图床文件。");
+			}
 			if (typeof record.content !== "string") {
 				throw new Error("R2 备份缺少正文，禁止删除图床文件。");
 			}
@@ -166,11 +203,16 @@ async function r2Archives(runtime: ImageReferenceRuntime) {
 	return entries;
 }
 
-export function createImgBedReferenceSources(runtime: ImageReferenceRuntime): ImgBedReferenceSource {
+export function createImgBedReferenceSources(
+	runtime: ImageReferenceRuntime,
+): ImgBedReferenceSource {
 	return {
 		listArticles: () => publicArticles(runtime),
 		async listPrivateDrafts() {
-			const [drafts, archives] = await Promise.all([kvDrafts(runtime), r2Archives(runtime)]);
+			const [drafts, archives] = await Promise.all([
+				kvDrafts(runtime),
+				r2Archives(runtime),
+			]);
 			return drafts.concat(archives);
 		},
 	};
