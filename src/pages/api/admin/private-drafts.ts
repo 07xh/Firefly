@@ -87,6 +87,7 @@ export const POST: APIRoute = async ({ request }) => {
 			await savePrivateDraft(store, {
 				slug: input.slug,
 				content: input.content,
+				extension: input.extension,
 			}),
 			201,
 		);
@@ -103,6 +104,7 @@ export const PUT: APIRoute = async ({ request }) => {
 			await savePrivateDraft(store, {
 				slug: input.slug,
 				content: input.content,
+				extension: input.extension,
 				expectedVersion: input.version,
 			}),
 		);
