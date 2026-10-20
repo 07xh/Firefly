@@ -49,7 +49,8 @@ export class PrivateDraftError extends Error {
 
 const PREFIX = "draft:v1:";
 const REVISION_PREFIX = "draft-history:v1:";
-const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const UUID_RE =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const MAX_DRAFT_BYTES = 500_000;
 const encoder = new TextEncoder();
 const validSlug = (slug: string): boolean =>
@@ -71,12 +72,16 @@ function revisionPrefix(slug: string): string {
 }
 
 function revisionKey(slug: string, version: string): string {
-	if (!UUID_RE.test(version)) throw new PrivateDraftError("历史版本编号无效。", 400);
+	if (!UUID_RE.test(version))
+		throw new PrivateDraftError("历史版本编号无效。", 400);
 	return revisionPrefix(slug) + version;
 }
 
 function validateCursor(cursor?: string): void {
-	if (cursor && (cursor.length > 1024 || !/^[A-Za-z0-9_+\-/=]+$/.test(cursor))) {
+	if (
+		cursor &&
+		(cursor.length > 1024 || !/^[A-Za-z0-9_+\-/=]+$/.test(cursor))
+	) {
 		throw new PrivateDraftError("分页参数无效。", 400);
 	}
 }
@@ -148,14 +153,17 @@ async function readRecord(
 	};
 }
 
-
 /** History is stored in the SAME namespace, NOT an independent disaster backup. */
-async function ensureRevision(store: PrivateDraftKV, record: DraftRecord): Promise<void> {
+async function ensureRevision(
+	store: PrivateDraftKV,
+	record: DraftRecord,
+): Promise<void> {
 	const key = revisionKey(record.slug, record.version);
 	const raw = JSON.stringify(record);
 	const old = await store.get(key, "text");
 	if (old !== null) {
-		if (old !== raw) throw new PrivateDraftError("历史版本内容冲突；已阻止覆盖旧备份。", 409);
+		if (old !== raw)
+			throw new PrivateDraftError("历史版本内容冲突；已阻止覆盖旧备份。", 409);
 		return;
 	}
 	await store.put(key, raw, {
@@ -205,12 +213,18 @@ export async function getPrivateDraftRevision(
 		throw new PrivateDraftError("历史版本数据损坏；已停止恢复。", 500);
 	}
 	if (
-		!record || typeof record !== "object" ||
-		!("schema" in record) || record.schema !== 1 ||
-		!("slug" in record) || record.slug !== slug ||
-		!("version" in record) || record.version !== version ||
-		!("updatedAt" in record) || typeof record.updatedAt !== "string" ||
-		!("content" in record) || typeof record.content !== "string"
+		!record ||
+		typeof record !== "object" ||
+		!("schema" in record) ||
+		record.schema !== 1 ||
+		!("slug" in record) ||
+		record.slug !== slug ||
+		!("version" in record) ||
+		record.version !== version ||
+		!("updatedAt" in record) ||
+		typeof record.updatedAt !== "string" ||
+		!("content" in record) ||
+		typeof record.content !== "string"
 	) {
 		throw new PrivateDraftError("历史版本校验失败；已停止恢复。", 500);
 	}
