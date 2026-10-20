@@ -1783,11 +1783,11 @@ reset();refresh();loadSettings();
     try{
       if(!privateDraftStorageReady)throw new Error("私人存储不可用，已停止导入。");
       if(file.size>500000 || file.size===0)throw new Error("备份文件大小必须在 1 字节至 500 KB 之间。");
-      const match=file.name.match(/^([\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,79})\\.(md|mdx)$/u);
+      const match=file.name.match(/^([\p{L}\p{N}][\p{L}\p{N}_-]{0,79})\.(md|mdx)$/u);
       if(!match)throw new Error("备份文件名仅允许中文、字母、数字、连字符和下划线，后缀为 .md 或 .mdx。");
       const content=await file.text();
-      const fm=content.match(/^---\\r?\\n([\\s\\S]*?)\\r?\\n---/);
-      if(!fm || !/^draft:\\s*true\\s*$/m.test(fm[1]))throw new Error("不是有效的私人草稿备份，必须具有 draft: true。");
+      const fm=content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+      if(!fm || !/^draft:\s*true\s*$/m.test(fm[1]))throw new Error("不是有效的私人草稿备份，必须具有 draft: true。");
       if(!window.confirm("将 "+file.name+" 导入到私人草稿存储吗？如果已有同名草稿会拒绝覆盖；原有文章不会改动。"))return;
       const saved=await privateDraftRequest("POST",{slug:match[1],extension:match[2],content});
       await refresh();
