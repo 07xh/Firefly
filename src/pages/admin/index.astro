@@ -468,6 +468,7 @@ export const prerender = false;
     新建文章
   </button>
 
+  <p id="privateDraftStatus" class="muted" role="status" aria-live="polite" style="margin:0 0 8px"></p>
   <div
     id="list"
     class="max-h-[60vh] space-y-1 overflow-y-auto pr-1"
@@ -582,7 +583,7 @@ export const prerender = false;
 <div id="markdownPreview" class="markdown-preview" hidden><p class="muted">点击“预览”查看当前正文。</p></div>
 </div>
 <label class="check"><input id="draft" type="checkbox" checked> 草稿箱状态（勾选后保存为草稿；取消勾选可保存已发布文章）</label>
-<div class="actions"><button class="btn" type="button" id="checkGitHub">检查 GitHub 写入权限</button><button class="btn" type="submit" id="saveDraft" value="save">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="reset">清空表单</button></div>
+<div class="actions"><button class="btn" type="button" id="checkGitHub">检查 GitHub 写入权限</button><button class="btn" type="submit" id="saveDraft" value="save">保存草稿</button><button class="btn primary" type="submit" id="publish" value="publish">发布文章</button><button class="btn danger" type="button" id="delete" disabled title="请先从左侧选择一篇已有文章">删除文章</button><button class="btn" type="button" id="exportPrivateDraft" disabled>导出私人草稿</button><button class="btn" type="button" id="importPrivateDraft">导入草稿备份</button><input type="file" id="privateDraftImportFile" accept=".md,.mdx,text/markdown,text/plain" hidden><button class="btn" type="button" id="reset">清空表单</button></div>
 </form><div class="status" id="status" role="status" aria-live="polite"></div><p class="muted">保存草稿会将文章写入 GitHub 并触发构建，但保持草稿状态；发布文章会将 draft 设为 false，提交到 GitHub，并跟踪 Cloudflare 部署结果。</p><a id="deployLink" class="deploy-link" href="#" target="_blank" rel="noopener noreferrer" hidden>查看 Cloudflare 部署日志 ↗</a></section>
 </div>
 <section id="appearanceTabPanel" role="tabpanel" aria-labelledby="tabAppearance" class="settings-panel min-w-0" hidden>
@@ -748,11 +749,13 @@ export const prerender = false;
 <script>
 // @ts-nocheck
 import katex from "katex";
+import { privateDraftRequest, loadPrivateDraftSummaries, buildPrivateDraftContent, assertPublishablePrivateDraft, stripArticleFrontmatter, exportPrivateDraft } from "../../lib/admin-private-drafts-client.js";
 import "katex/dist/katex.min.css";
 Object.assign(window, { FireflyKatex: katex });
 window.dispatchEvent(new Event("firefly:katex-ready"));
 const $ = id => document.getElementById(id);
 let articles = [], selected = null;
+let privateDraftStorageReady = false;
 Object.defineProperty(window, "FireflyArticleContext", {
   configurable: true,
   get() {
@@ -891,14 +894,22 @@ function render(){
 
   const pathRow=document.createElement("span");
   pathRow.className="mt-1 block truncate text-xs font-normal text-gray-400";
-  pathRow.textContent=a.path + " · " + ({draft:"草稿箱",scheduled:"定时发布",published:"已发布"}[articleStatus(a)]);
+  pathRow.textContent=a.path + " · " + (a.isPrivate ? "私人草稿（未公开）" : ({draft:"公开仓库草稿",scheduled:"定时发布",published:"已发布"}[articleStatus(a)]));
 
   item.append(titleRow,pathRow);
 
-  item.onclick=()=>{
+  item.onclick=async()=>{
    if(isArticleDirty()&&!confirm("当前文章有未保存修改，切换文章会丢失这些内容。是否继续？"))return;
+   if(a.isPrivate && !a.content){
+    try{
+     say("正在从私人存储读取草稿…");
+     const loaded=await privateDraftRequest("GET",undefined,{slug:a.slug});
+     if(loaded.version!==a.sha){say("私人草稿版本发生变化，请刷新后打开。",true);return;}
+     a.content=loaded.content;
+    }catch(error){say("读取私人草稿失败："+(error instanceof Error?error.message:String(error)),true);return;}
+   }
    selected=a;
-   $("formTitle").textContent="编辑文章";
+   $("formTitle").textContent=a.isPrivate?"编辑私人草稿":"编辑文章";
    $("slug").value=a.path.split("/").pop().replace(/\.mdx?$/,"");
    $("slug").disabled=true;
    $("body").value=a.content||"";
@@ -918,6 +929,7 @@ function render(){
    $("saveDraft").textContent=a.draft?"保存草稿修改":"转为草稿";
    $("publish").textContent=a.draft?"发布这篇文章":"保存修改并发布";
    $("delete").disabled=false;
+   $("exportPrivateDraft").disabled=!a.isPrivate;
    say(
     a.content
      ?"已载入文章。日期、定时发布时间、密码保护、分类、摘要和标签均可在表单中修改。"
@@ -939,6 +951,7 @@ function render(){
    "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
   ].join(" ");
 
+  del.dataset.articlePath=a.path;
   del.onclick=async event=>{
    event.stopPropagation();
    if(!confirm("确定删除“"+a.title+"”？此操作会提交到 GitHub 并触发部署。"))return;
@@ -959,8 +972,25 @@ function render(){
   list.append(row);
  }
 }
-async function refresh(){try{say("正在读取 GitHub…");articles=await api("GET");render();say("已读取 "+articles.length+" 篇文章")}catch(e){say(e.message,true);$("list").textContent="读取失败，请确认服务端令牌和仓库权限已配置。"}}
-function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
+async function refresh(){
+ try{
+  say("正在读取文章目录…");
+  const publicArticles=await api("GET");
+  let privateEntries=[];
+  privateDraftStorageReady=false;
+  try{
+   privateEntries=await loadPrivateDraftSummaries();
+   privateDraftStorageReady=true;
+   $("privateDraftStatus").textContent="私人草稿存储已连接 · "+privateEntries.length+" 篇";
+  }catch(error){
+   $("privateDraftStatus").textContent="私人草稿不可用："+(error instanceof Error?error.message:String(error))+"。不会退回公开 GitHub 保存。";
+  }
+  articles=[...privateEntries,...publicArticles];
+  render();
+  say("已读取 "+publicArticles.length+" 篇公开仓库文章、"+privateEntries.length+" 篇私人草稿。");
+ }catch(error){say(error instanceof Error?error.message:String(error),true);$("list").textContent="读取失败，请检查后台 GitHub 权限。";}
+}
+function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;$("exportPrivateDraft").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
 function showVisualTab(){
  $("body").hidden=true;$("wysiwygPane").hidden=false;$("markdownPreview").hidden=true;
  $("visualTab").classList.add("active");$("editorTab").classList.remove("active");$("previewTab").classList.remove("active");
