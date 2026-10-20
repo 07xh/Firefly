@@ -18,3 +18,15 @@ export function isPublicGitHubDraft(content: string): boolean {
 		return /^draft\s*:/m.test(fm[1]);
 	}
 }
+
+/**
+ * Firefly's source repository is public. Even if the frontend displays an
+ * encrypted page, a password in Markdown frontmatter is visible in Git history.
+ * Fail closed for both filled and blank password fields: the backend must
+ * not silently reintroduce credentials or misleading "protection" metadata.
+ */
+export function exposesPasswordFrontmatter(content: string): boolean {
+	const fm = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?=\r?\n|$)/);
+	if (!fm) return false;
+	return /^\s*(?:password|passwordHint)\s*:/im.test(fm[1]);
+}
