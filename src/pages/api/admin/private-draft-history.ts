@@ -1,6 +1,7 @@
 import { env as workerEnv } from "cloudflare:workers";
 
 import type { APIRoute } from "astro";
+import type { PrivateDraftBackupBucket } from "../../../lib/private-draft-r2-backup";
 import {
 	getPrivateDraftRevision,
 	listPrivateDraftRevisions,
@@ -33,6 +34,16 @@ function storage(): PrivateDraftKV {
 		);
 	}
 	return env.FIREFLY_PRIVATE_DRAFTS;
+}
+
+function backupStore(): PrivateDraftBackupBucket {
+	const runtime = workerEnv as unknown as {
+		FIREFLY_PRIVATE_DRAFT_BACKUPS?: PrivateDraftBackupBucket;
+	};
+	if (!runtime.FIREFLY_PRIVATE_DRAFT_BACKUPS) {
+		throw new PrivateDraftError("独立 R2 备份存储未配置；已停止修改私人草稿。", 503);
+	}
+	return runtime.FIREFLY_PRIVATE_DRAFT_BACKUPS;
 }
 
 function errorResponse(error: unknown): Response {
@@ -68,6 +79,7 @@ export const GET: APIRoute = async ({ url }) => {
 export const POST: APIRoute = async ({ request }) => {
 	try {
 		const store = storage();
+		const backup = backupStore();
 		const raw = await request.text();
 		if (new TextEncoder().encode(raw).byteLength > 4096) {
 			return json({ error: "恢复请求超过 4 KB 限制。" }, 413);
@@ -93,7 +105,7 @@ export const POST: APIRoute = async ({ request }) => {
 				slug: details.slug,
 				revision: details.revision,
 				expectedVersion: details.expectedVersion,
-			}),
+			}, backup),
 		);
 	} catch (error) {
 		return errorResponse(error);
