@@ -1784,14 +1784,33 @@ reset();refresh();loadSettings();
       category: $("category").value, description: $("description").value,
       tags: $("tags").value.split(",").map(x => x.trim()).filter(Boolean), draft: isDraft
     };
-    const data = selected
-      ? { path: selected.path, sha: selected.sha, rawContent: $("body").value, ...metadata }
-      : { ...metadata, slug, body: $("body").value };
+    const data = selected?.isPrivate
+      ? { ...metadata, slug, body: stripArticleFrontmatter($("body").value) }
+      : selected
+        ? { path: selected.path, sha: selected.sha, rawContent: $("body").value, ...metadata }
+        : { ...metadata, slug, body: $("body").value };
     const buttons = [$("saveDraft"), $("publish")];
     buttons.forEach(button => button.disabled = true);
-    say("阶段 1/4：本地表单校验通过，正在准备 GitHub 写入…");
+    say(isDraft?"正在准备私人草稿写入…":"阶段 1/4：本地表单校验通过，正在准备 GitHub 写入…");
     try {
-      const result = await api(selected ? "PUT" : "POST", data);
+      if(isDraft){
+        if(!privateDraftStorageReady) throw new Error("私人草稿存储不可用。已阻止向公开 GitHub 保存，请保留当前编辑内容。");
+        if(selected && !selected.isPrivate && !window.confirm("当前文章已位于公开 GitHub。将另外保存私人副本，原公开文件及历史记录不会被删除。确定继续吗？")) return;
+        const content=buildPrivateDraftContent($("body").value,metadata);
+        const saved=await privateDraftRequest(selected?.isPrivate?"PUT":"POST",{
+          slug,content,...(selected?.isPrivate?{version:selected.sha}:{})
+        });
+        window.dispatchEvent(new CustomEvent("firefly:save-complete",{detail:{path:"private:"+slug,slug}}));
+        reset();
+        await refresh();
+        say("私人草稿已保存在独立 KV，版本 "+saved.version+"。没有提交 GitHub，也没有触发公开部署。建议定期导出备份。");
+        return;
+      }
+      if(selected?.isPrivate){
+        assertPublishablePrivateDraft($("body").value,{...metadata,slug});
+        if(!window.confirm("确认将私人草稿正文公开提交至 GitHub 仓库吗？公开后任何人可能读取内容及历史记录。私人原稿将继续保留，不会自动删除。")) return;
+      }
+      const result = await api(selected?.isPrivate?"POST":selected?"PUT":"POST",data);
       if (!result.commitSha) throw new Error("GitHub 已响应，但未返回 Commit SHA，无法跟踪部署。请刷新列表确认写入结果。");
       const scheduled = !isDraft && Boolean(date && Date.parse(date) > Date.now());
       const savedPath = selected?.path || ("src/content/posts/" + slug + ".md");
