@@ -124,7 +124,10 @@ async function readRecord(
 	) {
 		throw new PrivateDraftError("草稿存储数据不完整，已停止覆盖。", 500);
 	}
-	return { ...record, extension: record.extension === "mdx" ? "mdx" : "md" } as DraftRecord;
+	return {
+		...record,
+		extension: record.extension === "mdx" ? "mdx" : "md",
+	} as DraftRecord;
 }
 
 export async function getPrivateDraft(store: PrivateDraftKV, slug: string) {
@@ -164,15 +167,26 @@ export async function listPrivateDrafts(
 
 export async function savePrivateDraft(
 	store: PrivateDraftKV,
-	input: { slug: unknown; content: unknown; expectedVersion?: unknown; extension?: unknown },
+	input: {
+		slug: unknown;
+		content: unknown;
+		expectedVersion?: unknown;
+		extension?: unknown;
+	},
 ) {
 	const slug = requireSlug(input.slug);
 	const content = requireDraftContent(input.content);
 	const prior = await readRecord(store, slug);
-	if (input.extension !== undefined && input.extension !== "md" && input.extension !== "mdx") {
+	if (
+		input.extension !== undefined &&
+		input.extension !== "md" &&
+		input.extension !== "mdx"
+	) {
 		throw new PrivateDraftError("草稿文件格式仅支持 md 或 mdx。", 400);
 	}
-	const extension = (input.extension ?? prior?.extension ?? "md") as "md" | "mdx";
+	const extension = (input.extension ?? prior?.extension ?? "md") as
+		| "md"
+		| "mdx";
 	const expected = input.expectedVersion;
 	if (expected === undefined) {
 		if (prior)
@@ -204,7 +218,12 @@ export async function savePrivateDraft(
 			title: draftTitle(content),
 		},
 	});
-	return { slug, extension, version: record.version, updatedAt: record.updatedAt };
+	return {
+		slug,
+		extension,
+		version: record.version,
+		updatedAt: record.updatedAt,
+	};
 }
 
 export async function deletePrivateDraft(
