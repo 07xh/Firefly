@@ -981,7 +981,10 @@ function render(){
 async function refresh(){
  try{
   say("正在读取文章目录…");
-  const publicArticles=await api("GET");
+  let publicArticles=[];
+  let publicError="";
+  try{publicArticles=await api("GET");}
+  catch(error){publicError=error instanceof Error?error.message:String(error);}
   let privateEntries=[];
   privateDraftStorageReady=false;
   try{
@@ -993,7 +996,9 @@ async function refresh(){
   }
   articles=[...privateEntries,...publicArticles];
   render();
-  say("已读取 "+publicArticles.length+" 篇公开仓库文章、"+privateEntries.length+" 篇私人草稿。");
+  say(publicError
+   ?"GitHub 文章暂时无法读取："+publicError+"；私人草稿仍可独立管理。"
+   :"已读取 "+publicArticles.length+" 篇公开仓库文章、"+privateEntries.length+" 篇私人草稿。",Boolean(publicError));
  }catch(error){say(error instanceof Error?error.message:String(error),true);$("list").textContent="读取失败，请检查后台 GitHub 权限。";}
 }
 function reset(){articleOpenSequence++;selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("privateDraftFormat").value="md";$("privateDraftFormat").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;$("exportPrivateDraft").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
