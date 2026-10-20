@@ -10,6 +10,9 @@ const {
 	listPrivateDrafts,
 	savePrivateDraft,
 	deletePrivateDraft,
+	listPrivateDraftRevisions,
+	getPrivateDraftRevision,
+	restorePrivateDraftRevision,
 } = await import("../src/lib/private-drafts.ts");
 
 const VALID = [
@@ -41,7 +44,7 @@ function mockKV() {
 			metadata.delete(key);
 		},
 		async list(options) {
-			assert.equal(options.prefix, "draft:v1:");
+			assert.ok(options.prefix.startsWith("draft:v1:") || options.prefix.startsWith("draft-history:v1:"));
 			const matches = [...data.keys()].filter(key => key.startsWith(options.prefix));
 			const start = options.cursor ? Number(options.cursor) : 0;
 			const page = matches.slice(start, start + (options.limit ?? 100));
@@ -142,4 +145,88 @@ test("stores mdx format and keeps it on subsequent edits", async () => {
 	const next = await savePrivateDraft(store, { slug: "mdx-notes", content: VALID + " update", expectedVersion: first.version });
 	assert.equal(next.extension, "mdx");
 	await rejectsStatus(() => savePrivateDraft(store, { slug: "bad-extension", content: VALID, extension: "html" }), 400);
+});
+
+test("each save creates immutable revision snapshots before replacing current", async () => {
+	const store = mockKV();
+	const first = await savePrivateDraft(store, {slug:"history-test", content:VALID});
+	const next = await savePrivateDraft(store, {slug:"history-test", content:VALID+"-second", expectedVersion:first.version});
+	const revisions = await listPrivateDraftRevisions(store, "history-test");
+	assert.equal(revisions.items.length, 2);
+	const old = await getPrivateDraftRevision(store, "history-test", first.version);
+	assert.equal(old.content, VALID);
+	assert.equal((await getPrivateDraftRevision(store,"history-test",next.version)).content, VALID+"-second");
+	assert.equal((await getPrivateDraft(store,"history-test")).content, VALID+"-second");
+	assert.ok(store.data.has("draft-history:v1:history-test:"+first.version));
+	assert.ok(store.data.has("draft-history:v1:history-test:"+next.version));
+});
+
+test("delete keeps history; restore deleted draft makes a new revision", async () => {
+	const store = mockKV();
+	const original = await savePrivateDraft(store, {slug:"recover", content:VALID, extension:"mdx"});
+	await deletePrivateDraft(store, "recover", original.version);
+	await rejectsStatus(() => getPrivateDraft(store,"recover"),404);
+	assert.equal((await getPrivateDraftRevision(store,"recover",original.version)).content,VALID);
+	const recovery = await restorePrivateDraftRevision(store, {slug:"recover",revision:original.version});
+	assert.notEqual(recovery.version, original.version);
+	assert.equal(recovery.extension,"mdx");
+	assert.equal((await getPrivateDraft(store,"recover")).content,VALID);
+});
+
+test("restoring existing draft needs the latest version and retains previous current history",async()=>{
+	const store=mockKV();
+	const first=await savePrivateDraft(store,{slug:"changes",content:VALID});
+	const second=await savePrivateDraft(store,{slug:"changes",content:VALID+"-edited",expectedVersion:first.version});
+	await rejectsStatus(()=>restorePrivateDraftRevision(store,{slug:"changes",revision:first.version}),409);
+	await rejectsStatus(()=>restorePrivateDraftRevision(store,{slug:"changes",revision:first.version,expectedVersion:first.version}),409);
+	assert.equal((await getPrivateDraft(store,"changes")).content,VALID+"-edited");
+	const restore=await restorePrivateDraftRevision(store,{slug:"changes",revision:first.version,expectedVersion:second.version});
+	assert.notEqual(restore.version,second.version);
+	assert.equal((await getPrivateDraft(store,"changes")).content,VALID);
+	assert.equal((await getPrivateDraftRevision(store,"changes",second.version)).content,VALID+"-edited");
+});
+
+test("failure to write history cannot overwrite or delete a current draft",async()=>{
+	const store=mockKV();
+	const original=await savePrivateDraft(store,{slug:"failsafe",content:VALID});
+	const dataBefore=store.data.get("draft:v1:failsafe");
+	const put=store.put.bind(store);
+	store.put=async (key,value,options)=>{
+		if(key.startsWith("draft-history:"))throw new Error("simulated history disk fault");
+		return put(key,value,options);
+	};
+	await assert.rejects(
+		()=>savePrivateDraft(store,{slug:"failsafe",content:VALID+" changed",expectedVersion:original.version}),
+		/simulated/,
+	);
+	assert.equal(store.data.get("draft:v1:failsafe"),dataBefore);
+	await assert.rejects(()=>deletePrivateDraft(store,"failsafe",original.version),/simulated/);
+	assert.equal(store.data.get("draft:v1:failsafe"),dataBefore);
+});
+
+test("history revisions cannot be silently overwritten and invalid versions fail",async()=>{
+	const store=mockKV();
+	const first=await savePrivateDraft(store,{slug:"intact",content:VALID});
+	const key="draft-history:v1:intact:"+first.version;
+	store.data.set(key,JSON.stringify({...JSON.parse(store.data.get(key)),content:"TAMPERED"}));
+	await rejectsStatus(()=>savePrivateDraft(store,{slug:"intact",content:VALID+"x",expectedVersion:first.version}),409);
+	assert.equal((await getPrivateDraft(store,"intact")).content,VALID);
+	await rejectsStatus(()=>getPrivateDraftRevision(store,"intact","../../../../bad"),400);
+	await rejectsStatus(()=>restorePrivateDraftRevision(store,{slug:"intact",revision:"not-a-version",expectedVersion:first.version}),400);
+});
+
+test("revision cursor pagination is independent from live draft pagination",async()=>{
+	const store=mockKV();
+	for(let i=0;i<105;i++){
+		const version="00000000-0000-4000-8000-"+String(i).padStart(12,"0");
+		const key="draft-history:v1:pagination:"+version;
+		store.data.set(key,JSON.stringify({schema:1,slug:"pagination",version,content:VALID,updatedAt:"2026-10-21",extension:"md"}));
+		store.metadata.set(key,{version,title:"Old draft",extension:"md",updatedAt:"2026-10-21"});
+	}
+	const first=await listPrivateDraftRevisions(store,"pagination");
+	assert.equal(first.items.length,100);
+	assert.ok(first.cursor);
+	const second=await listPrivateDraftRevisions(store,"pagination",first.cursor);
+	assert.equal(second.items.length,5);
+	assert.equal(second.cursor,null);
 });
