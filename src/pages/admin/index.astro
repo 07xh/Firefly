@@ -794,7 +794,7 @@ function markSettingsSaved() {
   updateSettingsDirtyState();
 }
 function currentArticleSnapshot() {
-  return JSON.stringify(["title", "slug", "published", "date", "articlePassword", "passwordHint", "category", "tags", "description", "body"]
+  return JSON.stringify(["title", "slug", "published", "date", "articlePassword", "passwordHint", "category", "tags", "description", "body", "privateDraftFormat"]
     .map(id => [id, $(id).value]).concat([["draft", $("draft").checked]]));
 }
 function isArticleDirty() {
@@ -914,7 +914,7 @@ function render(){
    }
    selected=a;
    $("formTitle").textContent=a.isPrivate?"编辑私人草稿":"编辑文章";
-   $("slug").value=a.path.split("/").pop().replace(/\.mdx?$/,"");
+   $("slug").value=a.isPrivate?a.slug:a.path.split("/").pop().replace(/\.mdx?$/,"");
    $("slug").disabled=true;
    $("privateDraftFormat").value=a.isPrivate?(a.extension==="mdx"?"mdx":"md"):(a.path.endsWith(".mdx")?"mdx":"md");
    $("privateDraftFormat").disabled=!a.isPrivate;
@@ -1815,7 +1815,11 @@ reset();refresh();loadSettings();
     const rawSchedule = $("date").value.trim();
     let date = mode === "publish" ? "" : fromBeijingDateTimeLocal(rawSchedule);
     if (!title || title.length > 200) { say("阶段 1/4：标题不能为空且最多 200 个字符。", true); $("title").focus(); return; }
-    if (!selected && !/^[\p{L}\p{N}][\p{L}\p{N}_-]{0,79}$/u.test(slug)) { say("阶段 1/4：文件名须以字母或数字开头，且仅包含字母、数字、连字符或下划线；支持中文。", true); $("slug").focus(); return; }
+    if (!/^[\p{L}\p{N}][\p{L}\p{N}_-]{0,79}$/u.test(slug)) { say("阶段 1/4：文件名须以字母或数字开头，且仅包含字母、数字、连字符或下划线；支持中文。", true); $("slug").focus(); return; }
+    if (selected?.isPrivate && slug !== selected.slug) {
+      say("私人草稿文件名与已选草稿不一致。请重新选择文章后再保存。", true);
+      return;
+    }
     if (!/^\d{4}-\d{2}-\d{2}$/.test(published) || Number.isNaN(Date.parse(published + "T00:00:00Z"))) { say("阶段 1/4：请选择有效的发布日期。", true); $("published").focus(); return; }
     if (rawSchedule && mode !== "publish" && !date) { say("阶段 1/4：定时发布时间无效，请重新选择。", true); $("date").focus(); return; }
     if ($("body").value.length > 500000) { say("阶段 1/4：正文超过 500 KB 限制。", true); return; }
