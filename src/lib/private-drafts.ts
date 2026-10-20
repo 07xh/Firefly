@@ -245,12 +245,16 @@ export async function restorePrivateDraftRevision(
 	const slug = requireSlug(input.slug);
 	const source = await getPrivateDraftRevision(store, slug, input.revision);
 	// This creates a fresh revision and does not modify the source snapshot.
-	return savePrivateDraft(store, {
-		slug,
-		content: source.content,
-		extension: source.extension,
-		expectedVersion: input.expectedVersion,
-	}, backup);
+	return savePrivateDraft(
+		store,
+		{
+			slug,
+			content: source.content,
+			extension: source.extension,
+			expectedVersion: input.expectedVersion,
+		},
+		backup,
+	);
 }
 
 export async function getPrivateDraft(store: PrivateDraftKV, slug: string) {
