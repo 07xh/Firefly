@@ -1756,6 +1756,45 @@ reset();refresh();loadSettings();
   };
 
 
+  // Private draft backup tools: no GitHub calls and no automatic overwrites.
+  $("exportPrivateDraft")?.addEventListener("click", () => {
+    try {
+      if(!selected?.isPrivate) throw new Error("请先从列表中选中私人草稿。");
+      const metadata={
+        title:$("title").value, published:$("published").value,
+        date:fromBeijingDateTimeLocal($("date").value),
+        password:$("articlePassword").value, passwordHint:$("passwordHint").value,
+        description:$("description").value,category:$("category").value,
+        tags:$("tags").value.split(",").map(v=>v.trim()).filter(Boolean)
+      };
+      const current=buildPrivateDraftContent($("body").value,metadata);
+      exportPrivateDraft(selected.slug+"."+$("privateDraftFormat").value,current);
+      say("已导出当前编辑内容的本地备份。文件仅保存在本设备，请妥善保管。");
+    }catch(error){say(error instanceof Error?error.message:String(error),true);}
+  });
+  $("importPrivateDraft")?.addEventListener("click",()=>{
+    if(!privateDraftStorageReady){say("私人草稿存储未连接，已阻止导入。",true);return;}
+    $("privateDraftImportFile").click();
+  });
+  $("privateDraftImportFile")?.addEventListener("change",async event=>{
+    const file=event.target.files?.[0];
+    event.target.value="";
+    if(!file)return;
+    try{
+      if(!privateDraftStorageReady)throw new Error("私人存储不可用，已停止导入。");
+      if(file.size>500000 || file.size===0)throw new Error("备份文件大小必须在 1 字节至 500 KB 之间。");
+      const match=file.name.match(/^([\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,79})\\.(md|mdx)$/u);
+      if(!match)throw new Error("备份文件名仅允许中文、字母、数字、连字符和下划线，后缀为 .md 或 .mdx。");
+      const content=await file.text();
+      const fm=content.match(/^---\\r?\\n([\\s\\S]*?)\\r?\\n---/);
+      if(!fm || !/^draft:\\s*true\\s*$/m.test(fm[1]))throw new Error("不是有效的私人草稿备份，必须具有 draft: true。");
+      if(!window.confirm("将 "+file.name+" 导入到私人草稿存储吗？如果已有同名草稿会拒绝覆盖；原有文章不会改动。"))return;
+      const saved=await privateDraftRequest("POST",{slug:match[1],extension:match[2],content});
+      await refresh();
+      say("已导入私人草稿："+match[1]+"，版本："+saved.version+"。未向公开仓库提交。");
+    }catch(error){say("导入失败："+(error instanceof Error?error.message:String(error)),true);}
+  });
+
   // Own the save flow so drafts and published posts both show the four stages.
   $("editor")?.addEventListener("submit", async event => {
     event.preventDefault();
