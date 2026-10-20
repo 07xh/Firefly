@@ -24,7 +24,9 @@ function response(payload: unknown, status = 200): Response {
 }
 
 function privateStore(): PrivateDraftKV {
-	const runtime = workerEnv as unknown as { FIREFLY_PRIVATE_DRAFTS?: PrivateDraftKV };
+	const runtime = workerEnv as unknown as {
+		FIREFLY_PRIVATE_DRAFTS?: PrivateDraftKV;
+	};
 	const store = runtime.FIREFLY_PRIVATE_DRAFTS;
 	if (!store) {
 		throw new PrivateDraftError(
@@ -41,7 +43,10 @@ function handleError(error: unknown): Response {
 	}
 	// Never log request bodies, draft content, passwords or Cloudflare bindings.
 	console.error("[Firefly] private draft storage operation failed");
-	return response({ error: "私人草稿存储暂时不可用，请保留本地原文后重试。" }, 503);
+	return response(
+		{ error: "私人草稿存储暂时不可用，请保留本地原文后重试。" },
+		503,
+	);
 }
 
 async function readInput(request: Request): Promise<Record<string, unknown>> {
@@ -78,10 +83,13 @@ export const POST: APIRoute = async ({ request }) => {
 	try {
 		const store = privateStore();
 		const input = await readInput(request);
-		return response(await savePrivateDraft(store, {
-			slug: input.slug,
-			content: input.content,
-		}), 201);
+		return response(
+			await savePrivateDraft(store, {
+				slug: input.slug,
+				content: input.content,
+			}),
+			201,
+		);
 	} catch (error) {
 		return handleError(error);
 	}
@@ -91,11 +99,13 @@ export const PUT: APIRoute = async ({ request }) => {
 	try {
 		const store = privateStore();
 		const input = await readInput(request);
-		return response(await savePrivateDraft(store, {
-			slug: input.slug,
-			content: input.content,
-			expectedVersion: input.version,
-		}));
+		return response(
+			await savePrivateDraft(store, {
+				slug: input.slug,
+				content: input.content,
+				expectedVersion: input.version,
+			}),
+		);
 	} catch (error) {
 		return handleError(error);
 	}
