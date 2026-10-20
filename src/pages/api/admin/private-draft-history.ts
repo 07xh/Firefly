@@ -16,6 +16,15 @@ import {
 
 export const prerender = false;
 
+function guardMigrationWrites(): void {
+	const flags = workerEnv as unknown as { FIREFLY_PRIVATE_DRAFT_MIGRATION_MODE?: string };
+	if (flags.FIREFLY_PRIVATE_DRAFT_MIGRATION_MODE === "true") {
+		throw new PrivateDraftError("私人草稿正在迁移，请先完成核对再恢复编辑。", 503);
+	}
+}
+
+
+
 function json(data: unknown, status = 200): Response {
 	return new Response(JSON.stringify(data), {
 		status,
@@ -79,6 +88,7 @@ export const GET: APIRoute = async ({ url }) => {
 
 export const POST: APIRoute = async ({ request }) => {
 	try {
+		guardMigrationWrites();
 		const store = storage();
 		const backup = backupStore();
 		const raw = await request.text();
