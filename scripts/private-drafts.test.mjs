@@ -200,7 +200,9 @@ test("failure to write history cannot overwrite or delete a current draft",async
 		/simulated/,
 	);
 	assert.equal(store.data.get("draft:v1:failsafe"),dataBefore);
-	await assert.rejects(()=>deletePrivateDraft(store,"failsafe",original.version),/simulated/);
+	const historicalKey="draft-history:v1:failsafe:"+original.version;
+	store.data.set(historicalKey,"CORRUPTED ARCHIVE");
+	await rejectsStatus(()=>deletePrivateDraft(store,"failsafe",original.version),409);
 	assert.equal(store.data.get("draft:v1:failsafe"),dataBefore);
 });
 
