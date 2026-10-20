@@ -2,8 +2,8 @@ import { env as workerEnv } from "cloudflare:workers";
 
 import type { APIRoute } from "astro";
 import {
-	publicAdminSystemHealth,
 	type FireflyBindingFlags,
+	publicAdminSystemHealth,
 } from "../../../lib/admin-system-health";
 
 export const prerender = false;
@@ -63,21 +63,20 @@ export const GET: APIRoute = async ({ url }) => {
 			? probe(() => r2.list({ prefix: "private-draft-backups/v1/", limit: 1 }))
 			: Promise.resolve("not_configured" as const),
 		d1
-			? probe(() => d1.prepare("SELECT COUNT(*) AS total FROM private_drafts").first())
+			? probe(() =>
+					d1.prepare("SELECT COUNT(*) AS total FROM private_drafts").first(),
+				)
 			: Promise.resolve("not_configured" as const),
 		token && /^[\w.-]+\/[\w.-]+$/.test(repo)
 			? probe(async () => {
-					const response = await fetch(
-						"https://api.github.com/repos/" + repo,
-						{
-							headers: {
-								Authorization: "Bearer " + token,
-								Accept: "application/vnd.github+json",
-								"User-Agent": "Firefly-Admin/1.0",
-							},
-							signal: AbortSignal.timeout(5000),
+					const response = await fetch("https://api.github.com/repos/" + repo, {
+						headers: {
+							Authorization: "Bearer " + token,
+							Accept: "application/vnd.github+json",
+							"User-Agent": "Firefly-Admin/1.0",
 						},
-					);
+						signal: AbortSignal.timeout(5000),
+					});
 					if (!response.ok) throw new Error("GitHub unreachable");
 				})
 			: Promise.resolve("not_configured" as const),
