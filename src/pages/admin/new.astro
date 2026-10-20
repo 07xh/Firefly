@@ -16,7 +16,7 @@ export const prerender = false;
 <header><h1>✦ 新建文章</h1><nav><a href="/admin/" style="color:#12884f;margin-right:14px">返回文章管理</a><button class="btn" id="logout" type="button">退出登录</button></nav></header>
 <main class="wrap">
 <section class="panel">
-<p class="muted">提交后会通过 GitHub API 写入仓库，并由 Cloudflare Worker 工作流自动构建、部署。草稿不会出现在公开文章列表。</p>
+<p class="muted">发布文章才会写入公开 GitHub 并触发部署；保存草稿使用独立私人 KV。首次保存前请确认私人存储已正确配置。</p>
 <form id="editor">
 <div class="field"><label for="title">标题 *</label><input id="title" required maxlength="200" autocomplete="off"></div>
 <div class="grid"><div class="field"><label for="slug">文章文件名 *</label><input id="slug" required pattern="[A-Za-z0-9][A-Za-z0-9_-]{0,79}" placeholder="my-first-post" autocomplete="off"><span class="muted">仅允许英文、数字、连字符和下划线。</span></div><div class="field"><label for="published">发布日期 *</label><input id="published" type="date" required></div></div>
@@ -42,7 +42,57 @@ async function watchDeployment(sha,mode,attempt=0){try{const response=await fetc
 $("editTab").onclick=showEdit;$("previewTab").onclick=previewMarkdown;$("body").addEventListener("input",()=>{if(!$("preview").hidden)previewMarkdown()});
 $("clear").onclick=()=>{for(const id of ["title","slug","published","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?localDate():""}showEdit();$("deployLink").hidden=true;$("deployLink").removeAttribute("href");say("表单已清空")};
 $("logout").onclick=async()=>{try{const response=await fetch("/api/admin/auth/",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:"{}"});if(!response.ok)throw new Error("退出登录失败（HTTP "+response.status+"）");location.assign("/admin/login/")}catch(error){say(error instanceof Error?error.message:"退出登录失败",true)}};
-$("editor").addEventListener("submit",async event=>{event.preventDefault();const mode=event.submitter&&event.submitter.value==="publish"?"publish":"draft";if(mode==="publish"&&!confirm("确认发布文章？这会把文章写入 GitHub 并触发正式网站部署。"))return;const slug=$("slug").value.trim();if(!/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(slug)){say("文件名格式不正确。",true);$("slug").focus();return}const buttons=[$("saveDraft"),$("publish")];buttons.forEach(button=>button.disabled=true);$("deployLink").hidden=true;try{const result=await api("POST",{title:$("title").value,slug:slug,published:$("published").value,category:$("category").value,description:$("description").value,tags:$("tags").value.split(",").map(tag=>tag.trim()).filter(Boolean),draft:mode==="draft",body:$("body").value});say("已提交到 GitHub（"+result.path+"），等待部署状态…");if(result.commitSha){watchDeployment(result.commitSha,mode)}else{say("文章已写入 GitHub，但接口未返回提交 SHA，无法自动确认部署。",true)}}catch(error){say(error instanceof Error?error.message:"提交失败，请重试。",true)}finally{buttons.forEach(button=>button.disabled=false)}});
+$("editor").addEventListener("submit",async event=>{
+  event.preventDefault();
+  const mode=event.submitter?.value==="publish"?"publish":"draft";
+  const slug=$("slug").value.trim();
+  const title=$("title").value.trim();
+  const published=$("published").value;
+  if(!/^[A-Za-z0-9][A-Za-z0-9_-]{0,79}$/.test(slug)){say("文件名格式不正确。",true);$("slug").focus();return;}
+  if(!title||!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(published)){say("请填写有效标题和日期。",true);return;}
+  if(mode==="publish"&&!confirm("确认公开发布文章？这会将全文提交到公开 GitHub 仓库并触发部署。"))return;
+  const buttons=[$("saveDraft"),$("publish")];
+  buttons.forEach(button=>button.disabled=true);
+  $("deployLink").hidden=true;
+  try{
+    const tags=$("tags").value.split(",").map(tag=>tag.trim()).filter(Boolean);
+    const details={
+      title,slug,published,category:$("category").value,
+      description:$("description").value,tags,body:$("body").value,
+    };
+    if(mode==="draft"){
+      const frontmatter=[
+        "---",
+        "title: "+JSON.stringify(title),
+        "published: "+published,
+        "description: "+JSON.stringify(details.description),
+        "category: "+JSON.stringify(details.category),
+        "draft: true",
+        "tags: "+JSON.stringify(tags),
+        "---",
+        "",
+      ].join("\n");
+      const response=await fetch("/api/admin/private-drafts/",{
+        method:"POST",credentials:"same-origin",cache:"no-store",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({slug,extension:"md",content:frontmatter+details.body}),
+      });
+      if(response.status===401){location.assign("/admin/login/?next="+encodeURIComponent(location.pathname));return;}
+      const data=await response.json().catch(()=>({error:"私人草稿接口响应无效。"}));
+      if(!response.ok)throw new Error(data.error||"私人草稿保存失败。");
+      say("私人草稿已保存在独立 KV 存储。没有向 GitHub 提交，也不会触发网站部署。");
+      return;
+    }
+    const result=await api("POST",{...details,draft:false});
+    say("已提交到 GitHub（"+result.path+"），等待部署状态…");
+    if(result.commitSha)watchDeployment(result.commitSha,mode);
+    else say("文章已写入 GitHub，但接口未返回提交 SHA，无法确认部署。",true);
+  }catch(error){
+    say(error instanceof Error?error.message:"提交失败，请重试。",true);
+  }finally{
+    buttons.forEach(button=>button.disabled=false);
+  }
+});
 $("published").value=localDate();
 </script>
 </body>
