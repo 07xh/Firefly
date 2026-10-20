@@ -1,6 +1,7 @@
 import { env as workerEnv } from "cloudflare:workers";
 
 import type { APIRoute } from "astro";
+import { resolvePrivateDraftStore, type PrivateDraftRuntime } from "../../../lib/private-draft-storage-binding";
 import {
 	PrivateBackupError,
 	type PrivateDraftBackupBucket,
@@ -27,16 +28,7 @@ function json(data: unknown, status = 200): Response {
 }
 
 function storage(): PrivateDraftKV {
-	const env = workerEnv as unknown as {
-		FIREFLY_PRIVATE_DRAFTS?: PrivateDraftKV;
-	};
-	if (!env.FIREFLY_PRIVATE_DRAFTS) {
-		throw new PrivateDraftError(
-			"私人草稿存储未绑定，无法查询或恢复历史版本。",
-			503,
-		);
-	}
-	return env.FIREFLY_PRIVATE_DRAFTS;
+	return resolvePrivateDraftStore(workerEnv as unknown as PrivateDraftRuntime);
 }
 
 function backupStore(): PrivateDraftBackupBucket {
