@@ -757,6 +757,7 @@ window.dispatchEvent(new Event("firefly:katex-ready"));
 const $ = id => document.getElementById(id);
 let articles = [], selected = null;
 let privateDraftStorageReady = false;
+let articleOpenSequence = 0;
 Object.defineProperty(window, "FireflyArticleContext", {
   configurable: true,
   get() {
@@ -900,12 +901,14 @@ function render(){
   item.append(titleRow,pathRow);
 
   item.onclick=async()=>{
+   const openSequence=++articleOpenSequence;
    if(isArticleDirty()&&!confirm("当前文章有未保存修改，切换文章会丢失这些内容。是否继续？"))return;
    if(a.isPrivate && !a.content){
     try{
      say("正在从私人存储读取草稿…");
      const loaded=await privateDraftRequest("GET",undefined,{slug:a.slug});
      if(loaded.version!==a.sha){say("私人草稿版本发生变化，请刷新后打开。",true);return;}
+     if(openSequence!==articleOpenSequence)return;
      a.content=loaded.content;
     }catch(error){say("读取私人草稿失败："+(error instanceof Error?error.message:String(error)),true);return;}
    }
@@ -993,7 +996,7 @@ async function refresh(){
   say("已读取 "+publicArticles.length+" 篇公开仓库文章、"+privateEntries.length+" 篇私人草稿。");
  }catch(error){say(error instanceof Error?error.message:String(error),true);$("list").textContent="读取失败，请检查后台 GitHub 权限。";}
 }
-function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("privateDraftFormat").value="md";$("privateDraftFormat").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;$("exportPrivateDraft").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
+function reset(){articleOpenSequence++;selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("privateDraftFormat").value="md";$("privateDraftFormat").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;$("exportPrivateDraft").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
 function showVisualTab(){
  $("body").hidden=true;$("wysiwygPane").hidden=false;$("markdownPreview").hidden=true;
  $("visualTab").classList.add("active");$("editorTab").classList.remove("active");$("previewTab").classList.remove("active");
