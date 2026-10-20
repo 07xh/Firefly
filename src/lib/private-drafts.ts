@@ -124,10 +124,11 @@ async function readRecord(
 	) {
 		throw new PrivateDraftError("草稿存储数据不完整，已停止覆盖。", 500);
 	}
+	const stored = record as DraftRecord;
 	return {
-		...record,
-		extension: record.extension === "mdx" ? "mdx" : "md",
-	} as DraftRecord;
+		...stored,
+		extension: stored.extension === "mdx" ? "mdx" : "md",
+	};
 }
 
 export async function getPrivateDraft(store: PrivateDraftKV, slug: string) {
