@@ -66,8 +66,9 @@ test("new draft is stored only in the private KV namespace", async () => {
 	const store = mockKV();
 	const created = await savePrivateDraft(store, { slug: "study-notes", content: VALID });
 	assert.match(created.version, /^[\w-]{36}$/);
-	assert.equal(store.data.size, 1);
-	assert.ok([...store.data.keys()][0].startsWith("draft:v1:"));
+	assert.equal(store.data.size, 2);
+	assert.ok(store.data.has("draft:v1:study-notes"));
+	assert.ok([...store.data.keys()].some(key => key.startsWith("draft-history:v1:study-notes:")));
 	const saved = await getPrivateDraft(store, "study-notes");
 	assert.equal(saved.content, VALID);
 	assert.equal(saved.version, created.version);
