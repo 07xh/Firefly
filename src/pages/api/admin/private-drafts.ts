@@ -1,6 +1,7 @@
 import { env as workerEnv } from "cloudflare:workers";
 
 import type { APIRoute } from "astro";
+import { resolvePrivateDraftStore, type PrivateDraftRuntime } from "../../../lib/private-draft-storage-binding";
 import {
 	PrivateBackupError,
 	type PrivateDraftBackupBucket,
@@ -28,17 +29,7 @@ function response(payload: unknown, status = 200): Response {
 }
 
 function privateStore(): PrivateDraftKV {
-	const runtime = workerEnv as unknown as {
-		FIREFLY_PRIVATE_DRAFTS?: PrivateDraftKV;
-	};
-	const store = runtime.FIREFLY_PRIVATE_DRAFTS;
-	if (!store) {
-		throw new PrivateDraftError(
-			"私人草稿存储尚未配置；未向公开 GitHub 仓库写入任何内容。",
-			503,
-		);
-	}
-	return store;
+	return resolvePrivateDraftStore(workerEnv as unknown as PrivateDraftRuntime);
 }
 
 function backupStore(): PrivateDraftBackupBucket {
