@@ -132,3 +132,14 @@ test("draft list pagination returns a continuation cursor", async () => {
 	assert.equal(second.items.length, 2);
 	assert.equal(second.cursor, null);
 });
+
+test("stores mdx format and keeps it on subsequent edits", async () => {
+	const store = mockKV();
+	const first = await savePrivateDraft(store, { slug: "mdx-notes", content: VALID, extension: "mdx" });
+	assert.equal(first.extension, "mdx");
+	assert.equal((await getPrivateDraft(store, "mdx-notes")).extension, "mdx");
+	assert.equal((await listPrivateDrafts(store)).items[0].extension, "mdx");
+	const next = await savePrivateDraft(store, { slug: "mdx-notes", content: VALID + " update", expectedVersion: first.version });
+	assert.equal(next.extension, "mdx");
+	await rejectsStatus(() => savePrivateDraft(store, { slug: "bad-extension", content: VALID, extension: "html" }), 400);
+});
