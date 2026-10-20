@@ -8,7 +8,11 @@
 
 export interface PrivateDraftKV {
 	get(key: string, type: "text"): Promise<string | null>;
-	put(key: string, value: string, options?: { metadata?: DraftMetadata }): Promise<void>;
+	put(
+		key: string,
+		value: string,
+		options?: { metadata?: DraftMetadata },
+	): Promise<void>;
 	delete(key: string): Promise<void>;
 	list(options: { prefix: string; cursor?: string; limit?: number }): Promise<{
 		keys: Array<{ name: string; metadata?: DraftMetadata }>;
@@ -87,14 +91,20 @@ function requireDraftContent(value: unknown): string {
 	return value;
 }
 
-async function readRecord(store: PrivateDraftKV, slug: string): Promise<DraftRecord | null> {
+async function readRecord(
+	store: PrivateDraftKV,
+	slug: string,
+): Promise<DraftRecord | null> {
 	const raw = await store.get(draftKey(slug), "text");
 	if (raw === null) return null;
 	let record: unknown;
 	try {
 		record = JSON.parse(raw);
 	} catch {
-		throw new PrivateDraftError("草稿存储数据无法解析，已停止操作以保护原文。", 500);
+		throw new PrivateDraftError(
+			"草稿存储数据无法解析，已停止操作以保护原文。",
+			500,
+		);
 	}
 	if (
 		!record ||
@@ -121,8 +131,14 @@ export async function getPrivateDraft(store: PrivateDraftKV, slug: string) {
 	return record;
 }
 
-export async function listPrivateDrafts(store: PrivateDraftKV, cursor?: string) {
-	if (cursor && (cursor.length > 1024 || !/^[A-Za-z0-9_+\-/=]+$/.test(cursor))) {
+export async function listPrivateDrafts(
+	store: PrivateDraftKV,
+	cursor?: string,
+) {
+	if (
+		cursor &&
+		(cursor.length > 1024 || !/^[A-Za-z0-9_+\-/=]+$/.test(cursor))
+	) {
 		throw new PrivateDraftError("分页参数无效。", 400);
 	}
 	const result = await store.list({
@@ -152,7 +168,11 @@ export async function savePrivateDraft(
 	const prior = await readRecord(store, slug);
 	const expected = input.expectedVersion;
 	if (expected === undefined) {
-		if (prior) throw new PrivateDraftError("同名私人草稿已存在，请先读取最新版本。", 409);
+		if (prior)
+			throw new PrivateDraftError(
+				"同名私人草稿已存在，请先读取最新版本。",
+				409,
+			);
 	} else if (
 		typeof expected !== "string" ||
 		!prior ||
