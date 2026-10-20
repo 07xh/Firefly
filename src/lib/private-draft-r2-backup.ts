@@ -7,7 +7,11 @@
  */
 export interface PrivateDraftBackupBucket {
 	get(key: string): Promise<{ text(): Promise<string> } | null>;
-	put(key: string, value: string, options?: { onlyIf: { etagDoesNotMatch: string } }): Promise<unknown>;
+	put(
+		key: string,
+		value: string,
+		options?: { onlyIf: { etagDoesNotMatch: string } },
+	): Promise<unknown>;
 	list(options: { prefix: string; cursor?: string; limit?: number }): Promise<{
 		objects: Array<{ key: string; uploaded?: Date }>;
 		truncated: boolean;
@@ -128,7 +132,10 @@ export async function ensurePrivateR2Backup(
 	const confirmed = await bucket.get(key);
 	const confirmedRaw = confirmed ? await confirmed.text() : null;
 	if (created === null && confirmedRaw !== null && confirmedRaw !== raw) {
-		throw new PrivateBackupError("历史备份已被并发操作写入不同内容，拒绝覆盖。", 409);
+		throw new PrivateBackupError(
+			"历史备份已被并发操作写入不同内容，拒绝覆盖。",
+			409,
+		);
 	}
 	if (confirmedRaw !== raw) {
 		throw new PrivateBackupError("R2 备份未能验证，已阻止修改当前草稿。", 503);
