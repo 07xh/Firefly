@@ -1,7 +1,7 @@
 import { env as workerEnv } from "cloudflare:workers";
 
 import type { APIRoute } from "astro";
-import type { PrivateDraftBackupBucket } from "../../../lib/private-draft-r2-backup";
+import { PrivateBackupError, type PrivateDraftBackupBucket } from "../../../lib/private-draft-r2-backup";
 import {
 	deletePrivateDraft,
 	getPrivateDraft,
@@ -49,6 +49,9 @@ function backupStore(): PrivateDraftBackupBucket {
 }
 
 function handleError(error: unknown): Response {
+	if (error instanceof PrivateBackupError) {
+		return response({ error: error.message }, error.status);
+	}
 	if (error instanceof PrivateDraftError) {
 		return response({ error: error.message }, error.status);
 	}
