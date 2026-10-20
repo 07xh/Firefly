@@ -5,6 +5,11 @@ export function privateDraftPath(slug) {
 	return "private:" + slug;
 }
 
+export function editorSlugForArticle(article) {
+	if (article?.isPrivate) return String(article.slug ?? "");
+	return String(article?.path ?? "").split("/").pop().replace(/\\.mdx?$/, "");
+}
+
 export function draftListEntry(item) {
 	return {
 		isPrivate: true,
