@@ -1,7 +1,10 @@
 import { env as workerEnv } from "cloudflare:workers";
 
 import type { APIRoute } from "astro";
-import { PrivateBackupError, type PrivateDraftBackupBucket } from "../../../lib/private-draft-r2-backup";
+import {
+	PrivateBackupError,
+	type PrivateDraftBackupBucket,
+} from "../../../lib/private-draft-r2-backup";
 import {
 	getPrivateDraftRevision,
 	listPrivateDraftRevisions,
@@ -41,7 +44,10 @@ function backupStore(): PrivateDraftBackupBucket {
 		FIREFLY_PRIVATE_DRAFT_BACKUPS?: PrivateDraftBackupBucket;
 	};
 	if (!runtime.FIREFLY_PRIVATE_DRAFT_BACKUPS) {
-		throw new PrivateDraftError("独立 R2 备份存储未配置；已停止修改私人草稿。", 503);
+		throw new PrivateDraftError(
+			"独立 R2 备份存储未配置；已停止修改私人草稿。",
+			503,
+		);
 	}
 	return runtime.FIREFLY_PRIVATE_DRAFT_BACKUPS;
 }
@@ -104,11 +110,15 @@ export const POST: APIRoute = async ({ request }) => {
 			return json({ error: "恢复必须指定草稿文件名和历史版本编号。" }, 400);
 		}
 		return json(
-			await restorePrivateDraftRevision(store, {
-				slug: details.slug,
-				revision: details.revision,
-				expectedVersion: details.expectedVersion,
-			}, backup),
+			await restorePrivateDraftRevision(
+				store,
+				{
+					slug: details.slug,
+					revision: details.revision,
+					expectedVersion: details.expectedVersion,
+				},
+				backup,
+			),
 		);
 	} catch (error) {
 		return errorResponse(error);
