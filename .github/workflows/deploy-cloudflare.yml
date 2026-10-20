@@ -132,23 +132,30 @@ jobs:
             else config.r2_buckets.push({ binding, bucket_name: r2Bucket });
             console.log("Configured dedicated private R2 backup binding.");
           }
-          // D1 is an EXPLICIT opt-in, never an automatic migration.
-          // Apply migrations and verify each existing KV draft before enabling.
+          // The D1 binding can be attached in a write-frozen KV migration,
+          // but only a separately approved backend switch makes it authoritative.
           const draftBackend = process.env.FIREFLY_PRIVATE_DRAFT_BACKEND?.trim() || "kv";
+          const migrationMode = process.env.FIREFLY_PRIVATE_DRAFT_MIGRATION_MODE?.trim() === "true";
           if (!["kv", "d1"].includes(draftBackend)) {
             throw new Error("FIREFLY_PRIVATE_DRAFT_BACKEND must be kv or d1.");
           }
-          if (draftBackend === "d1") {
+          if (migrationMode && draftBackend !== "kv") {
+            throw new Error("Migration maintenance mode requires the KV source backend.");
+          }
+          if (migrationMode && !privateDraftsId) {
+            throw new Error("KV to D1 migration requires the original private KV binding.");
+          }
+          if (draftBackend === "d1" || migrationMode) {
             const databaseId = process.env.FIREFLY_PRIVATE_DRAFT_D1_DATABASE_ID?.trim();
             const databaseName = process.env.FIREFLY_PRIVATE_DRAFT_D1_DATABASE_NAME?.trim() || "firefly-private-drafts";
             if (!/^[a-f0-9-]{36}$/.test(databaseId || "")) {
-              throw new Error("D1 mode requires FIREFLY_PRIVATE_DRAFT_D1_DATABASE_ID.");
+              throw new Error("D1 backend or migration requires FIREFLY_PRIVATE_DRAFT_D1_DATABASE_ID.");
             }
             if (!/^[a-z0-9-]{3,64}$/.test(databaseName)) {
               throw new Error("Invalid private-draft D1 database name.");
             }
             if (!r2Bucket) {
-              throw new Error("D1 mode requires the independent R2 backup binding.");
+              throw new Error("D1 backend or migration requires the private R2 backup binding.");
             }
             config.d1_databases ??= [];
             const binding = "FIREFLY_PRIVATE_DRAFT_DB";
@@ -161,13 +168,13 @@ jobs:
                 binding, database_name: databaseName, database_id: databaseId
               });
             }
-            config.vars ??= {};
-            config.vars.FIREFLY_PRIVATE_DRAFT_BACKEND = "d1";
-            console.log("Explicit D1 draft backend enabled: migration must already be verified.");
-          } else {
-            // Do not accidentally switch to D1 due to an old binding or variable.
-            config.vars ??= {};
-            config.vars.FIREFLY_PRIVATE_DRAFT_BACKEND = "kv";
+            console.log("Attached private D1 backend for approved migration/operation.");
+          }
+          config.vars ??= {};
+          config.vars.FIREFLY_PRIVATE_DRAFT_BACKEND = draftBackend;
+          config.vars.FIREFLY_PRIVATE_DRAFT_MIGRATION_MODE = migrationMode ? "true" : "false";
+          if (migrationMode) {
+            console.log("WARNING: private draft mutations are frozen during KV-to-D1 migration.");
           }
           if (config.assets) {
             config.assets.binding = config.assets.binding || "ASSETS";
@@ -196,6 +203,7 @@ jobs:
           FIREFLY_PRIVATE_DRAFT_BACKEND: ${{ vars.FIREFLY_PRIVATE_DRAFT_BACKEND }}
           FIREFLY_PRIVATE_DRAFT_D1_DATABASE_ID: ${{ vars.FIREFLY_PRIVATE_DRAFT_D1_DATABASE_ID }}
           FIREFLY_PRIVATE_DRAFT_D1_DATABASE_NAME: ${{ vars.FIREFLY_PRIVATE_DRAFT_D1_DATABASE_NAME }}
+          FIREFLY_PRIVATE_DRAFT_MIGRATION_MODE: ${{ vars.FIREFLY_PRIVATE_DRAFT_MIGRATION_MODE }}
       - name: Validate GitHub Contents token
         shell: bash
         env:
