@@ -126,10 +126,11 @@ export async function ensurePrivateR2Backup(
 	// Cloudflare R2 conditional put returns null when another writer won.
 	// Verify the winner has exactly the expected bytes; never overwrite it.
 	const confirmed = await bucket.get(key);
-	if (created === null && confirmed && (await confirmed.text()) !== raw) {
+	const confirmedRaw = confirmed ? await confirmed.text() : null;
+	if (created === null && confirmedRaw !== null && confirmedRaw !== raw) {
 		throw new PrivateBackupError("历史备份已被并发操作写入不同内容，拒绝覆盖。", 409);
 	}
-	if (!confirmed || (await confirmed.text()) !== raw) {
+	if (confirmedRaw !== raw) {
 		throw new PrivateBackupError("R2 备份未能验证，已阻止修改当前草稿。", 503);
 	}
 }
