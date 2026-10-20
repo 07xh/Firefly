@@ -8,11 +8,7 @@
 export interface PrivateDraftBackupBucket {
 	get(key: string): Promise<{ text(): Promise<string> } | null>;
 	put(key: string, value: string): Promise<unknown>;
-	list(options: {
-		prefix: string;
-		cursor?: string;
-		limit?: number;
-	}): Promise<{
+	list(options: { prefix: string; cursor?: string; limit?: number }): Promise<{
 		objects: Array<{ key: string; uploaded?: Date }>;
 		truncated: boolean;
 		cursor?: string;
@@ -30,7 +26,8 @@ export type PrivateDraftBackupRecord = {
 
 const PREFIX = "private-draft-backups/v1/";
 const SLUG = /^[\p{L}\p{N}][\p{L}\p{N}_-]{0,79}$/u;
-const VERSION = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const VERSION =
+	/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const encoder = new TextEncoder();
 
 export class PrivateBackupError extends Error {
@@ -49,7 +46,8 @@ function requireSlug(slug: string): string {
 }
 
 function requireVersion(version: string): string {
-	if (!VERSION.test(version)) throw new PrivateBackupError("备份版本号不合法。", 400);
+	if (!VERSION.test(version))
+		throw new PrivateBackupError("备份版本号不合法。", 400);
 	return version;
 }
 
@@ -115,7 +113,7 @@ export async function ensurePrivateR2Backup(
 	const raw = JSON.stringify(record);
 	const prior = await bucket.get(key);
 	if (prior) {
-		if (await prior.text() !== raw) {
+		if ((await prior.text()) !== raw) {
 			throw new PrivateBackupError("R2 历史备份内容冲突，已停止覆盖。", 409);
 		}
 		return;
@@ -133,7 +131,10 @@ export async function listPrivateR2Backups(
 	slug: string,
 	cursor?: string,
 ) {
-	if (cursor && (cursor.length > 1024 || !/^[A-Za-z0-9_+\-/=]+$/.test(cursor))) {
+	if (
+		cursor &&
+		(cursor.length > 1024 || !/^[A-Za-z0-9_+\-/=]+$/.test(cursor))
+	) {
 		throw new PrivateBackupError("备份分页参数无效。", 400);
 	}
 	const folder = prefix(slug);
