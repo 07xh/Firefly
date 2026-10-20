@@ -1,0 +1,129 @@
+---
+export const prerender = false;
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>运行状态 · Firefly 后台</title>
+    <style>
+      :root { font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:#f5f7f5; color:#253126 }
+      * { box-sizing:border-box }
+      body { margin:0 }
+      main { max-width:860px; padding:22px 15px 55px; margin:auto }
+      header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:20px }
+      h1 { font-size:22px; margin:0 }
+      h2 { font-size:16px }
+      .btn { font:inherit; font-size:13px; background:#fff; border:1px solid #d8e0d9; color:#26362b; border-radius:10px; padding:10px 14px; cursor:pointer; text-decoration:none }
+      .btn:disabled { opacity:.6; cursor:wait }
+      .main { background:#168653; color:#fff; border-color:#168653 }
+      .card { border:1px solid #e0e7e1; padding:17px; border-radius:16px; background:#fff; margin-bottom:15px }
+      .muted { font-size:13px; color:#6b786c; line-height:1.7 }
+      .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(225px,1fr)); gap:10px }
+      .item { display:flex; justify-content:space-between; gap:10px; border-radius:9px; background:#f7f9f7; padding:10px; font-size:13px }
+      .ok { color:#12884f; font-weight:600 }
+      .no { color:#a33924; font-weight:600 }
+      .actions { display:flex; gap:8px; flex-wrap:wrap }
+      #issues { padding-left:20px; font-size:13px; line-height:1.9 }
+      .hidden { display:none }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>系统运行状态</h1>
+          <p class="muted">仅供已登录管理员查看。不会展示访问密码、Token 或文章内容。</p>
+        </div>
+        <a class="btn" href="/admin/">返回后台</a>
+      </header>
+      <div class="actions" style="margin-bottom:12px">
+        <button class="btn" id="refresh" type="button">刷新配置状态</button>
+        <button class="btn main" id="probe" type="button">测试各服务连通性</button>
+      </div>
+      <p class="muted" id="status" role="status" aria-live="polite">正在读取后台配置状态…</p>
+      <section class="card">
+        <h2>登录与文章管理</h2>
+        <div class="grid" id="adminStatus"></div>
+      </section>
+      <section class="card">
+        <h2>私人草稿与备份</h2>
+        <div class="grid" id="draftStatus"></div>
+        <p class="muted">KV、D1 和 R2 分属不同存储。检测到绑定不等于已验证数据完整性；真实写入、备份恢复仍需独立测试。</p>
+      </section>
+      <section class="card">
+        <h2>媒体与连通性</h2>
+        <div class="grid" id="mediaStatus"></div>
+      </section>
+      <section class="card">
+        <h2>需要关注的配置</h2>
+        <ul id="issues"></ul>
+      </section>
+    </main>
+    <script>
+      const $ = id => document.getElementById(id);
+      function addItem(container, label, value) {
+        const row=document.createElement("div");
+        row.className="item";
+        const text=document.createElement("span");
+        text.textContent=label;
+        const status=document.createElement("span");
+        status.textContent=value === true ? "已配置" : value === false ? "未配置" : String(value);
+        status.className=value === true || value === "ok" || value === "configured" ? "ok" : "no";
+        row.append(text,status);
+        $(container).appendChild(row);
+      }
+      function render(data) {
+        ["adminStatus","draftStatus","mediaStatus","issues"].forEach(id=>$(id).replaceChildren());
+        addItem("adminStatus","会话 KV",Boolean(data.security?.sessionBinding));
+        addItem("adminStatus","管理员密码",Boolean(data.security?.adminPasswordConfigured));
+        addItem("adminStatus","GitHub 访问令牌",Boolean(data.articles?.githubTokenConfigured));
+        addItem("draftStatus","当前存储后端",data.privateDrafts?.backend ?? "未知");
+        addItem("draftStatus","KV 绑定",Boolean(data.privateDrafts?.kvBound));
+        addItem("draftStatus","D1 绑定",Boolean(data.privateDrafts?.d1Bound));
+        addItem("draftStatus","独立 R2 备份",Boolean(data.privateDrafts?.r2BackupBound));
+        addItem("draftStatus","迁移维护模式",data.privateDrafts?.migrationMode ? "已冻结写入" : "未启用");
+        addItem("mediaStatus","图床访问令牌",Boolean(data.media?.imageHostTokenConfigured));
+        if(data.connectivity) {
+          for(const [label,value] of Object.entries({
+            "KV 读取":data.connectivity.kv,
+            "R2 读取":data.connectivity.r2,
+            "D1 表读取":data.connectivity.d1,
+            "GitHub 访问":data.connectivity.github,
+          })) addItem("mediaStatus",label,value==="ok"?"ok":value==="failed"?"失败":"未配置");
+        }
+        const issues=Array.isArray(data.issues)?data.issues:[];
+        if(!issues.length) {
+          const item=document.createElement("li");
+          item.textContent="未发现明显的缺失绑定，但仍需实际读写及恢复验证。";
+          $("issues").append(item);
+        } else {
+          for(const issue of issues) {
+            const item=document.createElement("li");
+            item.textContent=String(issue);
+            $("issues").append(item);
+          }
+        }
+      }
+      async function load(probe=false){
+        const buttons=[$("refresh"),$("probe")];
+        buttons.forEach(b=>b.disabled=true);
+        $("status").textContent=probe?"正在测试 GitHub、KV、D1、R2 读取连通性…":"正在读取已配置的服务绑定…";
+        try {
+          const response=await fetch("/api/admin/system-health/"+(probe?"?probe=1":""),{credentials:"same-origin",cache:"no-store"});
+          if(response.status===401){location.assign("/admin/login/?next=/admin/system/");return;}
+          const result=await response.json().catch(()=>({error:"诊断接口响应无效。"}));
+          if(!response.ok)throw new Error(result.error||"无法读取运行状态。");
+          render(result);
+          $("status").textContent=probe?"连通性测试结束。具体结果见下方。":"配置状态已读取。可选择“测试各服务连通性”。";
+        }catch(error){$("status").textContent=error instanceof Error?error.message:"诊断请求失败。";}
+        finally{buttons.forEach(b=>b.disabled=false);}
+      }
+      $("refresh").onclick=()=>load(false);
+      $("probe").onclick=()=>load(true);
+      load(false);
+    </script>
+  </body>
+</html>
