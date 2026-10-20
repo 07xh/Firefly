@@ -1,7 +1,7 @@
 import { env as workerEnv } from "cloudflare:workers";
 
 import type { APIRoute } from "astro";
-import { isPublicGitHubDraft } from "../../../lib/public-post-write-policy";
+import { exposesPasswordFrontmatter, isPublicGitHubDraft } from "../../../lib/public-post-write-policy";
 
 type RuntimeEnv = {
 	FIREFLY_CONTENTS_TOKEN?: string;
@@ -251,6 +251,11 @@ export const POST: APIRoute = async ({ request }) => {
 		const path = `${ROOT}${slug}.${extension}`;
 		const content = makeMarkdown({ ...input, slug });
 		if (!content) return json({ error: "标题、发布日期或正文格式不合法" }, 400);
+		if (exposesPasswordFrontmatter(content)) {
+			return json({
+				error: "公开 GitHub 仓库不允许保存访问密码或密码提示。请移除这些字段；如需保密，请改存私人草稿。",
+			}, 400);
+		}
 		if (isPublicGitHubDraft(content)) {
 			return json({ error: "草稿不得保存到公开 GitHub 仓库。请使用后台私人草稿存储功能。" }, 400);
 		}
@@ -316,6 +321,11 @@ export const PUT: APIRoute = async ({ request }) => {
 				? updateFrontmatterField(content, "passwordHint", scalar(passwordHint))
 				: removeFrontmatterField(content, "passwordHint");
 			if (content.length > 500_000) return json({ error: "完整文章内容不能超过 500 KB" }, 400);
+		}
+		if (exposesPasswordFrontmatter(content)) {
+			return json({
+				error: "公开 GitHub 仓库不允许保存访问密码或密码提示。请移除这些字段；如需保密，请改存私人草稿。",
+			}, 400);
 		}
 		if (isPublicGitHubDraft(content)) {
 			return json({ error: "草稿不得保存到公开 GitHub 仓库。请改用后台私人草稿存储功能。" }, 400);
