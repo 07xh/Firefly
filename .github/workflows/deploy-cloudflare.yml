@@ -132,6 +132,43 @@ jobs:
             else config.r2_buckets.push({ binding, bucket_name: r2Bucket });
             console.log("Configured dedicated private R2 backup binding.");
           }
+          // D1 is an EXPLICIT opt-in, never an automatic migration.
+          // Apply migrations and verify each existing KV draft before enabling.
+          const draftBackend = process.env.FIREFLY_PRIVATE_DRAFT_BACKEND?.trim() || "kv";
+          if (!["kv", "d1"].includes(draftBackend)) {
+            throw new Error("FIREFLY_PRIVATE_DRAFT_BACKEND must be kv or d1.");
+          }
+          if (draftBackend === "d1") {
+            const databaseId = process.env.FIREFLY_PRIVATE_DRAFT_D1_DATABASE_ID?.trim();
+            const databaseName = process.env.FIREFLY_PRIVATE_DRAFT_D1_DATABASE_NAME?.trim() || "firefly-private-drafts";
+            if (!/^[a-f0-9-]{36}$/.test(databaseId || "")) {
+              throw new Error("D1 mode requires FIREFLY_PRIVATE_DRAFT_D1_DATABASE_ID.");
+            }
+            if (!/^[a-z0-9-]{3,64}$/.test(databaseName)) {
+              throw new Error("Invalid private-draft D1 database name.");
+            }
+            if (!r2Bucket) {
+              throw new Error("D1 mode requires the independent R2 backup binding.");
+            }
+            config.d1_databases ??= [];
+            const binding = "FIREFLY_PRIVATE_DRAFT_DB";
+            const existing = config.d1_databases.find((item) => item.binding === binding);
+            if (existing) {
+              existing.database_id = databaseId;
+              existing.database_name = databaseName;
+            } else {
+              config.d1_databases.push({
+                binding, database_name: databaseName, database_id: databaseId
+              });
+            }
+            config.vars ??= {};
+            config.vars.FIREFLY_PRIVATE_DRAFT_BACKEND = "d1";
+            console.log("Explicit D1 draft backend enabled: migration must already be verified.");
+          } else {
+            // Do not accidentally switch to D1 due to an old binding or variable.
+            config.vars ??= {};
+            config.vars.FIREFLY_PRIVATE_DRAFT_BACKEND = "kv";
+          }
           if (config.assets) {
             config.assets.binding = config.assets.binding || "ASSETS";
             // Authentication middleware must run before static-asset routing on
@@ -156,6 +193,9 @@ jobs:
           ENABLE_CUSTOM_DOMAIN_ROUTE: ${{ secrets.ENABLE_CUSTOM_DOMAIN_ROUTE }}
           FIREFLY_PRIVATE_DRAFTS_NAMESPACE_ID: ${{ vars.FIREFLY_PRIVATE_DRAFTS_NAMESPACE_ID }}
           FIREFLY_PRIVATE_DRAFT_BACKUP_BUCKET: ${{ vars.FIREFLY_PRIVATE_DRAFT_BACKUP_BUCKET }}
+          FIREFLY_PRIVATE_DRAFT_BACKEND: ${{ vars.FIREFLY_PRIVATE_DRAFT_BACKEND }}
+          FIREFLY_PRIVATE_DRAFT_D1_DATABASE_ID: ${{ vars.FIREFLY_PRIVATE_DRAFT_D1_DATABASE_ID }}
+          FIREFLY_PRIVATE_DRAFT_D1_DATABASE_NAME: ${{ vars.FIREFLY_PRIVATE_DRAFT_D1_DATABASE_NAME }}
       - name: Validate GitHub Contents token
         shell: bash
         env:
