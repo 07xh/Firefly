@@ -1,6 +1,7 @@
 import { env as workerEnv } from "cloudflare:workers";
 
 import type { APIRoute } from "astro";
+import type { PrivateDraftBackupBucket } from "../../../lib/private-draft-r2-backup";
 import {
 	deletePrivateDraft,
 	getPrivateDraft,
@@ -35,6 +36,16 @@ function privateStore(): PrivateDraftKV {
 		);
 	}
 	return store;
+}
+
+function backupStore(): PrivateDraftBackupBucket {
+	const runtime = workerEnv as unknown as {
+		FIREFLY_PRIVATE_DRAFT_BACKUPS?: PrivateDraftBackupBucket;
+	};
+	if (!runtime.FIREFLY_PRIVATE_DRAFT_BACKUPS) {
+		throw new PrivateDraftError("独立 R2 备份存储未配置；已停止修改私人草稿。", 503);
+	}
+	return runtime.FIREFLY_PRIVATE_DRAFT_BACKUPS;
 }
 
 function handleError(error: unknown): Response {
@@ -82,13 +93,14 @@ export const GET: APIRoute = async ({ url }) => {
 export const POST: APIRoute = async ({ request }) => {
 	try {
 		const store = privateStore();
+		const backup = backupStore();
 		const input = await readInput(request);
 		return response(
 			await savePrivateDraft(store, {
 				slug: input.slug,
 				content: input.content,
 				extension: input.extension,
-			}),
+			}, backup),
 			201,
 		);
 	} catch (error) {
@@ -99,6 +111,7 @@ export const POST: APIRoute = async ({ request }) => {
 export const PUT: APIRoute = async ({ request }) => {
 	try {
 		const store = privateStore();
+		const backup = backupStore();
 		const input = await readInput(request);
 		return response(
 			await savePrivateDraft(store, {
@@ -106,7 +119,7 @@ export const PUT: APIRoute = async ({ request }) => {
 				content: input.content,
 				extension: input.extension,
 				expectedVersion: input.version,
-			}),
+			}, backup),
 		);
 	} catch (error) {
 		return handleError(error);
@@ -116,11 +129,12 @@ export const PUT: APIRoute = async ({ request }) => {
 export const DELETE: APIRoute = async ({ request }) => {
 	try {
 		const store = privateStore();
+		const backup = backupStore();
 		const input = await readInput(request);
 		if (typeof input.slug !== "string" || typeof input.version !== "string") {
 			return response({ error: "删除草稿需要文件名和当前版本号。" }, 400);
 		}
-		return response(await deletePrivateDraft(store, input.slug, input.version));
+		return response(await deletePrivateDraft(store, input.slug, input.version, backup));
 	} catch (error) {
 		return handleError(error);
 	}
