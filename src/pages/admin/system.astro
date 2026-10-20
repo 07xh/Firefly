@@ -63,8 +63,26 @@ export const prerender = false;
       </section>
     </main>
     <script>
-      const $ = id => document.getElementById(id);
-      function addItem(container, label, value) {
+      const $ = (id: string): HTMLElement => {
+        const element = document.getElementById(id);
+        if (!element) throw new Error("后台状态组件不存在：" + id);
+        return element;
+      };
+      type HealthView = {
+        security?: { sessionBinding?: boolean; adminPasswordConfigured?: boolean };
+        articles?: { githubTokenConfigured?: boolean };
+        privateDrafts?: {
+          backend?: string;
+          migrationMode?: boolean;
+          kvBound?: boolean;
+          d1Bound?: boolean;
+          r2BackupBound?: boolean;
+        };
+        media?: { imageHostTokenConfigured?: boolean };
+        connectivity?: { kv?: string; r2?: string; d1?: string; github?: string } | null;
+        issues?: string[];
+      };
+      function addItem(container: string, label: string, value: boolean | string) {
         const row=document.createElement("div");
         row.className="item";
         const text=document.createElement("span");
@@ -75,7 +93,7 @@ export const prerender = false;
         row.append(text,status);
         $(container).appendChild(row);
       }
-      function render(data) {
+      function render(data: HealthView) {
         ["adminStatus","draftStatus","mediaStatus","issues"].forEach(id=>$(id).replaceChildren());
         addItem("adminStatus","会话 KV",Boolean(data.security?.sessionBinding));
         addItem("adminStatus","管理员密码",Boolean(data.security?.adminPasswordConfigured));
@@ -108,7 +126,7 @@ export const prerender = false;
         }
       }
       async function load(probe=false){
-        const buttons=[$("refresh"),$("probe")];
+        const buttons=[$("refresh"),$("probe")] as HTMLButtonElement[];
         buttons.forEach(b=>b.disabled=true);
         $("status").textContent=probe?"正在测试 GitHub、KV、D1、R2 读取连通性…":"正在读取已配置的服务绑定…";
         try {
