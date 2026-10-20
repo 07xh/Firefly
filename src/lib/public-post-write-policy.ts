@@ -14,6 +14,7 @@ export function isPublicGitHubDraft(content: string): boolean {
 		const parsed = matter(content).data;
 		return parsed.draft === true;
 	} catch {
-		return false;
+		// Malformed frontmatter containing a draft field is unsafe to publish.
+		return /^draft\s*:/m.test(fm[1]);
 	}
 }
