@@ -47,7 +47,9 @@ function mockR2() {
 			if (!objects.has(key)) return null;
 			return { async text() { return objects.get(key); } };
 		},
-		async put(key, value) {
+		async put(key, value, options) {
+			assert.equal(options?.onlyIf?.etagDoesNotMatch, "*");
+			if (objects.has(key)) return null;
 			objects.set(key, value);
 			return { key };
 		},
@@ -155,4 +157,23 @@ test("R2 backups and current draft remain inaccessible without backend authoriza
 	assert.ok(recovery.includes('const bound = bindings()'));
 	const middleware=readFileSync(new URL("../src/middleware.ts",import.meta.url),"utf8");
 	assert.ok(middleware.includes('pathname.startsWith("/api/admin/")'));
+});
+
+test("conditional R2 upload never overwrites competing writer's content",async()=>{
+  const r2=mockR2();
+  const record={
+    schema:1,slug:"race",version:"00000000-0000-4000-8000-000000000002",
+    extension:"md",updatedAt:"2026-10-21T00:00:00Z",content:VALID
+  };
+  const key=privateBackupKey(record.slug,record.version);
+  const put=r2.put;
+  r2.put=async(keyName,value,opts)=>{
+    r2.objects.set(keyName,JSON.stringify({...record,content:VALID+"-CONCURRENT"}));
+    return put(keyName,value,opts);
+  };
+  await assert.rejects(
+    ()=>ensurePrivateR2Backup(r2,record),
+    error=>error instanceof PrivateBackupError && error.status===409,
+  );
+  assert.equal(JSON.parse(r2.objects.get(key)).content,VALID+"-CONCURRENT");
 });
