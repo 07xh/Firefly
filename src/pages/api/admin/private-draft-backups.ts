@@ -32,13 +32,19 @@ function bindings() {
 		FIREFLY_PRIVATE_DRAFT_BACKUPS?: PrivateDraftBackupBucket;
 	};
 	if (!env.FIREFLY_PRIVATE_DRAFT_BACKUPS) {
-		throw new PrivateBackupError("独立 R2 备份没有配置，无法读取历史备份。", 503);
+		throw new PrivateBackupError(
+			"独立 R2 备份没有配置，无法读取历史备份。",
+			503,
+		);
 	}
 	return env;
 }
 
 function resultError(error: unknown): Response {
-	if (error instanceof PrivateBackupError || error instanceof PrivateDraftError) {
+	if (
+		error instanceof PrivateBackupError ||
+		error instanceof PrivateDraftError
+	) {
 		return reply({ error: error.message }, error.status);
 	}
 	console.error("[Firefly] private R2 recovery operation failed");
@@ -72,7 +78,10 @@ export const POST: APIRoute = async ({ request }) => {
 		const bucket = bound.FIREFLY_PRIVATE_DRAFT_BACKUPS;
 		const store = bound.FIREFLY_PRIVATE_DRAFTS;
 		if (!bucket || !store) {
-			throw new PrivateBackupError("KV 主存储与 R2 备份均需绑定才能安全恢复。", 503);
+			throw new PrivateBackupError(
+				"KV 主存储与 R2 备份均需绑定才能安全恢复。",
+				503,
+			);
 		}
 		const input = await request.text();
 		if (new TextEncoder().encode(input).byteLength > 4096) {
@@ -88,10 +97,17 @@ export const POST: APIRoute = async ({ request }) => {
 			return reply({ error: "恢复请求必须是 JSON 对象。" }, 400);
 		}
 		const payload = parsed as Record<string, unknown>;
-		if (typeof payload.slug !== "string" || typeof payload.version !== "string") {
+		if (
+			typeof payload.slug !== "string" ||
+			typeof payload.version !== "string"
+		) {
 			return reply({ error: "恢复操作必须指定草稿文件名和备份版本号。" }, 400);
 		}
-		const record = await getPrivateR2Backup(bucket, payload.slug, payload.version);
+		const record = await getPrivateR2Backup(
+			bucket,
+			payload.slug,
+			payload.version,
+		);
 		return reply(
 			await savePrivateDraft(
 				store,
