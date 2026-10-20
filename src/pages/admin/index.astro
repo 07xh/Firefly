@@ -750,7 +750,7 @@ export const prerender = false;
 <script>
 // @ts-nocheck
 import katex from "katex";
-import { privateDraftRequest, loadPrivateDraftSummaries, buildPrivateDraftContent, assertPublishablePrivateDraft, stripArticleFrontmatter, exportPrivateDraft } from "../../lib/admin-private-drafts-client.js";
+import { privateDraftRequest, editorSlugForArticle, loadPrivateDraftSummaries, buildPrivateDraftContent, assertPublishablePrivateDraft, stripArticleFrontmatter, exportPrivateDraft } from "../../lib/admin-private-drafts-client.js";
 import "katex/dist/katex.min.css";
 Object.assign(window, { FireflyKatex: katex });
 window.dispatchEvent(new Event("firefly:katex-ready"));
@@ -914,7 +914,7 @@ function render(){
    }
    selected=a;
    $("formTitle").textContent=a.isPrivate?"编辑私人草稿":"编辑文章";
-   $("slug").value=a.isPrivate?a.slug:a.path.split("/").pop().replace(/\.mdx?$/,"");
+   $("slug").value=editorSlugForArticle(a);
    $("slug").disabled=true;
    $("privateDraftFormat").value=a.isPrivate?(a.extension==="mdx"?"mdx":"md"):(a.path.endsWith(".mdx")?"mdx":"md");
    $("privateDraftFormat").disabled=!a.isPrivate;
