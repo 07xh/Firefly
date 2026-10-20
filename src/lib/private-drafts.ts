@@ -16,9 +16,9 @@ export interface PrivateDraftKV {
 	put(
 		key: string,
 		value: string,
-		options?: { metadata?: DraftMetadata },
+		options?: { metadata?: DraftMetadata; expectedVersion?: string | null },
 	): Promise<void>;
-	delete(key: string): Promise<void>;
+	delete(key: string, options?: { expectedVersion?: string }): Promise<void>;
 	list(options: { prefix: string; cursor?: string; limit?: number }): Promise<{
 		keys: Array<{ name: string; metadata?: DraftMetadata }>;
 		list_complete: boolean;
@@ -342,6 +342,7 @@ export async function savePrivateDraft(
 	if (prior) await ensureRevision(store, prior);
 	await ensureRevision(store, record);
 	await store.put(draftKey(slug), JSON.stringify(record), {
+		expectedVersion: prior?.version ?? null,
 		metadata: {
 			extension,
 			version: record.version,
@@ -370,6 +371,6 @@ export async function deletePrivateDraft(
 	}
 	if (backup) await ensurePrivateR2Backup(backup, prior);
 	await ensureRevision(store, prior);
-	await store.delete(draftKey(slug));
+	await store.delete(draftKey(slug), { expectedVersion: prior.version });
 	return { slug, deleted: true, recoveryVersion: prior.version };
 }
