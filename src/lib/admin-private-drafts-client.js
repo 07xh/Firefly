@@ -10,6 +10,7 @@ export function draftListEntry(item) {
 		isPrivate: true,
 		path: privateDraftPath(item.slug),
 		slug: item.slug,
+		extension: item.extension === "mdx" ? "mdx" : "md",
 		sha: item.version,
 		title: item.title || "未命名私人草稿",
 		published: "",
