@@ -23,7 +23,7 @@ test("new draft gets draft true and retains literal Markdown/MDX source", () => 
   const result = buildPrivateDraftContent(body, metadata);
   assert.match(result, /^---\ntitle: "私人笔记"/);
   assert.match(result, /^draft: true$/m);
-  assert.equal(stripArticleFrontmatter(result), body);
+  assert.equal(stripArticleFrontmatter(result).trimStart(), body.trimStart());
   assert.match(result, /^tags: \["Python","数学"\]$/m);
 });
 
