@@ -949,6 +949,7 @@ function render(){
    $("publish").textContent=a.draft?"发布这篇文章":"保存修改并发布";
    $("delete").disabled=false;
    $("exportPrivateDraft").disabled=!a.isPrivate;
+   if(a.isPrivate)$("privateHistorySlug").value=a.slug;
    say(
     a.content
      ?"已载入文章。日期、定时发布时间、密码保护、分类、摘要和标签均可在表单中修改。"
@@ -1777,6 +1778,105 @@ reset();refresh();loadSettings();
   };
 
 
+  // History is read and restored only via the authenticated private KV API.
+  let privateHistorySequence=0;
+  async function privateHistoryRequest(method,params={},payload){
+    const url=new URL("/api/admin/private-draft-history/",location.origin);
+    Object.entries(params).forEach(([key,value])=>{if(value!==undefined&&value!==null)url.searchParams.set(key,String(value));});
+    const response=await fetch(url,{
+      method,credentials:"same-origin",cache:"no-store",
+      ...(payload?{headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)}:{})
+    });
+    if(response.status===401){goLogin();throw new Error("后台登录已过期。");}
+    const result=await response.json().catch(()=>({error:"历史版本接口返回了无法识别的数据。"}));
+    if(!response.ok)throw new Error(result.error||"无法读取私人草稿历史版本。");
+    return result;
+  }
+  function privateHistoryStatus(message,isError=false){
+    const element=$("privateHistoryStatus");
+    element.textContent=message;
+    element.style.color=isError?"#b42318":"#657267";
+  }
+  async function loadPrivateHistory(){
+    const sequence=++privateHistorySequence;
+    const slug=$("privateHistorySlug").value.trim();
+    const list=$("privateHistoryList");
+    list.replaceChildren();
+    $("privateHistoryPreview").hidden=true;
+    if(!/^[\\p{L}\\p{N}][\\p{L}\\p{N}_-]{0,79}$/u.test(slug)){
+      privateHistoryStatus("请输入合法的私人草稿文件名。",true);
+      return;
+    }
+    privateHistoryStatus("正在读取私人草稿版本历史…");
+    try{
+      const versions=[];
+      let cursor;
+      const cursors=new Set();
+      for(let page=0;page<20;page++){
+        const result=await privateHistoryRequest("GET",cursor?{slug,cursor}:{slug});
+        if(sequence!==privateHistorySequence)return;
+        if(!Array.isArray(result.items))throw new Error("历史版本列表格式不正确。");
+        versions.push(...result.items);
+        if(!result.cursor)break;
+        if(cursors.has(result.cursor))throw new Error("历史版本分页出现重复游标。");
+        cursors.add(result.cursor);
+        cursor=result.cursor;
+        if(page===19)throw new Error("历史版本超过单次展示上限，请先做好外部备份。");
+      }
+      versions.sort((a,b)=>String(b.updatedAt).localeCompare(String(a.updatedAt)));
+      if(!versions.length){privateHistoryStatus("没有找到此草稿的历史版本。");return;}
+      privateHistoryStatus("已找到 "+versions.length+" 个历史版本；恢复后旧版本仍保留。");
+      for(const record of versions){
+        const row=document.createElement("div");
+        row.className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-200 p-2";
+        const info=document.createElement("span");
+        info.className="min-w-0 break-words text-sm text-gray-600";
+        info.textContent=(record.updatedAt||"未知日期")+" · "+record.title+" · "+record.version.slice(0,8);
+        const actions=document.createElement("div");
+        actions.className="flex flex-wrap gap-2";
+        const preview=document.createElement("button");
+        preview.type="button";preview.className="btn";preview.textContent="查看";
+        const exportButton=document.createElement("button");
+        exportButton.type="button";exportButton.className="btn";exportButton.textContent="导出";
+        const restore=document.createElement("button");
+        restore.type="button";restore.className="btn";restore.textContent="恢复这个版本";
+        const fetchVersion=()=>privateHistoryRequest("GET",{slug,version:record.version});
+        preview.onclick=async()=>{try{
+          const result=await fetchVersion();
+          $("privateHistoryPreview").textContent=result.content;
+          $("privateHistoryPreview").hidden=false;
+          privateHistoryStatus("已预览历史原文，查看不会修改当前稿。");
+        }catch(error){privateHistoryStatus(error instanceof Error?error.message:String(error),true);}};
+        exportButton.onclick=async()=>{try{
+          const result=await fetchVersion();
+          exportPrivateDraft(slug+"-"+record.version+"."+(result.extension==="mdx"?"mdx":"md"),result.content);
+          privateHistoryStatus("历史版本已经导出到本设备。请妥善保管该私人文件。");
+        }catch(error){privateHistoryStatus(error instanceof Error?error.message:String(error),true);}};
+        restore.onclick=async()=>{
+          if(isArticleDirty()&&!window.confirm("当前编辑器有未保存的修改，恢复后将重新载入草稿列表。仍要继续吗？"))return;
+          if(!window.confirm("确认从 "+record.updatedAt+" 恢复草稿“"+slug+"”吗？现有草稿会先保留快照，恢复会生成一个新版本。"))return;
+          restore.disabled=true;
+          try{
+            const expectedVersion=selected?.isPrivate&&selected.slug===slug?selected.sha:undefined;
+            const result=await privateHistoryRequest("POST",{},{
+              slug,revision:record.version,
+              ...(expectedVersion?{expectedVersion}:{})
+            });
+            ++privateHistorySequence;
+            reset();
+            await refresh();
+            privateHistoryStatus("已成功恢复为新版本 "+result.version+"。请从文章列表重新打开核对。");
+            $("privateHistoryPreview").hidden=true;
+            list.replaceChildren();
+          }catch(error){privateHistoryStatus(error instanceof Error?error.message:String(error),true);}
+          finally{restore.disabled=false;}
+        };
+        actions.append(preview,exportButton,restore);
+        row.append(info,actions);list.append(row);
+      }
+    }catch(error){privateHistoryStatus(error instanceof Error?error.message:String(error),true);}
+  }
+  $("privateHistoryLoad")?.addEventListener("click",loadPrivateHistory);
   // Private draft backup tools: no GitHub calls and no automatic overwrites.
   $("exportPrivateDraft")?.addEventListener("click", () => {
     try {
