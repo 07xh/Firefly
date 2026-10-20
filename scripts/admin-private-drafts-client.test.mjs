@@ -6,6 +6,7 @@ const {
   stripArticleFrontmatter,
   assertPublishablePrivateDraft,
   draftListEntry,
+  editorSlugForArticle,
 } = await import("../src/lib/admin-private-drafts-client.js");
 
 const metadata = {
@@ -69,4 +70,13 @@ test("private draft summaries do not carry plaintext body", () => {
   assert.equal(item.path, "private:note");
   assert.equal(item.extension, "mdx");
   assert.equal(item.sha, "uuid");
+});
+
+test("editor receives the original slug, never private: prefix", () => {
+  const privateEntry = draftListEntry({
+    slug: "我的笔记", title: "测试", extension: "mdx", version: "v1",
+  });
+  assert.equal(editorSlugForArticle(privateEntry), "我的笔记");
+  assert.equal(editorSlugForArticle({path:"src/content/posts/notes.mdx"}), "notes");
+  assert.equal(editorSlugForArticle({path:"src/content/posts/guide.md"}), "guide");
 });
