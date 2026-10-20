@@ -101,7 +101,12 @@ test("failure in R2 write leaves the current KV draft untouched",async()=>{
 		/simulated/,
 	);
 	assert.equal(kv.entries.get("draft:v1:safe"),before);
-	await assert.rejects(()=>deletePrivateDraft(kv,"safe",first.version,r2),/simulated|R2/);
+	// Simulate an already-existing backup that fails the integrity check.
+	r2.objects.set(privateBackupKey("safe",first.version),"tampered backup");
+	await assert.rejects(
+		()=>deletePrivateDraft(kv,"safe",first.version,r2),
+		error=>error instanceof PrivateBackupError && error.status===409,
+	);
 	assert.equal(kv.entries.get("draft:v1:safe"),before);
 });
 
