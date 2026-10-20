@@ -27,7 +27,10 @@ function storage(): PrivateDraftKV {
 		FIREFLY_PRIVATE_DRAFTS?: PrivateDraftKV;
 	};
 	if (!env.FIREFLY_PRIVATE_DRAFTS) {
-		throw new PrivateDraftError("私人草稿存储未绑定，无法查询或恢复历史版本。", 503);
+		throw new PrivateDraftError(
+			"私人草稿存储未绑定，无法查询或恢复历史版本。",
+			503,
+		);
 	}
 	return env.FIREFLY_PRIVATE_DRAFTS;
 }
@@ -79,7 +82,10 @@ export const POST: APIRoute = async ({ request }) => {
 			return json({ error: "恢复请求必须是对象。" }, 400);
 		}
 		const details = input as Record<string, unknown>;
-		if (typeof details.slug !== "string" || typeof details.revision !== "string") {
+		if (
+			typeof details.slug !== "string" ||
+			typeof details.revision !== "string"
+		) {
 			return json({ error: "恢复必须指定草稿文件名和历史版本编号。" }, 400);
 		}
 		return json(
