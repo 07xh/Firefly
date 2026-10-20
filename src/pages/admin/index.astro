@@ -1606,7 +1606,10 @@ reset();refresh();loadSettings();
   dialog.className = "firefly-delete-dialog";
   dialog.innerHTML = '<form method="dialog" class="firefly-delete-card"><div aria-hidden="true" style="display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#fff0ef;color:#b42318;font-weight:900;font-size:22px">!</div><h2>确认删除文章？</h2><p>删除会提交到 GitHub 并触发 Cloudflare 重新部署。后台不能直接撤销，但可通过 Git 历史恢复。</p><p id="fireflyDeleteTarget" style="padding:9px 11px;border-radius:8px;background:#f7f8f7"></p><div class="firefly-delete-actions"><button type="submit" value="cancel" class="btn">取消</button><button type="submit" value="confirm" class="btn danger">确认删除</button></div></form>';
   document.body.append(dialog);
-  function confirmDelete(target) {
+  function confirmDelete(target, isPrivate=false) {
+    dialog.querySelector("p").textContent=isPrivate
+      ?"将从私人 KV 中删除草稿。此操作无法直接撤销，请先导出备份，不会修改 GitHub。"
+      :"删除会提交到 GitHub 并触发部署；可尝试从 Git 历史恢复。";
     $("fireflyDeleteTarget").textContent = target;
     return new Promise(resolve => {
       const done = () => { dialog.removeEventListener("close", closed); resolve(dialog.returnValue === "confirm"); };
@@ -1624,17 +1627,25 @@ reset();refresh();loadSettings();
     event.stopPropagation();
     event.stopImmediatePropagation();
     const row = button.closest(".group");
-    const path = row?.querySelectorAll("span")?.[1]?.textContent?.trim();
-    const article = button.id === "delete" ? selected : articles.find(a => a.path === path);
-    if (!article || !await confirmDelete((article.title || "未命名文章") + " · " + article.path)) return;
+    const path=button.dataset.articlePath;
+    const article=button.id==="delete"?selected:articles.find(a=>a.path===path);
+    if(!article || !await confirmDelete((article.title || "未命名文章")+" · "+article.path,Boolean(article.isPrivate)))return;
     button.disabled = true;
     try {
-      const result = await api("DELETE", { path: article.path, sha: article.sha });
-      window.dispatchEvent(new CustomEvent("firefly:clear-recovery", { detail: { path: article.path } }));
-      if (selected?.path === article.path) reset();
-      say("阶段 2/4：删除已提交到 GitHub。" + (result.commitSha ? " Commit SHA：" + result.commitSha : ""));
-      await refresh();
-      if (result.commitSha) watchDeployment(result.commitSha, 0, false);
+      if(article.isPrivate){
+        await privateDraftRequest("DELETE",{slug:article.slug,version:article.sha});
+        window.dispatchEvent(new CustomEvent("firefly:clear-recovery",{detail:{path:article.path}}));
+        if(selected?.path===article.path)reset();
+        await refresh();
+        say("私人草稿已从 KV 删除，未修改 GitHub 或前台。");
+      }else{
+        const result=await api("DELETE",{path:article.path,sha:article.sha});
+        window.dispatchEvent(new CustomEvent("firefly:clear-recovery",{detail:{path:article.path}}));
+        if(selected?.path===article.path)reset();
+        say("删除已提交到 GitHub。"+(result.commitSha?" Commit SHA："+result.commitSha:""));
+        await refresh();
+        if(result.commitSha)watchDeployment(result.commitSha,0,false);
+      }
     } catch (error) {
       say(error instanceof Error ? error.message : "删除失败", true);
     } finally {
