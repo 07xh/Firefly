@@ -118,6 +118,20 @@ jobs:
             console.log("Configured dedicated private drafts KV binding.");
           }
 
+          // Additional private R2 backup bucket. This bucket must already exist
+          // and must not have a public custom domain or public r2.dev endpoint.
+          const r2Bucket = process.env.FIREFLY_PRIVATE_DRAFT_BACKUP_BUCKET?.trim();
+          if (r2Bucket) {
+            if (!/^[a-z0-9][a-z0-9-]{1,62}[a-z0-9]$/.test(r2Bucket)) {
+              throw new Error("FIREFLY_PRIVATE_DRAFT_BACKUP_BUCKET must be a valid R2 bucket name.");
+            }
+            config.r2_buckets ??= [];
+            const binding = "FIREFLY_PRIVATE_DRAFT_BACKUPS";
+            const existing = config.r2_buckets.find((item) => item.binding === binding);
+            if (existing) existing.bucket_name = r2Bucket;
+            else config.r2_buckets.push({ binding, bucket_name: r2Bucket });
+            console.log("Configured dedicated private R2 backup binding.");
+          }
           if (config.assets) {
             config.assets.binding = config.assets.binding || "ASSETS";
             // Authentication middleware must run before static-asset routing on
@@ -141,6 +155,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           ENABLE_CUSTOM_DOMAIN_ROUTE: ${{ secrets.ENABLE_CUSTOM_DOMAIN_ROUTE }}
           FIREFLY_PRIVATE_DRAFTS_NAMESPACE_ID: ${{ vars.FIREFLY_PRIVATE_DRAFTS_NAMESPACE_ID }}
+          FIREFLY_PRIVATE_DRAFT_BACKUP_BUCKET: ${{ vars.FIREFLY_PRIVATE_DRAFT_BACKUP_BUCKET }}
       - name: Validate GitHub Contents token
         shell: bash
         env:
