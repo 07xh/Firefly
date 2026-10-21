@@ -252,7 +252,7 @@ test("R2 backup rejects non-ISO or impossible timestamps and invalid record vers
 	]) {
 		await assert.rejects(
 			() => ensurePrivateR2Backup(r2, { ...record, ...changed }),
-			(error) => error instanceof PrivateBackupError && error.status === 500,
+			(error) => error instanceof PrivateBackupError && error.status === (changed.version ? 400 : 500),
 		);
 		assert.equal(r2.objects.size, 0);
 	}
