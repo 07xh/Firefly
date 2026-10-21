@@ -110,7 +110,6 @@ async function readBoundedBackupText(object: {
 	if (
 		object.size !== undefined &&
 		(!Number.isSafeInteger(object.size) ||
-			object.size < 0 ||
 			object.size > MAX_BACKUP_OBJECT_BYTES)
 	) {
 		throw new PrivateBackupError(
@@ -151,7 +150,10 @@ export async function ensurePrivateR2Backup(
 	validatePrivateBackupRecord(record, record.slug, record.version);
 	const raw = JSON.stringify(record);
 	if (encoder.encode(raw).byteLength > MAX_BACKUP_OBJECT_BYTES) {
-		throw new PrivateBackupError("私人 R2 备份文件超过允许大小，未执行写入。", 413);
+		throw new PrivateBackupError(
+			"私人 R2 备份文件超过允许大小，未执行写入。",
+			413,
+		);
 	}
 	const prior = await bucket.get(key);
 	if (prior) {
@@ -168,7 +170,9 @@ export async function ensurePrivateR2Backup(
 	// Cloudflare R2 conditional put returns null when another writer won.
 	// Verify the winner has exactly the expected bytes; never overwrite it.
 	const confirmed = await bucket.get(key);
-	const confirmedRaw = confirmed ? await readBoundedBackupText(confirmed) : null;
+	const confirmedRaw = confirmed
+		? await readBoundedBackupText(confirmed)
+		: null;
 	if (created === null && confirmedRaw !== null && confirmedRaw !== raw) {
 		throw new PrivateBackupError(
 			"历史备份已被并发操作写入不同内容，拒绝覆盖。",
