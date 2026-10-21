@@ -1,6 +1,8 @@
 import { env as workerEnv } from "cloudflare:workers";
 
 import type { APIRoute } from "astro";
+import { mapWithConcurrency } from "../../../lib/admin-bounded-reads";
+import { exposesPasswordFrontmatter, isPublicGitHubDraft } from "../../../lib/public-post-write-policy";
 
 type RuntimeEnv = {
 	FIREFLY_CONTENTS_TOKEN?: string;
@@ -210,11 +212,22 @@ async function readPost(path: string, config: ReturnType<typeof getConfig>): Pro
 	return { path: file.path, sha: file.sha, content: file.encoding === "base64" ? decodeBase64(file.content) : file.content };
 }
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ url }) => {
 	try {
 		const config = getConfig();
+		const requestedPath = url.searchParams.get("path");
+		if (requestedPath !== null) {
+			if (
+				!requestedPath.startsWith(ROOT) ||
+				!/^src\/content\/posts\/(?:[\p{L}\p{N}_-]+\/)*[\p{L}\p{N}_-]+\.mdx?$/u.test(requestedPath)
+			) {
+				return json({ error: "文章路径不合法。" }, 400);
+			}
+			return json(await readPost(requestedPath, config));
+		}
+		const summariesOnly = url.searchParams.get("summary") === "1";
 		const files = await findPostFiles(config);
-		const posts = await Promise.all(files.map(async (file) => {
+		const posts = await mapWithConcurrency(files, 5, async (file) => {
 			try {
 				const post = await readPost(file.path, config);
 				const match = post.content.match(/^title:\s*(?:"([^"]*)"|'([^']*)'|(.+))\s*$/m);
@@ -222,7 +235,7 @@ export const GET: APIRoute = async () => {
 				return {
 					path: post.path,
 					sha: post.sha,
-					content: post.content,
+					...(summariesOnly ? {} : { content: post.content }),
 					title: (match?.[1] ?? match?.[2] ?? match?.[3] ?? file.path.split("/").pop() ?? "").trim(),
 					published: date?.[1] ?? "",
 					date: frontmatterText(post.content, "date"),
@@ -233,7 +246,7 @@ export const GET: APIRoute = async () => {
 			} catch {
 				return { path: file.path, sha: file.sha, title: file.path.split("/").pop() ?? file.path, published: "", draft: false };
 			}
-		}));
+		});
 		return json(posts.sort((a, b) => b.published.localeCompare(a.published)));
 	} catch (error) {
 		return json({ error: error instanceof Error ? error.message : "Internal error" }, 503);
@@ -250,6 +263,14 @@ export const POST: APIRoute = async ({ request }) => {
 		const path = `${ROOT}${slug}.${extension}`;
 		const content = makeMarkdown({ ...input, slug });
 		if (!content) return json({ error: "标题、发布日期或正文格式不合法" }, 400);
+		if (exposesPasswordFrontmatter(content)) {
+			return json({
+				error: "公开 GitHub 仓库不允许保存访问密码或密码提示。请移除这些字段；如需保密，请改存私人草稿。",
+			}, 400);
+		}
+		if (isPublicGitHubDraft(content)) {
+			return json({ error: "草稿不得保存到公开 GitHub 仓库。请使用后台私人草稿存储功能。" }, 400);
+		}
 		const response = await github(`contents/${path}`, config, {
 			method: "PUT",
 			body: JSON.stringify({ message: `Add article: ${slug}`, content: encodeBase64(content), branch: config.branch }),
@@ -312,6 +333,14 @@ export const PUT: APIRoute = async ({ request }) => {
 				? updateFrontmatterField(content, "passwordHint", scalar(passwordHint))
 				: removeFrontmatterField(content, "passwordHint");
 			if (content.length > 500_000) return json({ error: "完整文章内容不能超过 500 KB" }, 400);
+		}
+		if (exposesPasswordFrontmatter(content)) {
+			return json({
+				error: "公开 GitHub 仓库不允许保存访问密码或密码提示。请移除这些字段；如需保密，请改存私人草稿。",
+			}, 400);
+		}
+		if (isPublicGitHubDraft(content)) {
+			return json({ error: "草稿不得保存到公开 GitHub 仓库。请改用后台私人草稿存储功能。" }, 400);
 		}
 		const response = await github(`contents/${path.split("/").map(encodeURIComponent).join("/")}`, config, {
 			method: "PUT",

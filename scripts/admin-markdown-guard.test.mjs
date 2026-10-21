@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   prepareMarkdownForVisualEditing,
   restoreProtectedMarkdown,
+  restoreProtectedMarkdownStrict,
 } from "../public/admin-markdown-guard.js";
 
 test("普通 Markdown 和代码示例保持正常可视化，不产生保留块", () => {
@@ -218,4 +219,142 @@ test("普通 Markdown 表格保留为可视化编辑内容，不被包装成源�
   const result = prepareMarkdownForVisualEditing(source);
   assert.equal(result.records.length, 0);
   assert.equal(result.markdown, source);
+});
+
+test("严格恢复：特殊 MDX 块在原位准确恢复，不丢失可编辑的普通段落", () => {
+  const source = [
+    "普通开头。",
+    "",
+    "<TabGroup labels={items}>",
+    "  <Tab title=\"第一项\">内容</Tab>",
+    "</TabGroup>",
+    "",
+    "普通结尾。",
+  ].join("\n");
+  const prepared = prepareMarkdownForVisualEditing(source);
+  assert.equal(prepared.records.length, 1);
+  const required = prepared.records.map(record => record.marker);
+  assert.equal(restoreProtectedMarkdownStrict(prepared.markdown,prepared.records,required),source);
+  const edited = prepared.markdown.replace("普通开头。","新开头。");
+  const restored = restoreProtectedMarkdownStrict(edited,prepared.records,required);
+  assert.match(restored,/新开头。/);
+  assert.match(restored,/<TabGroup labels={items}>/);
+});
+
+test("严格恢复：保留块在可视化编辑中丢失或重复时必须阻止同步", () => {
+  const source = "前文\n\n<details><summary>复杂语法</summary>内容</details>\n\n后文";
+  const prepared = prepareMarkdownForVisualEditing(source);
+  assert.equal(prepared.records.length,1);
+  const [record] = prepared.records;
+  assert.throws(
+    () => restoreProtectedMarkdownStrict(prepared.markdown.replace(record.marker,""),[],[record.marker]),
+    /消失/,
+  );
+  assert.throws(
+    () => restoreProtectedMarkdownStrict(prepared.markdown.replace(record.marker,""),[record],[record.marker]),
+    /丢失或重复/,
+  );
+  assert.throws(
+    () => restoreProtectedMarkdownStrict(prepared.markdown+"\n"+record.marker,[record],[record.marker]),
+    /丢失或重复/,
+  );
+});
+
+test("严格恢复：阻止重复结点、伪造标记和残留的未知标记", () => {
+  const source = "前\n\n<iframe src=\"a\"></iframe>\n\n后";
+  const prepared = prepareMarkdownForVisualEditing(source);
+  const record = prepared.records[0];
+  assert.throws(
+    () => restoreProtectedMarkdownStrict(prepared.markdown,[record,record],[record.marker]),
+    /重复/,
+  );
+  assert.throws(
+    () => restoreProtectedMarkdownStrict(prepared.markdown,[{marker:"not-generated",raw:"BAD"}],[record.marker]),
+    /标记/,
+  );
+  assert.throws(
+    () => restoreProtectedMarkdownStrict(prepared.markdown+"\nFIREFLYRAWBLOCK999END",[record],[record.marker]),
+    /尚未恢复/,
+  );
+});
+
+test("可视化同步与正式导出都使用严格模式，失败时返回源码编辑", async () => {
+  const {readFileSync}=await import("node:fs");
+  const editor = readFileSync(new URL("../public/admin-wysiwyg.js",import.meta.url),"utf8");
+  assert.ok(editor.includes("restoreProtectedMarkdownStrict(editor.getMarkdown(), loadedNodes, expected)"));
+  assert.ok(editor.includes("restoreProtectedMarkdownStrict(markdown, records, requiredProtectedMarkers)"));
+  assert.ok(editor.includes("restoreProtectedMarkdownStrict(editor.getMarkdown(), records, requiredProtectedMarkers)"));
+  assert.ok(editor.includes('reportVisualLoadFailure(error);\n      setMode("source");'));
+});
+
+test("opening a visual editor never rewrites or strips MDX imports implicitly", async () => {
+  const { readFileSync } = await import("node:fs");
+  const code = readFileSync(new URL("../public/admin-wysiwyg.js", import.meta.url), "utf8");
+  const start = code.indexOf("function loadSourceIntoEditor()");
+  const end = code.indexOf("function ensureImagePreviewTriggerStyles()", start);
+  assert.ok(start > 0 && end > start);
+  const loader = code.slice(start, end);
+  assert.ok(loader.includes("prepareMarkdownForVisualEditing(split.body)"));
+  assert.doesNotMatch(loader, /stripGlobalComponentImports\(/);
+  assert.doesNotMatch(loader, /sourceField\.value\s*=/);
+});
+
+test("complex MDX source blocks stay intact when normal prose changes", () => {
+  const components = [
+    "import { Steps } from 'firefly-mdx'",
+    "",
+    "<Steps>",
+    '  <StepItem title="第一步">原版作图顺序</StepItem>',
+    "</Steps>",
+    "",
+    "$$",
+    "x^2+y^2=r^2",
+    "$$",
+  ].join("\n");
+  const source = "教材说明。\n\n" + components + "\n\n结束。";
+  const prepared = prepareMarkdownForVisualEditing(source);
+  const required = prepared.records.map(item => item.marker);
+  assert.ok(required.length > 0);
+  assert.equal(restoreProtectedMarkdownStrict(prepared.markdown, prepared.records, required), source);
+  const edited = prepared.markdown.replace("教材说明。", "教材新说明。");
+  const restored = restoreProtectedMarkdownStrict(edited, prepared.records, required);
+  assert.ok(restored.includes(components));
+  assert.ok(restored.includes("教材新说明。"));
+});
+
+test("MDX protection rejects loss of nested components or double marker injection", () => {
+  const source = [
+    "引言",
+    "",
+    "<TabGroup labels={['语法']}>",
+    "  <Steps><StepItem title={item.name}>复杂组件</StepItem></Steps>",
+    "</TabGroup>",
+    "",
+    "后记",
+  ].join("\n");
+  const prepared = prepareMarkdownForVisualEditing(source);
+  const required = prepared.records.map(item => item.marker);
+  assert.ok(required.length > 0);
+  const [first] = required;
+  assert.throws(
+    () => restoreProtectedMarkdownStrict(prepared.markdown.replace(first, ""), prepared.records, required),
+    /丢失|消失/,
+  );
+  assert.throws(
+    () => restoreProtectedMarkdownStrict(prepared.markdown + "\n" + first, prepared.records, required),
+    /丢失或重复/,
+  );
+});
+
+test("strict restoration treats dollar substitutions as literal MDX, never JS replacement tokens", () => {
+  const special = "$$ and $& and $" + String.fromCharCode(96) + " and $'";
+  const raw = '<CustomMath formula="' + special + '">不改公式</CustomMath>';
+  const source = "前言。\n\n" + raw + "\n\n后记。";
+  const prepared = prepareMarkdownForVisualEditing(source);
+  assert.equal(prepared.records.length, 1);
+  const restored = restoreProtectedMarkdownStrict(
+    prepared.markdown, prepared.records, prepared.records.map(r => r.marker),
+  );
+  assert.equal(restored, source);
+  assert.ok(restored.includes(special));
 });
