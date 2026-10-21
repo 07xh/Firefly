@@ -49,7 +49,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Test isolated private draft storage
-        run: node --import tsx --test scripts/private-drafts.test.mjs scripts/admin-private-drafts-client.test.mjs scripts/public-post-write-policy.test.mjs scripts/private-draft-r2-backup.test.mjs scripts/private-draft-d1.test.mjs scripts/admin-system-health.test.mjs scripts/admin-public-article-summary.test.mjs
+        run: node --import tsx --test scripts/private-drafts.test.mjs scripts/admin-private-drafts-client.test.mjs scripts/public-post-write-policy.test.mjs scripts/private-draft-r2-backup.test.mjs scripts/private-draft-d1.test.mjs scripts/admin-system-health.test.mjs scripts/admin-public-article-summary.test.mjs scripts/admin-bounded-reads.test.mjs
 
       - name: Run Astro Check
         run: pnpm astro check
