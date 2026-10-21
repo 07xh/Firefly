@@ -1,6 +1,7 @@
 import { env as workerEnv } from "cloudflare:workers";
 
 import type { APIRoute } from "astro";
+import { mapWithConcurrency } from "../../../lib/admin-bounded-reads";
 import { exposesPasswordFrontmatter, isPublicGitHubDraft } from "../../../lib/public-post-write-policy";
 
 type RuntimeEnv = {
@@ -226,7 +227,7 @@ export const GET: APIRoute = async ({ url }) => {
 		}
 		const summariesOnly = url.searchParams.get("summary") === "1";
 		const files = await findPostFiles(config);
-		const posts = await Promise.all(files.map(async (file) => {
+		const posts = await mapWithConcurrency(files, 5, async (file) => {
 			try {
 				const post = await readPost(file.path, config);
 				const match = post.content.match(/^title:\s*(?:"([^"]*)"|'([^']*)'|(.+))\s*$/m);
@@ -245,7 +246,7 @@ export const GET: APIRoute = async ({ url }) => {
 			} catch {
 				return { path: file.path, sha: file.sha, title: file.path.split("/").pop() ?? file.path, published: "", draft: false };
 			}
-		}));
+		});
 		return json(posts.sort((a, b) => b.published.localeCompare(a.published)));
 	} catch (error) {
 		return json({ error: error instanceof Error ? error.message : "Internal error" }, 503);
