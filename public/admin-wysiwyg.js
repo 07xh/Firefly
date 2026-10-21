@@ -1,4 +1,4 @@
-import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=20261018-badge-node";
+import { prepareMarkdownForVisualEditing, restoreProtectedMarkdownStrict } from "/admin-markdown-guard.js?v=20261021-strict-integrity";
 import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261018-details-editor";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
@@ -60,6 +60,7 @@ async function loadTiptapModules() {
   const allowedImageTypes = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
   let editor = null;
   let frontmatterPrefix = "";
+  let requiredProtectedMarkers = [];
   let loadingSource = false;
   let visualLoadFailed = false;
   let pendingUploads = 0;
@@ -2200,9 +2201,16 @@ async function loadTiptapModules() {
         records.push({ marker: node.attrs.marker, raw: node.attrs.raw });
       }
     });
-    const restored = restoreProtectedMarkdown(markdown, records);
-    sourceField.value = frontmatterPrefix + restored + (restored && !restored.endsWith("\n") ? "\n" : "");
-    sourceField.dispatchEvent(new Event("input", { bubbles: true }));
+    try {
+      const restored = restoreProtectedMarkdownStrict(markdown, records, requiredProtectedMarkers);
+      sourceField.value = frontmatterPrefix + restored + (restored && !restored.endsWith("\n") ? "\n" : "");
+      sourceField.dispatchEvent(new Event("input", { bubbles: true }));
+    } catch (error) {
+      // Keep the last proven-good source in the textarea. Do NOT synchronize
+      // a partial serialization that dropped an opaque Markdown/MDX block.
+      reportVisualLoadFailure(error);
+      setMode("source");
+    }
   }
 
   function loadSourceIntoEditor() {
@@ -2221,6 +2229,15 @@ async function loadTiptapModules() {
     try {
       editor.commands.setContent(prepared.markdown, { contentType: "markdown", emitUpdate: false });
       replaceProtectedMarkerParagraphs(editor, prepared.records);
+      const loadedNodes = [];
+      editor.state.doc.descendants(node => {
+        if (node.type.name === "protectedMarkdownBlock") {
+          loadedNodes.push({ marker: node.attrs.marker, raw: node.attrs.raw });
+        }
+      });
+      const expected = prepared.records.map(record => record.marker);
+      restoreProtectedMarkdownStrict(editor.getMarkdown(), loadedNodes, expected);
+      requiredProtectedMarkers = expected;
       lastLoadedSource = sourceField.value || current;
       reportProtected(prepared.records);
       if (migrated.removed) {
@@ -2780,7 +2797,7 @@ async function loadTiptapModules() {
         editor.state.doc.descendants(node => {
           if (node.type.name === "protectedMarkdownBlock") records.push({ marker: node.attrs.marker, raw: node.attrs.raw });
         });
-        return restoreProtectedMarkdown(editor.getMarkdown(), records);
+        return restoreProtectedMarkdownStrict(editor.getMarkdown(), records, requiredProtectedMarkers);
       },
       destroy: () => editor?.destroy(),
     };
