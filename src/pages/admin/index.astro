@@ -422,10 +422,11 @@ export const prerender = false;
 <body class="admin-workspace">
 <a class="admin-skip-link" href="#adminMain">跳转到后台内容</a>
 <header class="admin-topbar">
+  <button id="adminMenuToggle" class="admin-menu-button" type="button" aria-label="打开管理导航" aria-controls="adminNav" aria-expanded="false">☰</button>
   <div class="admin-topbar-brand"><span class="admin-brand-mark" aria-hidden="true">✦</span><div><h1>Firefly <span>控制台</span></h1><p>内容创作 · 站点管理</p></div></div>
   <div class="admin-header-actions"><a class="admin-site-link" href="/" target="_blank" rel="noopener noreferrer">查看网站 <span aria-hidden="true">↗</span></a><button class="btn" id="logout" type="button">退出登录</button></div>
 </header>
-<aside class="admin-navigation" aria-label="后台工作台导航">
+<aside id="adminNav" class="admin-navigation" aria-label="后台工作台导航">
   <div class="admin-navigation-heading"><span>管理中心</span><small>MY WORKSPACE</small></div>
   <nav class="admin-tabs" role="tablist" aria-label="后台管理模块">
     <button id="tabOverview" class="admin-tab" type="button" role="tab" aria-selected="true" aria-controls="overviewTabPanel" tabindex="0"><svg class="admin-nav-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span>总览</span></button>
@@ -449,6 +450,7 @@ export const prerender = false;
     <p>仅保存在此浏览器，不影响访客前台。</p>
   </div>
 </aside>
+<button id="adminMenuBackdrop" class="admin-menu-backdrop" type="button" aria-label="关闭后台导航" hidden></button>
 <main class="wrap" id="adminMain">
 <section id="overviewTabPanel" class="admin-dashboard" role="tabpanel" aria-labelledby="tabOverview">
   <div class="admin-overview-heading"><div><p class="admin-overline">FIREFLY · MANAGEMENT</p><h2>管理中心 <span aria-hidden="true">✦</span></h2><p>写作、发布与网站配置，都可以从这里开始。</p></div><span class="admin-overview-note">轻快工作空间</span></div>
@@ -1266,8 +1268,22 @@ function setAdminTab(tab){
  }
  if(tab==="ai")loadAiProviders();
 }
+function setAdminMenuOpen(open){
+ const visible=Boolean(open);
+ document.body.dataset.adminMenuOpen=String(visible);
+ $("adminMenuToggle").setAttribute("aria-expanded",String(visible));
+ $("adminMenuBackdrop").hidden=!visible;
+ if(visible)$("tabOverview").focus();
+ else if(document.activeElement?.closest("#adminNav"))$("adminMenuToggle").focus();
+}
+$("adminMenuToggle").addEventListener("click",()=>setAdminMenuOpen(document.body.dataset.adminMenuOpen!=="true"));
+$("adminMenuBackdrop").addEventListener("click",()=>setAdminMenuOpen(false));
+document.addEventListener("keydown",event=>{if(event.key==="Escape"&&document.body.dataset.adminMenuOpen==="true")setAdminMenuOpen(false);});
 for(const [tab,id] of ADMIN_TABS){
- $(id).addEventListener("click",()=>setAdminTab(tab));
+ $(id).addEventListener("click",()=>{
+  setAdminTab(tab);
+  if(document.body.dataset.adminMenuOpen==="true")setAdminMenuOpen(false);
+ });
 }
 document.querySelector(".admin-tabs").addEventListener("keydown",event=>{
  if(!["ArrowDown","ArrowUp","ArrowLeft","ArrowRight","Home","End"].includes(event.key))return;
@@ -1310,7 +1326,11 @@ function applyAdminTheme(theme,accent){
  document.body.dataset.adminTheme=name;
  adminThemeSelect.value=name;
  adminAccentColor.value=name==="custom"?color:adminPresetColors[name];
- document.body.style.setProperty("--admin-current-accent",name==="custom"?color:adminPresetColors[name]);
+ const activeAccent=name==="custom"?color:adminPresetColors[name];
+ document.body.style.setProperty("--admin-current-accent",activeAccent);
+ const red=parseInt(activeAccent.slice(1,3),16), green=parseInt(activeAccent.slice(3,5),16), blue=parseInt(activeAccent.slice(5,7),16);
+ const luminance=(0.2126*red+0.7152*green+0.0722*blue)/255;
+ document.body.style.setProperty("--admin-button-text",luminance>0.60?"#20372a":"#ffffff");
  try{localStorage.setItem(adminThemeStorageKey,JSON.stringify({theme:name,accent:color}));}catch{}
 }
 try{
