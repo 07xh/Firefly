@@ -8,7 +8,7 @@ import { resolve } from "node:path";
  * This complements, but does not replace, screenshot and route regression tests.
  */
 export function isAdminFocusedBranch(name) {
-	return /^(?:feat\/(?:private-draft|admin-system-health|cloudflare-imgbed-admin)|fix\/(?:admin-data-safety|imgbed)|ci\/admin-only-frontend-freeze|docs\/admin-implementation)/.test(name);
+	return /^(?:feat\/(?:private-draft|admin-system-health|cloudflare-imgbed-admin)|fix\/(?:admin-|imgbed|private-draft|private-backup)|security\/admin-|perf\/admin-|ci\/(?:admin-only-frontend-freeze|pr-target-all-branches)|docs\/admin-implementation|integration\/admin-)/.test(name);
 }
 
 export function changesVisitorFrontend(path) {
@@ -37,6 +37,38 @@ export function changesVisitorFrontend(path) {
 		/^(?:astro\.config\.|tailwind\.config\.|postcss\.config\.|package\.json$|pnpm-lock\.yaml$|vite\.config\.)/.test(normalized)
 	) return true;
 	return false;
+}
+
+/**
+ * Git -z name-status includes deleted files and BOTH sides of renames/copies.
+ * Checking only added/modified paths could miss removing a visitor page or
+ * moving a visitor asset into a seemingly admin-only path.
+ */
+export function parseGitNameStatus(output) {
+	if (!output) return [];
+	const parts = output.split("\0");
+	if (parts.at(-1) !== "") {
+		throw new Error("Git diff 输出不完整，拒绝跳过前台改动检查。");
+	}
+	parts.pop();
+	const paths = [];
+	for (let index = 0; index < parts.length;) {
+		const status = parts[index++];
+		if (!/^[ACDMRTUXB][0-9]*$/.test(status)) {
+			throw new Error("Git diff 变更状态异常，拒绝跳过前台改动检查。");
+		}
+		const path = parts[index++];
+		if (!path) throw new Error("Git diff 文件路径缺失，拒绝跳过前台改动检查。");
+		paths.push(path);
+		if (status.startsWith("R") || status.startsWith("C")) {
+			const destination = parts[index++];
+			if (!destination) {
+				throw new Error("Git diff 重命名路径缺失，拒绝跳过前台改动检查。");
+			}
+			paths.push(destination);
+		}
+	}
+	return [...new Set(paths)];
 }
 
 export function forbiddenVisitorChanges(paths) {
@@ -68,10 +100,10 @@ function main() {
 	if (!/^[\w./-]+$/.test(base)) throw new Error("PR base branch is invalid.");
 	const output = execFileSync(
 		"git",
-		["diff", "--name-only", "--diff-filter=ACMR", "origin/" + base + "...HEAD"],
+		["diff", "--name-status", "--find-renames", "-z", "origin/" + base + "...HEAD"],
 		{ encoding: "utf8" },
 	);
-	const paths = output.split(/\r?\n/).filter(Boolean);
+	const paths = parseGitNameStatus(output);
 	validateAdminOnlyChanges(paths);
 	console.log("PASS: " + paths.length + " modified files; no visitor-facing Firefly UI files.");
 }
