@@ -1,8 +1,6 @@
 name: Deploy to GitHub Pages
 
 on:
-  push:
-    branches: [ master ]
   workflow_dispatch:
 
 # Pages 部署需要的权限
@@ -18,6 +16,7 @@ concurrency:
 
 jobs:
   build:
+    if: ${{ vars.FIREFLY_RELEASE_READY == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
