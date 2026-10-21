@@ -1,0 +1,41 @@
+name: Read-only admin preview checks
+
+on:
+  pull_request:
+    paths:
+      - "scripts/verify-private-preview-auth.mjs"
+      - "scripts/verify-private-preview-auth.test.mjs"
+      - ".github/workflows/admin-preview-check.yml"
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: "Isolated Cloudflare preview/staging origin only; never the production URL"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4.3.0
+        with:
+          node-version: "22"
+      - name: Exercise anonymous preview verifier with simulated HTTP responses
+        run: node --test scripts/verify-private-preview-auth.test.mjs
+
+  staging:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4.3.0
+        with:
+          node-version: "22"
+      - name: Verify no anonymous access to private admin APIs on the preview
+        env:
+          FIREFLY_PREVIEW_URL: ${{ inputs.preview_url }}
+        run: node scripts/verify-private-preview-auth.mjs
