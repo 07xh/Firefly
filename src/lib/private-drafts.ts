@@ -111,7 +111,10 @@ function validateListPage(
 		!Array.isArray(result.keys) ||
 		typeof result.list_complete !== "boolean"
 	) {
-		throw new PrivateDraftError("草稿列表响应格式异常，无法确认版本是否完整。", 503);
+		throw new PrivateDraftError(
+			"草稿列表响应格式异常，无法确认版本是否完整。",
+			503,
+		);
 	}
 	const next = result.list_complete ? null : result.cursor;
 	if (
@@ -122,7 +125,10 @@ function validateListPage(
 			next.length > 1024 ||
 			!/^[A-Za-z0-9_+\-/=]+$/.test(next))
 	) {
-		throw new PrivateDraftError("草稿历史分页缺少有效游标，已拒绝遗漏记录。", 503);
+		throw new PrivateDraftError(
+			"草稿历史分页缺少有效游标，已拒绝遗漏记录。",
+			503,
+		);
 	}
 	const seen = new Set<string>();
 	for (const item of result.keys) {
@@ -131,7 +137,10 @@ function validateListPage(
 			typeof item.name !== "string" ||
 			!item.name.startsWith(prefix)
 		) {
-			throw new PrivateDraftError("草稿列表含异常键名，无法确认版本完整。", 503);
+			throw new PrivateDraftError(
+				"草稿列表含异常键名，无法确认版本完整。",
+				503,
+			);
 		}
 		const suffix = item.name.slice(prefix.length);
 		if (
@@ -141,7 +150,10 @@ function validateListPage(
 				item.metadata?.version !== undefined &&
 				item.metadata.version !== suffix)
 		) {
-			throw new PrivateDraftError("草稿列表存在无效或重复记录，已停止操作。", 503);
+			throw new PrivateDraftError(
+				"草稿列表存在无效或重复记录，已停止操作。",
+				503,
+			);
 		}
 		seen.add(item.name);
 	}
