@@ -22,6 +22,7 @@
 | 私人草稿与独立 R2 的只读内容一致性核验 | [PR #60](https://github.com/07xh/Firefly/pull/60) | 功能、状态页、异常测试已提交；真实 KV/D1/R2 预览联调待完成 |
 | R2 备份列表完整性与迁移防漏保护 | [PR #61](https://github.com/07xh/Firefly/pull/61) | 异常对象、分页游标和并发列表变化均拒绝宣称完整；真实 Worker 联调仍待完成 |
 | KV/D1 草稿列表与历史分页完整性检查 | [PR #62](https://github.com/07xh/Firefly/pull/62) | 非法键、缺失或重复游标拒绝继续；真实 Cloudflare 联调未完成 |
+| R2 备份正文结构与大小安全校验 | [PR #70](https://github.com/07xh/Firefly/pull/70) | 防止公开/损坏/超大备份误恢复；构建及真实 R2 验收状态以对应 PR 为准 |
 | 私人草稿存储记录与 MDX 扩展名完整性保护 | [PR #63](https://github.com/07xh/Firefly/pull/63) | Node 22/23、Astro、Cloudflare 无部署构建及代码质量通过；真实 KV/D1/R2 预览联调未完成 |
 | 后台安全集成、前台冻结加固及 R2 私人备份格式防护 | [PR #64](https://github.com/07xh/Firefly/pull/64) | Node 22/23 Astro 检查及构建、Cloudflare 无部署构建与 Biome 均通过；独立预览 Worker 验收尚未完成 |
 | 部署单通道整理与自动门禁 | [PR #65](https://github.com/07xh/Firefly/pull/65) | 部署策略、Node 22/23、Cloudflare 无部署构建及 Biome 检查通过；尚须确认 GitHub Pages 真实用途、生产路由与回滚，未合并 |
