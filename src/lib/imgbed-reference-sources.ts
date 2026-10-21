@@ -8,7 +8,9 @@ export type ImageReferenceRuntime = {
 	FIREFLY_PRIVATE_DRAFT_DB?: {
 		prepare(query: string): {
 			bind(...values: number[]): {
-				all(): Promise<{ results: Array<{ slug: string; version: string; record: string }> }>;
+				all(): Promise<{
+					results: Array<{ slug: string; version: string; record: string }>;
+				}>;
 			};
 		};
 	};
@@ -174,7 +176,8 @@ async function kvDrafts(runtime: ImageReferenceRuntime) {
 
 async function r2Archives(runtime: ImageReferenceRuntime) {
 	const bucket = runtime.FIREFLY_PRIVATE_DRAFT_BACKUPS;
-	if (!bucket) throw new Error("R2 私人备份未绑定，无法确认图片历史引用，已拒绝删除。");
+	if (!bucket)
+		throw new Error("R2 私人备份未绑定，无法确认图片历史引用，已拒绝删除。");
 	const entries: Array<{ path: string; content: string }> = [];
 	let cursor: string | undefined;
 	const seen = new Set<string>();
@@ -211,7 +214,6 @@ async function r2Archives(runtime: ImageReferenceRuntime) {
 	return entries;
 }
 
-
 async function d1Drafts(runtime: ImageReferenceRuntime) {
 	const backend = runtime.FIREFLY_PRIVATE_DRAFT_BACKEND?.trim() || "kv";
 	if (backend === "kv") return [];
@@ -222,10 +224,14 @@ async function d1Drafts(runtime: ImageReferenceRuntime) {
 	for (const table of ["private_drafts", "private_draft_revisions"]) {
 		let offset = 0;
 		for (;;) {
-			const result = await db.prepare(
-				"SELECT slug,version,record FROM " + table +
-					" ORDER BY slug,version LIMIT ? OFFSET ?",
-			).bind(101, offset).all();
+			const result = await db
+				.prepare(
+					"SELECT slug,version,record FROM " +
+						table +
+						" ORDER BY slug,version LIMIT ? OFFSET ?",
+				)
+				.bind(101, offset)
+				.all();
 			if (!Array.isArray(result.results)) {
 				throw new Error("D1 草稿查询结果不完整，已禁止图片删除。");
 			}
@@ -234,13 +240,20 @@ async function d1Drafts(runtime: ImageReferenceRuntime) {
 			}
 			for (const row of result.results) {
 				let value: unknown;
-				try { value = JSON.parse(row.record); }
-				catch { throw new Error("D1 草稿历史记录损坏，禁止删除图片。"); }
+				try {
+					value = JSON.parse(row.record);
+				} catch {
+					throw new Error("D1 草稿历史记录损坏，禁止删除图片。");
+				}
 				if (
-					!value || typeof value !== "object" ||
-					!("content" in value) || typeof value.content !== "string" ||
-					!("slug" in value) || value.slug !== row.slug ||
-					!("version" in value) || value.version !== row.version
+					!value ||
+					typeof value !== "object" ||
+					!("content" in value) ||
+					typeof value.content !== "string" ||
+					!("slug" in value) ||
+					value.slug !== row.slug ||
+					!("version" in value) ||
+					value.version !== row.version
 				) {
 					throw new Error("D1 草稿版本校验失败，禁止删除图片。");
 				}
