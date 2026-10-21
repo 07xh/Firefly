@@ -98,6 +98,7 @@
         "src/pages/api/admin/deployment-status.ts",
         "src/pages/api/admin/github-check.ts",
         "src/pages/api/admin/settings.ts",
+        "src/pages/api/admin/upload.ts",
         "src/pages/api/admin/ai-draft.ts",
         "src/pages/api/admin/ai-providers.ts",
         "src/lib/ai-provider-config.ts",
