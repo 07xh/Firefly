@@ -99,6 +99,23 @@ export function validatePrivateBackupRecord(
 	return input as PrivateDraftBackupRecord;
 }
 
+async function readBoundedBackupText(
+	object: { text(): Promise<string>; size?: number },
+): Promise<string> {
+	if (
+		object.size !== undefined &&
+		(!Number.isSafeInteger(object.size) ||
+			object.size > MAX_BACKUP_OBJECT_BYTES)
+	) {
+		throw new PrivateBackupError("R2 备份对象过大或文件大小异常，已阻止恢复。", 500);
+	}
+	const raw = await object.text();
+	if (encoder.encode(raw).byteLength > MAX_BACKUP_OBJECT_BYTES) {
+		throw new PrivateBackupError("R2 备份对象过大，已阻止恢复。", 500);
+	}
+	return raw;
+}
+
 export async function getPrivateR2Backup(
 	bucket: PrivateDraftBackupBucket,
 	slug: string,
@@ -107,17 +124,9 @@ export async function getPrivateR2Backup(
 	const key = privateBackupKey(slug, version);
 	const saved = await bucket.get(key);
 	if (!saved) throw new PrivateBackupError("此 R2 备份版本不存在。", 404);
-	if (saved.size !== undefined &&
-		(!Number.isSafeInteger(saved.size) || saved.size > MAX_BACKUP_OBJECT_BYTES)) {
-		throw new PrivateBackupError("R2 备份对象过大或文件大小异常，已阻止恢复。", 500);
-	}
 	let content: unknown;
 	try {
-		const raw = await saved.text();
-		if (encoder.encode(raw).byteLength > MAX_BACKUP_OBJECT_BYTES) {
-			throw new PrivateBackupError("R2 备份对象过大，已阻止恢复。", 500);
-		}
-		content = JSON.parse(raw);
+		content = JSON.parse(await readBoundedBackupText(saved));
 	} catch (error) {
 		if (error instanceof PrivateBackupError) throw error;
 		throw new PrivateBackupError("R2 备份文件损坏，已停止恢复。", 500);
@@ -132,9 +141,12 @@ export async function ensurePrivateR2Backup(
 	const key = privateBackupKey(record.slug, record.version);
 	validatePrivateBackupRecord(record, record.slug, record.version);
 	const raw = JSON.stringify(record);
+	if (encoder.encode(raw).byteLength > MAX_BACKUP_OBJECT_BYTES) {
+		throw new PrivateBackupError("私人 R2 备份文件超过允许大小，未执行写入。", 413);
+	}
 	const prior = await bucket.get(key);
 	if (prior) {
-		if ((await prior.text()) !== raw) {
+		if ((await readBoundedBackupText(prior)) !== raw) {
 			throw new PrivateBackupError("R2 历史备份内容冲突，已停止覆盖。", 409);
 		}
 		return;
@@ -147,7 +159,7 @@ export async function ensurePrivateR2Backup(
 	// Cloudflare R2 conditional put returns null when another writer won.
 	// Verify the winner has exactly the expected bytes; never overwrite it.
 	const confirmed = await bucket.get(key);
-	const confirmedRaw = confirmed ? await confirmed.text() : null;
+	const confirmedRaw = confirmed ? await readBoundedBackupText(confirmed) : null;
 	if (created === null && confirmedRaw !== null && confirmedRaw !== raw) {
 		throw new PrivateBackupError(
 			"历史备份已被并发操作写入不同内容，拒绝覆盖。",
