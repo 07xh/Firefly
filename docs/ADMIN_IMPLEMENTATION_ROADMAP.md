@@ -11,7 +11,13 @@
 | 管理员会话与密码轮换 | [PR #43](https://github.com/07xh/Firefly/pull/43) | 开发完成，草稿，未真实上线验证 |
 | 私人草稿 KV 基础 API | [PR #44](https://github.com/07xh/Firefly/pull/44) | 开发完成，草稿，未真实 KV 联调 |
 | 私人草稿管理编辑、导入导出与服务端防泄漏 | [PR #45](https://github.com/07xh/Firefly/pull/45) | CI 通过，草稿，未浏览器端到端测试 |
-| 私人草稿版本历史与恢复 | feat/private-draft-revisions-20261021 | 实施中，不能视为备份生产可用 |
+| 私人草稿版本历史与恢复 | [PR #47](https://github.com/07xh/Firefly/pull/47) | 代码和 CI 通过，未真实 KV 恢复演练 |
+| R2 独立备份与条件写入保护 | [PR #48](https://github.com/07xh/Firefly/pull/48) · [PR #49](https://github.com/07xh/Firefly/pull/49) | 代码、测试完成；真实 R2 绑定未联调 |
+| D1 原子版本控制与全量历史迁移 | [PR #50](https://github.com/07xh/Firefly/pull/50) · [PR #54](https://github.com/07xh/Firefly/pull/54) | SQL 测试通过，正式迁移未执行 |
+| 后台运行状态中心与前台冻结检查 | [PR #52](https://github.com/07xh/Firefly/pull/52) · [PR #53](https://github.com/07xh/Firefly/pull/53) | 功能代码通过 CI；浏览器联调待完成 |
+| 图床删除安全检查与 D1 兼容 | [PR #51](https://github.com/07xh/Firefly/pull/51) · [PR #56](https://github.com/07xh/Firefly/pull/56) | 代码与回归测试提交；真实 ImgBed 联调待完成 |
+| 文章摘要列表与按需 MDX 原文加载 | [PR #57](https://github.com/07xh/Firefly/pull/57) | CI 通过；平板编辑器交互待验收 |
+| 所有目标分支均运行 CI | [PR #55](https://github.com/07xh/Firefly/pull/55) | GitHub Actions 通过，尚未合并到 master |
 | 独立图床集成 | [PR #42](https://github.com/07xh/Firefly/pull/42) | 未完成正式联调，不直接合并 |
 | 正式主分支 master 与前台 UI | 不改动 | 保护优先级最高 |
 
