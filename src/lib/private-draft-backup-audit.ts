@@ -120,16 +120,19 @@ export async function auditPrivateDraftBackups(
 		} catch (error) {
 			issues.push({
 				version,
-				code: error instanceof Error && "status" in error && error.status === 404
-					? "missing_r2"
-					: "r2_corrupt",
+				code:
+					error instanceof Error && "status" in error && error.status === 404
+						? "missing_r2"
+						: "r2_corrupt",
 			});
 			continue;
 		}
 		const local = known.get(version);
 		if (!local) {
-			if (!history.items.some((item) => item.version === version) &&
-				before?.version !== version) {
+			if (
+				!history.items.some((item) => item.version === version) &&
+				before?.version !== version
+			) {
 				r2Only++;
 			}
 		} else if (!sameRecord(local, remoteRecord)) {
@@ -141,7 +144,10 @@ export async function auditPrivateDraftBackups(
 		(before === null) !== (after === null) ||
 		(before !== null && after !== null && !sameRecord(before, after))
 	) {
-		issues.push({ version: after?.version ?? before?.version ?? "", code: "current_changed" });
+		issues.push({
+			version: after?.version ?? before?.version ?? "",
+			code: "current_changed",
+		});
 		return {
 			...base,
 			status: "incomplete" as const,
@@ -157,6 +163,7 @@ export async function auditPrivateDraftBackups(
 		versionsChecked: allVersions.size,
 		recoverableR2OnlyVersions: r2Only,
 		issues,
-		notice: "仅完成当前时刻的有限只读核验，不能证明 KV/R2 跨服务事务或异地灾难备份。",
+		notice:
+			"仅完成当前时刻的有限只读核验，不能证明 KV/R2 跨服务事务或异地灾难备份。",
 	};
 }
