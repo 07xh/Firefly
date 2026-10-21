@@ -231,3 +231,25 @@ test("KV to D1 migration refuses malformed R2 filenames without changing the sou
 	assert.equal(await destination.get("draft:v1:unknown-backup", "text"), null);
 	assert.equal((await getPrivateDraft(source, "unknown-backup")).version, original.version);
 });
+
+test("migration refuses an incomplete legacy KV history page and preserves both stores", async () => {
+	const legacy = createD1PrivateDraftStore(mockD1());
+	const destination = createD1PrivateDraftStore(mockD1());
+	const backup = mockR2();
+	const original = await savePrivateDraft(legacy, { slug: "truncated-kv", content: VALID }, backup);
+	const source = {
+		...legacy,
+		async list(options) {
+			if (options.prefix === "draft-history:v1:truncated-kv:") {
+				return { keys: [], list_complete: false };
+			}
+			return legacy.list(options);
+		},
+	};
+	await assert.rejects(
+		() => copyPrivateDraftWithHistory(source, destination, backup, "truncated-kv", original.version),
+		(error) => error instanceof PrivateDraftError && error.status === 503,
+	);
+	assert.equal(await destination.get("draft:v1:truncated-kv", "text"), null);
+	assert.equal((await getPrivateDraft(legacy, "truncated-kv")).version, original.version);
+});
