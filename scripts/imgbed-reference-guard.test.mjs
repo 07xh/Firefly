@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
 
 const { assertImageNotReferenced, findImageReferences, imageReferenceTokens } =
@@ -95,4 +96,91 @@ test("protected delete route calls reference scanner before upstream delete", ()
 	const remove=source.indexOf("const deleteResponse = await upstream(");
 	assert.ok(checker>0 && remove>checker);
 	assert.ok(source.includes("message.includes(\"仍被文章或草稿引用\") ? 409 : 503"));
+});
+
+function d1ImageTestDatabase() {
+	const sqlite = new DatabaseSync(":memory:");
+	sqlite.exec([
+		"CREATE TABLE private_drafts (slug TEXT,version TEXT,record TEXT)",
+		"CREATE TABLE private_draft_revisions (slug TEXT,version TEXT,record TEXT)",
+	].join(";"));
+	const db = {
+		prepare(query) {
+			return {
+				bind(...args) {
+					return {
+						async all() { return {results:sqlite.prepare(query).all(...args)}; },
+					};
+				},
+			};
+		},
+	};
+	return {sqlite, db};
+}
+
+function emptyPrivateArchive() {
+	return {
+		async list() { return {objects:[],truncated:false}; },
+		async get() { return null; },
+	};
+}
+
+test("D1-backed active private draft image references prevent deletion",async()=>{
+	const {sqlite,db}=d1ImageTestDatabase();
+	const content='<img src="https://tu.0701000.xyz/file/notes/试卷 A.png" />';
+	sqlite.prepare("INSERT INTO private_drafts VALUES (?,?,?)").run(
+		"current","v1",JSON.stringify({slug:"current",version:"v1",content}),
+	);
+	const sources=createImgBedReferenceSources({
+		FIREFLY_PRIVATE_DRAFT_BACKEND:"d1",
+		FIREFLY_PRIVATE_DRAFT_DB:db,
+		FIREFLY_PRIVATE_DRAFT_BACKUPS:emptyPrivateArchive(),
+	});
+	const docs=await sources.listPrivateDrafts();
+	assert.equal(docs.length,1);
+	assert.deepEqual(findImageReferences(docs,base,name),["d1:private_drafts:current:v1"]);
+});
+
+test("D1 historical revisions also keep images protected",async()=>{
+	const {sqlite,db}=d1ImageTestDatabase();
+	const content='![old](https://tu.0701000.xyz/file/notes/试卷 A.png)';
+	sqlite.prepare("INSERT INTO private_draft_revisions VALUES (?,?,?)").run(
+		"deleted","prior",JSON.stringify({slug:"deleted",version:"prior",content}),
+	);
+	const docs=await createImgBedReferenceSources({
+		FIREFLY_PRIVATE_DRAFT_BACKEND:"d1",
+		FIREFLY_PRIVATE_DRAFT_DB:db,
+		FIREFLY_PRIVATE_DRAFT_BACKUPS:emptyPrivateArchive(),
+	}).listPrivateDrafts();
+	assert.deepEqual(findImageReferences(docs,base,name),[
+		"d1:private_draft_revisions:deleted:prior",
+	]);
+});
+
+test("missing D1, KV, or R2 bindings fail closed before ImgBed deletion",async()=>{
+	for(const flags of [
+		{FIREFLY_PRIVATE_DRAFT_BACKEND:"d1",FIREFLY_PRIVATE_DRAFT_BACKUPS:emptyPrivateArchive()},
+		{FIREFLY_PRIVATE_DRAFT_BACKEND:"kv",FIREFLY_PRIVATE_DRAFT_BACKUPS:emptyPrivateArchive()},
+		{FIREFLY_PRIVATE_DRAFT_BACKEND:"d1",FIREFLY_PRIVATE_DRAFT_DB:d1ImageTestDatabase().db},
+	]){
+		await assert.rejects(
+			()=>createImgBedReferenceSources(flags).listPrivateDrafts(),
+			/未绑定/,
+		);
+	}
+});
+
+test("unreadable or malformed D1 draft rows never allow image deletion",async()=>{
+	const {sqlite,db}=d1ImageTestDatabase();
+	sqlite.prepare("INSERT INTO private_draft_revisions VALUES (?,?,?)").run(
+		"note","v1",JSON.stringify({slug:"note",version:"wrong",content:"safe"}),
+	);
+	await assert.rejects(
+		()=>createImgBedReferenceSources({
+			FIREFLY_PRIVATE_DRAFT_BACKEND:"d1",
+			FIREFLY_PRIVATE_DRAFT_DB:db,
+			FIREFLY_PRIVATE_DRAFT_BACKUPS:emptyPrivateArchive(),
+		}).listPrivateDrafts(),
+		/版本校验失败/,
+	);
 });
