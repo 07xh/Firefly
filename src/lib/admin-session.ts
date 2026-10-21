@@ -15,6 +15,9 @@ type StoredSession = {
 	kind: "firefly-admin-session";
 	createdAt: number;
 	expiresAt: number;
+	// Proof bound to both this token and the current admin password.
+	// Rotating the admin password invalidates every existing session.
+	authTag: string;
 };
 
 function base64Url(bytes: Uint8Array): string {
@@ -56,15 +59,37 @@ export function createSessionToken(): string {
 	return base64Url(crypto.getRandomValues(new Uint8Array(32)));
 }
 
+async function adminSessionAuthTag(
+	token: string,
+	adminPassword: string,
+): Promise<string> {
+	const encoder = new TextEncoder();
+	const key = await crypto.subtle.importKey(
+		"raw",
+		encoder.encode(adminPassword),
+		{ name: "HMAC", hash: "SHA-256" },
+		false,
+		["sign"],
+	);
+	const proof = await crypto.subtle.sign(
+		"HMAC",
+		key,
+		encoder.encode("firefly-admin-session:v2:" + token),
+	);
+	return base64Url(new Uint8Array(proof));
+}
+
 export async function storeAdminSession(
 	store: SessionKV,
 	token: string,
+	adminPassword: string,
 ): Promise<void> {
 	const now = Date.now();
 	const session: StoredSession = {
 		kind: "firefly-admin-session",
 		createdAt: now,
 		expiresAt: now + SESSION_TTL_SECONDS * 1000,
+		authTag: await adminSessionAuthTag(token, adminPassword),
 	};
 	await store.put(await sessionStorageKey(token), JSON.stringify(session), {
 		expirationTtl: SESSION_TTL_SECONDS,
@@ -74,6 +99,7 @@ export async function storeAdminSession(
 export async function validateAdminSession(
 	store: SessionKV,
 	token: string,
+	adminPassword: string,
 ): Promise<boolean> {
 	const key = await sessionStorageKey(token);
 	const raw = await store.get(key, "text");
@@ -88,7 +114,9 @@ export async function validateAdminSession(
 	if (
 		session.kind !== "firefly-admin-session" ||
 		typeof session.expiresAt !== "number" ||
-		session.expiresAt <= Date.now()
+		session.expiresAt <= Date.now() ||
+		typeof session.authTag !== "string" ||
+		session.authTag !== (await adminSessionAuthTag(token, adminPassword))
 	) {
 		await store.delete(key);
 		return false;

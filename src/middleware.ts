@@ -133,17 +133,21 @@ export const onRequest = defineMiddleware(async (context, next) => {
 		// Load Cloudflare bindings only when a protected request needs session validation.
 		// A top-level cloudflare:workers import breaks Astro prerendering.
 		const { env: workerEnv } = await import("cloudflare:workers");
-		const sessions = (workerEnv as unknown as { FIREFLY_SESSIONS?: SessionKV })
-			.FIREFLY_SESSIONS;
-		if (!sessions) {
+		const runtime = workerEnv as unknown as {
+			FIREFLY_SESSIONS?: SessionKV;
+			FIREFLY_ADMIN_PASSWORD?: string;
+		};
+		const sessions = runtime.FIREFLY_SESSIONS;
+		const adminPassword = runtime.FIREFLY_ADMIN_PASSWORD;
+		if (!sessions || !adminPassword) {
 			return errorResponse(
-				"后台认证尚未配置：请为 Worker 绑定 FIREFLY_SESSIONS KV 命名空间。",
+				"后台认证尚未配置：请检查 FIREFLY_SESSIONS KV 绑定和管理员密码 Secret。",
 				503,
 				isAdminApi,
 			);
 		}
 
-		const valid = await validateAdminSession(sessions, token);
+		const valid = await validateAdminSession(sessions, token, adminPassword);
 		if (!valid) {
 			if (isAdminApi) {
 				return errorResponse("登录已失效，请重新登录。", 401, true);
