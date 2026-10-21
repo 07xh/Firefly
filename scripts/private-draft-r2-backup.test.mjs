@@ -11,6 +11,7 @@ const {
 	listPrivateR2Backups,
 	privateBackupKey,
 	PrivateBackupError,
+	validatePrivateBackupRecord,
 } = await import("../src/lib/private-draft-r2-backup.ts");
 const {
 	savePrivateDraft,
@@ -176,4 +177,64 @@ test("conditional R2 upload never overwrites competing writer's content",async()
     error=>error instanceof PrivateBackupError && error.status===409,
   );
   assert.equal(JSON.parse(r2.objects.get(key)).content,VALID+"-CONCURRENT");
+});
+
+test("R2 archive rejects public, malformed, or timestamp-invalid content", async () => {
+	const r2=mockR2();
+	const template={
+		schema:1,slug:"private",
+		version:"00000000-0000-4000-8000-000000000044",
+		extension:"mdx",updatedAt:"2026-10-21T00:00:00Z",content:VALID,
+	};
+	assert.equal(validatePrivateBackupRecord(template,template.slug,template.version).content,VALID);
+	for(const corrupt of [
+		{...template,content:VALID.replace("draft: true","draft: false")},
+		{...template,content:VALID.replace("draft: true","visibility: public")},
+		{...template,updatedAt:"yesterday"},
+		{...template,updatedAt:"2026-99-99T00:00:00Z"},
+		{...template,content:"---\ntitle: bad\n---\nBody"},
+		{...template,version:"not-a-uuid"},
+	]){
+		assert.throws(
+			()=>validatePrivateBackupRecord(corrupt,template.slug,template.version),
+			error=>error instanceof PrivateBackupError&&error.status===500,
+		);
+		r2.objects.set(privateBackupKey(template.slug,template.version),JSON.stringify(corrupt));
+		await assert.rejects(
+			()=>getPrivateR2Backup(r2,template.slug,template.version),
+			error=>error instanceof PrivateBackupError&&error.status===500,
+		);
+	}
+	r2.objects.delete(privateBackupKey(template.slug,template.version));
+	await assert.rejects(
+		()=>ensurePrivateR2Backup(r2,{...template,content:VALID.replace("draft: true","draft: false")}),
+		error=>error instanceof PrivateBackupError&&error.status===500,
+	);
+	assert.equal(r2.objects.size,0);
+});
+
+test("known large R2 objects are rejected without reading their body",async()=>{
+	const version="00000000-0000-4000-8000-000000000044";
+	let bodyReads=0;
+	const r2={
+		async get(){
+			return {size:1_200_001,async text(){bodyReads++;return "{}";}};
+		},
+	};
+	await assert.rejects(
+		()=>getPrivateR2Backup(r2,"private",version),
+		error=>error instanceof PrivateBackupError&&error.status===500&&/过大/.test(error.message),
+	);
+	assert.equal(bodyReads,0);
+});
+
+test("maliciously oversized backup text is rejected even when size metadata is absent",async()=>{
+	const version="00000000-0000-4000-8000-000000000044";
+	const r2={
+		async get(){return {async text(){return "x".repeat(1_200_001);}};},
+	};
+	await assert.rejects(
+		()=>getPrivateR2Backup(r2,"private",version),
+		error=>error instanceof PrivateBackupError&&error.status===500&&/过大/.test(error.message),
+	);
 });
