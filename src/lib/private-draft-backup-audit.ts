@@ -20,6 +20,8 @@ type AuditIssueCode =
 	| "r2_corrupt"
 	| "kv_history_corrupt"
 	| "version_mismatch"
+	| "invalid_r2_listing"
+	| "listing_changed"
 	| "current_changed";
 
 type AuditIssue = {
@@ -77,14 +79,21 @@ export async function auditPrivateDraftBackups(
 		checkedAt: new Date().toISOString(),
 		currentPresent: Boolean(before),
 		versionsFound: allVersions.size,
+		invalidR2Objects: remote.invalidObjectCount,
 		maxVersionsPerAudit: MAX_VERSIONS,
 	};
-	if (!before && history.items.length === 0 && remote.items.length === 0) {
+	if (
+		!before &&
+		history.items.length === 0 &&
+		remote.items.length === 0 &&
+		remote.invalidObjectCount === 0
+	) {
 		throw new PrivateDraftError("没有找到此私人草稿或历史备份。", 404);
 	}
 	if (
 		history.cursor !== null ||
 		remote.cursor !== null ||
+		remote.invalidObjectCount > 0 ||
 		allVersions.size > MAX_VERSIONS
 	) {
 		return {
@@ -92,8 +101,10 @@ export async function auditPrivateDraftBackups(
 			status: "incomplete" as const,
 			versionsChecked: 0,
 			recoverableR2OnlyVersions: 0,
-			issues: [] as AuditIssue[],
-			notice: "历史版本超过单次核验上限或存在后续分页；不能据此认定备份完整。",
+			issues: remote.invalidObjectCount > 0
+				? ([{ version: "", code: "invalid_r2_listing" }] as AuditIssue[])
+				: ([] as AuditIssue[]),
+			notice: "R2 文件名异常、历史版本超过上限或存在后续分页；无法认定备份完整。",
 		};
 	}
 	const issues: AuditIssue[] = [];
@@ -139,7 +150,32 @@ export async function auditPrivateDraftBackups(
 			issues.push({ version, code: "version_mismatch" });
 		}
 	}
-	const after = await currentRecord(store, slug);
+	const [after, historyAfter, remoteAfter] = await Promise.all([
+		currentRecord(store, slug),
+		listPrivateDraftRevisions(store, slug),
+		listPrivateR2Backups(bucket, slug),
+	]);
+	const stableHistory = (items: typeof history.items) =>
+		JSON.stringify([...items].sort((a, b) => a.version.localeCompare(b.version)));
+	const stableR2 = (items: typeof remote.items) =>
+		JSON.stringify([...items].sort((a, b) => a.version.localeCompare(b.version)));
+	if (
+		historyAfter.cursor !== history.cursor ||
+		remoteAfter.cursor !== remote.cursor ||
+		remoteAfter.invalidObjectCount !== remote.invalidObjectCount ||
+		stableHistory(historyAfter.items) !== stableHistory(history.items) ||
+		stableR2(remoteAfter.items) !== stableR2(remote.items)
+	) {
+		issues.push({ version: "", code: "listing_changed" });
+		return {
+			...base,
+			status: "incomplete" as const,
+			versionsChecked: allVersions.size,
+			recoverableR2OnlyVersions: r2Only,
+			issues,
+			notice: "核验期间历史版本列表发生变化，检查结果可能过时，请重新核验。",
+		};
+	}
 	if (
 		(before === null) !== (after === null) ||
 		(before !== null && after !== null && !sameRecord(before, after))
