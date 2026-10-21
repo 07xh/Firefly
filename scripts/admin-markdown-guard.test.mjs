@@ -345,3 +345,16 @@ test("MDX protection rejects loss of nested components or double marker injectio
     /丢失或重复/,
   );
 });
+
+test("strict restoration treats dollar substitutions as literal MDX, never JS replacement tokens", () => {
+  const special = "$$ and $& and $" + String.fromCharCode(96) + " and $'";
+  const raw = '<CustomMath formula="' + special + '">不改公式</CustomMath>';
+  const source = "前言。\n\n" + raw + "\n\n后记。";
+  const prepared = prepareMarkdownForVisualEditing(source);
+  assert.equal(prepared.records.length, 1);
+  const restored = restoreProtectedMarkdownStrict(
+    prepared.markdown, prepared.records, prepared.records.map(r => r.marker),
+  );
+  assert.equal(restored, source);
+  assert.ok(restored.includes(special));
+});
