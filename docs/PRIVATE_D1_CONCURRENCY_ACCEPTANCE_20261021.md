@@ -17,9 +17,9 @@
 
 | 范围 | 执行状态 |
 | --- | --- |
-| SQLite 模拟 D1 + 内存 R2 / 新增单元回归 | CI 待执行；以结果为准 |
-| Node 22/23 Astro Check 与 Build | CI 待执行 |
-| Cloudflare 精确构建但不部署 | CI 待执行 |
+| SQLite 模拟 D1 + 内存 R2 / 新增单元回归 | Node 22 已通过（总计 86 项，0 失败），含新增加的跨页重复及删除后恢复测试 |
+| Node 22/23 Astro Check 与 Build | 已通过 |
+| Cloudflare 精确构建但不部署 | 已通过；未运行生产 Worker 部署 |
 | 真实 Worker + 独立 D1/KV/R2 创建/编辑/恢复 | 尚未执行 |
 | 真实跨地区并发与 Worker 故障恢复 | 尚未执行 |
 | 前台 UI、现有文章与生产存储 | 不修改 |
@@ -38,3 +38,11 @@
 - R2 与 D1 没有跨服务原子事务，失败后允许保留孤立版本，但不能把它错误标记为当前保存成功。
 - 当前单篇迁移历史上限为 40；备份审计最多核验 12 个版本。超过上限不得宣布全部迁移/全部备份已完整。
 - 本分支基于 PR #64 的累计安全分支，**不能独立于其依赖直接合并 master**；需在隔离的集成分支按顺序验收。
+
+## 已完成的自动化证据
+
+- [Build and Check：39539217630](https://github.com/07xh/Firefly/actions/runs/39539217630) — Node 22/23 Astro Check 与 Build、Cloudflare 不部署构建成功。
+- [Code quality：39539217617](https://github.com/07xh/Firefly/actions/runs/39539217617) — Biome 检查通过。
+- [Deployment policy audit：39539217626](https://github.com/07xh/Firefly/actions/runs/39539217626) — 发布门禁通过。
+
+**以上均为 CI 级验收。预览环境的 KV/D1/R2 实际绑定、真实恢复演练及浏览器测试仍未执行；不得据此启用生产 D1。**
