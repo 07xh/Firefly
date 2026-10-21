@@ -59,3 +59,12 @@ test("private ImgBed API and image management UI do not replace upload source", 
 	assert.ok(!library.includes("/api/admin/upload"));
 	assert.ok(main.includes("/admin/images/"));
 });
+
+test("ImgBed tokens are restricted to the owned HTTPS origin and upstream messages are sanitized", () => {
+	const route = readFileSync(new URL("../src/pages/api/admin/imgbed.ts", import.meta.url), "utf8");
+	assert.ok(route.includes('base.hostname !== "tu.0701000.xyz"'));
+	assert.ok(route.includes('base.protocol !== "https:"'));
+	assert.ok(route.includes("Never echo untrusted upstream error text"));
+	assert.ok(!route.includes("message = body.error"));
+	assert.ok(!route.includes("message = body.message"));
+});
