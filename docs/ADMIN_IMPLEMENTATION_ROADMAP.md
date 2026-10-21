@@ -21,6 +21,7 @@
 | GitHub 公开文章读取的服务端并发保护 | [PR #59](https://github.com/07xh/Firefly/pull/59) | 代码及回归测试提交；真实 Github 速率与平板操作待验收 |
 | 私人草稿与独立 R2 的只读内容一致性核验 | [PR #60](https://github.com/07xh/Firefly/pull/60) | 功能、状态页、异常测试已提交；真实 KV/D1/R2 预览联调待完成 |
 | R2 备份列表完整性与迁移防漏保护 | [PR #61](https://github.com/07xh/Firefly/pull/61) | 异常对象、分页游标和并发列表变化均拒绝宣称完整；真实 Worker 联调仍待完成 |
+| KV/D1 草稿列表与历史分页完整性检查 | [PR #62](https://github.com/07xh/Firefly/pull/62) | 非法键、缺失或重复游标拒绝继续；真实 Cloudflare 联调未完成 |
 | 所有目标分支均运行 CI | [PR #55](https://github.com/07xh/Firefly/pull/55) | GitHub Actions 通过，尚未合并到 master |
 | 独立图床集成 | [PR #42](https://github.com/07xh/Firefly/pull/42) | 未完成正式联调，不直接合并 |
 | 正式主分支 master 与前台 UI | 不改动 | 保护优先级最高 |
