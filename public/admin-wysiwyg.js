@@ -2217,13 +2217,10 @@ async function loadTiptapModules() {
     if (!editor) return false;
     const current = sourceField.value || "";
     const split = splitFrontmatter(current);
-    const migrated = stripGlobalComponentImports(split.body);
-    const sourceBody = migrated.removed ? migrated.source : split.body;
-    if (migrated.removed) {
-      sourceField.value = split.prefix + sourceBody;
-      sourceField.dispatchEvent(new Event("input", { bubbles: true }));
-    }
-    const prepared = prepareMarkdownForVisualEditing(sourceBody);
+    // Opening a visual editor is a READ operation. Never silently delete
+    // imports or normalize the original Markdown/MDX before any user edit.
+    // Redundant imports may be removed only by an explicit, reversible action.
+    const prepared = prepareMarkdownForVisualEditing(split.body);
     frontmatterPrefix = split.prefix;
     loadingSource = true;
     try {
@@ -2240,15 +2237,7 @@ async function loadTiptapModules() {
       requiredProtectedMarkers = expected;
       lastLoadedSource = sourceField.value || current;
       reportProtected(prepared.records);
-      if (migrated.removed) {
-        status("已从本次编辑稿移除 " + migrated.removed + " 条冗余 firefly-mdx import；保存文章后即可将清理结果写入 GitHub。");
-        if (notice) {
-          notice.hidden = false;
-          notice.textContent = (notice.textContent ? notice.textContent + " " : "")
-            + "已自动移除 " + migrated.removed + " 条冗余的 firefly-mdx 组件 import；保存后写入 GitHub。";
-          notice.setAttribute("role", "status");
-        }
-      }
+
       return true;
     } catch (error) {
       reportVisualLoadFailure(error);
