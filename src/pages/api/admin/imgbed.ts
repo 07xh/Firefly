@@ -90,6 +90,7 @@ async function getConfig(): Promise<{ base: URL; token: string } | Response> {
 
 	if (
 		base.protocol !== "https:" ||
+		base.hostname !== "tu.0701000.xyz" ||
 		base.username ||
 		base.password ||
 		base.search ||
@@ -152,23 +153,12 @@ async function readPayload(
 
 function upstreamError(
 	response: Response,
-	value: Record<string, unknown> | unknown[],
+	_value: Record<string, unknown> | unknown[],
 ): Response {
-	const body = Array.isArray(value) ? {} : value;
-	let message = `图床请求失败（HTTP ${response.status}）。`;
-
-	if (typeof body.error === "string") {
-		message = body.error;
-	} else if (typeof body.message === "string") {
-		message = body.message;
-	}
-
-	return json(
-		{ error: message.slice(0, 240) },
-		response.status >= 400 && response.status < 600
-			? response.status
-			: 502,
-	);
+	// Never echo untrusted upstream error text (potential tokens, internal
+	// endpoints or user-uploaded filenames) through the authenticated API.
+	const status = response.status >= 400 && response.status < 600 ? response.status : 502;
+	return json({ error: `图床服务返回 HTTP ${response.status}。请检查后台令牌权限与图床运行状态。` }, status);
 }
 
 function encodedPath(path: string): string {
