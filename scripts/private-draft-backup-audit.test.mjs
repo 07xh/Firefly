@@ -180,3 +180,59 @@ test("audit endpoint stays authenticated, read-only, and never exposes stored co
 	assert.ok(!route.includes("ensurePrivateR2Backup"));
 	assert.ok(middleware.includes('pathname.startsWith("/api/admin/")'));
 });
+
+test("unrecognized R2 object is surfaced as incomplete instead of a false verified result", async () => {
+	const store = mockKV(), backup = mockR2();
+	const first = await savePrivateDraft(store, { slug: "extra", content: MARKDOWN }, backup);
+	backup.records.set("private-draft-backups/v1/extra/not-a-uuid.json", "orphan");
+	const report = await auditPrivateDraftBackups(store, backup, "extra");
+	assert.equal(report.status, "incomplete");
+	assert.equal(report.invalidR2Objects, 1);
+	assert.ok(report.issues.some((item) => item.code === "invalid_r2_listing"));
+	assert.equal(backup.records.has(privateBackupKey("extra", first.version)), true);
+});
+
+test("malformed-only R2 archive does not misreport an absent draft", async () => {
+	const store = mockKV(), backup = mockR2();
+	backup.records.set("private-draft-backups/v1/malformed/subfolder/x.json", "{}");
+	const report = await auditPrivateDraftBackups(store, backup, "malformed");
+	assert.equal(report.currentPresent, false);
+	assert.equal(report.status, "incomplete");
+	assert.equal(report.invalidR2Objects, 1);
+});
+
+test("R2 truncated listings without a cursor fail closed", async () => {
+	const store = mockKV(), backup = mockR2();
+	await savePrivateDraft(store, { slug: "pagination", content: MARKDOWN }, backup);
+	backup.list = async () => ({ objects: [], truncated: true });
+	await assert.rejects(
+		() => auditPrivateDraftBackups(store, backup, "pagination"),
+		(error) => error.status === 503 && /游标/.test(error.message),
+	);
+});
+
+test("history mutation during audit forces an incomplete result", async () => {
+	const store = mockKV(), backup = mockR2();
+	await savePrivateDraft(store, { slug: "history-race", content: MARKDOWN }, backup);
+	const originalList = backup.list.bind(backup);
+	let listCalls = 0;
+	backup.list = async (options) => {
+		const result = await originalList(options);
+		if (++listCalls === 2) {
+			result.objects.push({ key: "private-draft-backups/v1/history-race/not-an-id.json" });
+		}
+		return result;
+	};
+	const result = await auditPrivateDraftBackups(store, backup, "history-race");
+	assert.equal(result.status, "incomplete");
+	assert.ok(result.issues.some((item) => item.code === "listing_changed"));
+});
+
+test("R2 list reader reports unknown keys without exposing raw object paths", async () => {
+	const store = mockKV(), backup = mockR2();
+	await savePrivateDraft(store, { slug: "privacy", content: MARKDOWN }, backup);
+	backup.records.set("private-draft-backups/v1/privacy/SENSITIVE_BACKUP_PATH.json", "{}");
+	const result = await auditPrivateDraftBackups(store, backup, "privacy");
+	assert.ok(!JSON.stringify(result).includes("SENSITIVE_BACKUP_PATH"));
+	assert.equal(result.status, "incomplete");
+});
