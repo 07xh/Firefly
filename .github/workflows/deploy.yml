@@ -1,8 +1,6 @@
 name: Deploy to GitHub Pages
 
 on:
-  push:
-    branches: [ master ]
   workflow_dispatch:
 
 # Pages 部署需要的权限
@@ -18,6 +16,8 @@ concurrency:
 
 jobs:
   build:
+    # Explicit opt-in after independently verifying GitHub Pages is still needed.
+    if: ${{ vars.ENABLE_GITHUB_PAGES_DEPLOY == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
