@@ -47,3 +47,10 @@ package/
 .codex*
 .claude
 .mimocode
+
+# Local-only Cloudflare preview resources and production resource deny-list.
+# Do NOT commit the real binding IDs or secrets used during staging acceptance.
+wrangler.preview.local.jsonc
+.firefly-production-resource-ids.json
+.dev.vars
+.dev.vars.*
