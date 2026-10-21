@@ -26,8 +26,9 @@ test("top-level YAML event detection ignores nested event descriptions", () => {
 	assert.equal(onSection("name: Demo\njobs:\n  test: true"), "");
 });
 
-test("canonical Pages must still publish from master but never from the repository root", () => {
-	assert.match(errors(modify(MANUAL_PAGES, (text) => text.replace("  push:\n    branches: [ master ]\n", ""))), /Canonical GitHub Pages workflow/);
+test("canonical Pages must require manual approval and never publish automatically", () => {
+	assert.match(errors(modify(MANUAL_PAGES, (text) => text.replace("on:\n  workflow_dispatch:", "on:\n  push:\n    branches: [master]\n  workflow_dispatch:"))), /Canonical GitHub Pages workflow/);
+	assert.match(errors(modify(MANUAL_PAGES, (text) => text.replace("vars.FIREFLY_RELEASE_READY", "vars.NOT_APPROVED"))), /Canonical GitHub Pages workflow/);
 	assert.match(errors(modify(MANUAL_PAGES, (text) => text.replace("path: dist", "path: '.'"))), /must build dist/);
 	assert.match(errors(modify(MANUAL_PAGES, (text) => text.replace("rm -rf dist\/admin", "echo skip"))), /exclude private admin/);
 	for (const file of DISABLED_PAGES) {
@@ -48,9 +49,12 @@ test("scheduled publishing must retain canonical dispatch link", () => {
 	assert.match(errors(modify(PRODUCTION, (text) => text.replace("group: cloudflare-workers", "group: alternate"))), /serialize deployments/);
 });
 
-test("missing files or missing top-level triggers fail closed", () => {
+test("production cannot be deployed by a master push or without explicit approval", () => {
 	const file = { ...original };
 	delete file[PRODUCTION];
 	assert.match(errors(file), /missing workflow file/);
-	assert.match(errors(modify(PRODUCTION, (text) => text.replace("on:\n  push:", "events:\n  push:"))), /Canonical Cloudflare deployment/);
+	assert.match(errors(modify(PRODUCTION, (text) => text.replace("on:\n  workflow_dispatch:", "on:\n  push:\n    branches: [master]\n  workflow_dispatch:"))), /must not run automatically/);
+	assert.match(errors(modify(PRODUCTION, (text) => text.replace("vars.FIREFLY_RELEASE_READY", "vars.RELEASE_ANYTIME"))), /manual approval/);
+	assert.match(errors(modify(PRODUCTION, (text) => text.replace("inputs.release_confirmation == 'DEPLOY_VERIFIED'", "true"))), /manual approval|bypass the production release/);
+	assert.match(errors(modify(PRODUCTION, (text) => text.replace("on:\n  workflow_dispatch:", "on:\n  repository_dispatch:"))), /manual dispatch/);
 });
