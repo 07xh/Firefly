@@ -103,12 +103,20 @@ export function validatePrivateBackupRecord(
 	return input as PrivateDraftBackupRecord;
 }
 
-async function readBoundedBackupText(object: { text(): Promise<string>; size?: number }): Promise<string> {
+async function readBoundedBackupText(object: {
+	text(): Promise<string>;
+	size?: number;
+}): Promise<string> {
 	if (
 		object.size !== undefined &&
-		(!Number.isSafeInteger(object.size) || object.size < 0 || object.size > MAX_BACKUP_OBJECT_BYTES)
+		(!Number.isSafeInteger(object.size) ||
+			object.size < 0 ||
+			object.size > MAX_BACKUP_OBJECT_BYTES)
 	) {
-		throw new PrivateBackupError("R2 备份对象过大或文件大小异常，已阻止恢复。", 500);
+		throw new PrivateBackupError(
+			"R2 备份对象过大或文件大小异常，已阻止恢复。",
+			500,
+		);
 	}
 	const raw = await object.text();
 	if (encoder.encode(raw).byteLength > MAX_BACKUP_OBJECT_BYTES) {

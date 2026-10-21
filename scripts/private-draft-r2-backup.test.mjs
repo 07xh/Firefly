@@ -295,7 +295,7 @@ test("R2 backup rejects oversized legacy objects and encoded JSON before writes"
 	assert.equal(r2.objects.get(key).length, 1_200_001);
 	r2.objects.delete(key);
 	await assert.rejects(
-		() => ensurePrivateR2Backup(r2, { ...record, content: VALID + "\\u0000".repeat(300_000) }),
+		() => ensurePrivateR2Backup(r2, { ...record, content: VALID + String.fromCharCode(0).repeat(300_000) }),
 		(error) => error instanceof PrivateBackupError && error.status === 413,
 	);
 	assert.equal(r2.objects.size, 0);
