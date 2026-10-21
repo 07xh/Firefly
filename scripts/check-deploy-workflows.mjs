@@ -67,12 +67,16 @@ export function deploymentPolicyViolations(files) {
 		failures.push("Both Worker deployment workflows must share a serial concurrency group.");
 
 	const pages = files[MANUAL_PAGES];
-	if (eventEnabled(pages, "push") || eventEnabled(pages, "schedule"))
-		failures.push("GitHub Pages publishing must not run automatically.");
-	if (!eventEnabled(pages, "workflow_dispatch") || !isOptIn(pages, "ENABLE_GITHUB_PAGES_DEPLOY"))
-		failures.push("GitHub Pages publishing requires an explicit disabled-by-default opt-in.");
-	if (!pages.includes("path: dist"))
-		failures.push("GitHub Pages manual fallback must use build output, not repository root.");
+	if (
+		!eventEnabled(pages, "push") ||
+		!/branches:\s*\[\s*master\s*\]/.test(onSection(pages)) ||
+		!eventEnabled(pages, "workflow_dispatch") ||
+		eventEnabled(pages, "schedule")
+	) {
+		failures.push("Canonical GitHub Pages workflow must preserve master and manual triggers.");
+	}
+	if (!pages.includes("path: dist") || !pages.includes("rm -rf dist/admin"))
+		failures.push("GitHub Pages must build dist and exclude private admin pages.");
 
 	for (const file of DISABLED_PAGES) {
 		const source = files[file];
@@ -105,7 +109,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
 			for (const item of violations) console.error("FAIL: " + item);
 			process.exitCode = 1;
 		} else {
-			console.log("PASS: one automatic Cloudflare deployment path; legacy Pages and Worker publishing are opt-in/inert.");
+			console.log("PASS: canonical Cloudflare and built-artifact Pages publishers preserved; duplicate legacy deployments disabled.");
 		}
 	} catch (error) {
 		console.error("FAIL: unable to audit deployment workflows:", error instanceof Error ? error.message : String(error));
