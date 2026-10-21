@@ -207,7 +207,9 @@ export function createD1PrivateDraftStore(
 			}
 			const slug = liveSlug(key);
 			const row = await db
-				.prepare("SELECT slug,version,record,updated_at,title,extension FROM private_drafts WHERE slug = ?")
+				.prepare(
+					"SELECT slug,version,record,updated_at,title,extension FROM private_drafts WHERE slug = ?",
+				)
 				.bind(slug)
 				.first();
 			return readStoredRow(row, slug);
