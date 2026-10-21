@@ -218,12 +218,18 @@ function requireStoredRecord(
 		!("content" in input) ||
 		typeof input.content !== "string"
 	) {
-		throw new PrivateDraftError("私人草稿存储记录不完整或不一致，已停止操作。", 500);
+		throw new PrivateDraftError(
+			"私人草稿存储记录不完整或不一致，已停止操作。",
+			500,
+		);
 	}
 	try {
 		requireDraftContent(input.content);
 	} catch {
-		throw new PrivateDraftError("私人草稿存储正文损坏，已拒绝覆盖或恢复。", 500);
+		throw new PrivateDraftError(
+			"私人草稿存储正文损坏，已拒绝覆盖或恢复。",
+			500,
+		);
 	}
 	return input as DraftRecord;
 }
