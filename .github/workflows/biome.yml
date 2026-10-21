@@ -16,5 +16,9 @@ jobs:
         uses: biomejs/setup-biome@f382a98e582959e6aaac8e5f8b17b31749018780 # v2.5.0
         with:
           version: 2.5.15
+      - name: Inspect R2 backup payload formatting
+        run: |
+          biome format --write src/lib/private-draft-r2-backup.ts
+          git diff -- src/lib/private-draft-r2-backup.ts
       - name: Run Biome
         run: biome ci --config-path=biome.json ./src --reporter=summary
