@@ -177,7 +177,7 @@ export async function listPrivateR2Backups(
 			!result.cursor ||
 			result.cursor === cursor ||
 			result.cursor.length > 1024 ||
-			!/^[A-Za-z0-9_+\\-/=]+$/.test(result.cursor))
+			!/^[A-Za-z0-9_+/=-]+$/.test(result.cursor))
 	) {
 		throw new PrivateBackupError(
 			"R2 备份分页缺少有效游标，已拒绝遗漏历史。",
