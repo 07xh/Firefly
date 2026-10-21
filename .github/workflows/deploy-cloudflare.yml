@@ -1,9 +1,16 @@
 name: Deploy to Cloudflare Workers
 
 on:
-  push:
-    branches: [master]
   workflow_dispatch:
+    inputs:
+      release_confirmation:
+        description: "Explicitly approve manually verified production release"
+        required: true
+        type: choice
+        default: "NO"
+        options:
+          - "NO"
+          - "DEPLOY_VERIFIED"
 
 permissions:
   contents: read
@@ -14,6 +21,7 @@ concurrency:
 
 jobs:
   deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.release_confirmation == 'DEPLOY_VERIFIED' && vars.FIREFLY_RELEASE_READY == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
