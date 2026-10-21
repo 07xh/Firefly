@@ -70,11 +70,22 @@ async function collectVersions(
 	slug: string,
 ): Promise<Map<string, PrivateDraftBackupRecord>> {
 	const records = new Map<string, PrivateDraftBackupRecord>();
+	// Pagination must not overlap: an apparently identical repeated version
+	// may hide another version omitted by a changing KV/R2 listing.
+	const kvVersions = new Set<string>();
+	const r2Versions = new Set<string>();
 	const kvCursors = new Set<string>();
 	let kvCursor: string | undefined;
 	for (let page = 0; page < 5; page++) {
 		const response = await listPrivateDraftRevisions(source, slug, kvCursor);
 		for (const item of response.items) {
+			if (kvVersions.has(item.version)) {
+				throw new PrivateDraftError(
+					"KV 历史分页出现重复版本，无法确认迁移完整性。",
+					503,
+				);
+			}
+			kvVersions.add(item.version);
 			if (records.size >= MAX_REVISIONS && !records.has(item.version)) {
 				throw new PrivateDraftError(
 					"单篇文章历史过多，请分批迁移，禁止跳过旧版本。",
@@ -107,6 +118,13 @@ async function collectVersions(
 			);
 		}
 		for (const item of response.items) {
+			if (r2Versions.has(item.version)) {
+				throw new PrivateDraftError(
+					"R2 历史分页出现重复版本，已停止迁移。",
+					503,
+				);
+			}
+			r2Versions.add(item.version);
 			if (records.size >= MAX_REVISIONS && !records.has(item.version)) {
 				throw new PrivateDraftError("R2 历史版本过多，禁止遗漏备份。", 413);
 			}
