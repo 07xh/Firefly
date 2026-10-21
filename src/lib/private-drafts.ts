@@ -189,6 +189,45 @@ function requireDraftContent(value: unknown): string {
 	return value;
 }
 
+/**
+ * Never interpret damaged stored MDX as Markdown. Validate stored records
+ * independently of client input before any edit, delete, audit or recovery.
+ * Existing storage bytes are left untouched if an integrity check fails.
+ */
+function requireStoredRecord(
+	input: unknown,
+	slug: string,
+	expectedVersion?: string,
+): DraftRecord {
+	if (
+		!input ||
+		typeof input !== "object" ||
+		!("schema" in input) ||
+		input.schema !== 1 ||
+		!("slug" in input) ||
+		input.slug !== slug ||
+		!("version" in input) ||
+		typeof input.version !== "string" ||
+		!UUID_RE.test(input.version) ||
+		(expectedVersion !== undefined && input.version !== expectedVersion) ||
+		!("extension" in input) ||
+		(input.extension !== "md" && input.extension !== "mdx") ||
+		!("updatedAt" in input) ||
+		typeof input.updatedAt !== "string" ||
+		!input.updatedAt.trim() ||
+		!("content" in input) ||
+		typeof input.content !== "string"
+	) {
+		throw new PrivateDraftError("私人草稿存储记录不完整或不一致，已停止操作。", 500);
+	}
+	try {
+		requireDraftContent(input.content);
+	} catch {
+		throw new PrivateDraftError("私人草稿存储正文损坏，已拒绝覆盖或恢复。", 500);
+	}
+	return input as DraftRecord;
+}
+
 async function readRecord(
 	store: PrivateDraftKV,
 	slug: string,
@@ -204,27 +243,7 @@ async function readRecord(
 			500,
 		);
 	}
-	if (
-		!record ||
-		typeof record !== "object" ||
-		!("schema" in record) ||
-		record.schema !== 1 ||
-		!("slug" in record) ||
-		record.slug !== slug ||
-		!("version" in record) ||
-		typeof record.version !== "string" ||
-		!("content" in record) ||
-		typeof record.content !== "string" ||
-		!("updatedAt" in record) ||
-		typeof record.updatedAt !== "string"
-	) {
-		throw new PrivateDraftError("草稿存储数据不完整，已停止覆盖。", 500);
-	}
-	const stored = record as DraftRecord;
-	return {
-		...stored,
-		extension: stored.extension === "mdx" ? "mdx" : "md",
-	};
+	return requireStoredRecord(record, slug);
 }
 
 /** History is stored in the SAME namespace, NOT an independent disaster backup. */
@@ -288,24 +307,7 @@ export async function getPrivateDraftRevision(
 	} catch {
 		throw new PrivateDraftError("历史版本数据损坏；已停止恢复。", 500);
 	}
-	if (
-		!record ||
-		typeof record !== "object" ||
-		!("schema" in record) ||
-		record.schema !== 1 ||
-		!("slug" in record) ||
-		record.slug !== slug ||
-		!("version" in record) ||
-		record.version !== version ||
-		!("updatedAt" in record) ||
-		typeof record.updatedAt !== "string" ||
-		!("content" in record) ||
-		typeof record.content !== "string"
-	) {
-		throw new PrivateDraftError("历史版本校验失败；已停止恢复。", 500);
-	}
-	const stored = record as DraftRecord;
-	return { ...stored, extension: stored.extension === "mdx" ? "mdx" : "md" };
+	return requireStoredRecord(record, slug, version);
 }
 
 export async function restorePrivateDraftRevision(
