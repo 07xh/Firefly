@@ -7,11 +7,13 @@ permissions:
   contents: read
 
 concurrency:
-  group: firefly-cloudflare-worker
+  group: cloudflare-workers
   cancel-in-progress: false
 
 jobs:
   deploy:
+    # Disabled by default. The canonical deployment is deploy-cloudflare.yml.
+    if: ${{ vars.ENABLE_LEGACY_WORKER_DEPLOY == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

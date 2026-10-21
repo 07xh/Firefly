@@ -1,0 +1,30 @@
+name: Deployment policy audit
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/**"
+      - "scripts/check-deploy-workflows.mjs"
+      - "scripts/check-deploy-workflows.test.mjs"
+  push:
+    branches: [master]
+    paths:
+      - ".github/workflows/**"
+      - "scripts/check-deploy-workflows.mjs"
+      - "scripts/check-deploy-workflows.test.mjs"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e # v4.3.0
+        with:
+          node-version: "22"
+      - name: Test deployment-policy rule coverage
+        run: node --test scripts/check-deploy-workflows.test.mjs
+      - name: Reject competing or uncontrolled production deploy workflows
+        run: node scripts/check-deploy-workflows.mjs
