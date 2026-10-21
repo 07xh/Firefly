@@ -34,8 +34,8 @@ jobs:
         run: node --test scripts/check-admin-only-changes.test.mjs
       - name: Reject frontend file changes on admin-only pull requests
         run: node scripts/check-admin-only-changes.mjs
-      - name: Test Markdown/MDX preservation and visual previews
-        run: node --test scripts/admin-markdown-guard.test.mjs scripts/admin-visual-preview.test.mjs scripts/ai-provider-management.test.mjs
+      - name: Test Markdown/MDX preservation, previews and isolation guard
+        run: node --test scripts/admin-markdown-guard.test.mjs scripts/admin-visual-preview.test.mjs scripts/ai-provider-management.test.mjs scripts/verify-private-preview-isolation.test.mjs
 
       - name: Syntax-check browser editor modules
         run: node --check public/admin-markdown-guard.js && node --check public/admin-visual-preview.js && node --check public/admin-wysiwyg.js
