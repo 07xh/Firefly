@@ -15,6 +15,7 @@ const {
 	getPrivateDraft,
 	deletePrivateDraft,
 	getPrivateDraftRevision,
+	restorePrivateDraftRevision,
 	listPrivateDraftRevisions,
 	PrivateDraftError,
 } = await import("../src/lib/private-drafts.ts");
@@ -478,4 +479,49 @@ test("migration rejects repeated R2 versions across pages without modifying KV o
 	assert.equal(await destination.get("draft:v1:r2-overlap", "text"), null);
 	assert.deepEqual(await getPrivateDraft(source, "r2-overlap"), original);
 	assert.deepEqual(backup.objects, snapshot);
+});
+
+test("D1 delete and restore keeps special MDX, CRLF, and Unicode bytes unchanged", async () => {
+	const store = createD1PrivateDraftStore(mockD1());
+	const backup = mockR2();
+	const special = [
+		"---",
+		'title: "投影笔记 📐"',
+		"draft: true",
+		"---",
+		"",
+		"import { Steps } from '../components/Steps.astro'",
+		"",
+		"<Steps>",
+		"  <Badge label=\"保留\" />",
+		"</Steps>",
+		"",
+		"公式 $x^{2}+y^{2}=r^{2}$；原样保留。",
+		"",
+	].join("\r\n");
+	const first = await savePrivateDraft(store, {
+		slug: "mdx-recovery", content: special, extension: "mdx",
+	}, backup);
+	const second = await savePrivateDraft(store, {
+		slug: "mdx-recovery", content: special + "新增段落\r\n",
+		extension: "mdx", expectedVersion: first.version,
+	}, backup);
+	await deletePrivateDraft(store, "mdx-recovery", second.version, backup);
+	await assert.rejects(
+		() => getPrivateDraft(store, "mdx-recovery"),
+		(error) => error instanceof PrivateDraftError && error.status === 404,
+	);
+	const restored = await restorePrivateDraftRevision(
+		store, { slug: "mdx-recovery", revision: first.version }, backup,
+	);
+	assert.notEqual(restored.version, first.version);
+	const reopened = await getPrivateDraft(store, "mdx-recovery");
+	assert.equal(reopened.content, special);
+	assert.equal(reopened.extension, "mdx");
+	assert.equal((await getPrivateDraftRevision(store, "mdx-recovery", first.version)).content, special);
+	assert.equal(backup.objects.size, 3);
+	assert.equal(
+		JSON.parse(backup.objects.get(privateBackupKey("mdx-recovery", first.version))).content,
+		special,
+	);
 });
