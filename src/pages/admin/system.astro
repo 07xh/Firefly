@@ -157,6 +157,7 @@ export const prerender = false;
         status:"verified"|"attention"|"incomplete";
         checkedAt:string;
         versionsFound:number;
+        invalidR2Objects:number;
         versionsChecked:number;
         currentPresent:boolean;
         recoverableR2OnlyVersions:number;
@@ -169,6 +170,8 @@ export const prerender = false;
         r2_corrupt:"R2 备份损坏或无法读取",
         kv_history_corrupt:"当前存储的历史版本损坏",
         version_mismatch:"KV/D1 与 R2 的版本内容不一致",
+        invalid_r2_listing:"R2 存在无法识别的备份文件名",
+        listing_changed:"检查期间历史备份列表发生变化",
         current_changed:"检查期间当前草稿发生修改",
       };
       $("backupAuditForm").addEventListener("submit",async(event)=>{
@@ -196,6 +199,7 @@ export const prerender = false;
           $("backupAuditStatus").textContent=statusName+"。"+data.notice;
           addItem("backupAuditResults","已核对版本数",String(data.versionsChecked));
           addItem("backupAuditResults","发现版本总数",String(data.versionsFound));
+          addItem("backupAuditResults","无法识别的 R2 备份对象",String(data.invalidR2Objects));
           addItem("backupAuditResults","当前稿存在",Boolean(data.currentPresent));
           addItem("backupAuditResults","仅 R2 保留的恢复版本",String(data.recoverableR2OnlyVersions));
           for(const issue of data.issues||[]){
