@@ -49,10 +49,14 @@ export function deploymentPolicyViolations(files) {
 	if (failures.length) return failures;
 
 	const primary = files[PRODUCTION];
-	if (!eventEnabled(primary, "push") || !/branches:\s*\[\s*master\s*\]/.test(onSection(primary)))
-		failures.push("Canonical Cloudflare deployment must be triggered by master pushes.");
+	if (eventEnabled(primary, "push") || eventEnabled(primary, "schedule"))
+		failures.push("Canonical Cloudflare deployment must not run automatically on master or on a schedule.");
 	if (!eventEnabled(primary, "workflow_dispatch"))
-		failures.push("Scheduled publication needs the canonical manual-dispatch trigger.");
+		failures.push("Canonical Cloudflare deployment requires manual dispatch.");
+	if (!primary.includes("inputs.release_confirmation == 'DEPLOY_VERIFIED'") ||
+		!primary.includes("vars.FIREFLY_RELEASE_READY == 'true'")) {
+		failures.push("Cloudflare production deployment requires a separate manual approval and repository release gate.");
+	}
 	if (!/\bgroup:\s*cloudflare-workers\b/.test(primary) || !/cancel-in-progress:\s*false/.test(primary))
 		failures.push("Canonical Cloudflare workflow must serialize deployments without cancelling in-flight runs.");
 	if (!primary.includes("wrangler deploy"))
@@ -68,12 +72,12 @@ export function deploymentPolicyViolations(files) {
 
 	const pages = files[MANUAL_PAGES];
 	if (
-		!eventEnabled(pages, "push") ||
-		!/branches:\s*\[\s*master\s*\]/.test(onSection(pages)) ||
+		eventEnabled(pages, "push") ||
 		!eventEnabled(pages, "workflow_dispatch") ||
-		eventEnabled(pages, "schedule")
+		eventEnabled(pages, "schedule") ||
+		!pages.includes("vars.FIREFLY_RELEASE_READY == 'true'")
 	) {
-		failures.push("Canonical GitHub Pages workflow must preserve master and manual triggers.");
+		failures.push("Canonical GitHub Pages workflow must require the manual release gate with no master push trigger.");
 	}
 	if (!pages.includes("path: dist") || !pages.includes("rm -rf dist/admin"))
 		failures.push("GitHub Pages must build dist and exclude private admin pages.");
@@ -93,6 +97,10 @@ export function deploymentPolicyViolations(files) {
 		failures.push("Scheduled publishing must retain its scheduled trigger.");
 	if (!scheduled.includes("actions/workflows/deploy-cloudflare.yml/dispatches"))
 		failures.push("Scheduled publishing must target the canonical Cloudflare workflow.");
+	// Existing scheduled publishing may still dispatch the deployment workflow,
+	// but must be unable to satisfy its separate approval input by default.
+	if (!primary.includes("inputs.release_confirmation == 'DEPLOY_VERIFIED'"))
+		failures.push("Scheduled publishing cannot bypass the production release confirmation.");
 	return failures;
 }
 
@@ -109,7 +117,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
 			for (const item of violations) console.error("FAIL: " + item);
 			process.exitCode = 1;
 		} else {
-			console.log("PASS: canonical Cloudflare and built-artifact Pages publishers preserved; duplicate legacy deployments disabled.");
+			console.log("PASS: Cloudflare and Pages are manual release-gated; legacy deployments remain disabled.");
 		}
 	} catch (error) {
 		console.error("FAIL: unable to audit deployment workflows:", error instanceof Error ? error.message : String(error));
