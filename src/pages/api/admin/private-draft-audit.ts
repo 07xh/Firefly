@@ -47,7 +47,10 @@ export const GET: APIRoute = async ({ url }) => {
 			),
 		);
 	} catch (error) {
-		if (error instanceof PrivateDraftError || error instanceof PrivateBackupError) {
+		if (
+			error instanceof PrivateDraftError ||
+			error instanceof PrivateBackupError
+		) {
 			return json({ error: error.message }, error.status);
 		}
 		// Do not log raw stored content or the failure object.
