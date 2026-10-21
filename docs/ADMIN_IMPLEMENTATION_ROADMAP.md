@@ -24,6 +24,8 @@
 | KV/D1 草稿列表与历史分页完整性检查 | [PR #62](https://github.com/07xh/Firefly/pull/62) | 非法键、缺失或重复游标拒绝继续；真实 Cloudflare 联调未完成 |
 | 私人草稿存储记录与 MDX 扩展名完整性保护 | [PR #63](https://github.com/07xh/Firefly/pull/63) | Node 22/23、Astro、Cloudflare 无部署构建及代码质量通过；真实 KV/D1/R2 预览联调未完成 |
 | 后台安全集成、前台冻结加固及 R2 私人备份格式防护 | [PR #64](https://github.com/07xh/Firefly/pull/64) | Node 22/23 Astro 检查及构建、Cloudflare 无部署构建与 Biome 均通过；独立预览 Worker 验收尚未完成 |
+| 部署单通道整理与自动门禁 | [PR #65](https://github.com/07xh/Firefly/pull/65) | 部署策略、Node 22/23、Cloudflare 无部署构建及 Biome 检查通过；尚须确认 GitHub Pages 真实用途、生产路由与回滚，未合并 |
+| 预览 Worker 匿名只读验收工具 | [PR #66](https://github.com/07xh/Firefly/pull/66) | 模拟匿名 API、Node 22/23、Cloudflare 无部署构建及 Biome 已通过；真实预览 Worker 尚未配置/运行，未合并 |
 | 所有目标分支均运行 CI | [PR #55](https://github.com/07xh/Firefly/pull/55) | GitHub Actions 通过，尚未合并到 master |
 | 独立图床集成 | [PR #42](https://github.com/07xh/Firefly/pull/42) | 未完成正式联调，不直接合并 |
 | 正式主分支 master 与前台 UI | 不改动 | 保护优先级最高 |
@@ -104,10 +106,12 @@
 9. 新增历史版本与备份操作时，始终先确认源数据安全，再考虑迁移或删除。
 10. 任何 PR 与 master 对比都必须确认不存在前台组件、布局、样式、文章正文更改。
 
-## 当前下一动作
+## 当前下一动作（分批安全交付）
 
-- 完成第四批历史版本/恢复 API 的测试、失败保护以及后台入口。
-- 整理分支的依赖关系，先验证 PR #43/#44/#45，再进行存储联调。
-- 逐阶段推进前述六个目标；不把尚未完成的项目标记为完成。
+- 第一批：PR #65 发布工作流已经通过代码和无部署构建；先确认 GitHub Pages 是否仍有实际用户，检查 Worker 自定义域名、当前部署与回滚，再决定是否解除草稿状态。
+- 第二批：PR #66 匿名只读 API 单元测试已通过；在隔离预览 Worker（测试 KV/D1/R2，无真实草稿）实际运行后登记 302/401/no-store 结果。
+- 第三批：基于 PR #64 的私人草稿积累代码，用合成 MDX 做存储历史、R2 备份和 D1 并发冲突的实测；不得凭模拟测试宣称迁移完成。
+- 第四批：编辑器复杂 MDX 往返、图床独立分支整合、安卓平板测试及前台像素级核查。
+- 不直接合并任一高风险大 PR；保留 master、原文及存储回滚来源。
 
 > 注：本清单可不断更新，但本身并不触发夜间自动运行。后续实际执行以 GitHub 提交、CI 记录和真实环境验收为准。
