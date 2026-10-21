@@ -368,3 +368,55 @@ test("D1 outage after independent R2 backup leaves existing current MDX unchange
 	assert.equal(backup.objects.get(privateBackupKey("outage", first.version)), JSON.stringify(prior));
 	assert.equal(backup.objects.size, 2, "new failed-at-CAS copy may remain in R2 for manual recovery");
 });
+
+test("corrupted existing D1 column indexes are rejected on read without changing stored MDX", async () => {
+	const database = mockD1();
+	const store = createD1PrivateDraftStore(database);
+	const backup = mockR2();
+	const first = await savePrivateDraft(store, {
+		slug: "damaged-index", content: VALID, extension: "mdx",
+	}, backup);
+	const key = "draft:v1:damaged-index";
+	const rawBefore = (await database.prepare(
+		"SELECT record FROM private_drafts WHERE slug = ?",
+	).bind("damaged-index").first()).record;
+	await database.prepare(
+		"UPDATE private_drafts SET extension = ? WHERE slug = ?",
+	).bind("md", "damaged-index").run();
+	await assert.rejects(
+		() => getPrivateDraft(store, "damaged-index"),
+		(error) => error instanceof PrivateDraftError && error.status === 500,
+	);
+	assert.equal(
+		(await database.prepare("SELECT record FROM private_drafts WHERE slug = ?")
+			.bind("damaged-index").first()).record,
+		rawBefore,
+		"failed D1 read must not repair or alter original content",
+	);
+	await assert.rejects(
+		() => savePrivateDraft(store, {
+			slug: "damaged-index", content: VALID + "\nedit",
+			extension: "md", expectedVersion: first.version,
+		}, backup),
+		(error) => error instanceof PrivateDraftError && error.status === 500,
+	);
+	await database.prepare(
+		"UPDATE private_drafts SET extension = ?, updated_at = ? WHERE slug = ?",
+	).bind("mdx", "wrong-date", "damaged-index").run();
+	await assert.rejects(
+		() => getPrivateDraft(store, "damaged-index"),
+		(error) => error instanceof PrivateDraftError && error.status === 500,
+	);
+	await database.prepare(
+		"UPDATE private_drafts SET updated_at = ? WHERE slug = ?",
+	).bind(JSON.parse(rawBefore).updatedAt, "damaged-index").run();
+	assert.equal((await getPrivateDraft(store, "damaged-index")).content, VALID);
+	await database.prepare(
+		"UPDATE private_draft_revisions SET extension = ? WHERE slug = ? AND version = ?",
+	).bind("md", "damaged-index", first.version).run();
+	await assert.rejects(
+		() => getPrivateDraftRevision(store, "damaged-index", first.version),
+		(error) => error instanceof PrivateDraftError && error.status === 500,
+	);
+	assert.equal(await store.get(key, "text"), rawBefore);
+});
