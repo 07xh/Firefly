@@ -475,6 +475,15 @@ export const prerender = false;
       <button type="button" class="admin-shortcut" data-admin-go="site">☷ 站点功能 <span aria-hidden="true">↗</span></button>
     </div><p id="dashboardLoadStatus" class="admin-dashboard-help" role="status" aria-live="polite">正在读取文章信息…</p></section>
   </div>
+  <section class="admin-dashboard-card admin-recent-card" aria-labelledby="dashboardRecentTitle">
+    <div class="admin-recent-heading">
+      <div><h3 id="dashboardRecentTitle">最近文章</h3><p>按文章发布日期展示，可直接打开编辑。</p></div>
+      <button type="button" class="admin-recent-more" data-admin-go="articles">查看全部 ↗</button>
+    </div>
+    <div id="dashboardRecentList" class="admin-recent-list" role="list" aria-live="polite">
+      <p class="admin-recent-empty">正在读取文章…</p>
+    </div>
+  </section>
 </section>
 <div id="articlesTabPanel" class="articles-grid" role="tabpanel" aria-labelledby="tabArticles" hidden>
 <section
@@ -1025,11 +1034,12 @@ function render(){
    }
   };
 
+  row.dataset.adminArticlePath=a.path;
   row.append(item,del);
   list.append(row);
  }
 }
-async function refresh(){try{say("正在读取 GitHub…");articles=await api("GET");render();updateDashboard();say("已读取 "+articles.length+" 篇文章")}catch(e){say(e.message,true);$("list").textContent="读取失败，请确认服务端令牌和仓库权限已配置。";$("dashboardLoadStatus").textContent="文章统计暂不可用，请检查文章管理接口。"}}
+async function refresh(){try{say("正在读取 GitHub…");articles=await api("GET");render();updateDashboard();say("已读取 "+articles.length+" 篇文章")}catch(e){say(e.message,true);$("list").textContent="读取失败，请确认服务端令牌和仓库权限已配置。";$("dashboardLoadStatus").textContent="文章统计暂不可用，请检查文章管理接口。";$("dashboardRecentList").replaceChildren(Object.assign(document.createElement("p"),{className:"admin-recent-empty",textContent:"文章列表暂不可用，请检查连接后重试。"}));for(const id of ["dashboardArticleCount","dashboardDraftCount","dashboardPublishedCount","dashboardScheduledCount"])$(id).textContent="—"}}
 function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
 function showVisualTab(){
  $("body").hidden=true;$("wysiwygPane").hidden=false;$("markdownPreview").hidden=true;
@@ -1313,8 +1323,62 @@ function updateDashboard(){
  $("dashboardDraftCount").textContent=String(counts.draft);
  $("dashboardPublishedCount").textContent=String(counts.published);
  $("dashboardScheduledCount").textContent=String(counts.scheduled);
- status.textContent="已从文章管理接口读取数据。部署状态请以 GitHub Actions 记录为准。";
+ status.textContent="已从文章管理接口读取数据。部署状态请以 GitHub Actions 记录为准.";
+ const recent=$("dashboardRecentList");
+ recent.replaceChildren();
+ if(articles.length===0){
+  const empty=document.createElement("p");
+  empty.className="admin-recent-empty";
+  empty.textContent="还没有文章，可通过「新建文章」开始创作。";
+  recent.append(empty);
+  return;
+ }
+ for(const article of articles.slice(0,5)){
+  const line=document.createElement("div");
+  line.className="admin-recent-row";
+  line.setAttribute("role","listitem");
+  const button=document.createElement("button");
+  button.type="button";
+  button.className="admin-recent-button";
+  button.dataset.adminArticlePath=article.path;
+  const title=document.createElement("strong");
+  title.textContent=article.title||"未命名文章";
+  const note=document.createElement("span");
+  const state=({draft:"草稿",published:"已发布",scheduled:"定时发布"})[articleStatus(article)];
+  note.textContent=(article.published||"无发布日期")+" · "+state;
+  const arrow=document.createElement("span");
+  arrow.className="admin-recent-arrow";
+  arrow.setAttribute("aria-hidden","true");
+  arrow.textContent="↗";
+  const detail=document.createElement("span");
+  detail.className="admin-recent-detail";
+  detail.append(title,note);
+  button.append(detail,arrow);
+  line.append(button);
+  recent.append(line);
+ }
 }
+function openRecentArticle(path){
+ $("search").value="";
+ $("statusFilter").value="all";
+ for(const id of ["categoryFilter","tagFilter"]){
+  const filter=$(id);
+  if(filter)filter.value="";
+ }
+ render();
+ const row=Array.from($("list").children).find(el=>el.dataset.adminArticlePath===path);
+ const button=row?.querySelector("button:not([aria-label^='删除文章'])");
+ if(button)button.click();
+ else{
+  setAdminTab("articles");
+  say("未在文章列表中找到这篇文章，请刷新后重试。",true);
+ }
+}
+$("dashboardRecentList").addEventListener("click",event=>{
+ const button=event.target instanceof Element?event.target.closest("button[data-admin-article-path]"):null;
+ if(!button)return;
+ openRecentArticle(button.dataset.adminArticlePath);
+});
 const adminThemeSelect=$("adminThemeSelect");
 const adminAccentColor=$("adminAccentColor");
 const adminThemeStorageKey="firefly:admin:color:v1";
