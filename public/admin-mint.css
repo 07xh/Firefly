@@ -300,3 +300,24 @@ body.admin-workspace[data-admin-theme="custom"] { --admin-selected: color-mix(in
 @media (prefers-reduced-motion: reduce) {
   .admin-workspace .admin-navigation, .admin-workspace .admin-metric { transition: none; }
 }
+
+/* Recent articles: reusable, keyboard-accessible links to the existing editor. */
+.admin-workspace .admin-recent-card { padding: clamp(17px, 2.3vw, 25px); }
+.admin-workspace .admin-recent-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 14px; }
+.admin-workspace .admin-recent-heading h3 { margin: 0 0 5px; font-size: 18px; font-weight: 760; color: var(--admin-ink); }
+.admin-workspace .admin-recent-heading p { margin: 0; color: var(--admin-secondary-ink); font-size: 12px; }
+.admin-workspace .admin-recent-more { min-height: 39px; padding: 8px 12px; white-space: nowrap; border: 1px solid var(--admin-border-soft); border-radius: 11px; background: var(--admin-soft); color: var(--admin-ink); font: inherit; font-size: 12px; cursor: pointer; }
+.admin-workspace .admin-recent-more:hover { background: var(--admin-selected); }
+.admin-workspace .admin-recent-list { display: grid; gap: 8px; }
+.admin-workspace .admin-recent-row { min-width: 0; }
+.admin-workspace .admin-recent-button { display: flex; gap: 14px; align-items: center; justify-content: space-between; width: 100%; min-height: 60px; padding: 12px 15px; text-align: left; background: var(--admin-soft); border: 1px solid transparent; border-radius: 13px; color: var(--admin-ink); font: inherit; cursor: pointer; }
+.admin-workspace .admin-recent-button:hover { background: var(--admin-selected); }
+.admin-workspace .admin-recent-detail { display: grid; gap: 5px; min-width: 0; }
+.admin-workspace .admin-recent-detail strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
+.admin-workspace .admin-recent-detail > span { font-size: 11px; color: var(--admin-secondary-ink); }
+.admin-workspace .admin-recent-arrow { flex: 0 0 auto; color: var(--admin-current-accent); }
+.admin-workspace .admin-recent-empty { margin: 0; padding: 18px; background: var(--admin-soft); border-radius: 13px; color: var(--admin-secondary-ink); font-size: 12px; }
+@media (max-width: 640px) {
+  .admin-workspace .admin-recent-heading { align-items: flex-start; }
+  .admin-workspace .admin-recent-heading p { line-height: 1.5; }
+}

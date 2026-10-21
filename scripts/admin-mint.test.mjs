@@ -40,3 +40,15 @@ test("mint design is admin only and offers persisted color choices",()=>{
  const selectors=css.split("\n").filter(line=>line.trim().endsWith("{")&&!line.trim().startsWith("@")&&!line.trim().startsWith("/*"));
  for(const selector of selectors)assert.ok(selector.includes(".admin-workspace")||selector.includes("body.admin-workspace"),selector);
 });
+
+test("recent article preview safely delegates to existing editor and handles missing data", () => {
+ assert.match(html, /id="dashboardRecentList"/);
+ assert.match(html, /function openRecentArticle\(path\)/);
+ assert.match(html, /row\.dataset\.adminArticlePath=a\.path/);
+ assert.match(html, /button\.click\(\)/);
+ assert.match(html, /isArticleDirty\(\)/);
+ assert.match(html, /recent\.replaceChildren\(\)/);
+ assert.match(html, /title\.textContent=article\.title/);
+ assert.match(html, /articles\.slice\(0,5\)/);
+ assert.match(css, /\.admin-workspace \.admin-recent-button/);
+});
