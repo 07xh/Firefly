@@ -420,3 +420,60 @@ test("corrupted existing D1 column indexes are rejected on read without changing
 	);
 	assert.equal(await store.get(key, "text"), rawBefore);
 });
+
+test("migration rejects overlapping KV history pages without creating D1 current record", async () => {
+	const legacy = createD1PrivateDraftStore(mockD1());
+	const destination = createD1PrivateDraftStore(mockD1());
+	const backup = mockR2();
+	const first = await savePrivateDraft(legacy, {
+		slug: "kv-overlap", content: VALID, extension: "mdx",
+	}, backup);
+	const source = {
+		...legacy,
+		async list(options) {
+			const result = await legacy.list(options);
+			if (options.prefix !== "draft-history:v1:kv-overlap:") return result;
+			// Different valid cursors can still deliver the SAME history key.
+			return {
+				keys: result.keys,
+				list_complete: options.cursor === "next",
+				cursor: options.cursor ? undefined : "next",
+			};
+		},
+	};
+	await assert.rejects(
+		() => copyPrivateDraftWithHistory(
+			source, destination, backup, "kv-overlap", first.version,
+		),
+		(error) => error instanceof PrivateDraftError && error.status === 503,
+	);
+	assert.equal(await destination.get("draft:v1:kv-overlap", "text"), null);
+	assert.equal((await getPrivateDraft(legacy, "kv-overlap")).version, first.version);
+	assert.equal((await getPrivateDraft(legacy, "kv-overlap")).content, VALID);
+});
+
+test("migration rejects repeated R2 versions across pages without modifying KV or D1", async () => {
+	const source = createD1PrivateDraftStore(mockD1());
+	const destination = createD1PrivateDraftStore(mockD1());
+	const backup = mockR2();
+	const first = await savePrivateDraft(source, {
+		slug: "r2-overlap", content: VALID, extension: "mdx",
+	}, backup);
+	const original = await getPrivateDraft(source, "r2-overlap");
+	const snapshot = new Map(backup.objects);
+	const key = privateBackupKey("r2-overlap", first.version);
+	backup.list = async ({ prefix, cursor }) => ({
+		objects: key.startsWith(prefix) ? [{ key }] : [],
+		truncated: !cursor,
+		cursor: cursor ? undefined : "next",
+	});
+	await assert.rejects(
+		() => copyPrivateDraftWithHistory(
+			source, destination, backup, "r2-overlap", first.version,
+		),
+		(error) => error instanceof PrivateDraftError && error.status === 503,
+	);
+	assert.equal(await destination.get("draft:v1:r2-overlap", "text"), null);
+	assert.deepEqual(await getPrivateDraft(source, "r2-overlap"), original);
+	assert.deepEqual(backup.objects, snapshot);
+});
