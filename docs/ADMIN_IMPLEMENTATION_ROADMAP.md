@@ -19,6 +19,7 @@
 | 文章摘要列表与按需 MDX 原文加载 | [PR #57](https://github.com/07xh/Firefly/pull/57) | CI 通过；平板编辑器交互待验收 |
 | 特殊 MDX/HTML 保留块完整性防护 | [PR #58](https://github.com/07xh/Firefly/pull/58) | 代码、单元测试与构建通过；真实浏览器编辑待验收 |
 | GitHub 公开文章读取的服务端并发保护 | [PR #59](https://github.com/07xh/Firefly/pull/59) | 代码及回归测试提交；真实 Github 速率与平板操作待验收 |
+| 私人草稿与独立 R2 的只读内容一致性核验 | [PR #60](https://github.com/07xh/Firefly/pull/60) | 功能、状态页、异常测试已提交；真实 KV/D1/R2 预览联调待完成 |
 | 所有目标分支均运行 CI | [PR #55](https://github.com/07xh/Firefly/pull/55) | GitHub Actions 通过，尚未合并到 master |
 | 独立图床集成 | [PR #42](https://github.com/07xh/Firefly/pull/42) | 未完成正式联调，不直接合并 |
 | 正式主分支 master 与前台 UI | 不改动 | 保护优先级最高 |
