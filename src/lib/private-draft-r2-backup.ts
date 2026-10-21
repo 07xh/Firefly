@@ -63,6 +63,15 @@ export function privateBackupKey(slug: string, version: string): string {
 	return prefix(slug) + requireVersion(version) + ".json";
 }
 
+function hasPrivateDraftFrontmatter(content: string): boolean {
+	const frontmatter = content.match(
+		/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/,
+	);
+	return Boolean(
+		frontmatter && /^draft:\s*true\s*(?:#.*)?$/m.test(frontmatter[1]),
+	);
+}
+
 export function validatePrivateBackupRecord(
 	input: unknown,
 	slug: string,
@@ -81,10 +90,11 @@ export function validatePrivateBackupRecord(
 		(input.extension !== "md" && input.extension !== "mdx") ||
 		!("updatedAt" in input) ||
 		typeof input.updatedAt !== "string" ||
+		!input.updatedAt.trim() ||
 		!("content" in input) ||
 		typeof input.content !== "string" ||
 		encoder.encode(input.content).byteLength > 500_000 ||
-		!/^---\r?\n[\s\S]*?\r?\n---/.test(input.content)
+		!hasPrivateDraftFrontmatter(input.content)
 	) {
 		throw new PrivateBackupError("备份内容校验失败，已阻止恢复。", 500);
 	}
@@ -169,7 +179,9 @@ export async function listPrivateR2Backups(
 		result.truncated &&
 		(typeof result.cursor !== "string" ||
 			!result.cursor ||
-			result.cursor === cursor)
+			result.cursor === cursor ||
+			result.cursor.length > 1024 ||
+			!/^[A-Za-z0-9_+\\-/=]+$/.test(result.cursor))
 	) {
 		throw new PrivateBackupError(
 			"R2 备份分页缺少有效游标，已拒绝遗漏历史。",
@@ -177,6 +189,7 @@ export async function listPrivateR2Backups(
 		);
 	}
 	const items: Array<{ version: string; uploadedAt: string }> = [];
+	const seenVersions = new Set<string>();
 	let invalidObjectCount = 0;
 	for (const item of result.objects) {
 		const key = item?.key;
@@ -191,8 +204,14 @@ export async function listPrivateR2Backups(
 			invalidObjectCount++;
 			continue;
 		}
+		const version = tail.slice(0, -5);
+		if (seenVersions.has(version)) {
+			invalidObjectCount++;
+			continue;
+		}
+		seenVersions.add(version);
 		items.push({
-			version: tail.slice(0, -5),
+			version,
 			uploadedAt: item.uploaded?.toISOString() ?? "",
 		});
 	}
