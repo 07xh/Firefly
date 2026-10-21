@@ -159,15 +159,39 @@ export async function listPrivateR2Backups(
 		limit: 100,
 		...(cursor ? { cursor } : {}),
 	});
+	if (!Array.isArray(result.objects) || typeof result.truncated !== "boolean") {
+		throw new PrivateBackupError("R2 备份列表格式异常，无法确认是否完整。", 503);
+	}
+	if (
+		result.truncated &&
+		(typeof result.cursor !== "string" || !result.cursor || result.cursor === cursor)
+	) {
+		throw new PrivateBackupError("R2 备份分页缺少有效游标，已拒绝遗漏历史。", 503);
+	}
+	const items: Array<{ version: string; uploadedAt: string }> = [];
+	let invalidObjectCount = 0;
+	for (const item of result.objects) {
+		const key = item?.key;
+		if (typeof key !== "string" || !key.startsWith(folder)) {
+			invalidObjectCount++;
+			continue;
+		}
+		const tail = key.slice(folder.length);
+		if (!tail.endsWith(".json") || !VERSION.test(tail.slice(0, -5))) {
+			// Never silently omit an unexpected key while claiming all
+			// historical backup versions were checked.
+			invalidObjectCount++;
+			continue;
+		}
+		items.push({
+			version: tail.slice(0, -5),
+			uploadedAt: item.uploaded?.toISOString() ?? "",
+		});
+	}
 	return {
 		slug,
-		items: result.objects
-			.filter((item) => item.key.startsWith(folder))
-			.map((item) => ({
-				version: item.key.slice(folder.length).replace(/\.json$/, ""),
-				uploadedAt: item.uploaded?.toISOString() ?? "",
-			}))
-			.filter((item) => VERSION.test(item.version)),
-		cursor: result.truncated ? result.cursor || null : null,
+		items,
+		invalidObjectCount,
+		cursor: result.truncated ? result.cursor : null,
 	};
 }
