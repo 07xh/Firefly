@@ -149,6 +149,63 @@ test("R2 backup can restore a deleted record with the same private draft APIs",a
 	assert.equal((await getPrivateDraft(kv,"recover")).content,VALID);
 });
 
+test("R2 refuses backups whose private marker, type, or timestamp is corrupt", async () => {
+	const r2 = mockR2();
+	const original = {
+		schema: 1,
+		slug: "secure",
+		version: "00000000-0000-4000-8000-000000000004",
+		extension: "mdx",
+		updatedAt: "2026-10-21T00:00:00Z",
+		content: VALID,
+	};
+	const cases = [
+		{ ...original, content: VALID.replace("draft: true", "draft: false") },
+		{ ...original, content: VALID.replace("draft: true", "published: true") },
+		{ ...original, content: "---\\ntitle: Public\\n---\\nno private flag" },
+		{ ...original, updatedAt: "" },
+		{ ...original, extension: "html" },
+	];
+	for (const record of cases) {
+		await assert.rejects(
+			() => ensurePrivateR2Backup(r2, record),
+			error => error instanceof PrivateBackupError && error.status === 500,
+		);
+		assert.equal(r2.objects.size, 0, "invalid backup must not reach R2");
+		const key = privateBackupKey(original.slug, original.version);
+		r2.objects.set(key, JSON.stringify(record));
+		await assert.rejects(
+			() => getPrivateR2Backup(r2, original.slug, original.version),
+			error => error instanceof PrivateBackupError && error.status === 500,
+		);
+		r2.objects.delete(key);
+	}
+});
+
+test("R2 listing flags repeated versions and rejects malformed continuation cursors", async () => {
+	const r2 = mockR2();
+	const version = "00000000-0000-4000-8000-000000000005";
+	const key = privateBackupKey("duplicates", version);
+	r2.list = async () => ({
+		objects: [{ key }, { key }],
+		truncated: false,
+	});
+	const listed = await listPrivateR2Backups(r2, "duplicates");
+	assert.equal(listed.items.length, 1);
+	assert.equal(listed.invalidObjectCount, 1);
+	for (const cursor of ["", "bad cursor", "x".repeat(1025)]) {
+		r2.list = async () => ({
+			objects: [{ key }],
+			truncated: true,
+			cursor,
+		});
+		await assert.rejects(
+			() => listPrivateR2Backups(r2, "duplicates"),
+			error => error instanceof PrivateBackupError && error.status === 503,
+		);
+	}
+});
+
 test("R2 backups and current draft remain inaccessible without backend authorization",()=>{
 	const main=readFileSync(new URL("../src/pages/api/admin/private-drafts.ts",import.meta.url),"utf8");
 	const recovery=readFileSync(new URL("../src/pages/api/admin/private-draft-backups.ts",import.meta.url),"utf8");
