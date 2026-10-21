@@ -101,10 +101,12 @@ export async function auditPrivateDraftBackups(
 			status: "incomplete" as const,
 			versionsChecked: 0,
 			recoverableR2OnlyVersions: 0,
-			issues: remote.invalidObjectCount > 0
-				? ([{ version: "", code: "invalid_r2_listing" }] as AuditIssue[])
-				: ([] as AuditIssue[]),
-			notice: "R2 文件名异常、历史版本超过上限或存在后续分页；无法认定备份完整。",
+			issues:
+				remote.invalidObjectCount > 0
+					? ([{ version: "", code: "invalid_r2_listing" }] as AuditIssue[])
+					: ([] as AuditIssue[]),
+			notice:
+				"R2 文件名异常、历史版本超过上限或存在后续分页；无法认定备份完整。",
 		};
 	}
 	const issues: AuditIssue[] = [];
@@ -156,9 +158,13 @@ export async function auditPrivateDraftBackups(
 		listPrivateR2Backups(bucket, slug),
 	]);
 	const stableHistory = (items: typeof history.items) =>
-		JSON.stringify([...items].sort((a, b) => a.version.localeCompare(b.version)));
+		JSON.stringify(
+			[...items].sort((a, b) => a.version.localeCompare(b.version)),
+		);
 	const stableR2 = (items: typeof remote.items) =>
-		JSON.stringify([...items].sort((a, b) => a.version.localeCompare(b.version)));
+		JSON.stringify(
+			[...items].sort((a, b) => a.version.localeCompare(b.version)),
+		);
 	if (
 		historyAfter.cursor !== history.cursor ||
 		remoteAfter.cursor !== remote.cursor ||
