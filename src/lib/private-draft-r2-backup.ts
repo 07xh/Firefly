@@ -6,7 +6,7 @@
  * Cloudflare KV and it is NOT an off-account backup.
  */
 export interface PrivateDraftBackupBucket {
-	get(key: string): Promise<{ text(): Promise<string> } | null>;
+	get(key: string): Promise<{ text(): Promise<string>; size?: number } | null>;
 	put(
 		key: string,
 		value: string,
@@ -33,6 +33,8 @@ const SLUG = /^[\p{L}\p{N}][\p{L}\p{N}_-]{0,79}$/u;
 const VERSION =
 	/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const encoder = new TextEncoder();
+const MAX_BACKUP_OBJECT_BYTES = 1_200_000;
+const ISO_INSTANT = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 
 export class PrivateBackupError extends Error {
 	constructor(
@@ -77,14 +79,20 @@ export function validatePrivateBackupRecord(
 		input.slug !== slug ||
 		!("version" in input) ||
 		input.version !== version ||
+		!VERSION.test(version) ||
 		!("extension" in input) ||
 		(input.extension !== "md" && input.extension !== "mdx") ||
 		!("updatedAt" in input) ||
 		typeof input.updatedAt !== "string" ||
+		!ISO_INSTANT.test(input.updatedAt) ||
+		!Number.isFinite(Date.parse(input.updatedAt)) ||
 		!("content" in input) ||
 		typeof input.content !== "string" ||
 		encoder.encode(input.content).byteLength > 500_000 ||
-		!/^---\r?\n[\s\S]*?\r?\n---/.test(input.content)
+		!/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/.test(input.content) ||
+		!/^draft:\s*true\s*(?:#.*)?$/m.test(
+			input.content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/)?.[1] ?? "",
+		)
 	) {
 		throw new PrivateBackupError("备份内容校验失败，已阻止恢复。", 500);
 	}
@@ -99,10 +107,19 @@ export async function getPrivateR2Backup(
 	const key = privateBackupKey(slug, version);
 	const saved = await bucket.get(key);
 	if (!saved) throw new PrivateBackupError("此 R2 备份版本不存在。", 404);
+	if (saved.size !== undefined &&
+		(!Number.isSafeInteger(saved.size) || saved.size > MAX_BACKUP_OBJECT_BYTES)) {
+		throw new PrivateBackupError("R2 备份对象过大或文件大小异常，已阻止恢复。", 500);
+	}
 	let content: unknown;
 	try {
-		content = JSON.parse(await saved.text());
-	} catch {
+		const raw = await saved.text();
+		if (encoder.encode(raw).byteLength > MAX_BACKUP_OBJECT_BYTES) {
+			throw new PrivateBackupError("R2 备份对象过大，已阻止恢复。", 500);
+		}
+		content = JSON.parse(raw);
+	} catch (error) {
+		if (error instanceof PrivateBackupError) throw error;
 		throw new PrivateBackupError("R2 备份文件损坏，已停止恢复。", 500);
 	}
 	return validatePrivateBackupRecord(content, slug, version);
