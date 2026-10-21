@@ -23,11 +23,16 @@ import {
  */
 const MAX_REVISIONS = 40;
 
-function assertPrivateSnapshot(record: PrivateDraftBackupRecord, slug: string): void {
+function assertPrivateSnapshot(
+	record: PrivateDraftBackupRecord,
+	slug: string,
+): void {
 	if (record.slug !== slug || !/^[0-9a-f-]{36}$/i.test(record.version)) {
 		throw new PrivateDraftError("历史草稿身份校验失败，已中止迁移。", 409);
 	}
-	const frontmatter = record.content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+	const frontmatter = record.content.match(
+		/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/,
+	);
 	if (!frontmatter || !/^draft:\s*true\s*(?:#.*)?$/m.test(frontmatter[1])) {
 		throw new PrivateDraftError("历史版本不符合私人草稿格式，拒绝复制。", 409);
 	}
@@ -71,7 +76,10 @@ async function collectVersions(
 		const response = await listPrivateDraftRevisions(source, slug, kvCursor);
 		for (const item of response.items) {
 			if (records.size >= MAX_REVISIONS && !records.has(item.version)) {
-				throw new PrivateDraftError("单篇文章历史过多，请分批迁移，禁止跳过旧版本。", 413);
+				throw new PrivateDraftError(
+					"单篇文章历史过多，请分批迁移，禁止跳过旧版本。",
+					413,
+				);
 			}
 			const record = await getPrivateDraftRevision(source, slug, item.version);
 			assertPrivateSnapshot(record, slug);
@@ -100,7 +108,10 @@ async function collectVersions(
 			assertPrivateSnapshot(record, slug);
 			const old = records.get(item.version);
 			if (old && !matches(old, record)) {
-				throw new PrivateDraftError("KV 与 R2 同名版本正文冲突，已停止迁移。", 409);
+				throw new PrivateDraftError(
+					"KV 与 R2 同名版本正文冲突，已停止迁移。",
+					409,
+				);
 			}
 			records.set(item.version, record);
 		}
@@ -154,7 +165,8 @@ export async function copyPrivateDraftWithHistory(
 			},
 		});
 		const actual = await destination.get(key, "text");
-		if (!actual) throw new PrivateDraftError("D1 历史记录回读失败，已停止迁移。", 503);
+		if (!actual)
+			throw new PrivateDraftError("D1 历史记录回读失败，已停止迁移。", 503);
 		const parsed: PrivateDraftBackupRecord = JSON.parse(actual);
 		if (!matches(record, parsed)) {
 			throw new PrivateDraftError("D1 历史版本核对失败，已停止迁移。", 409);
@@ -163,20 +175,30 @@ export async function copyPrivateDraftWithHistory(
 	// One last read makes unexpected writes to legacy KV fail closed.
 	const latest = await getPrivateDraft(source, slug);
 	if (!matches(current, latest)) {
-		throw new PrivateDraftError("迁移期间原 KV 草稿发生变化，已拒绝切换。", 409);
+		throw new PrivateDraftError(
+			"迁移期间原 KV 草稿发生变化，已拒绝切换。",
+			409,
+		);
 	}
-	const copied = await savePrivateDraft(destination, {
-		slug,
-		content: current.content,
-		extension: current.extension,
-	}, backup);
+	const copied = await savePrivateDraft(
+		destination,
+		{
+			slug,
+			content: current.content,
+			extension: current.extension,
+		},
+		backup,
+	);
 	const restored = await getPrivateDraft(destination, slug);
 	if (
 		restored.content !== current.content ||
 		restored.extension !== current.extension ||
 		restored.version !== copied.version
 	) {
-		throw new PrivateDraftError("D1 当前草稿迁移校验失败，旧 KV 原稿保持不动。", 503);
+		throw new PrivateDraftError(
+			"D1 当前草稿迁移校验失败，旧 KV 原稿保持不动。",
+			503,
+		);
 	}
 	return {
 		ok: true,
