@@ -489,3 +489,49 @@ export function restoreProtectedMarkdown(markdown, records) {
   }
   return output;
 }
+
+/**
+ * Strict variant for synchronizing a visual editor.
+ *
+ * Required markers originate from the last successfully parsed source.
+ * A node being accidentally dropped, duplicated, or converted to plain text
+ * must never silently remove the corresponding original MDX/HTML payload.
+ * Users can deliberately delete such blocks in Markdown source mode.
+ */
+export function restoreProtectedMarkdownStrict(markdown, records, requiredMarkers = []) {
+  if (typeof markdown !== "string" || !Array.isArray(records) || !Array.isArray(requiredMarkers)) {
+    throw new Error("扩展语法还原输入异常，原文已保留。");
+  }
+  const byMarker = new Map();
+  for (const record of records) {
+    if (!record || typeof record.marker !== "string" || typeof record.raw !== "string" ||
+      !/^X*(?:FIREFLYRAWBLOCK[0-9]+END)X*$/.test(record.marker) ||
+      byMarker.has(record.marker)) {
+      throw new Error("特殊语法保留标记重复或格式异常，已阻止覆盖原文。");
+    }
+    byMarker.set(record.marker, record.raw);
+  }
+  const required = new Set(requiredMarkers);
+  if (required.size !== requiredMarkers.length) {
+    throw new Error("特殊语法原始标记重复，已阻止覆盖原文。");
+  }
+  for (const marker of required) {
+    if (typeof marker !== "string" || !byMarker.has(marker)) {
+      throw new Error("部分 MDX 保留块在编辑器中消失，原文未修改。");
+    }
+  }
+  let restored = markdown;
+  for (const [marker, raw] of byMarker) {
+    const occurrences = restored.split(marker).length - 1;
+    if (occurrences !== 1) {
+      throw new Error("MDX 保留标记丢失或重复，已阻止保存：" + marker);
+    }
+    // Preserve literal replacement tokens (notably LaTeX delimiters) in MDX.
+    restored = restored.replace(marker, () => raw);
+  }
+  // Unknown generated placeholders should never reach the Markdown source.
+  if (/X*FIREFLYRAWBLOCK[0-9]+ENDX*/.test(restored)) {
+    throw new Error("存在尚未恢复的特殊语法标记，原文未被覆盖。");
+  }
+  return restored;
+}
