@@ -120,7 +120,7 @@ function validateListPage(
 			!next ||
 			next === previousCursor ||
 			next.length > 1024 ||
-			!/^[A-Za-z0-9_+\\-/=]+$/.test(next))
+			!/^[A-Za-z0-9_+\-/=]+$/.test(next))
 	) {
 		throw new PrivateDraftError("草稿历史分页缺少有效游标，已拒绝遗漏记录。", 503);
 	}
