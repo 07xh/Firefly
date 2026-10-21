@@ -431,8 +431,10 @@ test("migration rejects overlapping KV history pages without creating D1 current
 	const source = {
 		...legacy,
 		async list(options) {
-			const result = await legacy.list(options);
-			if (options.prefix !== "draft-history:v1:kv-overlap:") return result;
+			if (options.prefix !== "draft-history:v1:kv-overlap:") {
+				return legacy.list(options);
+			}
+			const result = await legacy.list({ ...options, cursor: undefined });
 			// Different valid cursors can still deliver the SAME history key.
 			return {
 				keys: result.keys,
