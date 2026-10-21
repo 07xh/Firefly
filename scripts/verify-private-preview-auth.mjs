@@ -1,3 +1,6 @@
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 /**
  * Read-only, anonymous preview Worker smoke checks.
  * No login, cookies, secrets, private article content, or write requests.
@@ -96,7 +99,7 @@ export async function verifyAnonymousPreview(previewUrl, fetcher = fetch) {
 	return { ok: true, count: checks.length, checks };
 }
 
-if (process.argv[1] && import.meta.url === new URL(process.argv[1], "file://").href) {
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
 	const previewUrl = process.env.FIREFLY_PREVIEW_URL;
 	try {
 		const report = await verifyAnonymousPreview(previewUrl);
