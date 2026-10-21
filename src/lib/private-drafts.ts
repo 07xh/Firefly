@@ -91,6 +91,63 @@ function validateCursor(cursor?: string): void {
 	}
 }
 
+/**
+ * KV and D1 pagination must never masquerade as a complete history.
+ * Validate the page envelope and every key BEFORE presenting or migrating
+ * results. Missing, stale or malformed cursors fail closed.
+ */
+function validateListPage(
+	result: {
+		keys: Array<{ name: string; metadata?: DraftMetadata }>;
+		list_complete: boolean;
+		cursor?: string;
+	},
+	prefix: string,
+	previousCursor: string | undefined,
+	revisions: boolean,
+): string | null {
+	if (
+		!result ||
+		!Array.isArray(result.keys) ||
+		typeof result.list_complete !== "boolean"
+	) {
+		throw new PrivateDraftError("草稿列表响应格式异常，无法确认版本是否完整。", 503);
+	}
+	const next = result.list_complete ? null : result.cursor;
+	if (
+		!result.list_complete &&
+		(typeof next !== "string" ||
+			!next ||
+			next === previousCursor ||
+			next.length > 1024 ||
+			!/^[A-Za-z0-9_+\\-/=]+$/.test(next))
+	) {
+		throw new PrivateDraftError("草稿历史分页缺少有效游标，已拒绝遗漏记录。", 503);
+	}
+	const seen = new Set<string>();
+	for (const item of result.keys) {
+		if (
+			!item ||
+			typeof item.name !== "string" ||
+			!item.name.startsWith(prefix)
+		) {
+			throw new PrivateDraftError("草稿列表含异常键名，无法确认版本完整。", 503);
+		}
+		const suffix = item.name.slice(prefix.length);
+		if (
+			(revisions ? !UUID_RE.test(suffix) : !validSlug(suffix)) ||
+			seen.has(item.name) ||
+			(revisions &&
+				item.metadata?.version !== undefined &&
+				item.metadata.version !== suffix)
+		) {
+			throw new PrivateDraftError("草稿列表存在无效或重复记录，已停止操作。", 503);
+		}
+		seen.add(item.name);
+	}
+	return next ?? null;
+}
+
 function draftTitle(content: string): string {
 	const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
 	if (!frontmatter) return "未命名草稿";
@@ -187,20 +244,22 @@ export async function listPrivateDraftRevisions(
 	cursor?: string,
 ) {
 	validateCursor(cursor);
+	const prefix = revisionPrefix(slug);
 	const result = await store.list({
-		prefix: revisionPrefix(slug),
+		prefix,
 		limit: 100,
 		...(cursor ? { cursor } : {}),
 	});
+	const continuation = validateListPage(result, prefix, cursor, true);
 	return {
 		slug,
 		items: result.keys.map((item) => ({
-			version: item.name.slice(revisionPrefix(slug).length),
+			version: item.name.slice(prefix.length),
 			updatedAt: item.metadata?.updatedAt ?? "",
 			title: item.metadata?.title ?? "私人草稿",
 			extension: item.metadata?.extension === "mdx" ? "mdx" : "md",
 		})),
-		cursor: result.list_complete ? null : result.cursor || null,
+		cursor: continuation,
 	};
 }
 
@@ -273,17 +332,16 @@ export async function listPrivateDrafts(
 		limit: 100,
 		...(cursor ? { cursor } : {}),
 	});
+	const continuation = validateListPage(result, PREFIX, cursor, false);
 	return {
-		items: result.keys
-			.filter((item) => item.name.startsWith(PREFIX))
-			.map((item) => ({
-				slug: item.name.slice(PREFIX.length),
-				extension: item.metadata?.extension === "mdx" ? "mdx" : "md",
-				version: item.metadata?.version ?? "",
-				title: item.metadata?.title ?? "私人草稿",
-				updatedAt: item.metadata?.updatedAt ?? "",
-			})),
-		cursor: result.list_complete ? null : result.cursor || null,
+		items: result.keys.map((item) => ({
+			slug: item.name.slice(PREFIX.length),
+			extension: item.metadata?.extension === "mdx" ? "mdx" : "md",
+			version: item.metadata?.version ?? "",
+			title: item.metadata?.title ?? "私人草稿",
+			updatedAt: item.metadata?.updatedAt ?? "",
+		})),
+		cursor: continuation,
 	};
 }
 
