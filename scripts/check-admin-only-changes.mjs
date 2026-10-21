@@ -8,7 +8,7 @@ import { resolve } from "node:path";
  * This complements, but does not replace, screenshot and route regression tests.
  */
 export function isAdminFocusedBranch(name) {
-	return /^(?:feat\/(?:private-draft|admin-system-health|cloudflare-imgbed-admin)|fix\/(?:admin-|imgbed|private-draft|private-backup)|security\/admin-|perf\/admin-|ci\/(?:admin-only-frontend-freeze|pr-target-all-branches)|docs\/admin-implementation|integration\/admin-)/.test(name);
+	return /^(?:feat\/(?:private-draft|admin-system-health|cloudflare-imgbed-admin)|fix\/(?:admin-|imgbed|private-draft|private-backup)|security\/admin-|perf\/admin-|ci\/(?:admin-only-frontend-freeze|pr-target-all-branches)|docs\/admin-implementation|integration\/admin-|qa\/(?:private-|admin-))/.test(name);
 }
 
 export function changesVisitorFrontend(path) {
