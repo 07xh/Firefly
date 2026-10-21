@@ -26,9 +26,10 @@ test("top-level YAML event detection ignores nested event descriptions", () => {
 	assert.equal(onSection("name: Demo\njobs:\n  test: true"), "");
 });
 
-test("automatic old Pages publishing or repo-root publishing fails", () => {
-	assert.match(errors(modify(MANUAL_PAGES, (text) => text.replace("on:\n  workflow_dispatch:", "on:\n  push:\n    branches: [ master ]\n  workflow_dispatch:"))), /GitHub Pages publishing must not run automatically/);
-	assert.match(errors(modify(MANUAL_PAGES, (text) => text.replace("path: dist", "path: '.'"))), /build output/);
+test("canonical Pages must still publish from master but never from the repository root", () => {
+	assert.match(errors(modify(MANUAL_PAGES, (text) => text.replace("  push:\n    branches: [ master ]\n", ""))), /Canonical GitHub Pages workflow/);
+	assert.match(errors(modify(MANUAL_PAGES, (text) => text.replace("path: dist", "path: '.'"))), /must build dist/);
+	assert.match(errors(modify(MANUAL_PAGES, (text) => text.replace("rm -rf dist\/admin", "echo skip"))), /exclude private admin/);
 	for (const file of DISABLED_PAGES) {
 		assert.match(errors(modify(file, (text) => text.replace("on:\n  workflow_dispatch:", "on:\n  push:\n    branches: [master]\n  workflow_dispatch:"))), /obsolete Pages/);
 		assert.match(errors(modify(file, (text) => text.replace("if: " + "$" + "{{ false }}", "if: " + "$" + "{{ true }}"))), /remain inert/);
