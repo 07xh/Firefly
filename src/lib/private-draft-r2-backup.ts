@@ -64,9 +64,7 @@ export function privateBackupKey(slug: string, version: string): string {
 }
 
 function hasPrivateDraftFrontmatter(content: string): boolean {
-	const frontmatter = content.match(
-		/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/,
-	);
+	const frontmatter = content.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
 	return Boolean(
 		frontmatter && /^draft:\s*true\s*(?:#.*)?$/m.test(frontmatter[1]),
 	);
