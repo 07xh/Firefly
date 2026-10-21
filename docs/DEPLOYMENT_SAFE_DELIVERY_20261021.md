@@ -4,26 +4,26 @@
 
 独立 **待审阅 PR**，从 `master` 建立，和累计近 200 次提交的后台开发分支分开。不触碰前台组件/布局、已有文章、生产 KV/D1/R2 数据或 Cloudflare Secret；**本 PR 不能代表已经发布到线上**。
 
-## 唯一默认自动发布通道
+## 两个既有目标各保留一个默认自动发布通道
 
 | 工作流 | PR 中策略 | 验收预期 |
 | --- | --- | --- |
 | `deploy-cloudflare.yml` | 保持 master push + 手动 dispatch | 唯一默认自动部署 Worker，继续供定时文章发布调用 |
 | `deploy-worker.yml` | 仅手动且需 `ENABLE_LEGACY_WORKER_DEPLOY=true` | 默认跳过；与主 Worker 部署共享 `cloudflare-workers` 并发组 |
-| `deploy.yml` | 仅手动且需 `ENABLE_GITHUB_PAGES_DEPLOY=true` | 默认跳过；保留经过构建的 `dist` Pages 回退流程 |
+| `deploy.yml` | **保持既有 master push + 手动触发** | GitHub Pages 正在正常发布；保留构建 `dist`、排除 `dist/admin` 的发布路径，不因不确定 Pages 用途中断现有服务 |
 | `static.yml` | 仅手动，全部 job 恒为跳过 | 不再直接把整个公开仓库当作 Pages 网站部署 |
 | `jekyll-gh-pages.yml` | 仅手动，全部 job 恒为跳过 | 避免错误 Jekyll 模板抢占 Pages 发布 |
 | `publish-scheduled-posts.yml` | 保持原样 | 定时文章仍指向 `deploy-cloudflare.yml` |
 
-上述 opt-in **不会自动新建或改变 GitHub Actions Variables**。不要为恢复旧工作流而盲目配置启用开关。若 GitHub Pages 是另外网站的实际来源，先核实并独立规划迁移，本 PR 不应未经检查合并。
+旧 Worker 备用路径的 opt-in **不会自动新建或改变 GitHub Actions Variables**。正常的 GitHub Pages 发布通道继续按原样工作，不增加 Pages opt-in 门槛。由于 Pages 近期确有成功部署记录，不能未经核验就关闭这一既有发布通道。
 
 ## 自动门禁
 
 新增 `scripts/check-deploy-workflows.mjs`、回归测试以及 `deployment-policy-audit.yml`。
 
-- 拒绝旧 Pages/Worker 自动触发。
-- 拒绝手动旧部署缺少显式启用条件。
-- 拒绝 Pages fallback 上传仓库目录。
+- 拒绝两个重复的旧 Pages 模板和备用 Worker 自动触发，但保留现有 `deploy.yml` 对 Pages 的正常 master 发布。
+- 拒绝备用 Worker 缺少显式启用条件。
+- 要求正常 Pages 工作流仍从 `master` 触发、上传 `dist` 构建产物并排除后台页面；阻止模板直接上传仓库目录。
 - 拒绝两个 Worker 发布入口不共享并发组，或主发布缺少正常触发。
 - 拒绝定时发布转向旧 Worker。
 - 对缺失工作流返回失败，而非默许。
@@ -33,7 +33,7 @@
 ## 真实环境需要执行的验收（未执行）
 
 - [ ] 核对 `0701000.xyz` 与 workers.dev 的实际 Cloudflare 绑定及最后正常生产部署。
-- [ ] 核对 GitHub Pages 是否服务于其他实际使用的域名；确认关闭自动更新不会影响其他业务。
+- [ ] 核对 GitHub Pages 是否服务于其他实际使用的域名；本批保留原 Pages 自动发布以避免服务中断。
 - [ ] 对比正式网站主页、文章、后台登录路由和静态资源。
 - [ ] 单独创建 Cloudflare 预览 Worker（不同 Worker 名称 / KV / D1 / R2），先在预览环境验证发布、回滚。
 - [ ] 私人草稿迁移与真实数据操作前另行批准；不在此 PR 处理。
@@ -48,4 +48,4 @@
 
 ## 不合并规则
 
-任何门禁失败、未明确生产部署路径、无法确认 Pages 使用情况、预览环境没有测试结果时，保持 PR 为草稿，**不要因为 CI 通过而自动合并**。
+任何门禁失败、无法证明当前自动发布入口未被额外引入、或回滚不可行时，保持 PR 为草稿。由于本批不关闭既有 Pages 发布，仍需合并后核对 Pages 和 Cloudflare 工作流结果；**CI 通过不代表站点行为已验收**。
