@@ -236,3 +236,19 @@ test("R2 list reader reports unknown keys without exposing raw object paths", as
 	assert.ok(!JSON.stringify(result).includes("SENSITIVE_BACKUP_PATH"));
 	assert.equal(result.status, "incomplete");
 });
+
+test("audit refuses to verify backups when KV silently drops the next history cursor", async () => {
+	const store = mockKV(), backup = mockR2();
+	await savePrivateDraft(store, { slug: "kv-cursor-fail", content: MARKDOWN }, backup);
+	const original = store.list.bind(store);
+	store.list = async (options) => {
+		if (options.prefix === "draft-history:v1:kv-cursor-fail:") {
+			return { keys: [], list_complete: false };
+		}
+		return original(options);
+	};
+	await assert.rejects(
+		() => auditPrivateDraftBackups(store, backup, "kv-cursor-fail"),
+		(error) => error.status === 503 && /游标/.test(error.message),
+	);
+});
