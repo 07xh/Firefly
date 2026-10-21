@@ -1,0 +1,215 @@
+---
+export const prerender = false;
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="robots" content="noindex,nofollow">
+    <title>运行状态 · Firefly 后台</title>
+    <style>
+      :root { font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif; background:#f5f7f5; color:#253126 }
+      * { box-sizing:border-box }
+      body { margin:0 }
+      main { max-width:860px; padding:22px 15px 55px; margin:auto }
+      header { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:20px }
+      h1 { font-size:22px; margin:0 }
+      h2 { font-size:16px }
+      .btn { font:inherit; font-size:13px; background:#fff; border:1px solid #d8e0d9; color:#26362b; border-radius:10px; padding:10px 14px; cursor:pointer; text-decoration:none }
+      .btn:disabled { opacity:.6; cursor:wait }
+      .main { background:#168653; color:#fff; border-color:#168653 }
+      .card { border:1px solid #e0e7e1; padding:17px; border-radius:16px; background:#fff; margin-bottom:15px }
+      .muted { font-size:13px; color:#6b786c; line-height:1.7 }
+      .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(225px,1fr)); gap:10px }
+      .item { display:flex; justify-content:space-between; gap:10px; border-radius:9px; background:#f7f9f7; padding:10px; font-size:13px }
+      .ok { color:#12884f; font-weight:600 }
+      .no { color:#a33924; font-weight:600 }
+      .actions { display:flex; gap:8px; flex-wrap:wrap }
+      #issues { padding-left:20px; font-size:13px; line-height:1.9 }
+      .hidden { display:none }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>系统运行状态</h1>
+          <p class="muted">仅供已登录管理员查看。不会展示访问密码、Token 或文章内容。</p>
+        </div>
+        <a class="btn" href="/admin/">返回后台</a>
+      </header>
+      <div class="actions" style="margin-bottom:12px">
+        <button class="btn" id="refresh" type="button">刷新配置状态</button>
+        <button class="btn main" id="probe" type="button">测试各服务连通性</button>
+      </div>
+      <p class="muted" id="status" role="status" aria-live="polite">正在读取后台配置状态…</p>
+      <section class="card">
+        <h2>登录与文章管理</h2>
+        <div class="grid" id="adminStatus"></div>
+      </section>
+      <section class="card">
+        <h2>私人草稿与备份</h2>
+        <div class="grid" id="draftStatus"></div>
+        <p class="muted">KV、D1 和 R2 分属不同存储。检测到绑定不等于已验证数据完整性；真实写入、备份恢复仍需独立测试。</p>
+      </section>
+      <section class="card">
+        <h2>核对私人草稿与 R2 备份</h2>
+        <p class="muted">按文件名检查当前草稿、历史版本及独立 R2 副本。仅执行读取，不自动修复或删除。单次最多核对 12 个版本，超出时明确提示未完成。</p>
+        <form id="backupAuditForm" class="actions">
+          <input id="auditSlug" name="slug" required maxlength="80" autocomplete="off"
+            placeholder="私人草稿文件名（不含扩展名）"
+            aria-label="私人草稿文件名"
+            style="flex:1;min-width:180px;padding:10px;border:1px solid #d8e0d9;border-radius:10px">
+          <button id="auditSubmit" class="btn main" type="submit">核对备份完整性</button>
+        </form>
+        <p class="muted" id="backupAuditStatus" role="status" aria-live="polite">尚未执行内容核对。</p>
+        <div id="backupAuditResults" class="grid"></div>
+        <ul id="backupAuditIssues" class="muted"></ul>
+      </section>
+      <section class="card">
+        <h2>媒体与连通性</h2>
+        <div class="grid" id="mediaStatus"></div>
+      </section>
+      <section class="card">
+        <h2>需要关注的配置</h2>
+        <ul id="issues"></ul>
+      </section>
+    </main>
+    <script>
+      const $ = (id: string): HTMLElement => {
+        const element = document.getElementById(id);
+        if (!element) throw new Error("后台状态组件不存在：" + id);
+        return element;
+      };
+      type HealthView = {
+        security?: { sessionBinding?: boolean; adminPasswordConfigured?: boolean };
+        articles?: { githubTokenConfigured?: boolean };
+        privateDrafts?: {
+          backend?: string;
+          migrationMode?: boolean;
+          kvBound?: boolean;
+          d1Bound?: boolean;
+          r2BackupBound?: boolean;
+        };
+        media?: { imageHostTokenConfigured?: boolean };
+        connectivity?: { kv?: string; r2?: string; d1?: string; github?: string } | null;
+        issues?: string[];
+      };
+      function addItem(container: string, label: string, value: boolean | string) {
+        const row=document.createElement("div");
+        row.className="item";
+        const text=document.createElement("span");
+        text.textContent=label;
+        const status=document.createElement("span");
+        status.textContent=value === true ? "已配置" : value === false ? "未配置" : String(value);
+        status.className=value === true || value === "ok" || value === "configured" ? "ok" : "no";
+        row.append(text,status);
+        $(container).appendChild(row);
+      }
+      function render(data: HealthView) {
+        ["adminStatus","draftStatus","mediaStatus","issues"].forEach(id=>$(id).replaceChildren());
+        addItem("adminStatus","会话 KV",Boolean(data.security?.sessionBinding));
+        addItem("adminStatus","管理员密码",Boolean(data.security?.adminPasswordConfigured));
+        addItem("adminStatus","GitHub 访问令牌",Boolean(data.articles?.githubTokenConfigured));
+        addItem("draftStatus","当前存储后端",data.privateDrafts?.backend ?? "未知");
+        addItem("draftStatus","KV 绑定",Boolean(data.privateDrafts?.kvBound));
+        addItem("draftStatus","D1 绑定",Boolean(data.privateDrafts?.d1Bound));
+        addItem("draftStatus","独立 R2 备份",Boolean(data.privateDrafts?.r2BackupBound));
+        addItem("draftStatus","迁移维护模式",data.privateDrafts?.migrationMode ? "已冻结写入" : "未启用");
+        addItem("mediaStatus","图床访问令牌",Boolean(data.media?.imageHostTokenConfigured));
+        if(data.connectivity) {
+          for(const [label,value] of Object.entries({
+            "KV 读取":data.connectivity.kv,
+            "R2 读取":data.connectivity.r2,
+            "D1 表读取":data.connectivity.d1,
+            "GitHub 访问":data.connectivity.github,
+          })) addItem("mediaStatus",label,value==="ok"?"ok":value==="failed"?"失败":"未配置");
+        }
+        const issues=Array.isArray(data.issues)?data.issues:[];
+        if(!issues.length) {
+          const item=document.createElement("li");
+          item.textContent="未发现明显的缺失绑定，但仍需实际读写及恢复验证。";
+          $("issues").append(item);
+        } else {
+          for(const issue of issues) {
+            const item=document.createElement("li");
+            item.textContent=String(issue);
+            $("issues").append(item);
+          }
+        }
+      }
+      async function load(probe=false){
+        const buttons=[$("refresh"),$("probe")] as HTMLButtonElement[];
+        buttons.forEach(b=>b.disabled=true);
+        $("status").textContent=probe?"正在测试 GitHub、KV、D1、R2 读取连通性…":"正在读取已配置的服务绑定…";
+        try {
+          const response=await fetch("/api/admin/system-health/"+(probe?"?probe=1":""),{credentials:"same-origin",cache:"no-store"});
+          if(response.status===401){location.assign("/admin/login/?next=/admin/system/");return;}
+          const result=await response.json().catch(()=>({error:"诊断接口响应无效。"}));
+          if(!response.ok)throw new Error(result.error||"无法读取运行状态。");
+          render(result);
+          $("status").textContent=probe?"连通性测试结束。具体结果见下方。":"配置状态已读取。可选择“测试各服务连通性”。";
+        }catch(error){$("status").textContent=error instanceof Error?error.message:"诊断请求失败。";}
+        finally{buttons.forEach(b=>b.disabled=false);}
+      }
+      type AuditResult = {
+        status:"verified"|"attention"|"incomplete";
+        checkedAt:string;
+        versionsFound:number;
+        versionsChecked:number;
+        currentPresent:boolean;
+        recoverableR2OnlyVersions:number;
+        maxVersionsPerAudit:number;
+        issues:Array<{version:string;code:string}>;
+        notice:string;
+      };
+      const issueLabels: Record<string,string> = {
+        missing_r2:"独立 R2 备份缺失",
+        r2_corrupt:"R2 备份损坏或无法读取",
+        kv_history_corrupt:"当前存储的历史版本损坏",
+        version_mismatch:"KV/D1 与 R2 的版本内容不一致",
+        current_changed:"检查期间当前草稿发生修改",
+      };
+      $("backupAuditForm").addEventListener("submit",async(event)=>{
+        event.preventDefault();
+        const field=$("auditSlug") as HTMLInputElement;
+        const submit=$("auditSubmit") as HTMLButtonElement;
+        const slug=field.value.trim();
+        $("backupAuditResults").replaceChildren();
+        $("backupAuditIssues").replaceChildren();
+        if(!/^[\p{L}\p{N}][\p{L}\p{N}_-]{0,79}$/u.test(slug)){
+          $("backupAuditStatus").textContent="草稿文件名只能包含字母、数字、下划线和连接号。";
+          return;
+        }
+        submit.disabled=true;
+        $("backupAuditStatus").textContent="正在只读核对备份版本，请勿将此结果当作连续性保证…";
+        try{
+          const response=await fetch("/api/admin/private-draft-audit/?slug="+encodeURIComponent(slug),{
+            credentials:"same-origin",cache:"no-store"
+          });
+          if(response.status===401){location.assign("/admin/login/?next=/admin/system/");return;}
+          const result=await response.json().catch(()=>({error:"服务器未返回可识别的备份结果。"}));
+          if(!response.ok)throw new Error(result.error||"私人备份核对失败。");
+          const data=result as AuditResult;
+          const statusName=data.status==="verified"?"本次范围内一致":data.status==="attention"?"发现备份问题":"核验未完成";
+          $("backupAuditStatus").textContent=statusName+"。"+data.notice;
+          addItem("backupAuditResults","已核对版本数",String(data.versionsChecked));
+          addItem("backupAuditResults","发现版本总数",String(data.versionsFound));
+          addItem("backupAuditResults","当前稿存在",Boolean(data.currentPresent));
+          addItem("backupAuditResults","仅 R2 保留的恢复版本",String(data.recoverableR2OnlyVersions));
+          for(const issue of data.issues||[]){
+            const item=document.createElement("li");
+            item.textContent=(issueLabels[issue.code]||"未知备份问题")+" · 版本 "+issue.version;
+            $("backupAuditIssues").append(item);
+          }
+        }catch(error){
+          $("backupAuditStatus").textContent=error instanceof Error?error.message:"备份核对未完成。";
+        }finally{submit.disabled=false;}
+      });
+      $("refresh").onclick=()=>load(false);
+      $("probe").onclick=()=>load(true);
+      load(false);
+    </script>
+  </body>
+</html>
