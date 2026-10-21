@@ -1,0 +1,50 @@
+---
+export const prerender = false;
+---
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>图片库 · Firefly 管理后台</title>
+<style>
+:root{font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#202820;background:#f3f6f3}*{box-sizing:border-box}body{margin:0}header{padding:16px max(18px,calc((100vw - 1100px)/2));background:#fff;border-bottom:1px solid #e1e8e1;display:flex;justify-content:space-between;align-items:center;gap:12px}h1{font-size:19px;margin:0}.wrap{max-width:1100px;margin:18px auto 26px;padding:0 16px}.panel{background:#fff;border:1px solid #e0e7e0;border-radius:14px;padding:18px;min-width:0;box-shadow:0 3px 12px #173c2510}.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.toolbar input[type=search]{flex:1;min-width:180px}.input,.btn{border:1px solid #d5dfd5;border-radius:9px;background:#fff;color:#263329;padding:10px 12px;font:inherit;font-size:13px}.btn{cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}.btn:disabled{opacity:.55;cursor:wait}.primary{background:#12884f;color:#fff;border-color:#12884f}.danger{color:#b42318;background:#fff8f7;border-color:#f1c6c3}.hint{margin:0 0 14px;color:#718075;font-size:12px;line-height:1.7}.status{min-height:22px;font-size:12px;color:#657267;line-height:1.6;overflow-wrap:anywhere}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px}.card{min-width:0;background:#fff;border:1px solid #e2eae3;border-radius:12px;overflow:hidden}.preview{height:150px;background:#f3f6f3;display:flex;align-items:center;justify-content:center}.preview img{max-width:100%;max-height:150px;object-fit:contain}.details{padding:10px}.name{min-height:36px;font-size:12px;line-height:1.5;overflow-wrap:anywhere;color:#526055}.meta{margin:5px 0 10px;font-size:11px;color:#89958c;overflow-wrap:anywhere}.actions{display:flex;gap:6px;flex-wrap:wrap}.actions .btn{flex:1;padding:8px 6px;font-size:12px}.empty{padding:36px 12px;text-align:center;color:#7b887e;font-size:13px;line-height:1.7}.pager{display:flex;align-items:center;gap:10px;margin-top:14px}@media(max-width:600px){header{padding:14px}.wrap{margin-top:12px}.panel{padding:12px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.preview{height:120px}.preview img{max-height:120px}.actions{gap:5px}}
+</style>
+</head>
+<body>
+<header><h1>🖼️ 图片库</h1><div class="actions"><a class="btn" href="/admin/">返回后台</a><a class="btn" href="https://tu.0701000.xyz/" target="_blank" rel="noreferrer">打开图床</a></div></header>
+<main class="wrap"><section class="panel">
+<p class="hint">图片上传到 Sanyue 图床，不再新增到博客 GitHub 仓库。每张图片最大 4 MiB。删除会影响所有引用该图片的文章，且图床不会自动恢复；删除前请确认。</p>
+<form id="uploadForm" class="toolbar"><input id="fileInput" class="input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" required><button id="uploadButton" class="btn primary" type="submit">上传图片</button></form>
+<div class="toolbar"><input id="searchInput" class="input" type="search" placeholder="搜索图片文件名…" aria-label="搜索图片"><button id="searchButton" class="btn" type="button">搜索</button><button id="refreshButton" class="btn" type="button">刷新</button></div>
+<p id="status" class="status" role="status" aria-live="polite"></p>
+<div id="gallery" class="grid"><div class="empty">正在加载图片库…</div></div>
+<div class="pager"><button id="moreButton" class="btn" type="button">加载更多</button><span id="countLabel" class="hint"></span></div>
+</section></main>
+<script>
+type ImageItem={name:string;url:string;type:string;size:string;timestamp?:string};
+const gallery=document.querySelector<HTMLDivElement>("#gallery")!;
+const status=document.querySelector<HTMLParagraphElement>("#status")!;
+const searchInput=document.querySelector<HTMLInputElement>("#searchInput")!;
+const fileInput=document.querySelector<HTMLInputElement>("#fileInput")!;
+const uploadForm=document.querySelector<HTMLFormElement>("#uploadForm")!;
+const uploadButton=document.querySelector<HTMLButtonElement>("#uploadButton")!;
+const moreButton=document.querySelector<HTMLButtonElement>("#moreButton")!;
+const countLabel=document.querySelector<HTMLSpanElement>("#countLabel")!;
+let start=0;const pageSize=40;let loading=false;let allLoaded=false;let currentSearch="";let items:ImageItem[]=[];
+function say(message:string){status.textContent=message}
+function escapeHtml(value:string){return value.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]||c))}
+function readableSize(raw:string){const n=Number(raw);if(!Number.isFinite(n)||n<=0)return "";if(n<1024)return n+" B";if(n<1024*1024)return (n/1024).toFixed(1)+" KB";return (n/1024/1024).toFixed(1)+" MB"}
+function render(){gallery.innerHTML=items.length?items.map(item=>'<article class="card"><div class="preview"><img loading="lazy" src="'+escapeHtml(item.url)+'" alt="'+escapeHtml(item.name)+'"></div><div class="details"><div class="name">'+escapeHtml(item.name)+'</div><div class="meta">'+escapeHtml(item.type)+' · '+escapeHtml(readableSize(item.size))+'</div><div class="actions"><button class="btn copy" data-url="'+escapeHtml(item.url)+'" type="button">复制链接</button><button class="btn danger delete" data-name="'+escapeHtml(item.name)+'" type="button">删除</button></div></div></article>').join(""):'<div class="empty">没有找到图片。可以上传图片，或更换搜索词。</div>';countLabel.textContent="当前显示 "+items.length+" 张"}
+async function load(reset=true){if(loading)return;loading=true;if(reset){start=0;allLoaded=false;items=[];gallery.innerHTML='<div class="empty">正在加载图片库…</div>'}moreButton.disabled=true;try{const query=new URLSearchParams({start:String(start),count:String(pageSize),search:currentSearch});const response=await fetch("/api/admin/upload?"+query.toString(),{credentials:"same-origin",cache:"no-store"});const data=await response.json();if(!response.ok)throw new Error(data.error||"加载图片库失败。");const next=Array.isArray(data.files)?data.files as ImageItem[]:[];items=reset?next:items.concat(next);start+=next.length;allLoaded=next.length<pageSize;render();moreButton.hidden=allLoaded;say("图片库已更新。")}catch(error){say(error instanceof Error?error.message:"加载失败，请稍后重试。");if(reset)gallery.innerHTML='<div class="empty">图片库加载失败。请检查 Token 权限和 Worker Secrets 配置。</div>'}finally{loading=false;moreButton.disabled=false}}
+uploadForm.addEventListener("submit",async event=>{event.preventDefault();const file=fileInput.files?.[0];if(!file)return;if(!file.type.startsWith("image/")||file.size>4*1024*1024){say("请选择 PNG、JPEG、WebP 或 GIF 图片，且不超过 4 MiB。");return}uploadButton.disabled=true;say("正在上传到图床…");try{const body=new FormData();body.set("file",file,file.name);const response=await fetch("/api/admin/upload",{method:"POST",credentials:"same-origin",body});const data=await response.json();if(!response.ok)throw new Error(data.error||"上传失败。");fileInput.value="";let copied=false;try{await navigator.clipboard.writeText(String(data.imageUrl||data.url));copied=true}catch{}say(copied?"上传成功，图片链接已复制。":"上传成功。可以在图片库中点击“复制链接”。");currentSearch="";searchInput.value="";await load(true)}catch(error){say(error instanceof Error?error.message:"上传失败，请重试。")}finally{uploadButton.disabled=false}});
+document.querySelector("#searchButton")!.addEventListener("click",()=>{currentSearch=searchInput.value.trim();load(true)});
+searchInput.addEventListener("keydown",event=>{if(event.key==="Enter"){event.preventDefault();currentSearch=searchInput.value.trim();load(true)}});
+document.querySelector("#refreshButton")!.addEventListener("click",()=>load(true));
+moreButton.addEventListener("click",()=>{if(!allLoaded)load(false)});
+gallery.addEventListener("click",async event=>{const target=event.target;if(!(target instanceof HTMLButtonElement))return;if(target.classList.contains("copy")){const url=target.dataset.url;if(!url)return;try{await navigator.clipboard.writeText(url);say("图片链接已复制，可以粘贴到文章内容中。")}catch{say("浏览器未允许复制，请打开图片后手动复制地址。")}return}if(target.classList.contains("delete")){const name=target.dataset.name;if(!name)return;if(!confirm("确定删除这张图片吗？\n\n"+name+"\n\n删除会使所有引用该图片的文章无法显示它，而且不能自动恢复。"))return;target.disabled=true;say("正在删除图片…");try{const response=await fetch("/api/admin/upload",{method:"DELETE",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify({name})});const data=await response.json();if(!response.ok)throw new Error(data.error||"删除失败。");say("图片已删除。");await load(true)}catch(error){say(error instanceof Error?error.message:"删除失败，请重试。")}finally{target.disabled=false}}});
+load();
+</script>
+</body>
+</html>
