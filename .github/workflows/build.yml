@@ -3,8 +3,8 @@ name: Build and Check
 on:
   push:
     branches: [ master ] # Adjust branches as needed
+  # Validate pull requests to ANY base branch, including stacked review branches.
   pull_request:
-    branches: [ master, feat/ai-natural-language-authoring-20261019 ] # Include the stacked AI authoring feature base
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
