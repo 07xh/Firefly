@@ -100,6 +100,9 @@ async function collectVersions(
 	let r2Cursor: string | undefined;
 	for (let page = 0; page < 5; page++) {
 		const response = await listPrivateR2Backups(backup, slug, r2Cursor);
+		if (response.invalidObjectCount > 0) {
+			throw new PrivateDraftError("R2 目录含无法识别的历史备份对象，已停止迁移以防遗漏。", 503);
+		}
 		for (const item of response.items) {
 			if (records.size >= MAX_REVISIONS && !records.has(item.version)) {
 				throw new PrivateDraftError("R2 历史版本过多，禁止遗漏备份。", 413);
