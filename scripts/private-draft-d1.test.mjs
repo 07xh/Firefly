@@ -194,3 +194,23 @@ test("history-copy failure preserves old KV source and prevents D1 main record",
 	assert.equal(await destination.get("draft:v1:failure","text"),null);
 	assert.equal((await getPrivateDraft(source,"failure")).content,VALID);
 });
+
+test("migration refuses over-limit history instead of silently dropping old versions",async()=>{
+	const source=createD1PrivateDraftStore(mockD1());
+	const destination=createD1PrivateDraftStore(mockD1());
+	const r2=mockR2();
+	let current=await savePrivateDraft(source,{slug:"longhistory",content:VALID},r2);
+	for(let i=1;i<41;i++){
+		current=await savePrivateDraft(source,{
+			slug:"longhistory",
+			content:VALID+"\nHISTORY_"+i,
+			expectedVersion:current.version,
+		},r2);
+	}
+	await assert.rejects(
+		()=>copyPrivateDraftWithHistory(source,destination,r2,"longhistory",current.version),
+		err=>err instanceof PrivateDraftError && err.status===413,
+	);
+	assert.equal(await destination.get("draft:v1:longhistory","text"),null);
+	assert.equal((await getPrivateDraft(source,"longhistory")).version,current.version);
+});
