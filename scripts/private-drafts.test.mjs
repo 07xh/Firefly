@@ -122,6 +122,58 @@ test("rejects corrupt data without overwriting or deleting it", async () => {
 	assert.equal(store.data.get("draft:v1:damaged"), "{bad json");
 });
 
+test("corrupted stored current records cannot silently switch MDX to Markdown or replace content", async () => {
+	const changes = [
+		(record) => ({ ...record, extension: "html" }),
+		(record) => ({ ...record, extension: null }),
+		(record) => ({ ...record, version: "not-a-uuid" }),
+		(record) => ({ ...record, updatedAt: "" }),
+		(record) => ({ ...record, content: record.content.replace("draft: true", "draft: false") }),
+		(record) => ({ ...record, content: record.content + "x".repeat(501_000) }),
+	];
+	for (const change of changes) {
+		const store = mockKV();
+		const original = await savePrivateDraft(store, {
+			slug: "protect-mdx", content: VALID, extension: "mdx",
+		});
+		const key = "draft:v1:protect-mdx";
+		const badRaw = JSON.stringify(change(JSON.parse(store.data.get(key))));
+		store.data.set(key, badRaw);
+		await rejectsStatus(() => getPrivateDraft(store, "protect-mdx"), 500);
+		await rejectsStatus(() => savePrivateDraft(store, {
+			slug: "protect-mdx", content: VALID + "edit", expectedVersion: original.version,
+		}), 500);
+		await rejectsStatus(() => deletePrivateDraft(store, "protect-mdx", original.version), 500);
+		assert.equal(store.data.get(key), badRaw);
+		assert.equal((await getPrivateDraftRevision(store, "protect-mdx", original.version)).extension, "mdx");
+	}
+});
+
+test("corrupted archived MDX cannot be restored over a healthy current draft", async () => {
+	for (const corrupt of [
+		(record) => ({ ...record, extension: "html" }),
+		(record) => ({ ...record, version: "other-version" }),
+		(record) => ({ ...record, content: "not-private-markdown" }),
+	]) {
+		const store = mockKV();
+		const first = await savePrivateDraft(store, {slug:"restore-safe", content:VALID, extension:"mdx"});
+		const current = await savePrivateDraft(store, {
+			slug:"restore-safe", content:VALID + " current", expectedVersion:first.version,
+		});
+		const key = "draft-history:v1:restore-safe:" + first.version;
+		const badRaw = JSON.stringify(corrupt(JSON.parse(store.data.get(key))));
+		store.data.set(key, badRaw);
+		const currentKey = "draft:v1:restore-safe";
+		const before = store.data.get(currentKey);
+		await rejectsStatus(() => getPrivateDraftRevision(store, "restore-safe", first.version), 500);
+		await rejectsStatus(() => restorePrivateDraftRevision(store, {
+			slug:"restore-safe", revision:first.version, expectedVersion:current.version,
+		}), 500);
+		assert.equal(store.data.get(currentKey), before);
+		assert.equal(store.data.get(key), badRaw);
+	}
+});
+
 test("draft list pagination returns a continuation cursor", async () => {
 	const store = mockKV();
 	for (let i = 0; i < 102; i++) {
