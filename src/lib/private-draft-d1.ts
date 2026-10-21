@@ -110,12 +110,65 @@ function requireMetadata(
 	return metadata;
 }
 
+/**
+ * Existing D1 rows may predate new write guards or be externally damaged.
+ * Refuse to interpret mismatched indexed fields as an alternative MDX format.
+ */
+function readStoredRow(
+	row: Record<string, unknown> | null,
+	slug: string,
+): string | null {
+	if (row === null) return null;
+	if (
+		row.slug !== slug ||
+		typeof row.record !== "string" ||
+		typeof row.version !== "string" ||
+		(row.extension !== "md" && row.extension !== "mdx") ||
+		typeof row.updated_at !== "string" ||
+		typeof row.title !== "string"
+	) {
+		throw new PrivateDraftError(
+			"D1 已存储记录缺少完整元数据，已停止读取。",
+			500,
+		);
+	}
+	try {
+		requireMetadata(
+			row.record,
+			{
+				version: row.version,
+				extension: row.extension,
+				updatedAt: row.updated_at,
+				title: row.title,
+			},
+			slug,
+		);
+	} catch {
+		throw new PrivateDraftError(
+			"D1 原文与索引元数据不一致，已停止读取以保护 MDX。",
+			500,
+		);
+	}
+	return row.record;
+}
+
 function metadataFromRow(row: DraftRow) {
+	if (
+		!VERSION.test(row.version) ||
+		!row.updated_at?.trim() ||
+		typeof row.title !== "string" ||
+		(row.extension !== "md" && row.extension !== "mdx")
+	) {
+		throw new PrivateDraftError(
+			"D1 列表索引元数据损坏，不能自动降级文件类型。",
+			500,
+		);
+	}
 	return {
 		version: row.version,
 		updatedAt: row.updated_at,
 		title: row.title,
-		extension: row.extension === "mdx" ? ("mdx" as const) : ("md" as const),
+		extension: row.extension,
 	};
 }
 
@@ -146,18 +199,18 @@ export function createD1PrivateDraftStore(
 				const { slug, version } = decodeHistoryKey(key);
 				const row = await db
 					.prepare(
-						"SELECT record FROM private_draft_revisions WHERE slug = ? AND version = ?",
+						"SELECT slug,version,record,updated_at,title,extension FROM private_draft_revisions WHERE slug = ? AND version = ?",
 					)
 					.bind(slug, version)
 					.first();
-				return typeof row?.record === "string" ? row.record : null;
+				return readStoredRow(row, slug);
 			}
 			const slug = liveSlug(key);
 			const row = await db
-				.prepare("SELECT record FROM private_drafts WHERE slug = ?")
+				.prepare("SELECT slug,version,record,updated_at,title,extension FROM private_drafts WHERE slug = ?")
 				.bind(slug)
 				.first();
-			return typeof row?.record === "string" ? row.record : null;
+			return readStoredRow(row, slug);
 		},
 		async put(key: string, value: string, options) {
 			if (key.startsWith(HISTORY_PREFIX)) {
