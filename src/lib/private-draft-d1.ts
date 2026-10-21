@@ -56,6 +56,11 @@ function liveSlug(key: string): string {
 	return validateSlug(key.slice(LIVE_PREFIX.length));
 }
 
+/**
+ * D1's indexed columns must describe the exact immutable record we persist.
+ * Reject mismatches before any INSERT/UPDATE; never downgrade damaged MDX
+ * metadata to Markdown or treat an unmarked post as a private draft.
+ */
 function requireMetadata(
 	record: string,
 	metadata: DraftMetadata | undefined,
@@ -71,14 +76,39 @@ function requireMetadata(
 		!metadata ||
 		!parsed ||
 		typeof parsed !== "object" ||
+		!("schema" in parsed) ||
+		parsed.schema !== 1 ||
 		!("slug" in parsed) ||
 		parsed.slug !== slug ||
 		!("version" in parsed) ||
+		typeof parsed.version !== "string" ||
+		!VERSION.test(parsed.version) ||
 		parsed.version !== metadata.version ||
+		!("extension" in parsed) ||
+		(parsed.extension !== "md" && parsed.extension !== "mdx") ||
+		parsed.extension !== metadata.extension ||
+		!("updatedAt" in parsed) ||
+		typeof parsed.updatedAt !== "string" ||
+		!parsed.updatedAt.trim() ||
+		parsed.updatedAt !== metadata.updatedAt ||
+		typeof metadata.title !== "string" ||
 		!("content" in parsed) ||
-		typeof parsed.content !== "string"
+		typeof parsed.content !== "string" ||
+		new TextEncoder().encode(parsed.content).byteLength > 500_000
 	) {
-		throw new PrivateDraftError("D1 草稿内容与版本信息不一致。", 400);
+		throw new PrivateDraftError(
+			"D1 草稿内容、版本或文件类型与索引元数据不一致。",
+			400,
+		);
+	}
+	const frontmatter = parsed.content.match(
+		/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/,
+	);
+	if (!frontmatter || !/^draft:\s*true\s*(?:#.*)?$/m.test(frontmatter[1])) {
+		throw new PrivateDraftError(
+			"D1 草稿正文缺少私人标记，已阻止写入。",
+			400,
+		);
 	}
 	return metadata;
 }
