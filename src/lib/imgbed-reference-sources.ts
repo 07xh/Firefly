@@ -5,6 +5,13 @@ export type ImageReferenceRuntime = {
 	GITHUB_CONTENTS_REPO?: string;
 	GITHUB_CONTENTS_BRANCH?: string;
 	FIREFLY_PRIVATE_DRAFT_BACKEND?: string;
+	FIREFLY_PRIVATE_DRAFT_DB?: {
+		prepare(query: string): {
+			bind(...values: number[]): {
+				all(): Promise<{ results: Array<{ slug: string; version: string; record: string }> }>;
+			};
+		};
+	};
 	FIREFLY_PRIVATE_DRAFTS?: {
 		list(options: { prefix: string; cursor?: string; limit: number }): Promise<{
 			keys: Array<{ name: string }>;
@@ -117,13 +124,14 @@ async function publicArticles(runtime: ImageReferenceRuntime) {
 
 async function kvDrafts(runtime: ImageReferenceRuntime) {
 	const backend = runtime.FIREFLY_PRIVATE_DRAFT_BACKEND?.trim() || "kv";
-	if (backend === "d1") {
-		// This PR predates D1 integration. Refuse deletes rather than miss
-		// an image referenced by a D1-backed private article.
-		throw new Error("D1 私人草稿引用检查尚未联调，已保护性禁止删除图床文件。");
+	if (backend !== "kv" && backend !== "d1") {
+		throw new Error("无法确定私人草稿存储模式，禁止删除图片。");
 	}
-	if (backend !== "kv") throw new Error("无法确定私人草稿存储模式，禁止删除。");
 	const kv = runtime.FIREFLY_PRIVATE_DRAFTS;
+	// A D1 migration may keep the old KV as a recovery source. Scan it too.
+	if (!kv && backend === "kv") {
+		throw new Error("私人草稿 KV 未绑定，无法证明图床文件未被使用。");
+	}
 	if (!kv) return [];
 	const entries: Array<{ path: string; content: string }> = [];
 	for (const prefix of ["draft:v1:", "draft-history:v1:"]) {
@@ -166,7 +174,7 @@ async function kvDrafts(runtime: ImageReferenceRuntime) {
 
 async function r2Archives(runtime: ImageReferenceRuntime) {
 	const bucket = runtime.FIREFLY_PRIVATE_DRAFT_BACKUPS;
-	if (!bucket) return [];
+	if (!bucket) throw new Error("R2 私人备份未绑定，无法确认图片历史引用，已拒绝删除。");
 	const entries: Array<{ path: string; content: string }> = [];
 	let cursor: string | undefined;
 	const seen = new Set<string>();
@@ -203,17 +211,66 @@ async function r2Archives(runtime: ImageReferenceRuntime) {
 	return entries;
 }
 
+
+async function d1Drafts(runtime: ImageReferenceRuntime) {
+	const backend = runtime.FIREFLY_PRIVATE_DRAFT_BACKEND?.trim() || "kv";
+	if (backend === "kv") return [];
+	if (backend !== "d1") throw new Error("未知私人草稿后端，禁止删除图片。");
+	const db = runtime.FIREFLY_PRIVATE_DRAFT_DB;
+	if (!db) throw new Error("D1 私人草稿数据库未绑定，禁止删除图片。");
+	const documents: Array<{ path: string; content: string }> = [];
+	for (const table of ["private_drafts", "private_draft_revisions"]) {
+		let offset = 0;
+		for (;;) {
+			const result = await db.prepare(
+				"SELECT slug,version,record FROM " + table +
+					" ORDER BY slug,version LIMIT ? OFFSET ?",
+			).bind(101, offset).all();
+			if (!Array.isArray(result.results)) {
+				throw new Error("D1 草稿查询结果不完整，已禁止图片删除。");
+			}
+			if (documents.length + result.results.length > MAX_SNAPSHOTS) {
+				throw new Error("D1 草稿或历史版本数量超过引用检查上限。");
+			}
+			for (const row of result.results) {
+				let value: unknown;
+				try { value = JSON.parse(row.record); }
+				catch { throw new Error("D1 草稿历史记录损坏，禁止删除图片。"); }
+				if (
+					!value || typeof value !== "object" ||
+					!("content" in value) || typeof value.content !== "string" ||
+					!("slug" in value) || value.slug !== row.slug ||
+					!("version" in value) || value.version !== row.version
+				) {
+					throw new Error("D1 草稿版本校验失败，禁止删除图片。");
+				}
+				documents.push({
+					path: "d1:" + table + ":" + row.slug + ":" + row.version,
+					content: value.content,
+				});
+			}
+			if (result.results.length < 101) break;
+			offset += result.results.length;
+			if (offset > MAX_SNAPSHOTS) {
+				throw new Error("D1 草稿分页上限已达到，禁止删除图片。");
+			}
+		}
+	}
+	return documents;
+}
+
 export function createImgBedReferenceSources(
 	runtime: ImageReferenceRuntime,
 ): ImgBedReferenceSource {
 	return {
 		listArticles: () => publicArticles(runtime),
 		async listPrivateDrafts() {
-			const [drafts, archives] = await Promise.all([
+			const [drafts, archives, database] = await Promise.all([
 				kvDrafts(runtime),
 				r2Archives(runtime),
+				d1Drafts(runtime),
 			]);
-			return drafts.concat(archives);
+			return drafts.concat(archives, database);
 		},
 	};
 }
