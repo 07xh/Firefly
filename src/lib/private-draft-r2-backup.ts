@@ -160,13 +160,21 @@ export async function listPrivateR2Backups(
 		...(cursor ? { cursor } : {}),
 	});
 	if (!Array.isArray(result.objects) || typeof result.truncated !== "boolean") {
-		throw new PrivateBackupError("R2 备份列表格式异常，无法确认是否完整。", 503);
+		throw new PrivateBackupError(
+			"R2 备份列表格式异常，无法确认是否完整。",
+			503,
+		);
 	}
 	if (
 		result.truncated &&
-		(typeof result.cursor !== "string" || !result.cursor || result.cursor === cursor)
+		(typeof result.cursor !== "string" ||
+			!result.cursor ||
+			result.cursor === cursor)
 	) {
-		throw new PrivateBackupError("R2 备份分页缺少有效游标，已拒绝遗漏历史。", 503);
+		throw new PrivateBackupError(
+			"R2 备份分页缺少有效游标，已拒绝遗漏历史。",
+			503,
+		);
 	}
 	const items: Array<{ version: string; uploadedAt: string }> = [];
 	let invalidObjectCount = 0;
