@@ -2,6 +2,7 @@ import { env as workerEnv } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { assertImageNotReferenced } from "../../../lib/imgbed-reference-guard";
 import { createImgBedReferenceSources } from "../../../lib/imgbed-reference-sources";
+import { imgBedReleaseDenial } from "../../../lib/imgbed-release-policy";
 
 export const prerender = false;
 
@@ -198,17 +199,8 @@ function imageUrl(base: URL, path: string): string {
  * The legacy /api/admin/upload route remains unchanged.
  */
 function requireMediaStage(method: "GET" | "POST" | "DELETE"): Response | null {
-	const runtime = workerEnv as unknown as RuntimeEnv;
-	if (runtime.FIREFLY_IMGBED_ENABLED !== "true") {
-		return json({ error: "实验图片库尚未启用，原有 GitHub 图片上传不受影响。" }, 503);
-	}
-	if (method === "POST" && runtime.FIREFLY_IMGBED_UPLOAD_ENABLED !== "true") {
-		return json({ error: "实验图片库已开启浏览，但上传功能尚未通过验收。" }, 503);
-	}
-	if (method === "DELETE" && runtime.FIREFLY_IMGBED_DELETE_ENABLED !== "true") {
-		return json({ error: "图片删除尚未通过验收，已保护性禁止操作。" }, 503);
-	}
-	return null;
+	const message = imgBedReleaseDenial(workerEnv as unknown as RuntimeEnv, method);
+	return message ? json({ error: message }, 503) : null;
 }
 
 export const GET: APIRoute = async ({ url }) => {
