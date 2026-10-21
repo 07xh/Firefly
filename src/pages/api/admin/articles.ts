@@ -211,9 +211,20 @@ async function readPost(path: string, config: ReturnType<typeof getConfig>): Pro
 	return { path: file.path, sha: file.sha, content: file.encoding === "base64" ? decodeBase64(file.content) : file.content };
 }
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ url }) => {
 	try {
 		const config = getConfig();
+		const requestedPath = url.searchParams.get("path");
+		if (requestedPath !== null) {
+			if (
+				!requestedPath.startsWith(ROOT) ||
+				!/^src\/content\/posts\/(?:[\p{L}\p{N}_-]+\/)*[\p{L}\p{N}_-]+\.mdx?$/u.test(requestedPath)
+			) {
+				return json({ error: "文章路径不合法。" }, 400);
+			}
+			return json(await readPost(requestedPath, config));
+		}
+		const summariesOnly = url.searchParams.get("summary") === "1";
 		const files = await findPostFiles(config);
 		const posts = await Promise.all(files.map(async (file) => {
 			try {
@@ -223,7 +234,7 @@ export const GET: APIRoute = async () => {
 				return {
 					path: post.path,
 					sha: post.sha,
-					content: post.content,
+					...(summariesOnly ? {} : { content: post.content }),
 					title: (match?.[1] ?? match?.[2] ?? match?.[3] ?? file.path.split("/").pop() ?? "").trim(),
 					published: date?.[1] ?? "",
 					date: frontmatterText(post.content, "date"),
