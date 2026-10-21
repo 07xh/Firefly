@@ -168,7 +168,7 @@ function metadataFromRow(row: DraftRow) {
 		version: row.version,
 		updatedAt: row.updated_at,
 		title: row.title,
-		extension: row.extension,
+		extension: row.extension as "md" | "mdx",
 	};
 }
 
