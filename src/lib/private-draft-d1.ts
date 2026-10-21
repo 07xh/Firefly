@@ -105,10 +105,7 @@ function requireMetadata(
 		/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/,
 	);
 	if (!frontmatter || !/^draft:\s*true\s*(?:#.*)?$/m.test(frontmatter[1])) {
-		throw new PrivateDraftError(
-			"D1 草稿正文缺少私人标记，已阻止写入。",
-			400,
-		);
+		throw new PrivateDraftError("D1 草稿正文缺少私人标记，已阻止写入。", 400);
 	}
 	return metadata;
 }
