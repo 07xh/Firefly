@@ -234,3 +234,69 @@ test("conditional R2 upload never overwrites competing writer's content",async()
   );
   assert.equal(JSON.parse(r2.objects.get(key)).content,VALID+"-CONCURRENT");
 });
+
+test("R2 backup rejects non-ISO or impossible timestamps and invalid record version", async () => {
+	const r2 = mockR2();
+	const record = {
+		schema: 1,
+		slug: "secure",
+		version: "00000000-0000-4000-8000-000000000044",
+		extension: "mdx",
+		updatedAt: "2026-10-21T00:00:00Z",
+		content: VALID,
+	};
+	for (const changed of [
+		{ updatedAt: "yesterday" },
+		{ updatedAt: "2026-99-99T00:00:00Z" },
+		{ version: "invalid-version" },
+	]) {
+		await assert.rejects(
+			() => ensurePrivateR2Backup(r2, { ...record, ...changed }),
+			(error) => error instanceof PrivateBackupError && error.status === 500,
+		);
+		assert.equal(r2.objects.size, 0);
+	}
+});
+
+test("R2 backup rejects oversized object metadata without downloading contents", async () => {
+	let reads = 0;
+	const fake = {
+		async get() {
+			return { size: 1_200_001, async text() { reads++; return "{}"; } };
+		},
+	};
+	await assert.rejects(
+		() => getPrivateR2Backup(fake, "secure", "00000000-0000-4000-8000-000000000044"),
+		(error) => error instanceof PrivateBackupError && error.status === 500,
+	);
+	assert.equal(reads, 0);
+});
+
+test("R2 backup rejects oversized legacy objects and encoded JSON before writes", async () => {
+	const r2 = mockR2();
+	const record = {
+		schema: 1,
+		slug: "secure",
+		version: "00000000-0000-4000-8000-000000000044",
+		extension: "mdx",
+		updatedAt: "2026-10-21T00:00:00Z",
+		content: VALID,
+	};
+	const key = privateBackupKey(record.slug, record.version);
+	r2.objects.set(key, "x".repeat(1_200_001));
+	await assert.rejects(
+		() => getPrivateR2Backup(r2, record.slug, record.version),
+		(error) => error instanceof PrivateBackupError && error.status === 500,
+	);
+	await assert.rejects(
+		() => ensurePrivateR2Backup(r2, record),
+		(error) => error instanceof PrivateBackupError && error.status === 500,
+	);
+	assert.equal(r2.objects.get(key).length, 1_200_001);
+	r2.objects.delete(key);
+	await assert.rejects(
+		() => ensurePrivateR2Backup(r2, { ...record, content: VALID + "\\u0000".repeat(300_000) }),
+		(error) => error instanceof PrivateBackupError && error.status === 413,
+	);
+	assert.equal(r2.objects.size, 0);
+});
