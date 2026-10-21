@@ -55,7 +55,7 @@ test("Worker Previews use unchanged production top-level config with isolated bi
 });
 
 test("missing or incomplete private production manifest prevents preflight success", () => {
-	assert.match(violations(() => {}, undefined), /生产资源私有清单/);
+	assert.match(violations(() => {}, null), /生产资源私有清单/);
 	assert.match(violations(() => {}, ["some-resource"]), /生产资源私有清单/);
 	assert.match(violations(() => {}, ["a", "b", "c", "d"]), /覆盖会话 KV/);
 });
