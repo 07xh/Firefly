@@ -253,3 +253,118 @@ test("migration refuses an incomplete legacy KV history page and preserves both 
 	assert.equal(await destination.get("draft:v1:truncated-kv", "text"), null);
 	assert.equal((await getPrivateDraft(legacy, "truncated-kv")).version, original.version);
 });
+
+test("D1 rejects inconsistent indexed metadata and unmarked draft records without touching rows", async () => {
+	const db = mockD1();
+	const store = createD1PrivateDraftStore(db);
+	const version = crypto.randomUUID();
+	const record = {
+		schema: 1, slug: "metadata", version, extension: "mdx",
+		updatedAt: "2026-10-21T00:00:00.000Z", content: VALID,
+	};
+	const metadata = {
+		version, extension: "mdx", updatedAt: record.updatedAt, title: "原稿",
+	};
+	const cases = [
+		{ record: { ...record, extension: "md" }, metadata },
+		{ record, metadata: { ...metadata, extension: "md" } },
+		{ record: { ...record, updatedAt: "2026-10-20T00:00:00.000Z" }, metadata },
+		{ record, metadata: { ...metadata, updatedAt: "2026-10-22T00:00:00.000Z" } },
+		{ record: { ...record, schema: 2 }, metadata },
+		{ record: { ...record, content: VALID.replace("draft: true", "draft: false") }, metadata },
+		{ record: { ...record, content: VALID + "x".repeat(501_000) }, metadata },
+		{ record: { ...record, version: "not-a-uuid" }, metadata },
+		{ record, metadata: { ...metadata, version: crypto.randomUUID() } },
+	];
+	for (const [index, variation] of cases.entries()) {
+		const key = "draft:v1:metadata";
+		await assert.rejects(
+			() => store.put(key, JSON.stringify(variation.record), {
+				metadata: variation.metadata,
+				expectedVersion: null,
+			}),
+			(error) => error instanceof PrivateDraftError && error.status === 400,
+			"invalid current case " + index,
+		);
+		assert.equal(await store.get(key, "text"), null);
+		await assert.rejects(
+			() => store.put("draft-history:v1:metadata:" + version,
+				JSON.stringify(variation.record), { metadata: variation.metadata }),
+			(error) => error instanceof PrivateDraftError && error.status === 400,
+			"invalid history case " + index,
+		);
+		assert.equal(
+			await store.get("draft-history:v1:metadata:" + version, "text"),
+			null,
+		);
+	}
+});
+
+test("two simultaneously editing sessions cannot both overwrite the same D1 version", async () => {
+	const actual = createD1PrivateDraftStore(mockD1());
+	const backup = mockR2();
+	const initial = await savePrivateDraft(actual, {
+		slug: "race", content: VALID, extension: "mdx",
+	}, backup);
+	const original = await getPrivateDraft(actual, "race");
+	let reads = 0;
+	let releaseBoth;
+	const bothRead = new Promise((resolve) => { releaseBoth = resolve; });
+	const racingStore = {
+		...actual,
+		async get(key, type) {
+			const result = await actual.get(key, type);
+			if (key === "draft:v1:race") {
+				reads++;
+				if (reads === 2) releaseBoth();
+				await bothRead;
+			}
+			return result;
+		},
+	};
+	const outcomes = await Promise.allSettled([
+		savePrivateDraft(racingStore, {
+			slug: "race", content: VALID + "\nWRITER_A", extension: "mdx",
+			expectedVersion: initial.version,
+		}, backup),
+		savePrivateDraft(racingStore, {
+			slug: "race", content: VALID + "\nWRITER_B", extension: "mdx",
+			expectedVersion: initial.version,
+		}, backup),
+	]);
+	assert.equal(outcomes.filter((x) => x.status === "fulfilled").length, 1);
+	const failed = outcomes.find((x) => x.status === "rejected");
+	assert.ok(failed.reason instanceof PrivateDraftError);
+	assert.equal(failed.reason.status, 409);
+	const current = await getPrivateDraft(actual, "race");
+	assert.equal(current.extension, "mdx");
+	assert.notEqual(current.version, initial.version);
+	assert.ok([VALID + "\nWRITER_A", VALID + "\nWRITER_B"].includes(current.content));
+	assert.equal((await getPrivateDraftRevision(actual, "race", initial.version)).content, original.content);
+	assert.equal(backup.objects.get(privateBackupKey("race", initial.version)), JSON.stringify(original));
+	assert.equal(backup.objects.size, 3, "losing writer may leave an immutable R2 snapshot");
+});
+
+test("D1 outage after independent R2 backup leaves existing current MDX unchanged", async () => {
+	const actual = createD1PrivateDraftStore(mockD1());
+	const backup = mockR2();
+	const first = await savePrivateDraft(actual, { slug: "outage", content: VALID, extension: "mdx" }, backup);
+	const prior = await getPrivateDraft(actual, "outage");
+	const unavailableStore = {
+		...actual,
+		async put(key, value, options) {
+			if (key === "draft:v1:outage") throw new Error("simulated D1 outage");
+			return actual.put(key, value, options);
+		},
+	};
+	await assert.rejects(
+		() => savePrivateDraft(unavailableStore, {
+			slug: "outage", content: VALID + "\nUNSAVED_MD_X",
+			extension: "mdx", expectedVersion: first.version,
+		}, backup),
+		/simulated D1 outage/,
+	);
+	assert.deepEqual(await getPrivateDraft(actual, "outage"), prior);
+	assert.equal(backup.objects.get(privateBackupKey("outage", first.version)), JSON.stringify(prior));
+	assert.equal(backup.objects.size, 2, "new failed-at-CAS copy may remain in R2 for manual recovery");
+});
