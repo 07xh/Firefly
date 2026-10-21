@@ -214,3 +214,20 @@ test("migration refuses over-limit history instead of silently dropping old vers
 	assert.equal(await destination.get("draft:v1:longhistory","text"),null);
 	assert.equal((await getPrivateDraft(source,"longhistory")).version,current.version);
 });
+
+test("KV to D1 migration refuses malformed R2 filenames without changing the source", async () => {
+	const source = createD1PrivateDraftStore(mockD1());
+	const destination = createD1PrivateDraftStore(mockD1());
+	const backup = mockR2();
+	const original = await savePrivateDraft(source, { slug: "unknown-backup", content: VALID }, backup);
+	backup.objects.set(
+		"private-draft-backups/v1/unknown-backup/INVALID_REVISION.json",
+		"{}",
+	);
+	await assert.rejects(
+		() => copyPrivateDraftWithHistory(source, destination, backup, "unknown-backup", original.version),
+		(error) => error instanceof PrivateDraftError && error.status === 503,
+	);
+	assert.equal(await destination.get("draft:v1:unknown-backup", "text"), null);
+	assert.equal((await getPrivateDraft(source, "unknown-backup")).version, original.version);
+});
