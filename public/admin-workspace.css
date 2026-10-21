@@ -1,0 +1,158 @@
+/* Firefly backend workspace v2 – isolated from every visitor-facing page */
+body.admin-workspace {
+  --admin-accent: #147b4a;
+  --admin-forest: #163928;
+  --admin-text: #24372c;
+  --admin-line: #e0ebe3;
+  --admin-surface: #fff;
+  min-height: 100dvh;
+  color: var(--admin-text);
+  background: radial-gradient(ellipse 70% 28% at 35% 0%, #e8f4eb 0%, transparent 100%), #f5f8f5;
+}
+.admin-workspace *, .admin-workspace *::before, .admin-workspace *::after { box-sizing: border-box; }
+.admin-workspace :is(button, input, textarea, select, a, summary):focus-visible { outline: 3px solid #34a26c80; outline-offset: 2px; }
+.admin-workspace .admin-skip-link { position: fixed; top: -100px; left: 16px; z-index: 100; border-radius: 10px; padding: 12px 18px; color: #fff; background: var(--admin-forest); }
+.admin-workspace .admin-skip-link:focus { top: 12px; }
+.admin-workspace .admin-topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  min-height: 84px;
+  padding: 16px clamp(20px, 3vw, 48px);
+  background: #fffffff0;
+  border-bottom: 1px solid var(--admin-line);
+  box-shadow: 0 2px 20px #1a4b2708;
+}
+.admin-workspace .admin-topbar-brand { display: flex; gap: 13px; align-items: center; min-width: 0; }
+.admin-workspace .admin-brand-mark {
+  display: grid; place-items: center; flex: 0 0 43px; height: 43px;
+  border-radius: 14px; background: var(--admin-forest); color: #dcffe5;
+  font-size: 25px; box-shadow: 0 7px 20px #103c2530;
+}
+.admin-workspace .admin-topbar h1 { font-size: 20px; line-height: 1.3; font-weight: 780; letter-spacing: -.04em; margin: 0; color: #142f20; }
+.admin-workspace .admin-topbar h1 span { font-size: 14px; color: #678574; font-weight: 620; letter-spacing: 0; }
+.admin-workspace .admin-topbar-brand p { margin: 4px 0 0; font-size: 12px; color: #798b7f; }
+.admin-workspace .admin-header-actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: flex-end; }
+.admin-workspace .admin-site-link { padding: 10px 12px; color: var(--admin-accent); font-size: 13px; font-weight: 680; text-decoration: none; }
+.admin-workspace .admin-site-link:hover { color: #0d5030; text-decoration: underline; text-underline-offset: 4px; }
+.admin-workspace .btn { min-height: 39px; border-radius: 10px; transition: background .15s ease, border-color .15s ease, box-shadow .15s ease; }
+.admin-workspace .btn:hover:not(:disabled) { border-color: #afc9b9; background: #f4faf5; }
+.admin-workspace .btn.primary, .admin-workspace #publish { background: #147b4a; border-color: #147b4a; color: #fff; }
+.admin-workspace .btn.primary:hover:not(:disabled), .admin-workspace #publish:hover:not(:disabled) { background: #0f643b; border-color: #0f643b; }
+.admin-workspace .btn.danger:hover:not(:disabled) { background: #fff1f0; border-color: #e8aca6; color: #a52117; }
+.admin-workspace .wrap { max-width: 1550px; width: 100%; margin: 0 auto 40px; padding: 24px clamp(16px, 2.5vw, 38px) 48px; min-width: 0; }
+.admin-workspace #articlesTabPanel[hidden], .admin-workspace #appearanceTabPanel[hidden], .admin-workspace #aiProvidersTabPanel[hidden] { display: none !important; }
+.admin-workspace .articles-grid { grid-template-columns: minmax(268px, 302px) minmax(0, 1fr); gap: 20px; align-items: start; }
+.admin-workspace .articles-grid > section, .admin-workspace .settings-card {
+  min-width: 0; border: 1px solid var(--admin-line); border-radius: 18px;
+  background: var(--admin-surface); box-shadow: 0 3px 18px #193c2409;
+}
+.admin-workspace .admin-article-sidebar { padding: 19px !important; }
+.admin-workspace .admin-article-sidebar h2 { color: #173b28; font-weight: 760; letter-spacing: -.02em; }
+.admin-workspace .admin-article-sidebar :is(#search, #statusFilter, #categoryFilter) {
+  min-height: 42px; background: #fcfefc; border-color: #dfebe1; border-radius: 10px;
+}
+.admin-workspace #new { min-height: 44px; border-radius: 11px; background: #147b4a; box-shadow: 0 5px 13px #147b4a22; }
+.admin-workspace #new:hover { background: #0d6239; }
+.admin-workspace #list { max-height: min(65vh, 720px); padding: 3px 4px 4px 1px; scrollbar-width: thin; scrollbar-color: #c5d8ca transparent; }
+.admin-workspace #list > .group { margin: 3px 0 6px; border-radius: 12px; border-left-width: 3px; border-top: 1px solid #edf2ee; border-right: 1px solid #edf2ee; border-bottom: 1px solid #edf2ee; overflow: hidden; }
+.admin-workspace #list > .group:hover { background: #f2f8f3; }
+.admin-workspace #list > .group.border-emerald-500 { border-color: #64ba88; background: #edf8f0; }
+.admin-workspace #list .group button { min-width: 0; }
+.admin-workspace .admin-editor-panel { padding: clamp(18px, 2vw, 29px) !important; }
+.admin-workspace #formTitle { font-size: 20px; font-weight: 780; letter-spacing: -.02em; line-height: 1.5; color: #183b29; margin: 0 0 21px; padding-bottom: 13px; border-bottom: 1px solid #ebf0ec; }
+.admin-workspace #aiWriterPanel { border-radius: 14px; }
+.admin-workspace .field { min-width: 0; }
+.admin-workspace .field :is(input, select, textarea):not([type="checkbox"]):not([type="file"]) { max-width: 100%; border-color: #dce7de; border-radius: 10px; }
+.admin-workspace .field :is(input, select, textarea):not([type="checkbox"]):focus { border-color: #40976a; outline: 3px solid #4aab7426; outline-offset: 0; }
+.admin-workspace .editor-tabs { gap: 7px; flex-wrap: wrap; }
+.admin-workspace .editor-tabs .btn { min-height: 41px; border-radius: 11px; }
+.admin-workspace .editor-reading-controls { border-radius: 12px; }
+.admin-workspace .rich-editor-shell { min-width: 0; border-radius: 14px; overflow: hidden; }
+.admin-workspace .rich-editor-toolbar { gap: 6px; padding: 10px; }
+.admin-workspace .rich-editor-toolbar button { border-radius: 8px; }
+.admin-workspace .rich-editor-canvas { min-height: 440px; }
+.admin-workspace .markdown-preview { min-height: 440px; border-radius: 13px; }
+.admin-workspace .actions { position: sticky; bottom: 10px; z-index: 15; gap: 10px; padding: 13px; margin-top: 20px; border: 1px solid #d5e5d9; border-radius: 14px; background: #ffffffee; box-shadow: 0 -4px 22px #1b4c2918; backdrop-filter: blur(12px); }
+.admin-workspace .actions .btn { min-height: 42px; }
+.admin-workspace .settings-panel { max-width: 1160px; width: 100%; }
+.admin-workspace .settings-card { padding: clamp(17px, 2.4vw, 26px); }
+.admin-workspace .settings-card-heading h3 { font-size: 16px; }
+.admin-workspace .settings-card-number { background: #e4f4e9; color: #147b4a; }
+.admin-workspace .settings-save-row { background: #fffffff2; border-color: #d5e4d9; }
+.admin-workspace .ai-provider-card { border-radius: 13px; }
+.admin-workspace .admin-navigation { min-width: 0; }
+.admin-workspace .admin-navigation-heading { display: none; }
+.admin-workspace .admin-navigation-footnote { display: none; }
+
+/* Wide monitors: persistent task navigation with a generous writing surface. */
+@media (min-width: 1300px) {
+  body.admin-workspace { display: grid; grid-template-columns: 226px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+  .admin-workspace .admin-topbar { grid-column: 1 / -1; grid-row: 1; }
+  .admin-workspace .admin-navigation {
+    grid-column: 1; grid-row: 2; position: sticky; top: 18px;
+    display: flex; flex-direction: column; min-height: min(520px, calc(100dvh - 36px));
+    margin: 18px 0 20px 18px; padding: 24px 12px 18px;
+    background: #193b2b; border: 1px solid #27523a; border-radius: 22px;
+    box-shadow: 0 12px 30px #113c2b18; color: #f5fff7;
+  }
+  .admin-workspace .admin-navigation-heading { display: flex; flex-direction: column; gap: 5px; padding: 0 12px 22px; }
+  .admin-workspace .admin-navigation-heading span { font-size: 17px; font-weight: 780; }
+  .admin-workspace .admin-navigation-heading small { font-size: 10px; letter-spacing: .12em; color: #9ac6aa; }
+  .admin-workspace .admin-navigation-footnote { display: block; margin: auto 10px 0; padding: 18px 3px 0; border-top: 1px solid #ffffff23; font-size: 11px; line-height: 1.8; color: #b4cdbd; }
+  .admin-workspace .admin-tabs { display: flex; flex-direction: column; align-items: stretch; max-width: none; width: 100%; padding: 0; margin: 0; border: 0; gap: 7px; }
+  .admin-workspace .admin-tab { width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid transparent; border-radius: 12px; text-align: left; font-size: 13px; font-weight: 630; background: transparent; color: #cbdfd1; }
+  .admin-workspace .admin-tab:hover { background: #ffffff15; color: white; border-color: #ffffff15; }
+  .admin-workspace .admin-tab[aria-selected="true"] { background: #e7f8ec; color: #15492f; border-color: #d1edd8; font-weight: 760; box-shadow: 0 4px 13px #0a26141c; }
+  .admin-workspace .wrap { grid-column: 2; grid-row: 2; padding-top: 20px; }
+}
+
+/* Laptops and tablets: a clear horizontal navigation and wider content. */
+@media (max-width: 1299px) {
+  .admin-workspace .admin-navigation { position: sticky; top: 0; z-index: 35; background: #f5f8f5ed; border-bottom: 1px solid var(--admin-line); backdrop-filter: blur(14px); }
+  .admin-workspace .admin-tabs { max-width: 1180px; display: flex; gap: 8px; margin: 0 auto; padding: 11px 20px; border: none; }
+  .admin-workspace .admin-tab { min-height: 44px; padding: 10px 16px; border: 1px solid transparent; border-radius: 11px; white-space: nowrap; font-size: 13px; font-weight: 650; color: #5a7160; }
+  .admin-workspace .admin-tab:hover { background: #eaf5ec; }
+  .admin-workspace .admin-tab[aria-selected="true"] { border-color: #bedfc8; background: #fff; color: #146f45; box-shadow: 0 2px 10px #17482b10; }
+  .admin-workspace .wrap { max-width: 1200px; }
+}
+@media (max-width: 920px) {
+  .admin-workspace .articles-grid { grid-template-columns: minmax(0, 1fr); }
+  .admin-workspace .admin-article-sidebar { padding: 18px !important; }
+  .admin-workspace #list { max-height: 260px; }
+  .admin-workspace .rich-editor-canvas, .admin-workspace .markdown-preview { min-height: 370px; }
+}
+@media (max-width: 640px) {
+  .admin-workspace .admin-topbar { gap: 10px; min-height: 66px; padding: 11px 13px; }
+  .admin-workspace .admin-brand-mark { height: 37px; flex-basis: 37px; border-radius: 11px; font-size: 21px; }
+  .admin-workspace .admin-topbar-brand { gap: 9px; }
+  .admin-workspace .admin-topbar h1 { font-size: 16px; }
+  .admin-workspace .admin-topbar h1 span { font-size: 12px; }
+  .admin-workspace .admin-topbar-brand p { display: none; }
+  .admin-workspace .admin-header-actions { gap: 3px; }
+  .admin-workspace .admin-header-actions .btn { min-height: 37px; padding: 7px 9px; font-size: 12px; }
+  .admin-workspace .admin-site-link { padding: 7px 5px; font-size: 12px; }
+  .admin-workspace .admin-tabs { width: 100%; gap: 5px; overflow-x: auto; padding: 8px 12px; scrollbar-width: thin; }
+  .admin-workspace .admin-tab { flex: 0 0 auto; min-height: 42px; padding: 9px 11px; font-size: 12px; }
+  .admin-workspace .wrap { padding: 12px 12px 68px; margin: 0 auto; }
+  .admin-workspace .articles-grid { gap: 12px; }
+  .admin-workspace .articles-grid > section { border-radius: 15px; }
+  .admin-workspace .admin-article-sidebar, .admin-workspace .admin-editor-panel { padding: 15px !important; }
+  .admin-workspace #formTitle { font-size: 18px; margin-bottom: 16px; padding-bottom: 10px; }
+  .admin-workspace #list { max-height: 222px; }
+  .admin-workspace .grid, .admin-workspace .settings-grid, .admin-workspace .settings-switch-grid { grid-template-columns: minmax(0, 1fr); }
+  .admin-workspace .editor-tabs { gap: 6px; }
+  .admin-workspace .editor-tabs .btn { flex: 1 1 auto; min-width: 0; padding: 8px 7px; font-size: 12px; }
+  .admin-workspace .rich-editor-toolbar { max-height: 220px; overflow-y: auto; }
+  .admin-workspace .rich-editor-canvas, .admin-workspace .markdown-preview { min-height: 310px; }
+  .admin-workspace .actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 10px; bottom: max(6px, env(safe-area-inset-bottom)); }
+  .admin-workspace .actions .btn { min-width: 0; width: 100%; padding: 9px 5px; font-size: 12px; }
+  .admin-workspace #publish { grid-column: 1 / -1; grid-row: 1; }
+  .admin-workspace .settings-panel { padding: 0; }
+  .admin-workspace .settings-card { padding: 15px; border-radius: 15px; }
+  .admin-workspace .settings-save-row { bottom: max(6px, env(safe-area-inset-bottom)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-workspace .btn { transition: none; }
+}
