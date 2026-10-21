@@ -233,3 +233,64 @@ test("revision cursor pagination is independent from live draft pagination",asyn
 	assert.equal(second.items.length,5);
 	assert.equal(second.cursor,null);
 });
+
+test("history listing with a missing, stale, or malformed cursor cannot be treated as complete", async () => {
+	const store = mockKV();
+	for (const cursor of [undefined, "", "BAD CURSOR"]) {
+		store.list = async () => ({
+			keys: [],
+			list_complete: false,
+			cursor,
+		});
+		await rejectsStatus(() => listPrivateDraftRevisions(store, "incomplete"), 503);
+		await rejectsStatus(() => listPrivateDrafts(store), 503);
+	}
+	store.list = async () => ({
+		keys: [],
+		list_complete: false,
+		cursor: "same",
+	});
+	await rejectsStatus(() => listPrivateDraftRevisions(store, "incomplete", "same"), 503);
+	await rejectsStatus(() => listPrivateDrafts(store, "same"), 503);
+});
+
+test("history listing rejects invalid, duplicate, or inconsistent revision keys", async () => {
+	const store = mockKV();
+	const validVersion = "00000000-0000-4000-8000-000000000003";
+	const good = "draft-history:v1:safe:" + validVersion;
+	for (const keys of [
+		[{ name: "draft-history:v1:safe:not-a-version" }],
+		[{ name: "draft-history:v1:other:" + validVersion }],
+		[{ name: good }, { name: good }],
+		[{ name: good, metadata: { version: "not-the-listed-version" } }],
+		[{ name: undefined }],
+	]) {
+		store.list = async () => ({ keys, list_complete: true });
+		await rejectsStatus(() => listPrivateDraftRevisions(store, "safe"), 503);
+	}
+});
+
+test("live draft listing rejects malformed keys instead of silently omitting them", async () => {
+	const store = mockKV();
+	for (const keys of [
+		[{ name: "draft:v1:../escape" }],
+		[{ name: "unexpected-namespace:secret" }],
+		[{ name: "draft:v1:safe" }, { name: "draft:v1:safe" }],
+	]) {
+		store.list = async () => ({ keys, list_complete: true });
+		await rejectsStatus(() => listPrivateDrafts(store), 503);
+	}
+});
+
+test("malformed KV response never passes as an empty, complete version history", async () => {
+	const store = mockKV();
+	for (const response of [
+		{ keys: [], list_complete: undefined },
+		{ keys: null, list_complete: true },
+		{ list_complete: true },
+	]) {
+		store.list = async () => response;
+		await rejectsStatus(() => listPrivateDraftRevisions(store, "bad-response"), 503);
+		await rejectsStatus(() => listPrivateDrafts(store), 503);
+	}
+});
