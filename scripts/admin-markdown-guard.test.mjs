@@ -286,3 +286,62 @@ test("可视化同步与正式导出都使用严格模式，失败时返回源�
   assert.ok(editor.includes("restoreProtectedMarkdownStrict(editor.getMarkdown(), records, requiredProtectedMarkers)"));
   assert.ok(editor.includes('reportVisualLoadFailure(error);\n      setMode("source");'));
 });
+
+test("opening a visual editor never rewrites or strips MDX imports implicitly", async () => {
+  const { readFileSync } = await import("node:fs");
+  const code = readFileSync(new URL("../public/admin-wysiwyg.js", import.meta.url), "utf8");
+  const start = code.indexOf("function loadSourceIntoEditor()");
+  const end = code.indexOf("function ensureImagePreviewTriggerStyles()", start);
+  assert.ok(start > 0 && end > start);
+  const loader = code.slice(start, end);
+  assert.ok(loader.includes("prepareMarkdownForVisualEditing(split.body)"));
+  assert.doesNotMatch(loader, /stripGlobalComponentImports\(/);
+  assert.doesNotMatch(loader, /sourceField\.value\s*=/);
+});
+
+test("complex MDX source blocks stay intact when normal prose changes", () => {
+  const components = [
+    "import { Steps } from 'firefly-mdx'",
+    "",
+    "<Steps>",
+    '  <StepItem title="第一步">原版作图顺序</StepItem>',
+    "</Steps>",
+    "",
+    "$$",
+    "x^2+y^2=r^2",
+    "$$",
+  ].join("\n");
+  const source = "教材说明。\n\n" + components + "\n\n结束。";
+  const prepared = prepareMarkdownForVisualEditing(source);
+  const required = prepared.records.map(item => item.marker);
+  assert.ok(required.length > 0);
+  assert.equal(restoreProtectedMarkdownStrict(prepared.markdown, prepared.records, required), source);
+  const edited = prepared.markdown.replace("教材说明。", "教材新说明。");
+  const restored = restoreProtectedMarkdownStrict(edited, prepared.records, required);
+  assert.ok(restored.includes(components));
+  assert.ok(restored.includes("教材新说明。"));
+});
+
+test("MDX protection rejects loss of nested components or double marker injection", () => {
+  const source = [
+    "引言",
+    "",
+    "<TabGroup labels={['语法']}>",
+    "  <Steps><StepItem title={item.name}>复杂组件</StepItem></Steps>",
+    "</TabGroup>",
+    "",
+    "后记",
+  ].join("\n");
+  const prepared = prepareMarkdownForVisualEditing(source);
+  const required = prepared.records.map(item => item.marker);
+  assert.ok(required.length > 0);
+  const [first] = required;
+  assert.throws(
+    () => restoreProtectedMarkdownStrict(prepared.markdown.replace(first, ""), prepared.records, required),
+    /丢失|消失/,
+  );
+  assert.throws(
+    () => restoreProtectedMarkdownStrict(prepared.markdown + "\n" + first, prepared.records, required),
+    /丢失或重复/,
+  );
+});
