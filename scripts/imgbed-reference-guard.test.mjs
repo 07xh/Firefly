@@ -90,12 +90,24 @@ test("GitHub source reads source bytes and identifies public Markdown references
 	}
 });
 
-test("protected delete route calls reference scanner before upstream delete", () => {
-	const source=readFileSync(new URL("../src/pages/api/admin/upload.ts",import.meta.url),"utf8");
-	const checker=source.indexOf("await assertImageNotReferenced(");
-	const remove=source.indexOf("const deleteResponse = await upstream(");
-	assert.ok(checker>0 && remove>checker);
-	assert.ok(source.includes("message.includes(\"仍被文章或草稿引用\") ? 409 : 503"));
+test("protected ImgBed delete route checks stage and references before upstream deletion", () => {
+	// The legacy upload.ts route uploads to GitHub and does not handle ImgBed deletion.
+	const source = readFileSync(
+		new URL("../src/pages/api/admin/imgbed.ts", import.meta.url),
+		"utf8",
+	);
+	const route = source.slice(source.indexOf("export const DELETE:"));
+	assert.ok(route.startsWith("export const DELETE:"));
+	const stage = route.indexOf('requireMediaStage("DELETE")');
+	const checker = route.indexOf("await assertImageNotReferenced(");
+	const remove = route.indexOf("const deleteResponse = await upstream(");
+	assert.ok(stage >= 0, "deletion must be gated by its own server-side flag");
+	assert.ok(checker > stage, "reference scan must run after the release gate");
+	assert.ok(remove > checker, "upstream delete must run only after reference scan");
+	assert.ok(
+		route.includes('message.includes("仍被文章或草稿引用") ? 409 : 503'),
+		"unverified references must block deletion",
+	);
 });
 
 function d1ImageTestDatabase() {
