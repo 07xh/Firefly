@@ -1,4 +1,4 @@
-import { prepareMarkdownForVisualEditing, restoreProtectedMarkdown } from "/admin-markdown-guard.js?v=20261018-badge-node";
+import { prepareMarkdownForVisualEditing, restoreProtectedMarkdownStrict } from "/admin-markdown-guard.js?v=20261021-strict-integrity";
 import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261018-details-editor";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
@@ -60,6 +60,7 @@ async function loadTiptapModules() {
   const allowedImageTypes = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
   let editor = null;
   let frontmatterPrefix = "";
+  let requiredProtectedMarkers = [];
   let loadingSource = false;
   let visualLoadFailed = false;
   let pendingUploads = 0;
@@ -2200,38 +2201,43 @@ async function loadTiptapModules() {
         records.push({ marker: node.attrs.marker, raw: node.attrs.raw });
       }
     });
-    const restored = restoreProtectedMarkdown(markdown, records);
-    sourceField.value = frontmatterPrefix + restored + (restored && !restored.endsWith("\n") ? "\n" : "");
-    sourceField.dispatchEvent(new Event("input", { bubbles: true }));
+    try {
+      const restored = restoreProtectedMarkdownStrict(markdown, records, requiredProtectedMarkers);
+      sourceField.value = frontmatterPrefix + restored + (restored && !restored.endsWith("\n") ? "\n" : "");
+      sourceField.dispatchEvent(new Event("input", { bubbles: true }));
+    } catch (error) {
+      // Keep the last proven-good source in the textarea. Do NOT synchronize
+      // a partial serialization that dropped an opaque Markdown/MDX block.
+      reportVisualLoadFailure(error);
+      setMode("source");
+    }
   }
 
   function loadSourceIntoEditor() {
     if (!editor) return false;
     const current = sourceField.value || "";
     const split = splitFrontmatter(current);
-    const migrated = stripGlobalComponentImports(split.body);
-    const sourceBody = migrated.removed ? migrated.source : split.body;
-    if (migrated.removed) {
-      sourceField.value = split.prefix + sourceBody;
-      sourceField.dispatchEvent(new Event("input", { bubbles: true }));
-    }
-    const prepared = prepareMarkdownForVisualEditing(sourceBody);
+    // Opening a visual editor is a READ operation. Never silently delete
+    // imports or normalize the original Markdown/MDX before any user edit.
+    // Redundant imports may be removed only by an explicit, reversible action.
+    const prepared = prepareMarkdownForVisualEditing(split.body);
     frontmatterPrefix = split.prefix;
     loadingSource = true;
     try {
       editor.commands.setContent(prepared.markdown, { contentType: "markdown", emitUpdate: false });
       replaceProtectedMarkerParagraphs(editor, prepared.records);
+      const loadedNodes = [];
+      editor.state.doc.descendants(node => {
+        if (node.type.name === "protectedMarkdownBlock") {
+          loadedNodes.push({ marker: node.attrs.marker, raw: node.attrs.raw });
+        }
+      });
+      const expected = prepared.records.map(record => record.marker);
+      restoreProtectedMarkdownStrict(editor.getMarkdown(), loadedNodes, expected);
+      requiredProtectedMarkers = expected;
       lastLoadedSource = sourceField.value || current;
       reportProtected(prepared.records);
-      if (migrated.removed) {
-        status("已从本次编辑稿移除 " + migrated.removed + " 条冗余 firefly-mdx import；保存文章后即可将清理结果写入 GitHub。");
-        if (notice) {
-          notice.hidden = false;
-          notice.textContent = (notice.textContent ? notice.textContent + " " : "")
-            + "已自动移除 " + migrated.removed + " 条冗余的 firefly-mdx 组件 import；保存后写入 GitHub。";
-          notice.setAttribute("role", "status");
-        }
-      }
+
       return true;
     } catch (error) {
       reportVisualLoadFailure(error);
@@ -2780,7 +2786,7 @@ async function loadTiptapModules() {
         editor.state.doc.descendants(node => {
           if (node.type.name === "protectedMarkdownBlock") records.push({ marker: node.attrs.marker, raw: node.attrs.raw });
         });
-        return restoreProtectedMarkdown(editor.getMarkdown(), records);
+        return restoreProtectedMarkdownStrict(editor.getMarkdown(), records, requiredProtectedMarkers);
       },
       destroy: () => editor?.destroy(),
     };
