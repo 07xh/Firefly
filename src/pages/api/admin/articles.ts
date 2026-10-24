@@ -1,6 +1,7 @@
 import { env as workerEnv } from "cloudflare:workers";
 
 import type { APIRoute } from "astro";
+import { mapWithConcurrency } from "../../../lib/admin-article-batch";
 
 type RuntimeEnv = {
 	FIREFLY_CONTENTS_TOKEN?: string;
@@ -214,26 +215,24 @@ export const GET: APIRoute = async () => {
 	try {
 		const config = getConfig();
 		const files = await findPostFiles(config);
-		const posts = await Promise.all(files.map(async (file) => {
-			try {
-				const post = await readPost(file.path, config);
-				const match = post.content.match(/^title:\s*(?:"([^"]*)"|'([^']*)'|(.+))\s*$/m);
-				const date = post.content.match(/^published:\s*(\d{4}-\d{2}-\d{2})\s*$/m);
-				return {
-					path: post.path,
-					sha: post.sha,
-					content: post.content,
-					title: (match?.[1] ?? match?.[2] ?? match?.[3] ?? file.path.split("/").pop() ?? "").trim(),
-					published: date?.[1] ?? "",
-					date: frontmatterText(post.content, "date"),
-					category: frontmatterText(post.content, "category"),
-					tags: frontmatterTags(post.content),
-					draft: /^draft:\s*true\s*$/m.test(post.content),
-				};
-			} catch {
-				return { path: file.path, sha: file.sha, title: file.path.split("/").pop() ?? file.path, published: "", draft: false };
-			}
-		}));
+		// Bound parallel GitHub requests; preserve list order and fail closed if a
+		// source read fails rather than presenting a broken entry as "published".
+		const posts = await mapWithConcurrency(files, 6, async (file) => {
+			const post = await readPost(file.path, config);
+			const match = post.content.match(/^title:\s*(?:"([^"]*)"|'([^']*)'|(.+))\s*$/m);
+			const date = post.content.match(/^published:\s*(\d{4}-\d{2}-\d{2})\s*$/m);
+			return {
+				path: post.path,
+				sha: post.sha,
+				content: post.content,
+				title: (match?.[1] ?? match?.[2] ?? match?.[3] ?? file.path.split("/").pop() ?? "").trim(),
+				published: date?.[1] ?? "",
+				date: frontmatterText(post.content, "date"),
+				category: frontmatterText(post.content, "category"),
+				tags: frontmatterTags(post.content),
+				draft: /^draft:\s*true\s*$/m.test(post.content),
+			};
+		});
 		return json(posts.sort((a, b) => b.published.localeCompare(a.published)));
 	} catch (error) {
 		return json({ error: error instanceof Error ? error.message : "Internal error" }, 503);
