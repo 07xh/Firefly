@@ -1,0 +1,29 @@
+name: Firefly admin-only change scope
+
+on:
+  pull_request:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  protect-public-site:
+    if: startsWith(github.head_ref, 'firefly-admin/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout proposed changes and complete history
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Test path allowlist
+        run: node --test scripts/guard-admin-only-changes.test.mjs
+      - name: Enforce backend-only scope, including all renames and deletions
+        run: node scripts/guard-admin-only-changes.mjs
+        env:
+          ADMIN_SCOPE_BASE: ${{ github.event.pull_request.base.sha }}
