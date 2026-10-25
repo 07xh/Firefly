@@ -11,9 +11,12 @@ const KEYS: Record<SidebarSide, string> = {
 	right: "firefly:sidebar:right:v1",
 };
 const DEFAULTS: SidebarCollapseState = { left: "collapsed", right: "expanded" };
+// 存储被禁用时，当前标签页仍可在内存中保持收缩状态。
+const transient: Partial<SidebarCollapseState> = {};
 
 export function getSidebarCollapseState(): SidebarCollapseState {
 	const read = (side: SidebarSide): SidebarDisplayState => {
+		if (transient[side]) return transient[side];
 		try {
 			const value = localStorage.getItem(KEYS[side]);
 			return value === "collapsed" || value === "expanded" ? value : DEFAULTS[side];
@@ -50,6 +53,7 @@ export function initSidebarCollapse(onChange: () => void): void {
 		if (side !== "left" && side !== "right") return;
 		const current = getSidebarCollapseState();
 		const next = current[side] === "expanded" ? "collapsed" : "expanded";
+		transient[side] = next;
 		try {
 			localStorage.setItem(KEYS[side], next);
 		} catch {
@@ -66,6 +70,11 @@ export function initSidebarCollapse(onChange: () => void): void {
 		onChange();
 	});
 	window.addEventListener("storage", (event) => {
-		if (event.key === null || Object.values(KEYS).includes(event.key)) onChange();
+		if (event.key === null || Object.values(KEYS).includes(event.key)) {
+			// 其它标签页是最新来源，不能让当前标签页内存覆盖它。
+			delete transient.left;
+			delete transient.right;
+			onChange();
+		}
 	});
 }
