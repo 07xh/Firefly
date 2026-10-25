@@ -1,3 +1,4 @@
+import "./admin-article-media-library.test.mjs";
 import "./admin-editor-commands.test.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

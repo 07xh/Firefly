@@ -817,7 +817,8 @@ export const prerender = false;
     <section class="admin-dashboard-card"><h3>在编辑器中上传图片</h3><p>当前可视化编辑器支持图片上传、粘贴和拖入。上传后会自动插入文章正文。</p><button type="button" class="admin-shortcut admin-shortcut-primary" data-admin-go="editor">打开编辑工作台 ↗</button></section>
     <section class="admin-dashboard-card"><h3>独立图床</h3><p>你现有的图床服务仍通过独立网站管理。这里暂不显示未经接入验证的图片库。</p><a class="admin-shortcut" href="https://tu.0701000.xyz/login" target="_blank" rel="noopener noreferrer">打开独立图床 ↗</a></section>
   </div>
-  <p class="admin-utility-note">图床图片库的搜索、删除和后台直连仍需单独验收；此页不会擅自操作图片。</p>
+  <section id="adminMediaLibrary" aria-label="文章图片引用库"></section>
+  <p class="admin-utility-note">文章引用图片库只扫描已引用图片；图床图片库的搜索、删除和后台直连仍需单独验收，此页不会擅自操作图床文件。</p>
 </section>
 <section id="systemTabPanel" class="admin-utility-page" role="tabpanel" aria-labelledby="tabSystem" hidden>
   <div class="admin-overview-heading"><div><p class="admin-overline">SYSTEM CENTER</p><h2>安全与系统</h2><p>查看部署、身份保护与运行诊断入口。</p></div></div>
@@ -2073,4 +2074,4 @@ if (initialCmsView === "new") { reset(); setAdminTab("editor"); }
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=20261026-safe-dialogs"></script><script type="module" src="/admin-pagescms-workspace.js?v=20261026-01"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=20261026-safe-dialogs"></script><script type="module" src="/admin-pagescms-workspace.js?v=20261026-cover-preview"></script><script type="module" src="/admin-article-media-library.js?v=20261026-article-gallery"></script></body></html>
