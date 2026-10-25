@@ -94,6 +94,7 @@
     {
       "includes": [
         "src/pages/api/admin/articles.ts",
+        "src/pages/api/admin/dynamics.ts",
         "src/pages/api/admin/preview.ts",
         "src/pages/api/admin/deployment-status.ts",
         "src/pages/api/admin/github-check.ts",
