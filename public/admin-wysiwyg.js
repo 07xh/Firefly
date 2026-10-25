@@ -1,5 +1,5 @@
 import { prepareMarkdownForVisualEditing, restoreProtectedMarkdownStrict } from "/admin-markdown-guard.js?v=20261021-strict-integrity";
-import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261018-details-editor";
+import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, moveEditableTab, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261018-details-editor";
 import { filterSlashItems, SLASH_ITEMS, validateImageSource } from "/admin-editor-commands.js?v=20261026-visual";
 import { parseEditableMath, serializeEditableMath } from "/admin-math-editor.js?v=20261026-1";
 
@@ -1280,7 +1280,25 @@ async function loadTiptapModules() {
           values.splice(index, 1);
           renderRows(values);
         });
-        cardHead.append(number, remove);
+        const up = makeButton("上移");
+        const down = makeButton("下移");
+        up.setAttribute("aria-label", "将第 " + (index + 1) + " 个标签页上移");
+        down.setAttribute("aria-label", "将第 " + (index + 1) + " 个标签页下移");
+        up.disabled = index === 0;
+        down.disabled = index === items.length - 1;
+        const reorder = offset => {
+          error.hidden = true;
+          try {
+            const changed = moveEditableTab(getValues(), index, index + offset);
+            renderRows(changed);
+            rowRefs[index + offset]?.title?.input.focus();
+          } catch (exception) {
+            showError(exception instanceof Error ? exception.message : "无法调整标签页顺序");
+          }
+        };
+        up.addEventListener("click", () => reorder(-1));
+        down.addEventListener("click", () => reorder(1));
+        cardHead.append(number, up, down, remove);
         const fields = document.createElement("div");
         fields.className = "firefly-structured-editor__fields";
         const titleField = makeField("标签名称", item.title, "title", { maxLength: 80, placeholder: "例如 JavaScript 示例" });

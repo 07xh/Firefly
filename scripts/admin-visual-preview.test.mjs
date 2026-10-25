@@ -1,8 +1,9 @@
 import "./admin-math-editor.test.mjs";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import test from "node:test";
 
-import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "../public/admin-visual-preview.js";
+import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, moveEditableTab, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "../public/admin-visual-preview.js";
 
 test("Firefly Badge component renders as a safe visual preview model", () => {
   const model = inspectProtectedMarkdown('前言 <Badge type="tip">新功能</Badge> 后记', "MDX component");
@@ -341,4 +342,42 @@ test("details serializer validates title and body to protect Markdown/MDX", () =
   assert.throws(() => serializeEditableDetails({ title: "", body: "普通文字" }), /标题不能为空/);
   assert.throws(() => serializeEditableDetails({ title: "标题", body: "**加粗**" }), /纯文本/);
   assert.throws(() => serializeEditableDetails({ title: "标题", body: ":::tip nested" }), /纯文本/);
+});
+
+
+test("visual TabGroup reorder preserves exact code, labels and source order without mutation", () => {
+  const source = [
+    { title: "A", language: "js", text: "console.log('A');" },
+    { title: "B", language: "python", text: "print('B')\n\n# \x60\x60\x60 MDX inside code" },
+    { title: "C", language: "md", text: "# Heading" },
+  ];
+  const moved = moveEditableTab(source, 0, 2);
+  assert.deepEqual(moved.map(x=>x.title),["B","C","A"]);
+  assert.deepEqual(source.map(x=>x.title),["A","B","C"]);
+  assert.equal(moved[0].text,source[1].text);
+  assert.equal(moved[2].text,source[0].text);
+  const serialized=serializeEditableTabGroup({kind:"tabs"},moved);
+  const parsed=inspectProtectedMarkdown(serialized,"MDX component");
+  assert.equal(parsed.kind,"tabs");
+  assert.equal(parsed.editable,true);
+  assert.deepEqual(parsed.items.map(x=>x.title),["B","C","A"]);
+  assert.equal(parsed.items[0].text,source[1].text);
+});
+
+test("reordering a single tab is inert and invalid indices are rejected", () => {
+  const single=[{title:"单页",language:"js",text:"const a=1;"}];
+  assert.deepEqual(moveEditableTab(single,0,0),single);
+  assert.notStrictEqual(moveEditableTab(single,0,0),single);
+  assert.throws(()=>moveEditableTab(single,0,1),/位置无效/);
+  assert.throws(()=>moveEditableTab(single,NaN,0),/位置无效/);
+  assert.throws(()=>moveEditableTab([],0,0),/位置无效/);
+  assert.throws(()=>moveEditableTab(single,0,-1),/位置无效/);
+});
+
+test("TabGroup reorder UI uses the one existing protected-component serializer", () => {
+  const fs = readFileSync(new URL("../public/admin-wysiwyg.js", import.meta.url),"utf8");
+  assert.match(fs,/moveEditableTab\(getValues\(\), index, index \+ offset\)/);
+  assert.match(fs,/renderRows\(changed\)/);
+  assert.match(fs,/rowRefs\[index \+ offset\]\?\.title\?\.input\.focus\(\)/);
+  assert.match(fs,/serializeEditableTabGroup\(model, getValues\(\)\)/);
 });
