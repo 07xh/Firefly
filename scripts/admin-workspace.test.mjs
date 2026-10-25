@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 const root = new URL("../", import.meta.url);
 const page = readFileSync(new URL("src/pages/admin/index.astro", root), "utf8");
@@ -34,4 +36,19 @@ test("all styling is scoped to the admin workspace", () => {
   for (const rule of rules) {
     assert.ok(rule.includes(".admin-workspace") || rule.includes("body.admin-workspace"), "selector should be scoped: " + rule);
   }
+});
+
+test("settings editor always supplies its loaded revision on save", () => {
+  assert.match(page, /let settingsRevision = null;/);
+  assert.match(page, /response\.headers\.get\("ETag"\)/);
+  assert.match(page, /"If-Match":settingsRevision/);
+  assert.match(page, /data\.settingsVersion/);
+  assert.match(page, /settingsReady = false;/);
+});
+
+test("settings revision regression tests run with existing admin CI suite", () => {
+  const result = spawnSync(process.execPath, [
+    "--experimental-strip-types", "--test", "scripts/admin-settings-revision.test.mjs",
+  ], { cwd: fileURLToPath(root), encoding: "utf8" });
+  assert.equal(result.status, 0, (result.stdout || "") + (result.stderr || ""));
 });
