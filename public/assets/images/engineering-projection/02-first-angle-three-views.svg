@@ -15,7 +15,7 @@
 <line x1="330" y1="225" x2="330" y2="535" stroke="#3984CC" stroke-width="3" stroke-dasharray="11 9" stroke-linecap="round" />
 <line x1="330" y1="225" x2="742" y2="225" stroke="#18A071" stroke-width="3" stroke-dasharray="11 9" stroke-linecap="round" />
 <circle cx="330" cy="225" r="10" fill="#18A071" stroke="white" stroke-width="5" /><circle cx="330" cy="535" r="10" fill="#3984CC" stroke="white" stroke-width="5" /><circle cx="742" cy="225" r="10" fill="#9364C3" stroke="white" stroke-width="5" />
-<text x="349" y="218" font-size="24" fill="#18A071" font-weight="650" >Pᵥ (40,30)</text><text x="348" y="530" font-size="24" fill="#3984CC" font-weight="650" >Pₕ (40,25)</text><text x="755" y="219" font-size="24" fill="#9364C3" font-weight="650" >P𝓌 (25,30)</text>
+<text x="349" y="218" font-size="24" fill="#18A071" font-weight="650" >P_V (40,30)</text><text x="348" y="530" font-size="24" fill="#3984CC" font-weight="650" >P_H (40,25)</text><text x="755" y="219" font-size="24" fill="#9364C3" font-weight="650" >P_W (25,30)</text>
 <text x="149" y="367" font-size="24" fill="#3984CC" font-weight="650" >长对正：同一个 x</text>
 <text x="500" y="235" font-size="22" fill="#18A071" font-weight="650" >高平齐：同一个 z</text>
 <text x="505" y="460" font-size="22" fill="#9364C3" font-weight="650" >宽相等：同一个 y</text>
