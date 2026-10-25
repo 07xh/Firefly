@@ -622,6 +622,7 @@ export const prerender = false;
     <button type="button" data-editor-action="link" title="插入或编辑链接">链接</button>
     <button type="button" data-editor-action="unlink" title="移除链接">取消链接</button>
     <button type="button" id="wysiwygUpload" title="上传图片">图片</button>
+    <button type="button" data-editor-action="imageUrl" title="从 HTTPS 图床地址插入图片">图床图片</button>
     <input type="file" id="wysiwygFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
     <button type="button" data-editor-action="table" title="选择行数、列数和表头后插入表格">插入表格</button>
     <div id="tableEditorTools" class="table-editor-tools" role="group" aria-label="表格编辑工具" hidden>
@@ -641,7 +642,7 @@ export const prerender = false;
   </div>
   <div id="wysiwygNotice" class="rich-editor-notice" hidden></div>
   <div id="wysiwygEditor" class="rich-editor-canvas"></div>
-  <div class="rich-editor-help">直接输入中文并按回车分段。选中文字后使用工具栏格式化；支持图片粘贴/拖入；点击图片可放大预览，键盘聚焦后按 Enter 或空格也可预览。还支持链接、列表、引用、代码块和表格。包含无法无损转换的 MDX/HTML 特殊语法时，会自动切换回源码模式保护原文。</div>
+  <div class="rich-editor-help">直接输入中文并按回车分段。选中文字后使用工具栏格式化；支持图片粘贴/拖入；点击图片可放大预览，键盘聚焦后按 Enter 或空格也可预览。在空白段落输入 / 可搜索并插入标题、列表、提示卡片、表格和图片，图床图片可直接填写 URL 插入。包含无法无损转换的 MDX/HTML 特殊语法时，会自动切换回源码模式保护原文。</div>
 </div>
 <div id="wysiwygFallback" hidden>可视化编辑器加载失败，正文将保持原样。你仍可在 Markdown 源码模式下继续编辑。</div>
 <textarea id="body" spellcheck="false" hidden placeholder="在此编辑 Markdown / MDX 源文件。含特殊组件的文章会默认使用源码模式。"></textarea>
@@ -2072,4 +2073,4 @@ if (initialCmsView === "new") { reset(); setAdminTab("editor"); }
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=20261026-slash"></script><script type="module" src="/admin-pagescms-workspace.js?v=20261026-01"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=20261026-visual-image"></script><script type="module" src="/admin-pagescms-workspace.js?v=20261026-01"></script></body></html>
