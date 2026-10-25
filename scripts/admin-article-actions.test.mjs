@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+// Keep dedicated create/duplicate regressions in the existing protected admin test step.
+import "./admin-article-duplicates.test.mjs";
+import "./admin-article-create.test.mjs";
 
 const root = new URL("../", import.meta.url);
 const admin = readFileSync(new URL("src/pages/admin/index.astro", root), "utf8");
