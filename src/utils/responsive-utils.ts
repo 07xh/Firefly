@@ -98,6 +98,9 @@ export interface GridColumnsInput {
 	hasRightWidgets: boolean;
 	/** 无侧栏列时内容栏占包裹层总宽的比例（0–1），不设置或 ≥1 则铺满 */
 	noSidebarContentWidth?: number;
+	/** 两侧的独立收缩状态，未指定时与旧版展开行为一致。 */
+	leftCollapsed?: boolean;
+	rightCollapsed?: boolean;
 }
 
 /** #main-grid 的列几何，由 gridColumnVarsToStyle 序列化 */
@@ -116,10 +119,17 @@ export interface GridColumnVars {
 }
 
 /** 按左右两侧是否占列生成轨道串 */
-function trackSegments(left: boolean, right: boolean): string {
-	if (left && right) return `${SIDEBAR_TRACK} 1fr ${SIDEBAR_TRACK}`;
-	if (left) return `${SIDEBAR_TRACK} 1fr`;
-	if (right) return `1fr ${SIDEBAR_TRACK}`;
+function trackSegments(
+	left: boolean,
+	right: boolean,
+	leftCollapsed = false,
+	rightCollapsed = false,
+): string {
+	const leftTrack = leftCollapsed ? "3.875rem" : SIDEBAR_TRACK;
+	const rightTrack = rightCollapsed ? "3.875rem" : SIDEBAR_TRACK;
+	if (left && right) return `${leftTrack} minmax(0, 1fr) ${rightTrack}`;
+	if (left) return `${leftTrack} minmax(0, 1fr)`;
+	if (right) return `minmax(0, 1fr) ${rightTrack}`;
 	return "1fr";
 }
 
@@ -156,8 +166,8 @@ export function computeGridColumns(input: GridColumnsInput): GridColumnVars {
 	const ratioXl = input.enabled && !leftIn && !rightIn ? ratio : 1;
 
 	return {
-		"--cols-md": trackSegments(mdLeft, mdRight),
-		"--cols-xl": trackSegments(leftIn, rightIn),
+		"--cols-md": trackSegments(mdLeft, mdRight, input.leftCollapsed, input.rightCollapsed),
+		"--cols-xl": trackSegments(leftIn, rightIn, input.leftCollapsed, input.rightCollapsed),
 		"--left-display-md": mdLeft ? "contents" : "none",
 		"--left-display-xl": leftIn ? "contents" : "none",
 		"--right-display-md": mdRight ? "contents" : "none",

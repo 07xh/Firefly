@@ -1,0 +1,98 @@
+/* 方案 B：左右侧栏独立收纳；沿用现有主题色、卡片、头像与背景图。 */
+@media (min-width: 768px) {
+  #main-grid .firefly-sidebar-control {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: .55rem;
+  }
+  #main-grid #right-sidebar > .firefly-sidebar-control {
+    justify-content: flex-start;
+  }
+  #main-grid .firefly-sidebar-toggle,
+  #main-grid .firefly-sidebar-rail :is(a, button) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.7rem;
+    height: 2.7rem;
+    color: var(--content-meta, currentColor);
+    background: var(--card-bg);
+    border: 1px solid var(--line-divider);
+    border-radius: .85rem;
+    cursor: pointer;
+    transition: color .2s, background .2s, transform .2s;
+  }
+  #main-grid .firefly-sidebar-toggle:hover,
+  #main-grid .firefly-sidebar-rail :is(a, button):hover,
+  #main-grid .firefly-sidebar-rail :is(a, button):focus-visible {
+    color: var(--primary);
+    background: var(--btn-card-bg-hover);
+  }
+  #main-grid .firefly-sidebar-toggle:focus-visible,
+  #main-grid .firefly-sidebar-rail :is(a, button):focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+  #main-grid .firefly-sidebar-toggle svg,
+  #main-grid .firefly-sidebar-rail svg { width: 1.35rem; height: 1.35rem; }
+  #main-grid .firefly-sidebar-chevron { transition: transform .2s; }
+  #main-grid .firefly-sidebar-rail { display: none; }
+  #main-grid[data-sidebar-left-state="collapsed"] #left-sidebar,
+  #main-grid[data-sidebar-right-state="collapsed"] #right-sidebar {
+    position: sticky;
+    top: 5.5rem;
+    align-self: start;
+    min-width: 0;
+    width: 100%;
+  }
+  #main-grid[data-sidebar-left-state="collapsed"] #left-sidebar > :not(.firefly-sidebar-control):not(.firefly-sidebar-rail),
+  #main-grid[data-sidebar-right-state="collapsed"] #right-sidebar > :not(.firefly-sidebar-control):not(.firefly-sidebar-rail) {
+    display: none !important;
+  }
+  #main-grid[data-sidebar-left-state="collapsed"] #left-sidebar .firefly-sidebar-rail,
+  #main-grid[data-sidebar-right-state="collapsed"] #right-sidebar .firefly-sidebar-rail {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: .55rem;
+  }
+  #main-grid[data-sidebar-left-state="collapsed"] #left-sidebar > .firefly-sidebar-control,
+  #main-grid[data-sidebar-right-state="collapsed"] #right-sidebar > .firefly-sidebar-control {
+    justify-content: center;
+  }
+  #main-grid[data-sidebar-left-state="collapsed"] #left-sidebar .firefly-sidebar-chevron,
+  #main-grid[data-sidebar-right-state="collapsed"] #right-sidebar .firefly-sidebar-chevron {
+    transform: rotate(180deg);
+  }
+  #main-grid:has([data-sidebar-toggle]) {
+    transition: grid-template-columns .24s ease;
+  }
+}
+@media (max-width: 767px) {
+  /* 手机继续使用现有移动导航 + 页底组件，避免引入占屏幕宽度的窄栏。 */
+  #main-grid .firefly-sidebar-control,
+  #main-grid .firefly-sidebar-rail { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #main-grid, #main-grid .firefly-sidebar-chevron { transition: none !important; }
+}
+
+/* 文章页方案 A：在原有阅读卡片与封面上做排版减法，不修改图片或介绍。 */
+#post-container .custom-md {
+  font-size: clamp(1rem, .96rem + .15vw, 1.065rem);
+  line-height: 1.88;
+  overflow-wrap: anywhere;
+}
+#post-container .custom-md :is(p, li) { line-height: 1.88; }
+#post-container .custom-md :is(h2, h3) {
+  scroll-margin-top: 6rem;
+  line-height: 1.4;
+}
+#post-container .custom-md :is(h2, h3) + p { margin-top: .85rem; }
+#post-container .custom-md :is(img, video, iframe) { max-width: 100%; }
+#post-container .custom-md :is(pre, .expressive-code, .horizontal-scroll-container) { max-width: 100%; }
+#post-container .custom-md :is(table, pre) { overflow-x: auto; }
+@media (min-width: 1024px) {
+  #post-container .custom-md { max-width: 86ch; margin-inline: auto; }
+}
