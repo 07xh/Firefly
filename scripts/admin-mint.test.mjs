@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 const root=new URL("../",import.meta.url);
 const html=readFileSync(new URL("src/pages/admin/index.astro",root),"utf8");
 const css=readFileSync(new URL("public/admin-mint.css",root),"utf8");
@@ -51,4 +53,27 @@ test("recent article preview safely delegates to existing editor and handles mis
  assert.match(html, /title\.textContent=article\.title/);
  assert.match(html, /articles\.slice\(0,5\)/);
  assert.match(css, /\.admin-workspace \.admin-recent-button/);
+});
+
+test("admin-only read-only media explorer is present and does not change visitor pages", () => {
+ for (const id of ["adminMediaList", "adminMediaSearch", "adminMediaReload", "adminMediaStatus"]) {
+  assert.match(html, new RegExp('id="' + id + '"'));
+ }
+ assert.match(html, /admin-media-library\.js/);
+ assert.match(html, /admin-media-library\.css/);
+ const js=readFileSync(new URL("public/admin-media-library.js",root),"utf8");
+ assert.match(js, /\/api\/admin\/media\//);
+ assert.match(js, /navigator\.clipboard/);
+ assert.doesNotMatch(js, /method\s*:\s*["'](?:DELETE|PUT|POST)["']/);
+ const css=readFileSync(new URL("public/admin-media-library.css",root),"utf8");
+ for (const line of css.split("\n").filter(line=>line.includes("{")&&!line.trim().startsWith("@"))) {
+  assert.match(line,/\.admin-workspace/);
+ }
+});
+
+test("media listing whitelist regression suite", () => {
+ const result=spawnSync(process.execPath, ["--experimental-strip-types","--test","scripts/admin-media-files.test.mjs"], {
+  cwd:fileURLToPath(root),encoding:"utf8"
+ });
+ assert.equal(result.status,0,(result.stdout||"")+(result.stderr||""));
 });
