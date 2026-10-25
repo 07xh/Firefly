@@ -7,7 +7,6 @@ const ROOT = "src/content/dynamic/";
 const FILE_PATTERN = /^src\/content\/dynamic\/[A-Za-z0-9_-]+\.md$/;
 
 type Config = { token: string; repo: string; branch: string };
-type GithubFile = { name: string; path: string; sha: string; type: string };
 type FullFile = { path: string; sha: string; content: string; encoding: string };
 
 function json(payload: unknown, status = 200): Response {
@@ -167,21 +166,42 @@ export const GET: APIRoute = async ({ url }) => {
       const file = await read(c, path);
       return file ? json(extract(file)) : json({ error: "动态不存在" }, 404);
     }
-    const response = await github(c, "contents/" + ROOT.slice(0, -1) + "?ref=" + encodeURIComponent(c.branch));
-    if (response.status === 404) return json([]);
-    if (!response.ok) return json({ error: "获取动态列表失败（GitHub HTTP " + response.status + "）" }, 502);
-    const files = await response.json() as GithubFile[];
-    if (!Array.isArray(files)) return json({ error: "GitHub 动态目录格式不正确" }, 502);
-    const names = files.filter((file) => file.type === "file" && safePath(file.path));
+    // Share the same Git Trees inventory strategy as article management.
+    // Returning [] for a Contents directory 404 previously concealed real
+    // repository/configuration errors as an empty historical timeline.
+    const response = await github(c, "git/trees/" + encodeURIComponent(c.branch) + "?recursive=1");
+    if (!response.ok) {
+      return json({ error: "读取 GitHub 仓库树失败（HTTP " + response.status + "）；请检查仓库、分支与 Contents Token 配置。" }, 502);
+    }
+    const payload = await response.json() as { tree?: Array<{ path: string; type: string }>; truncated?: boolean };
+    if (!Array.isArray(payload.tree) || payload.truncated) {
+      return json({ error: "GitHub 仓库树不完整，已取消刷新，避免将历史动态误判为已删除。" }, 502);
+    }
+    const names = payload.tree.filter((file) => file.type === "blob" && safePath(file.path));
     if (names.length > 250) return json({ error: "动态数量较多，当前管理器每次最多读取 250 条" }, 413);
-    const entries = await Promise.all(names.map(async (entry) => {
+
+    // One broken legacy file must never hide all the other dynamics.
+    const settled = await Promise.allSettled(names.map(async (entry) => {
       const file = await read(c, entry.path);
-      return file ? extract(file) : null;
+      if (!file) throw new Error("GitHub 文件返回 404");
+      return extract(file);
     }));
-    return json(entries.filter((entry) => entry !== null).map((entry) => ({
-      path: entry.path, sha: entry.sha, published: entry.published,
-      pinned: entry.pinned, location: entry.location, preview: entry.body.slice(0, 160).replace(/\s+/g, " "),
-    })).sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.published.localeCompare(a.published)));
+    const entries = settled.flatMap((result) => result.status === "fulfilled" ? [result.value] : []);
+    const warnings = settled.flatMap((result, index) =>
+      result.status === "rejected" ? [names[index].path + "：" +
+        (result.reason instanceof Error ? result.reason.message : "读取失败")] : []);
+    if (names.length > 0 && entries.length === 0) {
+      return json({ error: "找到了 " + names.length + " 条动态，但详细读取全部失败；原始文件仍保存在 GitHub。", warnings }, 502);
+    }
+    return json({
+      items: entries.map((entry) => ({
+        path: entry.path, sha: entry.sha, published: entry.published,
+        pinned: entry.pinned, location: entry.location,
+        preview: entry.body.slice(0, 160).replace(/\s+/g, " "),
+      })).sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.published.localeCompare(a.published)),
+      warnings,
+      totalFiles: names.length,
+    });
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : "动态列表读取失败" }, 503);
   }

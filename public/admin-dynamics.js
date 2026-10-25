@@ -34,6 +34,7 @@
     const response = await fetch(endpoint + query, {
       method,
       credentials: "same-origin",
+      cache: "no-store",
       headers: method === "GET" ? undefined : { "Content-Type": "application/json" },
       ...(method === "GET" ? {} : { body: JSON.stringify(payload) }),
     });
@@ -137,15 +138,32 @@
     }
   }
 
-  async function loadList() {
-    $("list").textContent = "正在读取 GitHub 动态列表…";
+  async function loadList(options = {}) {
+    const { quiet = false } = options;
+    if (!quiet) say("正在从 GitHub 重新读取已有动态…");
     try {
-      state.items = await api("GET", null);
-      if (!Array.isArray(state.items)) throw new Error("动态列表格式不正确");
+      const result = await api("GET", null, "?refresh=" + Date.now());
+      const items = Array.isArray(result) ? result : result.items;
+      if (!Array.isArray(items)) throw new Error("动态接口未返回有效列表，请检查接口版本");
+      state.items = items;
       renderList();
+      const warnings = Array.isArray(result.warnings) ? result.warnings : [];
+      if (warnings.length) {
+        say("已读取 " + items.length + " 条动态，但另有 " + warnings.length +
+          " 条读取失败（原文件未删除）：\n" + warnings.slice(0, 3).join("\n"), true);
+      } else if (!quiet) {
+        say("已从 GitHub 读取 " + items.length + " 条动态。" +
+          (items.length ? " 点击左侧条目即可编辑。" : " 当前仓库中没有动态文件。"));
+      }
     } catch (error) {
-      say(error instanceof Error ? error.message : "动态列表加载失败", true);
-      $("list").textContent = "加载失败，请确认网络与 GitHub 写入权限，然后重试。";
+      // Preserve the last successful list instead of replacing it with an
+      // incorrect empty-state message after a transient network/API failure.
+      renderList();
+      const message = error instanceof Error ? error.message : "动态列表读取失败";
+      say("刷新失败：" + message + "\n历史动态不会因刷新失败而被删除。", true);
+      if (!state.items.length) {
+        $("list").textContent = "读取失败，不代表仓库没有动态。请查看下方具体错误。";
+      }
     }
   }
 
@@ -200,7 +218,7 @@
       $("editorTitle").textContent = "编辑已发布动态";
       $("save").textContent = "保存修改";
       showCommit(data, "已成功写入 GitHub。请留意 Cloudflare 工作流部署，完成后前台动态才会更新。");
-      await loadList();
+      await loadList({ quiet: true });
     } catch (error) {
       say(error instanceof Error ? error.message : "保存失败", true);
     } finally {
@@ -217,7 +235,7 @@
       const data = await api("DELETE", state.selected);
       toNew();
       showCommit(data, "GitHub 动态文件已删除。等待 Cloudflare 部署完成后，前台才会同步删除。");
-      await loadList();
+      await loadList({ quiet: true });
     } catch (error) {
       say(error instanceof Error ? error.message : "删除失败", true);
     } finally {
@@ -272,7 +290,7 @@
   $("remove").addEventListener("click", () => void remove());
   $("new").addEventListener("click", () => { if (!state.busy && maybeLeave()) toNew(); });
   $("reset").addEventListener("click", () => { if (!state.busy && maybeLeave()) toNew(); });
-  $("refresh").addEventListener("click", () => { if (!state.busy && maybeLeave()) { toNew(); void loadList(); } });
+  $("refresh").addEventListener("click", () => { if (!state.busy) void loadList(); });
   $("search").addEventListener("input", renderList);
   $("previewButton").addEventListener("click", () => void showPreview());
   $("edit").addEventListener("click", showEdit);

@@ -62,3 +62,41 @@ test("dynamic API validates datetime, body length and immutable file path", () =
   assert.match(api, /sha !== value\.sha/);
   assert.match(api, /response\.status === 409 \|\| response\.status === 422/);
 });
+
+
+test("historical dynamics are discovered from the shared Git tree and isolated per file", () => {
+  assert.match(api, /git\/trees\//);
+  assert.match(api, /recursive=1/);
+  assert.match(api, /file\.type === "blob" && safePath\(file\.path\)/);
+  assert.match(api, /payload\.truncated/);
+  assert.match(api, /Promise\.allSettled/);
+  assert.match(api, /warnings/);
+  assert.doesNotMatch(api, /if \(response\.status === 404\) return json\(\[\]\)/);
+  assert.match(api, /names\.length > 0 && entries\.length === 0/);
+});
+
+test("refresh preserves the editor, bypasses stale caches and retains prior list on failure", () => {
+  assert.match(client, /cache: "no-store"/);
+  assert.match(client, /"\?refresh=" \+ Date\.now\(\)/);
+  assert.match(client, /Array\.isArray\(result\) \? result : result\.items/);
+  assert.match(client, /已读取/);
+  assert.match(client, /原文件未删除/);
+  assert.match(client, /读取失败，不代表仓库没有动态/);
+  assert.doesNotMatch(client, /\$\("refresh"\)\.addEventListener\("click",[\s\S]{0,110}toNew\(\)/);
+});
+
+test("all four historical source files have frontmatter understood by the manager", () => {
+  const paths = [
+    "2026-07-15-010756.md",
+    "2026-07-15-020613.md",
+    "2026-07-15-021127.md",
+    "2026-07-15-161529.md",
+  ];
+  for (const name of paths) {
+    const source = readFileSync(new URL("../src/content/dynamic/" + name, import.meta.url), "utf8");
+    const match = source.match(/^---\r?\n([\s\S]*?)\r?\n---(?:\r?\n|$)/);
+    assert.ok(match, "broken frontmatter in " + name);
+    assert.match(match[1], /^published:\s*\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/m);
+    assert.ok(source.slice(match[0].length).trim().length > 0, "empty body in " + name);
+  }
+});
