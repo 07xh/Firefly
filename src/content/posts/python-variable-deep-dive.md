@@ -8,8 +8,6 @@ tags: ["Python", "变量", "引用", "作用域", "对象模型", "Python基础"
 slug: "python-variable-deep-dive"
 ---
 
-# 深入理解 Python 变量：名字、对象与引用
-
 刚学 Python 时，我们经常看到这样的代码：
 
 ```python
@@ -911,3 +909,9 @@ backup: [80, 90, 100]
 5. 因为两者已经是不同的列表对象，所以 `scores is backup` 为 `False`。
 
 **这就是 Python 变量最核心的原理：对象可以被多个名字共享；赋值改变绑定，原地操作改变对象。** 一旦弄明白这两种变化的区别，后面的列表、函数、字典、面向对象编程都会更容易理解。
+
+## 参考资料（可继续深入）
+
+- [Python 官方文档：数据模型](https://docs.python.org/3/reference/datamodel.html)：对象、身份、类型与可变性。
+- [Python 官方文档：执行模型](https://docs.python.org/3/reference/executionmodel.html)：名字绑定与作用域查找规则。
+- [Python 官方文档：浅拷贝与深拷贝](https://docs.python.org/3/library/copy.html)：复制的准确含义与限制。
