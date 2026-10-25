@@ -155,6 +155,10 @@ function validScheduleDate(value: unknown): value is string {
 	return Number.isFinite(Date.parse(value));
 }
 
+function isSafeCoverImage(value: string): boolean {
+	return /^(https:\/\/[^\s"'<>]+|\/(?!\/)[^\s"'<>]+)$/.test(value);
+}
+
 function makeMarkdown(input: Record<string, unknown>): string | null {
 	const title = typeof input.title === "string" ? input.title.trim() : "";
 	const body = typeof input.body === "string" ? input.body : "";
@@ -164,6 +168,8 @@ function makeMarkdown(input: Record<string, unknown>): string | null {
 	if (Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== published) return null;
 	const description = typeof input.description === "string" ? input.description.slice(0, 500) : "";
 	const category = typeof input.category === "string" ? input.category.slice(0, 100) : "";
+	const image = typeof input.image === "string" ? input.image.trim() : "";
+	if (image.length > 2048 || (image && !isSafeCoverImage(image))) return null;
 	const draft = input.draft === true;
 	const scheduleDate = typeof input.date === "string" ? input.date.trim() : "";
 	const password = typeof input.password === "string" ? input.password : "";
@@ -179,6 +185,7 @@ function makeMarkdown(input: Record<string, unknown>): string | null {
 		...(scheduleDate ? [`date: ${scalar(scheduleDate)}`] : []),
 		`description: ${scalar(description)}`,
 		`category: ${scalar(category)}`,
+		...(image ? [`image: ${scalar(image)}`] : []),
 		`draft: ${draft}`,
 		...(password ? [`password: ${scalar(password)}`] : []),
 		...(passwordHint ? [`passwordHint: ${scalar(passwordHint)}`] : []),
@@ -308,6 +315,8 @@ export const PUT: APIRoute = async ({ request }) => {
 			if (!validDate(input.published)) return json({ error: "发布日期格式不正确" }, 400);
 			const category = typeof input.category === "string" ? input.category.slice(0, 100) : "";
 			const description = typeof input.description === "string" ? input.description.slice(0, 500) : "";
+			const image = typeof input.image === "string" ? input.image.trim() : "";
+			if (image.length > 2048 || (image && !isSafeCoverImage(image))) return json({ error: "封面图片须为 HTTPS 地址或站内绝对路径" }, 400);
 			const scheduleDate = typeof input.date === "string" ? input.date.trim() : "";
 			const password = typeof input.password === "string" ? input.password : "";
 			const passwordHint = typeof input.passwordHint === "string" ? input.passwordHint.slice(0, 120) : "";
@@ -319,6 +328,7 @@ export const PUT: APIRoute = async ({ request }) => {
 			content = updateFrontmatterField(content, "title", scalar(title));
 			content = updateFrontmatterField(content, "published", input.published);
 			content = updateFrontmatterField(content, "category", scalar(category));
+			content = image ? updateFrontmatterField(content, "image", scalar(image)) : removeFrontmatterField(content, "image");
 			content = updateFrontmatterField(content, "description", scalar(description));
 			content = updateFrontmatterField(content, "tags", JSON.stringify(tags));
 			if (typeof input.draft === "boolean") {
