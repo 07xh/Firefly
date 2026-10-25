@@ -418,6 +418,7 @@ export const prerender = false;
 </style>
 <link rel="stylesheet" href="/admin-workspace.css?v=20261021-01">
 <link rel="stylesheet" href="/admin-mint.css?v=20261021-center-01">
+<link rel="stylesheet" href="/admin-media-library.css?v=20261025">
 </head>
 <body class="admin-workspace">
 <a class="admin-skip-link" href="#adminMain">跳转到后台内容</a>
@@ -812,6 +813,16 @@ export const prerender = false;
     <section class="admin-dashboard-card"><h3>在编辑器中上传图片</h3><p>当前可视化编辑器支持图片上传、粘贴和拖入。上传后会自动插入文章正文。</p><button type="button" class="admin-shortcut admin-shortcut-primary" data-admin-go="editor">打开编辑工作台 ↗</button></section>
     <section class="admin-dashboard-card"><h3>独立图床</h3><p>你现有的图床服务仍通过独立网站管理。这里暂不显示未经接入验证的图片库。</p><a class="admin-shortcut" href="https://tu.0701000.xyz/login" target="_blank" rel="noopener noreferrer">打开独立图床 ↗</a></section>
   </div>
+  <section class="admin-dashboard-card" aria-labelledby="adminMediaLibraryTitle">
+    <h3 id="adminMediaLibraryTitle">GitHub 仓库图片库 <small>只读</small></h3>
+    <p>浏览已存于本博客仓库的图片。可搜索文件名、复制图片直链或 Markdown 引用；此功能不删除文件，也不修改访客前台。</p>
+    <div class="admin-media-toolbar">
+      <input id="adminMediaSearch" type="search" placeholder="搜索图片名称或仓库路径…" aria-label="搜索仓库图片">
+      <button id="adminMediaReload" class="btn" type="button">刷新图片库</button>
+    </div>
+    <p id="adminMediaStatus" role="status" aria-live="polite" class="muted">打开媒体资源后自动读取，也可点击刷新图片库。</p>
+    <div id="adminMediaList" class="admin-media-grid" aria-label="仓库图片列表"><p class="muted">尚未读取媒体资源。</p></div>
+  </section>
   <p class="admin-utility-note">图床图片库的搜索、删除和后台直连仍需单独验收；此页不会擅自操作图片。</p>
 </section>
 <section id="systemTabPanel" class="admin-utility-page" role="tabpanel" aria-labelledby="tabSystem" hidden>
@@ -2048,4 +2059,4 @@ reset();refresh();loadSettings();
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=20261018-editor-reading-controls"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=20261018-editor-reading-controls"></script><script type="module" src="/admin-media-library.js?v=20261025"></script></body></html>
