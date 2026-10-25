@@ -530,7 +530,7 @@ async function handleSave(request: Request): Promise<Response> {
 		const payload: Record<string, unknown> = {
 			message: "Update global site settings from Firefly Admin",
 			branch: config.branch,
-			content: encodeBase64(JSON.stringify(settings, null, 2) + "\n"),
+			content: encodeBase64(JSON.stringify(settings, null, "\t") + "\n"),
 		};
 		if (current.sha) payload.sha = current.sha;
 
