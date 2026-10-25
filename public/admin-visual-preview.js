@@ -441,6 +441,21 @@ export function serializeEditableStepTimeline(model, values) {
 }
 
 
+/** Reorder one visual code tab without altering its label, language, or code. */
+export function moveEditableTab(items, sourceIndex, targetIndex) {
+  if (!Array.isArray(items) || items.length < 1 || items.length > 20 ||
+      !Number.isInteger(sourceIndex) || !Number.isInteger(targetIndex) ||
+      sourceIndex < 0 || targetIndex < 0 ||
+      sourceIndex >= items.length || targetIndex >= items.length) {
+    throw new Error("标签页移动位置无效");
+  }
+  const copy = items.map(item => ({ title: item.title, language: item.language, text: item.text }));
+  if (sourceIndex === targetIndex) return copy;
+  const [moved] = copy.splice(sourceIndex, 1);
+  copy.splice(targetIndex, 0, moved);
+  return copy;
+}
+
 /** Serializes only literal-label TabGroup components whose content is fenced code. */
 export function serializeEditableTabGroup(model, values) {
   if (model?.kind !== "tabs") throw new Error("只能保存标签页组件。");
