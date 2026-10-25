@@ -1,0 +1,61 @@
+# Optional Pages CMS hosted editor for Firefly. The canonical UI is /admin/.
+# Keep structured field merge on, do not change the site theme or Worker authentication.
+# Rich-text conversion is deliberately avoided until MDX round-trip safety is proven.
+media:
+  input: public/uploads
+  output: /uploads
+  extensions: [png, jpg, jpeg, webp, gif]
+content:
+  - name: posts
+    label: 博客文章
+    type: collection
+    path: src/content/posts
+    format: yaml-frontmatter
+    subfolders: false
+    operations:
+      create: false
+      rename: false
+      delete: false
+    view:
+      primary: title
+      fields: [title, published, category, draft]
+      sort: [published, title]
+      search: [title, category, tags]
+      default:
+        sort: published
+        order: desc
+    fields:
+      - name: title
+        label: 文章标题
+        type: string
+        required: true
+        options:
+          maxlength: 200
+      - name: published
+        label: 展示发布日期
+        type: date
+        required: true
+        options:
+          format: yyyy-MM-dd
+      - name: category
+        label: 文章分类
+        type: string
+      - name: tags
+        label: 标签
+        type: string
+        list: true
+      - name: description
+        label: 摘要
+        type: text
+      - name: image
+        label: 封面图地址
+        type: string
+      - name: draft
+        label: 草稿状态
+        type: boolean
+      - name: body
+        label: 正文 Markdown / MDX 源码（请勿使用富文本转换）
+        type: code
+settings:
+  content:
+    merge: true
