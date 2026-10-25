@@ -1,5 +1,11 @@
 import { env as workerEnv } from "cloudflare:workers";
+
 import type { APIRoute } from "astro";
+
+import {
+	type FireflyR2Bucket,
+	uploadImageToR2,
+} from "../../../lib/admin-r2-image-upload";
 
 export const prerender = false;
 
@@ -7,6 +13,8 @@ type RuntimeEnv = {
 	FIREFLY_CONTENTS_TOKEN?: string;
 	GITHUB_CONTENTS_REPO?: string;
 	GITHUB_CONTENTS_BRANCH?: string;
+	FIREFLY_IMAGE_R2?: FireflyR2Bucket;
+	FIREFLY_R2_PUBLIC_BASE_URL?: string;
 };
 
 const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
@@ -74,14 +82,7 @@ function validMagic(bytes: Uint8Array, mime: string): boolean {
 export const POST: APIRoute = async ({ request }) => {
 	try {
 		const env = workerEnv as unknown as RuntimeEnv;
-		const token = env.FIREFLY_CONTENTS_TOKEN?.trim();
-		const repo = env.GITHUB_CONTENTS_REPO?.trim() || "07xh/Firefly";
-		const branch = env.GITHUB_CONTENTS_BRANCH?.trim() || "master";
-		if (!token)
-			return json({ error: "FIREFLY_CONTENTS_TOKEN 尚未配置。" }, 503);
-		if (!/^[\w.-]+\/[\w.-]+$/.test(repo))
-			return json({ error: "仓库配置不合法。" }, 503);
-
+		// GitHub remains the default; R2 is selected explicitly per request.
 		const contentLength = request.headers.get("Content-Length");
 		if (
 			contentLength &&
@@ -90,6 +91,14 @@ export const POST: APIRoute = async ({ request }) => {
 			return json({ error: "上传请求超过 5 MiB 限制。" }, 413);
 		}
 		const form = await request.formData();
+		const requestedProvider = form.get("provider");
+		const provider = requestedProvider === null ? "github" : requestedProvider;
+		if (provider !== "github" && provider !== "r2") {
+			return json(
+				{ error: "不支持的图床通道，请选择 GitHub 或 Cloudflare R2。" },
+				400,
+			);
+		}
 		const value = form.get("file");
 		if (!(value instanceof File))
 			return json({ error: "请求中没有图片文件。" }, 400);
@@ -105,6 +114,67 @@ export const POST: APIRoute = async ({ request }) => {
 		const bytes = new Uint8Array(await value.arrayBuffer());
 		if (!validMagic(bytes, mime))
 			return json({ error: "文件内容与图片类型不匹配，已拒绝上传。" }, 415);
+
+		if (provider === "r2") {
+			if (
+				!env.FIREFLY_IMAGE_R2 ||
+				typeof env.FIREFLY_IMAGE_R2.put !== "function"
+			) {
+				return json(
+					{
+						error: "R2 图床未启用：请为 Worker 绑定 FIREFLY_IMAGE_R2 存储桶。",
+					},
+					503,
+				);
+			}
+			if (!env.FIREFLY_R2_PUBLIC_BASE_URL?.trim()) {
+				return json(
+					{ error: "R2 图床缺少公开图片地址 FIREFLY_R2_PUBLIC_BASE_URL。" },
+					503,
+				);
+			}
+			try {
+				const uploaded = await uploadImageToR2({
+					bucket: env.FIREFLY_IMAGE_R2,
+					publicBaseUrl: env.FIREFLY_R2_PUBLIC_BASE_URL,
+					bytes,
+					mime,
+				});
+				return json(
+					{
+						ok: true,
+						storage: "r2",
+						path: uploaded.key,
+						filename: uploaded.filename,
+						imageUrl: uploaded.imageUrl,
+						commitSha: null,
+						commitUrl: null,
+					},
+					201,
+				);
+			} catch (error) {
+				// Do not expose bucket names, internal errors or Cloudflare credentials.
+				console.error("[Firefly] optional R2 image upload failed", {
+					error: error instanceof Error ? error.name : "UnknownError",
+				});
+				return json(
+					{
+						error:
+							"R2 上传失败。请检查 Worker 存储桶绑定、公开域名及运行日志；旧图床未受影响。",
+					},
+					502,
+				);
+			}
+		}
+
+		// Preserve the original GitHub contents-API path and behavior.
+		const token = env.FIREFLY_CONTENTS_TOKEN?.trim();
+		const repo = env.GITHUB_CONTENTS_REPO?.trim() || "07xh/Firefly";
+		const branch = env.GITHUB_CONTENTS_BRANCH?.trim() || "master";
+		if (!token)
+			return json({ error: "FIREFLY_CONTENTS_TOKEN 尚未配置。" }, 503);
+		if (!/^[\w.-]+\/[\w.-]+$/.test(repo))
+			return json({ error: "仓库配置不合法。" }, 503);
 
 		const now = new Date();
 		const date = [
@@ -153,6 +223,7 @@ export const POST: APIRoute = async ({ request }) => {
 		return json(
 			{
 				ok: true,
+				storage: "github",
 				path: payload.content?.path ?? path,
 				filename,
 				imageUrl,

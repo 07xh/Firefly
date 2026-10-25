@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+// Keep the R2 upload regression in the existing CI preinstall test group.
+import "./admin-r2-upload.test.mjs";
 
 const root = new URL("../", import.meta.url);
 const admin = readFileSync(new URL("src/pages/admin/index.astro", root), "utf8");

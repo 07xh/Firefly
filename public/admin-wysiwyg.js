@@ -2379,9 +2379,11 @@ async function loadTiptapModules() {
     pendingUploads += 1;
     const toolbar = $("wysiwygUpload");
     if (toolbar) toolbar.disabled = true;
-    status("正在上传图片到 GitHub，请稍候…");
+    const provider = document.getElementById("fireflyUploadProvider")?.value === "r2" ? "r2" : "github";
+    status("正在上传图片到" + (provider === "r2" ? " Cloudflare R2" : " GitHub") + "，请稍候…");
     const form = new FormData();
     form.append("file", file, file.name || "image.png");
+    form.append("provider", provider);
     try {
       const response = await fetch("/api/admin/upload/", {
         method: "POST",
@@ -2397,7 +2399,9 @@ async function loadTiptapModules() {
         alt: file.name || "文章图片",
         title: file.name || "",
       }).run();
-      status("图片已上传并插入正文。图片文件已单独提交到 GitHub；文章正文仍需保存。");
+      status(data.storage === "r2"
+        ? "R2 图片已上传并插入正文；文章仍需保存。"
+        : "图片已上传并插入正文。图片文件已单独提交到 GitHub；文章正文仍需保存。");
     } catch (error) {
       status(error instanceof Error ? error.message : "图片上传失败。", true);
     } finally {

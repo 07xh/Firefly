@@ -109,6 +109,30 @@
     }
   }, true);
 
+  // Storage selection only affects NEW images. Existing Markdown image
+  // links, source files, public layout and the legacy GitHub API stay intact.
+  const editorBody = $("body");
+  if (editorBody && !$("fireflyUploadProvider")) {
+    const control = document.createElement("div");
+    control.className = "firefly-upload-provider";
+    control.style.cssText = "display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0;color:#526158;font-size:12px";
+    const label = document.createElement("label");
+    label.htmlFor = "fireflyUploadProvider";
+    label.textContent = "新图片上传到";
+    const select = document.createElement("select");
+    select.id = "fireflyUploadProvider";
+    select.setAttribute("aria-label", "图片上传图床");
+    select.style.cssText = "border:1px solid #d5dfd5;border-radius:8px;padding:7px 9px;background:white;color:#263329";
+    select.add(new Option("GitHub（原有图床）", "github"));
+    select.add(new Option("Cloudflare R2（新增）", "r2"));
+    const hint = document.createElement("span");
+    hint.textContent = "只影响新上传；现有图片链接保持不变。";
+    control.append(label, select, hint);
+    editorBody.parentElement?.insertBefore(control, editorBody);
+  }
+  const selectedUploadProvider = () =>
+    $("fireflyUploadProvider")?.value === "r2" ? "r2" : "github";
+
   function insertAtCursor(text) {
     const field = $("body");
     const start = field.selectionStart ?? field.value.length;
@@ -128,7 +152,9 @@
     insertAtCursor(marker);
     const form = new FormData();
     form.append("file", file, file.name || "pasted-image.png");
-    say("图片正在上传到 GitHub，上传期间请勿删除正文中的占位符…");
+    const provider = selectedUploadProvider();
+    form.append("provider", provider);
+    say("图片正在上传到" + (provider === "r2" ? " Cloudflare R2" : " GitHub") + "，上传期间请勿删除正文中的占位符…");
     try {
       const response = await fetch("/api/admin/upload/", { method: "POST", body: form, credentials: "same-origin" });
       if (response.status === 401) { goLogin(); throw new Error("登录已过期，请重新登录。"); }
@@ -140,7 +166,9 @@
       if (!field.value.includes(marker)) throw new Error("图片已上传，但占位符不见了。请手动插入：" + data.imageUrl);
       field.value = field.value.replace(marker, markdown);
       field.dispatchEvent(new Event("input", { bubbles: true }));
-      say("图片上传成功并已插入 Markdown。图片 Commit SHA：" + (data.commitSha || "未返回"));
+      say(data.storage === "r2"
+        ? "R2 图片上传成功，已插入 Markdown；文章正文仍需保存。"
+        : "GitHub 图片上传成功并已插入 Markdown。图片 Commit SHA：" + (data.commitSha || "未返回"));
     } catch (error) {
       const field = $("body");
       if (field.value.includes(marker)) {
