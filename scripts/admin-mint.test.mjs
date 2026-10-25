@@ -62,6 +62,7 @@ test("admin GitHub batch reader unit tests", () => {
     "--experimental-strip-types",
     "--test",
     "scripts/admin-article-batch.test.mjs",
+    "scripts/admin-article-metadata.test.mjs",
   ], { cwd: fileURLToPath(root), encoding: "utf8" });
   assert.equal(result.status, 0, (result.stdout || "") + (result.stderr || ""));
 });
