@@ -15,6 +15,7 @@ test("only known admin files and their dedicated checks are allowed", () => {
     "public/admin-wysiwyg.js",
     "public/admin/settings.html",
     "scripts/admin-mint.test.mjs",
+    "scripts/ai-draft.test.mjs",
     "docs/ADMIN_IMPLEMENTATION_ROADMAP.md",
     ".github/workflows/admin-only-guard.yml",
     "scripts/guard-admin-only-changes.mjs",
