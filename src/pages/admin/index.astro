@@ -438,6 +438,7 @@ export const prerender = false;
     <button id="tabAiProviders" class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="aiProvidersTabPanel" tabindex="-1"><svg class="admin-nav-icon" aria-hidden="true" viewBox="0 0 24 24"><rect x="4" y="7" width="16" height="13" rx="3"/><path d="M12 3v4M9 3h6"/><circle cx="9" cy="13" r="1"/><circle cx="15" cy="13" r="1"/><path d="M9 17h6"/></svg><span>AI 服务</span></button>
     <button id="tabSystem" class="admin-tab" type="button" role="tab" aria-selected="false" aria-controls="systemTabPanel" tabindex="-1"><svg class="admin-nav-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M12 2 4 6v5c0 5 3.3 9 8 11 4.7-2 8-6 8-11V6z"/><path d="m9 12 2 2 4-4"/></svg><span>安全与系统</span></button>
   </nav>
+  <a href="/admin/dynamics/" class="admin-dynamic-entry" style="display:flex;align-items:center;gap:10px;margin:10px 12px;padding:12px 14px;border:1px solid #cce8d4;border-radius:11px;background:#eaf8ef;color:#176c42;font-size:13px;font-weight:700;text-decoration:none">✦ <span>动态管理 <small style="font-weight:400;color:#629777">· 发布 / 编辑 / 置顶</small></span></a>
   <div class="admin-theme-settings">
     <label for="adminThemeSelect">后台配色</label>
     <select id="adminThemeSelect" aria-label="后台配色风格">
@@ -471,6 +472,7 @@ export const prerender = false;
     <section class="admin-dashboard-card"><h3>快捷操作</h3><p>常用操作，一步直达。</p><div class="admin-shortcuts">
       <button type="button" class="admin-shortcut admin-shortcut-primary" data-admin-go="new">＋ 新建文章 <span aria-hidden="true">↗</span></button>
       <button type="button" class="admin-shortcut" data-admin-go="media">▧ 管理图片 <span aria-hidden="true">↗</span></button>
+      <a class="admin-shortcut" href="/admin/dynamics/">✦ 管理动态 <span aria-hidden="true">↗</span></a>
       <a class="admin-shortcut" href="/" target="_blank" rel="noopener noreferrer">◎ 预览网站 <span aria-hidden="true">↗</span></a>
       <button type="button" class="admin-shortcut" data-admin-go="site">☷ 站点功能 <span aria-hidden="true">↗</span></button>
     </div><p id="dashboardLoadStatus" class="admin-dashboard-help" role="status" aria-live="polite">正在读取文章信息…</p></section>
