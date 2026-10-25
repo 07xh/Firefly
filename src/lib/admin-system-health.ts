@@ -32,8 +32,12 @@ export type AdminHealthSummary = {
 	note: string;
 };
 
-export function summarizeAdminHealth(env: AdminHealthBindings): AdminHealthSummary {
-	const passwordConfigured = typeof env.FIREFLY_ADMIN_PASSWORD === "string" && env.FIREFLY_ADMIN_PASSWORD.length >= 16;
+export function summarizeAdminHealth(
+	env: AdminHealthBindings,
+): AdminHealthSummary {
+	const passwordConfigured =
+		typeof env.FIREFLY_ADMIN_PASSWORD === "string" &&
+		env.FIREFLY_ADMIN_PASSWORD.length >= 16;
 	const sessionKvBound = Boolean(env.FIREFLY_SESSIONS);
 	const tokenConfigured = Boolean(env.FIREFLY_CONTENTS_TOKEN?.trim());
 	const issues: string[] = [];
