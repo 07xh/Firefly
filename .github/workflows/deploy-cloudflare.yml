@@ -85,6 +85,7 @@ jobs:
           export ASTRO_SESSION_NAMESPACE_ID="$astro_session_id"
           node --input-type=module <<'NODE'
           import fs from "node:fs";
+          import { configureOptionalFireflyR2 } from "./scripts/admin-r2-deployment-binding.mjs";
           const configPath = "dist/server/wrangler.json";
           if (!fs.existsSync(configPath)) {
             throw new Error("Astro Cloudflare build did not generate dist/server/wrangler.json");
@@ -103,6 +104,16 @@ jobs:
             const entry = config.kv_namespaces.find((item) => item.binding === binding);
             if (entry) entry.id = id;
             else config.kv_namespaces.push({ binding, id });
+          }
+
+          const r2 = configureOptionalFireflyR2(config, {
+            bucketName: process.env.FIREFLY_IMAGE_R2_BUCKET_NAME,
+            publicBaseUrl: process.env.FIREFLY_R2_PUBLIC_BASE_URL,
+          });
+          if (r2.enabled) {
+            console.log("Enabled explicit FIREFLY_IMAGE_R2 Worker R2 binding; existing KV and GitHub upload unaffected.");
+          } else {
+            console.log("Optional R2 image binding is disabled; existing GitHub upload remains the default.");
           }
 
           if (config.assets) {
@@ -127,6 +138,8 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           ENABLE_CUSTOM_DOMAIN_ROUTE: ${{ secrets.ENABLE_CUSTOM_DOMAIN_ROUTE }}
+          FIREFLY_IMAGE_R2_BUCKET_NAME: ${{ vars.FIREFLY_IMAGE_R2_BUCKET_NAME }}
+          FIREFLY_R2_PUBLIC_BASE_URL: ${{ vars.FIREFLY_R2_PUBLIC_BASE_URL }}
       - name: Validate GitHub Contents token
         shell: bash
         env:
