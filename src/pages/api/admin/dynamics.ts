@@ -7,7 +7,6 @@ const ROOT = "src/content/dynamic/";
 const FILE_PATTERN = /^src\/content\/dynamic\/[A-Za-z0-9_-]+\.md$/;
 
 type Config = { token: string; repo: string; branch: string };
-type GithubFile = { name: string; path: string; sha: string; type: string };
 type FullFile = { path: string; sha: string; content: string; encoding: string };
 
 function json(payload: unknown, status = 200): Response {
