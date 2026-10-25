@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 700" role="img" aria-labelledby="title desc">
+<title id="title">图 1｜一个三维点的三个正投影</title><desc id="desc">V 保存 x、z；H 保存 x、y；W 保存 y、z。</desc>
+<defs><pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M 26 0 L 0 0 0 26" fill="none" stroke="#E5EFEC" stroke-width="1"/></pattern><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#809A9D"/></marker></defs>
+<rect width="1020" height="700" rx="22" fill="#F4F9F7"/>
+<rect x="15" y="15" width="990" height="670" rx="20" fill="#FFFFFF" stroke="#E4EDEB" stroke-width="2"/>
+<g font-family="'Noto Sans CJK SC','Noto Sans SC','Microsoft YaHei','PingFang SC',system-ui,sans-serif">
+<text x="52" y="74" font-size="35" fill="#203B41" font-weight="750" >图 1｜一个三维点的三个正投影</text>
+<text x="52" y="116" font-size="22" fill="#53717A" font-weight="400" >V 保存 x、z；H 保存 x、y；W 保存 y、z。</text>
+
+<polygon points="390,440 750,518 750,293 390,215" fill="#D5F3E6" stroke="#18A071" stroke-width="3" fill-opacity="0.73" stroke-linejoin="round"/>
+<polygon points="390,440 750,518 590,594 230,516" fill="#DAEDFC" stroke="#3984CC" stroke-width="3" fill-opacity="0.7" stroke-linejoin="round"/>
+<polygon points="390,440 230,516 230,291 390,215" fill="#EDE0FA" stroke="#9364C3" stroke-width="3" fill-opacity="0.7" stroke-linejoin="round"/>
+<line x1="390" y1="440" x2="750" y2="518" stroke="#78949B" stroke-width="3"  stroke-linecap="round" /><line x1="390" y1="440" x2="230" y2="516" stroke="#78949B" stroke-width="3"  stroke-linecap="round" /><line x1="390" y1="440" x2="390" y2="215" stroke="#78949B" stroke-width="3"  stroke-linecap="round" />
+<line x1="530" y1="390" x2="630" y2="342" stroke="#18A071" stroke-width="4" stroke-dasharray="11 9" stroke-linecap="round" />
+<line x1="530" y1="390" x2="530" y2="540" stroke="#3984CC" stroke-width="4" stroke-dasharray="11 9" stroke-linecap="round" />
+<line x1="530" y1="390" x2="290" y2="338" stroke="#9364C3" stroke-width="4" stroke-dasharray="11 9" stroke-linecap="round" />
+<circle cx="630" cy="342" r="9" fill="#18A071" stroke="white" stroke-width="5" /><circle cx="530" cy="540" r="9" fill="#3984CC" stroke="white" stroke-width="5" /><circle cx="290" cy="338" r="9" fill="#9364C3" stroke="white" stroke-width="5" /><circle cx="530" cy="390" r="11" fill="#203B41" stroke="white" stroke-width="5" />
+<text x="540" y="370" font-size="25" fill="#203B41" font-weight="700" >P = (40, 25, 30)</text>
+<text x="645" y="332" font-size="27" fill="#18A071" font-weight="700" >Pᵥ</text>
+<text x="543" y="573" font-size="27" fill="#3984CC" font-weight="700" >Pₕ</text>
+<text x="250" y="317" font-size="27" fill="#9364C3" font-weight="700" >P𝓌</text>
+<text x="770" y="277" font-size="25" fill="#18A071" font-weight="700" >V 面：x 与 z</text>
+<text x="770" y="322" font-size="25" fill="#3984CC" font-weight="700" >H 面：x 与 y</text>
+<text x="770" y="367" font-size="25" fill="#9364C3" font-weight="700" >W 面：y 与 z</text>
+<text x="742" y="543" font-size="25" fill="#203B41" font-weight="650" >x</text><text x="202" y="529" font-size="25" fill="#203B41" font-weight="650" >y</text><text x="405" y="199" font-size="25" fill="#203B41" font-weight="650" >z</text>
+<rect x="72" y="620" width="880" height="45" rx="12" fill="#EDF8F3" stroke="#CFE9D8" stroke-width="2"/>
+<text x="92" y="650" font-size="23" fill="#203B41" font-weight="550" >虚线是空间投射线；彩色平面是投影面，不是实体表面。</text>
+
+</g></svg>
