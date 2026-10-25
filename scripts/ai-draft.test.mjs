@@ -12,15 +12,19 @@ const { POST } = await import(`data:text/javascript;base64,${Buffer.from(runnabl
 
 async function draft(payload, mode = "generate") {
   const original = globalThis.fetch;
-  let requestBody;
+  const requestBodies = [];
+  const payloads = Array.isArray(payload) ? payload : [payload];
+  let call = 0;
   globalThis.fetch = async (_url, options) => {
-    requestBody = JSON.parse(options.body);
-    if (payload instanceof Error) throw payload;
-    return new Response(JSON.stringify(payload), { status: 200 });
+    requestBodies.push(JSON.parse(options.body));
+    const next = payloads[Math.min(call, payloads.length - 1)];
+    call += 1;
+    if (next instanceof Error) throw next;
+    return new Response(JSON.stringify(next), { status: 200 });
   };
   try {
     const response = await POST({ request: new Request("https://example.com/api/admin/ai-draft/", { method: "POST", body: JSON.stringify({ mode, prompt: "Write an article", existing: { title: "Old" }, body: "Old body" }) }) });
-    return { status: response.status, data: await response.json(), requestBody };
+    return { status: response.status, data: await response.json(), requestBody: requestBodies[0], requestBodies, calls: requestBodies.length };
   } finally { globalThis.fetch = original; }
 }
 
@@ -34,10 +38,30 @@ test("accepts JSON in a fenced text part without forcing response_format on comp
   assert.equal(result.requestBody.response_format, undefined);
 });
 
-test("reports truncated output before parsing it", async () => {
-  const result = await draft(choice('{"title":"Partial"', "length"));
+test("retries a length-limited response with a compact prompt and accepts only complete JSON", async () => {
+  const result = await draft([
+    choice('{"title":"Partial"', "length"),
+    choice(JSON.stringify(valid), "stop"),
+  ]);
+  assert.equal(result.status, 200);
+  assert.equal(result.data.draft.body, "Body");
+  assert.equal(result.calls, 2);
+  assert.equal(result.requestBodies[0].max_tokens, 7000);
+  assert.equal(result.requestBodies[1].max_tokens, 4000);
+  assert.match(result.requestBodies[1].messages[1].content, /1800 个汉字以内/);
+});
+
+test("rejects a second length-limited response with actionable diagnostics", async () => {
+  const result = await draft([
+    choice('{"title":"Partial"', "length"),
+    choice('{"title":"Still partial"', "length"),
+  ]);
   assert.equal(result.status, 502);
-  assert.match(result.data.error, /截断|长度|输出额度/);
+  assert.match(result.data.error, /连续两次.*长度上限/);
+  assert.match(result.data.error, /finish_reason=length/);
+  assert.match(result.data.error, /4000 tokens/);
+  assert.equal(result.data.draft, undefined);
+  assert.equal(result.calls, 2);
 });
 
 test("reports malformed JSON specifically without echoing provider output", async () => {
