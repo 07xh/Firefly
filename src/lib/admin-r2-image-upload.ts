@@ -40,7 +40,7 @@ export function normalizeR2PublicBaseUrl(raw: string): string {
     url.username ||
     url.password ||
     url.port ||
-    /^(?:localhost|127\\.|0\\.|10\\.|192\\.168\\.|172\\.(?:1[6-9]|2\\d|3[01])\\.)/i.test(url.hostname) ||
+    /^(?:localhost|127\.|0\.|10\.|192\.168\.|172\.(?:1[6-9]|2\d|3[01])\.)/i.test(url.hostname) ||
     url.hostname.endsWith(".local") ||
     url.hostname.endsWith(".localhost")
   ) {
