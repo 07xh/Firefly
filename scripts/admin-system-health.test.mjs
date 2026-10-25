@@ -51,6 +51,8 @@ test("diagnostics endpoint inherits protected admin middleware and cannot write"
 	assert.match(middleware, /pathname\.startsWith\("\/api\/admin\/"\)/);
 	assert.match(api, /export const GET: APIRoute/);
 	assert.match(api, /AbortSignal\.timeout\(5000\)/);
+	assert.match(api, /\/contents\/package\.json\?ref=/);
+	assert.doesNotMatch(api, /\/contents\/src\/data\/settings\.json\?ref=/);
 	assert.doesNotMatch(api, /export const (?:POST|PUT|PATCH|DELETE)/);
 	assert.doesNotMatch(api, /return json\(env\)/);
 	assert.doesNotMatch(api, /(?<!\w)(?:console\.log)\(/);
