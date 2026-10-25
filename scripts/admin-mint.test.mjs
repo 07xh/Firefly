@@ -30,7 +30,9 @@ test("settings share a single form but show appropriate groups",()=>{
 });
 test("media and system views disclose incomplete integrations",()=>{
  assert.match(html,/图床图片库的搜索、删除和后台直连仍需单独验收/);
- assert.match(html,/实时运行状态尚未接入监控 API/);
+ assert.match(html,/id="adminSystemHealthReport"/);
+ assert.match(html,/id="adminSystemHealthProbe"/);
+ assert.match(html,/只读连接状态/);
 });
 test("mint design is admin only and offers persisted color choices",()=>{
  assert.match(html,/href="\/admin-mint\.css\?v=/);
