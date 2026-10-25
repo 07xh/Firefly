@@ -104,6 +104,19 @@ jobs:
             if (entry) entry.id = id;
             else config.kv_namespaces.push({ binding, id });
           }
+          // Optional private drafts namespace: leave the current deployment
+          // unchanged when the repository variable is not configured.
+          const privateDraftsId = process.env.FIREFLY_PRIVATE_DRAFTS_NAMESPACE_ID?.trim();
+          if (privateDraftsId) {
+            if (!/^[a-f0-9]{32}$/.test(privateDraftsId)) {
+              throw new Error("FIREFLY_PRIVATE_DRAFTS_NAMESPACE_ID must be a 32-character KV namespace ID.");
+            }
+            const binding = "FIREFLY_PRIVATE_DRAFTS";
+            const entry = config.kv_namespaces.find((item) => item.binding === binding);
+            if (entry) entry.id = privateDraftsId;
+            else config.kv_namespaces.push({ binding, id: privateDraftsId });
+            console.log("Configured dedicated private drafts KV binding.");
+          }
 
           if (config.assets) {
             config.assets.binding = config.assets.binding || "ASSETS";
@@ -127,6 +140,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           ENABLE_CUSTOM_DOMAIN_ROUTE: ${{ secrets.ENABLE_CUSTOM_DOMAIN_ROUTE }}
+          FIREFLY_PRIVATE_DRAFTS_NAMESPACE_ID: ${{ vars.FIREFLY_PRIVATE_DRAFTS_NAMESPACE_ID }}
       - name: Validate GitHub Contents token
         shell: bash
         env:
