@@ -2,6 +2,7 @@ import { prepareMarkdownForVisualEditing, restoreProtectedMarkdownStrict } from 
 import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, moveEditableTab, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261018-details-editor";
 import { filterSlashItems, SLASH_ITEMS, validateImageSource } from "/admin-editor-commands.js?v=20261026-visual";
 import { parseEditableMath, serializeEditableMath } from "/admin-math-editor.js?v=20261026-1";
+import { validateEditorLink } from "/admin-editor-links.js?v=20261026-1";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
@@ -2701,18 +2702,7 @@ async function loadTiptapModules() {
       case "deleteRow": if (typeof editor.commands.deleteRow === "function") editor.chain().focus().deleteRow().run(); else status("无法删除当前行，请先点入表格单元格。", true); break;
       case "deleteColumn": if (typeof editor.commands.deleteColumn === "function") editor.chain().focus().deleteColumn().run(); else status("无法删除当前列，请先点入表格单元格。", true); break;
       case "deleteTable": if (typeof editor.commands.deleteTable === "function") editor.chain().focus().deleteTable().run(); else status("无法删除表格，请先点入表格单元格。", true); break;
-      case "link": {
-        const existing = editor.getAttributes("link").href || "https://";
-        const href = window.prompt("输入链接地址（https://、http:// 或 mailto:）", existing);
-        if (href === null) return;
-        const trimmed = href.trim();
-        if (!/^(https?:\/\/|mailto:)/i.test(trimmed)) {
-          status("链接仅允许 http、https 或 mailto 地址。", true);
-          return;
-        }
-        if (trimmed) chain.extendMarkRange("link").setLink({ href: trimmed }).run();
-        break;
-      }
+      case "link": openVisualLinkDialog(); return;
       case "unlink": chain.unsetLink().run(); break;
       case "imagePicker": $("wysiwygFile")?.click(); break;
       case "imageUrl": openImageUrlDialog(); break;
@@ -2722,6 +2712,107 @@ async function loadTiptapModules() {
   }
 
 
+
+
+  // Accessible visual link editing; unlike window.prompt, typing/cancelling
+  // cannot change the selection or silently serialize protected MDX.
+  function openVisualLinkDialog() {
+    if (!editor || visualLoadFailed || document.getElementById("firefly-edit-link")) return;
+    const originalDoc = editor.state.doc;
+    const { from, to } = editor.state.selection;
+    const hasExistingLink = Boolean(editor.getAttributes("link").href);
+    if (from === to && !hasExistingLink) {
+      status("请先在正文中选中需要添加链接的文字，再打开链接编辑。", true);
+      editor.commands.focus();
+      return;
+    }
+    const dialog = document.createElement("dialog");
+    dialog.id = "firefly-edit-link";
+    dialog.setAttribute("aria-labelledby","firefly-edit-link-heading");
+    const form = document.createElement("form");
+    form.noValidate = true;
+    form.className = "firefly-edit-link-form";
+    const heading = document.createElement("h2");
+    heading.id = "firefly-edit-link-heading";
+    heading.textContent = hasExistingLink ? "编辑文字链接" : "插入文字链接";
+    const description = document.createElement("p");
+    description.textContent = "先在编辑器中选中文字，再填写链接地址。取消不会更改原文。";
+    const label = document.createElement("label");
+    label.textContent = "链接地址（HTTPS、HTTP 或 mailto）";
+    const field = document.createElement("input");
+    field.type = "text";
+    field.maxLength = 2048;
+    field.required = true;
+    field.placeholder = "https://example.com";
+    field.value = editor.getAttributes("link").href || "";
+    label.append(field);
+    const message=document.createElement("p");
+    message.setAttribute("role","alert");
+    message.className="firefly-edit-link-error";
+    message.hidden=true;
+    const actions=document.createElement("div");
+    actions.className="firefly-edit-link-actions";
+    const cancel=document.createElement("button");
+    cancel.type="button";cancel.textContent="取消";
+    const apply=document.createElement("button");
+    apply.type="submit";apply.className="primary";apply.textContent="应用链接";
+    actions.append(cancel,apply);
+    form.append(heading,description,label,message,actions);
+    dialog.append(form);
+    const style=document.createElement("style");
+    style.textContent=[
+      "#firefly-edit-link{width:min(480px,calc(100vw - 24px));max-width:none;border:1px solid #d7e6d8;border-radius:14px;padding:0;background:#fff;color:#25372b;box-shadow:0 22px 70px #162a2055}",
+      "#firefly-edit-link::backdrop{background:#112b1b99}",
+      ".firefly-edit-link-form{display:grid;gap:13px;padding:20px}",
+      ".firefly-edit-link-form h2{font-size:18px;margin:0}",
+      ".firefly-edit-link-form p{font-size:12px;line-height:1.6;color:#66776a;margin:0}",
+      ".firefly-edit-link-form label{display:grid;gap:6px;font-size:13px;font-weight:650}",
+      ".firefly-edit-link-form input{box-sizing:border-box;width:100%;border-radius:8px;border:1px solid #c8decf;padding:10px;background:#fff;color:#25372b;font:14px system-ui}",
+      ".firefly-edit-link-form .firefly-edit-link-error{color:#b42318}",
+      ".firefly-edit-link-actions{display:flex;gap:8px;justify-content:flex-end}",
+      ".firefly-edit-link-actions button{padding:9px 14px;border:1px solid #bcd4c3;border-radius:8px;background:#fff;color:#25372b;cursor:pointer}",
+      ".firefly-edit-link-actions .primary{background:#177f49;border-color:#177f49;color:#fff}",
+      "@media(max-width:480px){.firefly-edit-link-form{padding:15px}.firefly-edit-link-actions button{flex:1}}",
+    ].join("\n");
+    document.head.append(style);
+    document.body.append(dialog);
+    let closed=false;
+    const cleanup=()=> {if(closed)return;closed=true;dialog.remove();style.remove();};
+    const close=()=> {
+      if(dialog.open && typeof dialog.close==="function")dialog.close();
+      else cleanup();
+    };
+    dialog.addEventListener("close",cleanup,{once:true});
+    cancel.addEventListener("click",close);
+    field.addEventListener("input",()=>{message.hidden=true;});
+    form.addEventListener("submit",event=>{
+      event.preventDefault();
+      const href=validateEditorLink(field.value);
+      if(!href){
+        message.textContent="请填写有效的 HTTP/HTTPS 或邮箱链接，且不能包含凭据、不安全协议或空白字符。";
+        message.hidden=false;field.focus();return;
+      }
+      if(!editor.state.doc.eq(originalDoc)){
+        message.textContent="编辑期间正文已发生变化，已取消操作以避免误改链接。";
+        message.hidden=false;return;
+      }
+      const inserted=editor.chain().focus()
+        .setTextSelection({from,to})
+        .extendMarkRange("link")
+        .setLink({href})
+        .run();
+      if (!inserted) {
+        message.textContent="链接未能应用，请先选中文字后重试。";
+        message.hidden=false;return;
+      }
+      close();
+      status("链接已更新到编辑器，点击保存文章后才会提交 GitHub。");
+    });
+    if(typeof dialog.showModal==="function")dialog.showModal();
+    else dialog.setAttribute("open","");
+    field.focus();
+    field.select();
+  }
 
   // URL image picker based on Pages CMS media insertion UX.
   // The selection and Markdown are untouched until a valid URL is submitted.
