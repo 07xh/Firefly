@@ -94,7 +94,10 @@ export const POST: APIRoute = async ({ request }) => {
 		const requestedProvider = form.get("provider");
 		const provider = requestedProvider === null ? "github" : requestedProvider;
 		if (provider !== "github" && provider !== "r2") {
-			return json({ error: "不支持的图床通道，请选择 GitHub 或 Cloudflare R2。" }, 400);
+			return json(
+				{ error: "不支持的图床通道，请选择 GitHub 或 Cloudflare R2。" },
+				400,
+			);
 		}
 		const value = form.get("file");
 		if (!(value instanceof File))
@@ -118,7 +121,9 @@ export const POST: APIRoute = async ({ request }) => {
 				typeof env.FIREFLY_IMAGE_R2.put !== "function"
 			) {
 				return json(
-					{ error: "R2 图床未启用：请为 Worker 绑定 FIREFLY_IMAGE_R2 存储桶。" },
+					{
+						error: "R2 图床未启用：请为 Worker 绑定 FIREFLY_IMAGE_R2 存储桶。",
+					},
 					503,
 				);
 			}
@@ -154,7 +159,8 @@ export const POST: APIRoute = async ({ request }) => {
 				});
 				return json(
 					{
-						error: "R2 上传失败。请检查 Worker 存储桶绑定、公开域名及运行日志；旧图床未受影响。",
+						error:
+							"R2 上传失败。请检查 Worker 存储桶绑定、公开域名及运行日志；旧图床未受影响。",
 					},
 					502,
 				);
