@@ -118,6 +118,7 @@ function mountMediaLibrary() {
     ".firefly-media-library__actions button,.firefly-media-library__actions a,.firefly-media-library__more{font-size:12px;cursor:pointer;padding:6px 8px;border:1px solid #c7dfce;background:#f5faf6;color:#246942;border-radius:7px;text-decoration:none}",
     ".firefly-media-library__actions button:disabled{opacity:.45;cursor:not-allowed}",
     ".firefly-media-library__manual-copy{font-size:12px;display:grid;gap:4px}",
+    ".firefly-media-library__manual-copy[hidden]{display:none!important}",
     ".firefly-media-library__manual-copy input{max-width:100%;font:12px system-ui;padding:7px;border:1px solid #c8d7ca;border-radius:6px}",
     "@media(prefers-color-scheme:dark){.firefly-media-library__item{background:#202b22;border-color:#4a6650}.firefly-media-library__thumb{background:#1e3023}.firefly-media-library__caption{color:#e2efe5}.firefly-media-library__source{color:#a6b9ac}}",
   ].join("\n");
