@@ -71,6 +71,11 @@
       monospace
     );
 
+    /* Show the real source characters: !=, ==, >=, <=, -> and similar
+       operators must not be rendered as math-like font ligatures. */
+    font-variant-ligatures: none;
+    font-feature-settings: "liga" 0, "clig" 0, "calt" 0, "dlig" 0;
+
     &:before {
       content: none;
     }

@@ -1,3 +1,13 @@
+/* Keep punctuation legible in syntax-highlighted code too.
+   JetBrains Mono contextual ligatures can visually turn !=, >=, <= into ≠, ≥, ≤.
+   This changes glyph shaping only; syntax colors and copy behavior stay intact. */
+.expressive-code .frame pre,
+.expressive-code .frame code,
+.expressive-code .frame .ec-code {
+  font-variant-ligatures: none;
+  font-feature-settings: "liga" 0, "clig" 0, "calt" 0, "dlig" 0;
+}
+
 .expressive-code {
   .frame {
     @apply shadow-none!;
