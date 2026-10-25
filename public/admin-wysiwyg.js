@@ -1,5 +1,6 @@
 import { prepareMarkdownForVisualEditing, restoreProtectedMarkdownStrict } from "/admin-markdown-guard.js?v=20261021-strict-integrity";
 import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261018-details-editor";
+import { filterSlashItems, SLASH_ITEMS, validateImageSource } from "/admin-editor-commands.js?v=20261026-visual";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
@@ -2531,6 +2532,10 @@ async function loadTiptapModules() {
       status("当前文档未能安全载入可视化编辑器，请先使用源码模式。", true);
       return;
     }
+    if (editor.state.selection.node?.type.name === "protectedMarkdownBlock") {
+      status("当前选择的是受保护的 MDX/Markdown 语法块；请使用专用编辑控件，不会直接覆盖原始语法。", true);
+      return;
+    }
     const chain = editor.chain().focus();
     switch (action) {
       case "badge": {
@@ -2588,75 +2593,236 @@ async function loadTiptapModules() {
       }
       case "unlink": chain.unsetLink().run(); break;
       case "imagePicker": $("wysiwygFile")?.click(); break;
+      case "imageUrl": openImageUrlDialog(); break;
       default: break;
     }
     syncSourceFromEditor();
   }
 
 
-  // Inspired by the Pages CMS editor command palette; keep the existing Tiptap/MDX serializer.
+
+  // URL image picker based on Pages CMS media insertion UX.
+  // The selection and Markdown are untouched until a valid URL is submitted.
+  function openImageUrlDialog() {
+    if (!editor || visualLoadFailed) return;
+    if (document.getElementById("firefly-insert-image-url")) return;
+    const dialog = document.createElement("dialog");
+    dialog.id = "firefly-insert-image-url";
+    dialog.setAttribute("aria-labelledby", "firefly-image-url-title");
+    const form = document.createElement("form");
+    form.className = "firefly-image-url-form";
+    form.noValidate = true;
+    const title = document.createElement("h2");
+    title.id = "firefly-image-url-title";
+    title.textContent = "从图床链接插入图片";
+    const helper = document.createElement("p");
+    helper.textContent = "粘贴 HTTPS 图片地址或站内 / 开头的图片路径。取消不会改变文章正文。";
+    const imageLabel = document.createElement("label");
+    imageLabel.textContent = "图片地址 *";
+    const urlInput = document.createElement("input");
+    urlInput.type = "text"; urlInput.required = true; urlInput.maxLength = 2048;
+    urlInput.placeholder = "https://tu.example.com/image.webp";
+    imageLabel.append(urlInput);
+    const altLabel = document.createElement("label");
+    altLabel.textContent = "图片说明（可选）";
+    const altInput = document.createElement("input");
+    altInput.type = "text"; altInput.maxLength = 160;
+    altInput.placeholder = "例如：三视图作图示例";
+    altLabel.append(altInput);
+    const preview = document.createElement("img");
+    preview.alt = "插入前的图片预览"; preview.loading = "lazy";
+    preview.hidden = true;
+    const error = document.createElement("p");
+    error.setAttribute("role","alert"); error.className="firefly-image-url-error"; error.hidden=true;
+    const actions = document.createElement("div");
+    actions.className = "firefly-image-url-actions";
+    const cancel = document.createElement("button");
+    cancel.type = "button"; cancel.textContent = "取消";
+    const save = document.createElement("button");
+    save.type = "submit"; save.textContent = "插入图片"; save.className="primary";
+    actions.append(cancel, save);
+    form.append(title,helper,imageLabel,altLabel,preview,error,actions);
+    dialog.append(form);
+    const css = document.createElement("style");
+    css.dataset.fireflyImageUrlStyles = "true";
+    css.textContent = [
+      "#firefly-insert-image-url{width:min(500px,calc(100vw - 24px));max-width:none;border:1px solid #d5e5db;border-radius:15px;padding:0;box-shadow:0 22px 72px #172d2244;background:#fff;color:#26392d}",
+      "#firefly-insert-image-url::backdrop{background:#13271a99}",
+      ".firefly-image-url-form{display:grid;gap:12px;padding:20px}",
+      ".firefly-image-url-form h2{margin:0;font-size:18px}",
+      ".firefly-image-url-form p{font-size:12px;line-height:1.6;color:#627366;margin:0}",
+      ".firefly-image-url-form label{display:grid;gap:6px;font-size:13px;font-weight:600}",
+      ".firefly-image-url-form input{width:100%;box-sizing:border-box;border:1px solid #c7d8cd;border-radius:8px;background:#fff;color:#223629;padding:10px;font:14px system-ui}",
+      ".firefly-image-url-form img:not([hidden]){display:block;max-height:160px;max-width:100%;object-fit:contain;border-radius:8px;border:1px solid #dce7dd}",
+      ".firefly-image-url-form .firefly-image-url-error{color:#b42318}",
+      ".firefly-image-url-actions{display:flex;justify-content:flex-end;gap:8px}",
+      ".firefly-image-url-actions button{padding:9px 14px;border:1px solid #c9d8cb;border-radius:8px;background:#fff;color:#253e2c;cursor:pointer;font:13px system-ui}",
+      ".firefly-image-url-actions .primary{background:#17834c;border-color:#17834c;color:#fff}",
+      "@media(max-width:480px){.firefly-image-url-form{padding:15px}.firefly-image-url-actions button{flex:1}}",
+    ].join("\n");
+    document.head.append(css);
+    document.body.append(dialog);
+    const cleanup = () => { preview.removeAttribute("src"); dialog.remove(); css.remove(); };
+    const close = () => {
+      if (typeof dialog.close === "function") dialog.close();
+      else cleanup();
+    };
+    dialog.addEventListener("close", cleanup, { once: true });
+    cancel.addEventListener("click", close);
+    urlInput.addEventListener("input", () => {
+      error.hidden = true;
+      const valid = validateImageSource(urlInput.value);
+      preview.hidden = !valid;
+      if (valid) preview.src = valid;
+      else preview.removeAttribute("src");
+    });
+    preview.addEventListener("error", () => { preview.hidden = true; });
+    form.addEventListener("submit", event => {
+      event.preventDefault();
+      const url = validateImageSource(urlInput.value);
+      const alt = altInput.value.replace(/[\r\n]/g, " ").trim();
+      if (!url) {
+        error.textContent = "请填写安全的 HTTPS 图片地址或站内绝对路径，不能包含空格、括号或不安全协议。";
+        error.hidden = false;
+        urlInput.focus();
+        return;
+      }
+      const inserted = editor.chain().focus().setImage({ src: url, alt }).run();
+      if (!inserted) {
+        error.textContent = "当前编辑位置无法插入图片，请先选择普通正文段落。";
+        error.hidden = false;
+        return;
+      }
+      close();
+      status("图床图片已插入编辑器。正文尚未保存到 GitHub。");
+    });
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open", "");
+    urlInput.focus();
+  }
+
+
+  // Pages CMS-inspired searchable command menu. This is UI only: typing,
+  // searching and dismissing it never changes the Markdown/MDX document.
   function createSlashPalette() {
-    const actions = [
-      ["paragraph", "正文段落"], ["h1", "一级标题"], ["h2", "二级标题"],
-      ["h3", "三级标题"], ["bullet", "无序列表"], ["ordered", "有序列表"],
-      ["quote", "引用"], ["code", "代码块"], ["rule", "分隔线"],
-      ["callout", "提示卡片"], ["table", "表格"], ["imagePicker", "插入图片"],
-    ];
     const menu = document.createElement("div");
     menu.className = "firefly-slash-menu";
     menu.hidden = true;
-    menu.setAttribute("role", "listbox");
-    menu.setAttribute("aria-label", "快速插入内容");
+    menu.setAttribute("aria-label", "可视化内容快捷插入");
+    const label = document.createElement("label");
+    label.className = "firefly-slash-label";
+    label.textContent = "搜索插入命令";
+    const input = document.createElement("input");
+    input.type = "search"; input.autocomplete = "off";
+    input.placeholder = "标题、列表、表格、图片…";
+    input.setAttribute("role", "combobox");
+    input.setAttribute("aria-autocomplete", "list");
+    input.setAttribute("aria-expanded", "false");
+    input.setAttribute("aria-controls", "firefly-slash-options");
+    label.append(input);
+    const options = document.createElement("div");
+    options.id = "firefly-slash-options";
+    options.className = "firefly-slash-options";
+    options.setAttribute("role", "listbox");
+    const empty = document.createElement("p");
+    empty.className = "firefly-slash-empty";
+    empty.setAttribute("role", "status");
+    empty.textContent = "没有匹配命令";
+    menu.append(label,options,empty);
     const style = document.createElement("style");
     style.textContent = [
       ".firefly-slash-menu[hidden]{display:none!important}",
-      ".firefly-slash-menu{position:relative;z-index:40;display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:5px;margin:6px 0 12px;padding:10px;background:var(--admin-panel-bg,#fff);border:1px solid #cde1d3;border-radius:12px;box-shadow:0 8px 20px #1835261a;max-height:230px;overflow:auto}",
-      ".firefly-slash-menu button{border:1px solid transparent;border-radius:8px;background:#f5f9f6;color:#285c3d;text-align:left;padding:9px;cursor:pointer;font:13px system-ui,sans-serif}",
-      ".firefly-slash-menu button:hover,.firefly-slash-menu button:focus-visible{background:#e3f5e9;border-color:#82cba0;outline:2px solid transparent}",
+      ".firefly-slash-menu{position:relative;z-index:40;margin:6px 0 12px;padding:12px;background:#fff;border:1px solid #cde1d3;border-radius:13px;box-shadow:0 10px 24px #1835261a;max-height:310px;overflow:auto}",
+      ".firefly-slash-label{display:grid;gap:7px;font:600 12px system-ui;color:#447353}",
+      ".firefly-slash-label input{box-sizing:border-box;width:100%;padding:10px;border:1px solid #c9decf;border-radius:8px;background:#fff;color:#223629;font:14px system-ui}",
+      ".firefly-slash-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(132px,1fr));gap:5px;margin-top:8px}",
+      ".firefly-slash-options button{display:grid;gap:2px;border:1px solid transparent;border-radius:8px;background:#f5f9f6;color:#285c3d;text-align:left;padding:9px;cursor:pointer;font:13px system-ui}",
+      ".firefly-slash-options button small{color:#698574;font-size:10px}",
+      ".firefly-slash-options button[aria-selected=true],.firefly-slash-options button:hover,.firefly-slash-options button:focus-visible{background:#e3f5e9;border-color:#82cba0;outline:2px solid transparent}",
+      ".firefly-slash-empty{font:12px system-ui;color:#7a8981;padding:7px;margin:0}",
+      "@media(prefers-color-scheme:dark){.firefly-slash-menu{background:#202a22;border-color:#47614c}.firefly-slash-label{color:#a8cfb3}.firefly-slash-label input{background:#202820;color:#e6ede8;border-color:#4c6551}.firefly-slash-options button{background:#2b382e;color:#d6eadc}.firefly-slash-options button[aria-selected=true],.firefly-slash-options button:hover{background:#36533f}}",
     ].join("\n");
     document.head.append(style);
     editorElement.insertAdjacentElement("beforebegin", menu);
-    for (const [command, label] of actions) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.setAttribute("role", "option");
-      button.textContent = label;
-      button.addEventListener("mousedown", event => event.preventDefault());
-      button.addEventListener("click", () => {
-        menu.hidden = true;
-        runAction(command);
-      });
-      menu.append(button);
-    }
-    const close = () => { menu.hidden = true; };
-    editorElement.addEventListener("keydown", event => {
-      if (!menu.hidden) {
-        if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(); editor.commands.focus(); return; }
-        if (event.key === "ArrowDown" || event.key === "Enter") {
-          event.preventDefault(); event.stopPropagation(); menu.querySelector("button")?.focus(); return;
-        }
+    let shown = [];
+    let active = 0;
+    const close = (restoreFocus = false) => {
+      menu.hidden = true;
+      input.setAttribute("aria-expanded","false");
+      input.removeAttribute("aria-activedescendant");
+      input.value = "";
+      if (restoreFocus) editor?.commands.focus();
+    };
+    const highlight = () => {
+      const buttons = [...options.querySelectorAll("button")];
+      for (let i = 0; i < buttons.length; i++) {
+        buttons[i].setAttribute("aria-selected",String(i === active));
+        if (i === active) input.setAttribute("aria-activedescendant",buttons[i].id);
       }
+      if (!buttons.length) input.removeAttribute("aria-activedescendant");
+    };
+    const choose = index => {
+      const item = shown[index];
+      if (!item || visualLoadFailed) return;
+      close();
+      runAction(item.key);
+    };
+    const render = () => {
+      shown = filterSlashItems(SLASH_ITEMS,input.value).slice(0,14);
+      active = 0;
+      options.replaceChildren();
+      empty.hidden = shown.length > 0;
+      for (let i = 0; i < shown.length; i++) {
+        const item = shown[i];
+        const button = document.createElement("button");
+        button.type = "button";
+        button.id = "firefly-slash-item-" + i;
+        button.setAttribute("role", "option");
+        const heading = document.createElement("strong");
+        heading.textContent = item.label;
+        const hint = document.createElement("small");
+        hint.textContent = item.keywords.split(" ").slice(0,3).join(" · ");
+        button.append(heading,hint);
+        button.addEventListener("mousedown",event => event.preventDefault());
+        button.addEventListener("click",() => choose(i));
+        options.append(button);
+      }
+      highlight();
+    };
+    const open = () => {
+      input.value = "";
+      menu.hidden = false;
+      input.setAttribute("aria-expanded","true");
+      render();
+      input.focus();
+    };
+    editorElement.addEventListener("keydown", event => {
       if (event.key !== "/" || event.ctrlKey || event.altKey || event.metaKey || event.isComposing || !editor || visualLoadFailed) return;
+      if (activeMode !== "visual" || editor.isActive("codeBlock") || editor.isActive("tableCell") || editor.isActive("tableHeader")) return;
       const selection = editor.state.selection;
       if (!selection.empty || selection.$from.parent.type.name !== "paragraph" || selection.$from.parent.textContent.length !== 0) return;
       event.preventDefault();
       event.stopPropagation();
-      menu.hidden = false;
-      menu.querySelector("button")?.focus();
+      open();
     }, true);
-    menu.addEventListener("keydown", event => {
-      const buttons = [...menu.querySelectorAll("button")];
-      const index = buttons.indexOf(document.activeElement);
-      if (event.key === "Escape") { event.preventDefault(); close(); editor.commands.focus(); }
-      if (event.key === "ArrowDown" || event.key === "ArrowRight") { event.preventDefault(); buttons[(index+1)%buttons.length]?.focus(); }
-      if (event.key === "ArrowUp" || event.key === "ArrowLeft") { event.preventDefault(); buttons[(index-1+buttons.length)%buttons.length]?.focus(); }
-      if (event.key === "Enter" && index >= 0) { event.preventDefault(); buttons[index].click(); }
+    input.addEventListener("input",render);
+    input.addEventListener("keydown",event => {
+      if (event.key === "Escape") {event.preventDefault();close(true);return;}
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        if (shown.length) active = (active + (event.key === "ArrowDown" ? 1 : -1) + shown.length) % shown.length;
+        highlight();
+      }
+      if (event.key === "Enter") { event.preventDefault(); choose(active); }
     });
-    document.addEventListener("pointerdown", event => {
+    menu.addEventListener("keydown",event => {
+      if (event.key === "Escape") { event.preventDefault(); close(true); }
+    });
+    document.addEventListener("pointerdown",event => {
       if (!menu.hidden && !menu.contains(event.target) && !editorElement.contains(event.target)) close();
     });
-    window.addEventListener("firefly:source-loaded", close);
-    window.addEventListener("firefly:mode", event => { if (event.detail?.mode !== "visual") close(); });
+    window.addEventListener("firefly:source-loaded", () => close());
+    window.addEventListener("firefly:mode",event => { if (event.detail?.mode !== "visual") close(); });
   }
 
   async function init() {
