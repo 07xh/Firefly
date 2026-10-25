@@ -166,8 +166,18 @@ export function computeGridColumns(input: GridColumnsInput): GridColumnVars {
 	const ratioXl = input.enabled && !leftIn && !rightIn ? ratio : 1;
 
 	return {
-		"--cols-md": trackSegments(mdLeft, mdRight, input.leftCollapsed, input.rightCollapsed),
-		"--cols-xl": trackSegments(leftIn, rightIn, input.leftCollapsed, input.rightCollapsed),
+		"--cols-md": trackSegments(
+			mdLeft,
+			mdRight,
+			input.leftCollapsed,
+			input.rightCollapsed,
+		),
+		"--cols-xl": trackSegments(
+			leftIn,
+			rightIn,
+			input.leftCollapsed,
+			input.rightCollapsed,
+		),
 		"--left-display-md": mdLeft ? "contents" : "none",
 		"--left-display-xl": leftIn ? "contents" : "none",
 		"--right-display-md": mdRight ? "contents" : "none",

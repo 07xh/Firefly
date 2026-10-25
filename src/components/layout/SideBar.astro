@@ -1,7 +1,6 @@
 ---
 import type { MarkdownHeading } from "astro";
 import { Icon } from "astro-icon/components";
-import { url } from "@/utils/url-utils";
 import Advertisement from "@/components/widget/Advertisement.astro";
 import Announcement from "@/components/widget/Announcement.astro";
 import Calendar from "@/components/widget/Calendar.astro";
@@ -19,7 +18,7 @@ import type {
 	WidgetComponentConfig,
 } from "@/types/config";
 import { isWidgetVisibleOnPageType } from "@/utils/responsive-utils";
-import { isArticleDetailPage } from "@/utils/url-utils";
+import { isArticleDetailPage, url } from "@/utils/url-utils";
 
 interface Props {
 	class?: string;

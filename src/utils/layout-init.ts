@@ -19,9 +19,9 @@ import { initIconLoader } from "@/utils/icon-loader";
 import { initImageLoadFadeIn } from "@/utils/lqip-utils";
 import { initScroll } from "@/utils/scroll-utils";
 import { initThemeListener, initWallpaperMode } from "@/utils/setting-utils";
+import { initSidebarCollapse } from "@/utils/sidebar-collapse-utils";
 import { setupSwupTransitions } from "@/utils/swup-transitions";
 import { initTouchCodeCopyReveal } from "@/utils/touch-copy-utils";
-import { initSidebarCollapse } from "@/utils/sidebar-collapse-utils";
 
 /** 布局初始化编排（从 Layout.astro 迁出） */
 export function initLayout(): void {

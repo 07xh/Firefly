@@ -16,10 +16,13 @@ const transient: Partial<SidebarCollapseState> = {};
 
 export function getSidebarCollapseState(): SidebarCollapseState {
 	const read = (side: SidebarSide): SidebarDisplayState => {
-		if (transient[side]) return transient[side];
+		const cached = transient[side];
+		if (cached) return cached;
 		try {
 			const value = localStorage.getItem(KEYS[side]);
-			return value === "collapsed" || value === "expanded" ? value : DEFAULTS[side];
+			return value === "collapsed" || value === "expanded"
+				? value
+				: DEFAULTS[side];
 		} catch {
 			return DEFAULTS[side];
 		}
@@ -28,15 +31,17 @@ export function getSidebarCollapseState(): SidebarCollapseState {
 }
 
 export function syncSidebarToggleButtons(state: SidebarCollapseState): void {
-	document.querySelectorAll<HTMLButtonElement>("[data-sidebar-toggle]").forEach((button) => {
-		const side = button.dataset.sidebarToggle;
-		if (side !== "left" && side !== "right") return;
-		const expanded = state[side] === "expanded";
-		const label = `${expanded ? "收起" : "展开"}${side === "left" ? "左" : "右"}侧栏`;
-		button.setAttribute("aria-label", label);
-		button.setAttribute("title", label);
-		button.setAttribute("aria-expanded", String(expanded));
-	});
+	document
+		.querySelectorAll<HTMLButtonElement>("[data-sidebar-toggle]")
+		.forEach((button) => {
+			const side = button.dataset.sidebarToggle;
+			if (side !== "left" && side !== "right") return;
+			const expanded = state[side] === "expanded";
+			const label = `${expanded ? "收起" : "展开"}${side === "left" ? "左" : "右"}侧栏`;
+			button.setAttribute("aria-label", label);
+			button.setAttribute("title", label);
+			button.setAttribute("aria-expanded", String(expanded));
+		});
 }
 
 let isBound = false;
@@ -57,16 +62,8 @@ export function initSidebarCollapse(onChange: () => void): void {
 		try {
 			localStorage.setItem(KEYS[side], next);
 		} catch {
-			// 存储受限时仍允许当前页面切换；只是不保证下次访问保留。
+			// 存储受限时仍可切换；只是不保证下次访问保留。
 		}
-		// 使用实际点击结果更新，不依赖跨页保存是否成功。
-		const grid = document.getElementById("main-grid");
-		if (grid) {
-			grid.dataset.sidebarLeftState = side === "left" ? next : current.left;
-			grid.dataset.sidebarRightState = side === "right" ? next : current.right;
-		}
-		// 网格几何也从用户操作结果计算，断开存储失败与视觉更新的耦合。
-		document.dispatchEvent(new CustomEvent("firefly:sidebar-toggle", { detail: { side, next } }));
 		onChange();
 	});
 	window.addEventListener("storage", (event) => {

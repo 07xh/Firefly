@@ -6,8 +6,11 @@ import {
 	computeGridColumns,
 	gridColumnVarsToStyle,
 } from "@/utils/responsive-utils";
+import {
+	getSidebarCollapseState,
+	syncSidebarToggleButtons,
+} from "@/utils/sidebar-collapse-utils";
 import { isArticleDetailPage } from "@/utils/url-utils";
-import { getSidebarCollapseState, syncSidebarToggleButtons } from "@/utils/sidebar-collapse-utils";
 
 const sidebarStickyState: Record<
 	"left" | "right",
