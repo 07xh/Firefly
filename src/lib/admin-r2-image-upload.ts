@@ -55,11 +55,7 @@ export function normalizeR2PublicBaseUrl(raw: string): string {
 	return url.origin + (segments.length ? "/" + segments.join("/") : "");
 }
 
-export function newR2ImageKey(
-	mime: string,
-	date: Date,
-	uuid: string,
-): string {
+export function newR2ImageKey(mime: string, date: Date, uuid: string): string {
 	const extension = IMAGE_EXTENSIONS[mime];
 	if (
 		!extension ||
