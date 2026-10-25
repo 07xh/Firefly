@@ -84,3 +84,46 @@ test("admin form has red duplicate feedback and blocks submit", () => {
 	assert.match(html, /const duplicateField=validateArticleDuplicate\(\);/);
 	assert.match(html, /if\(duplicateField\)\{say\(\$\("articleDuplicateError"\)\.textContent,true\);/);
 });
+
+
+test("cover image metadata rejects unsafe URL before any repository access", async () => {
+  const original = globalThis.fetch;
+  let requests = 0;
+  globalThis.fetch = async () => { requests++; throw new Error("must not call GitHub"); };
+  try {
+    const response = await POST({
+      request: new Request("http://localhost/api/admin/articles/",{
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({title:"Cover",slug:"cover",published:"2026-10-26",body:"# Safe",image:"javascript:alert(1)"})
+      })
+    });
+    assert.equal(response.status,400);
+    assert.equal(requests,0);
+  } finally { globalThis.fetch = original; }
+});
+
+test("cover image URL is preserved in new article frontmatter", async () => {
+  const original = globalThis.fetch;
+  let saved = "";
+  globalThis.fetch = async (url,init) => {
+    if (String(url).includes("git/trees/")) return Response.json({tree:[]});
+    if (init?.method === "PUT") {
+      const payload = JSON.parse(init.body);
+      saved = new TextDecoder().decode(Uint8Array.from(atob(payload.content),c=>c.charCodeAt(0)));
+      return Response.json({commit:{sha:"test-sha"}}, {status:201});
+    }
+    throw new Error("unexpected fetch: " + url);
+  };
+  try {
+    const response = await POST({
+      request: new Request("http://localhost/api/admin/articles/",{
+        method:"POST",
+        headers:{"content-type":"application/json"},
+        body:JSON.stringify({title:"Cover",slug:"cover",published:"2026-10-26",body:"# Safe",image:"https://example.org/cover.webp"})
+      })
+    });
+    assert.equal(response.status,201);
+    assert.match(saved,/^image: "https:\/\/example\.org\/cover\.webp"$/m);
+  } finally { globalThis.fetch = original; }
+});
