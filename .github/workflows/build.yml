@@ -29,7 +29,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Test Markdown/MDX preservation and visual previews
-        run: node --test scripts/admin-markdown-guard.test.mjs scripts/admin-visual-preview.test.mjs scripts/ai-provider-management.test.mjs scripts/admin-workspace.test.mjs scripts/admin-mint.test.mjs scripts/admin-article-actions.test.mjs
+        run: node --test scripts/admin-markdown-guard.test.mjs scripts/admin-visual-preview.test.mjs scripts/ai-provider-management.test.mjs scripts/ai-draft.test.mjs scripts/admin-workspace.test.mjs scripts/admin-mint.test.mjs scripts/admin-article-actions.test.mjs
 
       - name: Syntax-check browser editor modules
         run: node --check public/admin-markdown-guard.js && node --check public/admin-visual-preview.js && node --check public/admin-wysiwyg.js

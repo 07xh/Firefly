@@ -95,16 +95,21 @@ function parseModelJson(value: string): JsonRecord {
 		.replace(new RegExp("^" + fence + "(?:json)?\\s*", "i"), "")
 		.replace(new RegExp("\\s*" + fence + "$"), "")
 		.trim();
-	const start = cleaned.indexOf("{");
-	const end = cleaned.lastIndexOf("}");
-	if (start < 0 || end <= start) {
+	if (!cleaned.startsWith("{") || !cleaned.endsWith("}")) {
 		throw new Error("AI 返回的内容不是有效 JSON。");
 	}
 	try {
-		return record(JSON.parse(cleaned.slice(start, end + 1)));
+		const parsed = JSON.parse(cleaned);
+		if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("invalid object");
+		return parsed as JsonRecord;
 	} catch {
 		throw new Error("AI 返回的草稿格式无法解析，请调整要求后重试。");
 	}
+}
+
+function validateDraftFields(draft: JsonRecord): boolean {
+	return ["title", "slug", "description", "category", "body"].every((key) => typeof draft[key] === "string") &&
+		Array.isArray(draft.tags) && draft.tags.every((tag) => typeof tag === "string");
 }
 
 function extractMessageContent(payload: unknown): string {
@@ -214,8 +219,9 @@ export const POST: APIRoute = async ({ request }) => {
 		"请按要求返回字段完整的 JSON 对象。",
 	].join("\n\n");
 
+	let upstream: Response;
 	try {
-		const upstream = await fetch(endpoint.toString(), {
+		upstream = await fetch(endpoint.toString(), {
 			method: "POST",
 			headers: {
 				authorization: "Bearer " + apiKey,
@@ -232,7 +238,12 @@ export const POST: APIRoute = async ({ request }) => {
 			}),
 			signal: AbortSignal.timeout(45000),
 		});
+	} catch (error) {
+		const timedOut = error instanceof Error && (error.name === "TimeoutError" || error.name === "AbortError");
+		return json({ error: timedOut ? "AI 服务响应超时，请稍后重试，或缩短文章要求。" : "无法连接 AI 服务，请检查服务地址、网络或服务商状态后重试。" }, 502);
+	}
 
+	try {
 		if (!upstream.ok) {
 			const status = upstream.status;
 			if (status === 401 || status === 403) {
@@ -248,11 +259,21 @@ export const POST: APIRoute = async ({ request }) => {
 		}
 
 		const upstreamPayload: unknown = await upstream.json().catch(() => null);
+		if (!upstreamPayload) return json({ error: "AI 服务返回的响应不是有效 JSON，请检查 Chat Completions 接口兼容性。" }, 502);
+		const firstChoice = record(Array.isArray(record(upstreamPayload).choices) ? (record(upstreamPayload).choices as unknown[])[0] : null);
+		if (firstChoice.finish_reason === "length") return json({ error: "AI 输出达到长度或输出额度限制，草稿可能被截断；请缩小文章要求后重试。" }, 502);
+		if (firstChoice.finish_reason === "content_filter") return json({ error: "AI 服务因内容过滤停止生成，请调整写作要求后重试。" }, 502);
 		const content = extractMessageContent(upstreamPayload);
 		if (!content) {
 			return json({ error: "AI 服务没有返回可用文本，请检查模型是否支持 Chat Completions。" }, 502);
 		}
-		const generated = parseModelJson(content);
+		let generated: JsonRecord;
+		try {
+			generated = parseModelJson(content);
+		} catch {
+			return json({ error: "AI 返回的草稿不是有效 JSON，请缩小生成范围或更换兼容 Chat Completions 的模型。" }, 502);
+		}
+		if (!validateDraftFields(generated)) return json({ error: "AI 返回的草稿缺少必需字段或字段类型不正确，请重试或更换模型。" }, 502);
 		const title = mode === "rewrite" ? existingTitle : text(generated.title, 200);
 		const generatedSlug = safeSlug(generated.slug);
 		const slug =
@@ -287,15 +308,7 @@ export const POST: APIRoute = async ({ request }) => {
 			body,
 		};
 		return json({ draft, mode });
-	} catch (error) {
-		const timedOut = error instanceof Error && error.name === "TimeoutError";
-		return json(
-			{
-				error: timedOut
-					? "AI 服务响应超时，请稍后重试，或缩短文章要求。"
-					: "AI 服务暂时不可用或返回格式不正确，请检查接口配置后重试。",
-			},
-			502,
-		);
+	} catch {
+		return json({ error: "AI 草稿处理失败，请稍后重试；若持续出现，请检查模型与 Chat Completions 的兼容性。" }, 502);
 	}
 };
