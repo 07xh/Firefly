@@ -1,3 +1,4 @@
+import "./admin-visual-noop.test.mjs";
 import "./admin-editor-noop-dialogs.test.mjs";
 import "./admin-image-properties.test.mjs";
 import "./admin-editor-links.test.mjs";
