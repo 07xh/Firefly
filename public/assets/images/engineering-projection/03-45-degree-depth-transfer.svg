@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 740" role="img" aria-labelledby="title desc">
+<title id="title">图 3｜45° 辅助线为什么可以传递深度</title><desc id="desc">蓝色传递同一个左右位置；绿色传高度；紫色通过 45° 线转移深度。</desc>
+<defs><pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M 26 0 L 0 0 0 26" fill="none" stroke="#E5EFEC" stroke-width="1"/></pattern><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#809A9D"/></marker></defs>
+<rect width="1020" height="740" rx="22" fill="#F4F9F7"/>
+<rect x="15" y="15" width="990" height="710" rx="20" fill="#FFFFFF" stroke="#E4EDEB" stroke-width="2"/>
+<g font-family="'Noto Sans CJK SC','Noto Sans SC','Microsoft YaHei','PingFang SC',system-ui,sans-serif">
+<text x="52" y="74" font-size="35" fill="#203B41" font-weight="750" >图 3｜45° 辅助线为什么可以传递深度</text>
+<text x="52" y="116" font-size="22" fill="#53717A" font-weight="400" >蓝色传递同一个左右位置；绿色传高度；紫色通过 45° 线转移深度。</text>
+
+<rect x="65" y="152" width="392" height="192" rx="18" fill="#F4FBF8" stroke="#B0DBC5" stroke-width="2"/><rect x="65" y="412" width="392" height="252" rx="18" fill="#F5FAFE" stroke="#BEDCF5" stroke-width="2"/><rect x="619" y="152" width="348" height="192" rx="18" fill="#FAF7FE" stroke="#D7C5EA" stroke-width="2"/>
+<text x="85" y="187" font-size="28" fill="#18A071" font-weight="700" >主视图 V</text><text x="85" y="447" font-size="28" fill="#3984CC" font-weight="700" >俯视图 H</text><text x="635" y="187" font-size="28" fill="#9364C3" font-weight="700" >左视图 W</text>
+<line x1="330" y1="230" x2="330" y2="530" stroke="#3984CC" stroke-width="3" stroke-dasharray="11 9" stroke-linecap="round" />
+<line x1="330" y1="230" x2="770" y2="230" stroke="#18A071" stroke-width="4" stroke-dasharray="11 9" stroke-linecap="round" />
+<line x1="330" y1="530" x2="770" y2="530" stroke="#9364C3" stroke-width="4" stroke-dasharray="11 9" stroke-linecap="round" />
+<line x1="770" y1="530" x2="770" y2="230" stroke="#9364C3" stroke-width="4" stroke-dasharray="11 9" stroke-linecap="round" />
+<line x1="640" y1="400" x2="910" y2="670" stroke="#D68C28" stroke-width="5"  stroke-linecap="round" />
+<line x1="640" y1="400" x2="640" y2="660" stroke="#C2D0CB" stroke-width="2" stroke-dasharray="11 9" stroke-linecap="round" />
+<line x1="470" y1="400" x2="640" y2="400" stroke="#C2D0CB" stroke-width="2" stroke-dasharray="11 9" stroke-linecap="round" />
+<circle cx="330" cy="230" r="10" fill="#18A071" stroke="white" stroke-width="5" /><circle cx="330" cy="530" r="10" fill="#3984CC" stroke="white" stroke-width="5" /><circle cx="770" cy="230" r="10" fill="#9364C3" stroke="white" stroke-width="5" />
+<circle cx="770" cy="530" r="8" fill="#D68C28" stroke="white" stroke-width="5" />
+<text x="346" y="219" font-size="26" fill="#18A071" font-weight="750" >P_V</text><text x="345" y="524" font-size="26" fill="#3984CC" font-weight="750" >P_H</text><text x="788" y="219" font-size="26" fill="#9364C3" font-weight="750" >P_W</text>
+<text x="788" y="520" font-size="23" fill="#D68C28" font-weight="680" >转折点</text>
+<text x="830" y="606" font-size="28" fill="#D68C28" font-weight="750" >45°</text>
+<text x="645" y="385" font-size="22" fill="#53717A" font-weight="650" >O</text>
+<text x="666" y="687" font-size="23" fill="#53717A" font-weight="500" >深度量取基准</text>
+<rect x="80" y="675" width="855" height="46" rx="12" fill="#EDF8F3" stroke="#CFE9D8" stroke-width="2"/>
+<text x="97" y="706" font-size="21" fill="#203B41" font-weight="600" >深度 25 mm 先从 H 传到斜线，再等距传到 W 的水平位置。</text>
+
+</g></svg>
