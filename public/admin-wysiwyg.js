@@ -1866,6 +1866,11 @@ async function loadTiptapModules() {
         error.textContent="原始公式在编辑期间发生变化，已阻止覆盖，请重新打开公式编辑器。";
         error.hidden=false;return;
       }
+      if (raw === current.attrs.raw) {
+        close();
+        status("公式未变化，原始 LaTeX 保持不变。");
+        return;
+      }
       activeEditor.view.dispatch(activeEditor.state.tr.setNodeMarkup(pos,undefined,{...current.attrs,raw}));
       status("公式已更新到当前草稿，尚未提交到 GitHub。");
       close();
@@ -2612,6 +2617,13 @@ async function loadTiptapModules() {
         message.hidden = false;
         return;
       }
+      if (checked.attrs.src === originalAttrs.src &&
+          checked.attrs.alt === (originalAttrs.alt || "") &&
+          checked.attrs.title === (originalAttrs.title || "")) {
+        close();
+        status("图片信息未变化，原始 Markdown 保持不变。");
+        return;
+      }
       const transaction = editor.state.tr.setNodeMarkup(position, undefined, {...current.attrs,...checked.attrs});
       editor.view.dispatch(transaction);
       status("图片信息已更新到当前草稿，保存文章后才写入 GitHub。");
@@ -2936,6 +2948,11 @@ async function loadTiptapModules() {
       if(!editor.state.doc.eq(originalDoc)){
         message.textContent="编辑期间正文已发生变化，已取消操作以避免误改链接。";
         message.hidden=false;return;
+      }
+      if (hasExistingLink && href === editor.getAttributes("link").href) {
+        close();
+        status("链接未变化，原始 Markdown 保持不变。");
+        return;
       }
       const inserted=editor.chain().focus()
         .setTextSelection({from,to})
