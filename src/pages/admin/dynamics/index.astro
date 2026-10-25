@@ -1,8 +1,9 @@
 ---
+import { siteConfig } from "@/config";
 export const prerender = false;
 ---
 <!doctype html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-site-timezone={siteConfig.timezone || "Asia/Shanghai"}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -58,7 +59,7 @@ export const prerender = false;
         <h3 id="editorTitle">发布新动态</h3>
         <form id="editor">
           <div class="fields">
-            <div class="field"><label for="published">发布时间（按站点时间填写） *</label><input type="datetime-local" step="1" id="published" required></div>
+            <div class="field"><label for="published">发布时间（站点时区：{siteConfig.timezone || "Asia/Shanghai"}） *</label><input type="datetime-local" step="1" id="published" required></div>
             <div class="field"><label for="location">地点（可选）</label><input type="text" id="location" maxlength="100" placeholder="例如：学校 / 校园"></div>
           </div>
           <label class="check"><input type="checkbox" id="pinned">置顶显示此动态</label>
