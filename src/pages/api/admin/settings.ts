@@ -1,5 +1,6 @@
 import { env as workerEnv } from "cloudflare:workers";
 import type { APIRoute } from "astro";
+import { checkSettingsRevision, formatSettingsRevision } from "../../../lib/admin-settings-revision";
 
 export const prerender = false;
 
@@ -130,12 +131,13 @@ class SettingsApiError extends Error {
 	}
 }
 
-function json(data: unknown, status = 200): Response {
+function json(data: unknown, status = 200, extraHeaders?: Record<string, string>): Response {
 	return new Response(JSON.stringify(data), {
 		status,
 		headers: {
 			"content-type": "application/json; charset=utf-8",
 			"cache-control": "private, no-store",
+			...extraHeaders,
 		},
 	});
 }
@@ -523,6 +525,8 @@ async function handleSave(request: Request): Promise<Response> {
 	try {
 		const config = getConfig();
 		const current = await readSettings(config);
+		const version = checkSettingsRevision(request.headers.get("If-Match"), current.sha);
+		if (!version.ok) return json({ error: version.error }, version.status);
 		const settings = applySubmittedSettings(
 			current.settings,
 			input as Record<string, unknown>,
@@ -547,8 +551,10 @@ async function handleSave(request: Request): Promise<Response> {
 				status,
 			);
 		}
-		const result = (await response.json()) as { commit?: { sha?: string } };
-		return json({ ok: true, settings, commitSha: result.commit?.sha ?? null });
+		const result = (await response.json()) as { commit?: { sha?: string }; content?: { sha?: string } };
+		const settingsVersion = result.content?.sha && /^[0-9a-f]{40}$/i.test(result.content.sha)
+			? result.content.sha.toLowerCase() : null;
+		return json({ ok: true, settings, settingsVersion, commitSha: result.commit?.sha ?? null });
 	} catch (error) {
 		const status = error instanceof SettingsApiError ? error.status : 502;
 		const message = error instanceof Error ? error.message : "保存全局配置失败。";
@@ -559,7 +565,7 @@ async function handleSave(request: Request): Promise<Response> {
 export const GET: APIRoute = async () => {
 	try {
 		const result = await readSettings(getConfig());
-		return json(result.settings);
+		return json(result.settings, 200, { etag: formatSettingsRevision(result.sha) });
 	} catch (error) {
 		const status = error instanceof SettingsApiError ? error.status : 502;
 		const message = error instanceof Error ? error.message : "读取全局配置失败。";
