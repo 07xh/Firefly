@@ -2,9 +2,9 @@
 title: "2026 Python 模拟题逐题答案与解析"
 published: 2026-10-18
 description: "Python 模拟题逐题答案与解析，包含顺序结构、while 循环、for 循环三大类型"
-category: "python"
-draft: false
-tags: ["python"]
+category: "Python"
+draft: true
+tags: ["Python"]
 slug: "python"
 ---
 ---
