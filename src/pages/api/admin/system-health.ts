@@ -30,12 +30,19 @@ async function checkGitHubContents(env: HealthRuntime): Promise<ProbeStatus> {
 	if (!token) return "not_configured";
 	const repo = env.GITHUB_CONTENTS_REPO?.trim() || "07xh/Firefly";
 	const branch = env.GITHUB_CONTENTS_BRANCH?.trim() || "master";
-	if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo) || !/^[A-Za-z0-9_.\/-]+$/.test(branch) || branch.includes("..")) {
+	if (
+		!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repo) ||
+		!/^[A-Za-z0-9_.\/-]+$/.test(branch) ||
+		branch.includes("..")
+	) {
 		return "failed";
 	}
 	try {
-		const url = "https://api.github.com/repos/" + repo
-			+ "/contents/package.json?ref=" + encodeURIComponent(branch);
+		const url =
+			"https://api.github.com/repos/" +
+			repo +
+			"/contents/package.json?ref=" +
+			encodeURIComponent(branch);
 		const response = await fetch(url, {
 			headers: {
 				Accept: "application/vnd.github+json",
@@ -45,7 +52,7 @@ async function checkGitHubContents(env: HealthRuntime): Promise<ProbeStatus> {
 			},
 			signal: AbortSignal.timeout(5000),
 		});
-				return response.ok ? "ok" : "failed";
+		return response.ok ? "ok" : "failed";
 	} catch {
 		return "failed";
 	}
@@ -55,7 +62,9 @@ export const GET: APIRoute = async ({ url }) => {
 	const env = workerEnv as unknown as HealthRuntime;
 	const summary = summarizeAdminHealth(env);
 	const probe = url.searchParams.get("probe") === "1";
-	const github: ProbeStatus = probe ? await checkGitHubContents(env) : "not_requested";
+	const github: ProbeStatus = probe
+		? await checkGitHubContents(env)
+		: "not_requested";
 	return json({
 		...summary,
 		connectivity: { github },
