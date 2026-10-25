@@ -35,7 +35,7 @@ async function checkGitHubContents(env: HealthRuntime): Promise<ProbeStatus> {
 	}
 	try {
 		const url = "https://api.github.com/repos/" + repo
-			+ "/contents/src/data/settings.json?ref=" + encodeURIComponent(branch);
+			+ "/contents/package.json?ref=" + encodeURIComponent(branch);
 		const response = await fetch(url, {
 			headers: {
 				Accept: "application/vnd.github+json",
@@ -45,9 +45,7 @@ async function checkGitHubContents(env: HealthRuntime): Promise<ProbeStatus> {
 			},
 			signal: AbortSignal.timeout(5000),
 		});
-		// A 404 may indicate a missing settings file rather than a token issue,
-		// but it is not proof of a healthy content-management connection.
-		return response.ok ? "ok" : "failed";
+				return response.ok ? "ok" : "failed";
 	} catch {
 		return "failed";
 	}
