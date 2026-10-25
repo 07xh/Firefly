@@ -919,11 +919,22 @@ function articleStatus(article) {
  const timestamp = raw ? Date.parse(raw) : Number.NaN;
  return Number.isFinite(timestamp) && timestamp > Date.now() ? "scheduled" : "published";
 }
+// 已发布文章点“转为草稿”必须显式写 draft:true，不能仅按旧勾选状态保存。
+function shouldConvertToDraft(mode, article, checked, scheduledDate) {
+ return mode === "save" && article?.draft === false && !checked &&
+  (!scheduledDate || Date.parse(scheduledDate) <= Date.now());
+}
+function articlePathForDeleteButton(button) {
+ return button.closest("[data-admin-article-path]")?.dataset.adminArticlePath || "";
+}
 function updateSaveButtonLabel() {
  const draft = $("draft").checked;
  const localDate = $("date").value;
  const hasFutureDate = Boolean(localDate && Date.parse(localDate + ":00+08:00") > Date.now());
- $("saveDraft").textContent = draft ? "保存为草稿" : (hasFutureDate ? "保存定时文章" : (selected ? "保存修改" : "保存并公开"));
+ const converting = shouldConvertToDraft("save", selected, draft, hasFutureDate ? fromBeijingDateTimeLocal(localDate) : "");
+ $("saveDraft").textContent = draft ? (selected?.draft ? "保存草稿修改" : "保存为草稿")
+  : hasFutureDate ? "保存定时文章"
+  : converting ? "转为草稿" : (selected ? "保存修改" : "保存并公开");
 }
 function frontmatterValue(source,key){const match=source.match(new RegExp("^"+key+":\\s*(.*?)\\s*$","m"));if(!match)return "";const raw=match[1].trim();try{const parsed=JSON.parse(raw);if(Array.isArray(parsed))return parsed.map(String).join(", ");if(typeof parsed==="string")return parsed;if(parsed===null)return ""}catch{}if(raw.startsWith("'")&&raw.endsWith("'"))return raw.slice(1,-1).replace(/''/g,"'");return raw}
 async function api(method,data){const r=await fetch("/api/admin/articles/",{method,headers:{"Content-Type":"application/json"},...(data?{body:JSON.stringify(data)}:{})});if(r.status===401){goLogin();throw new Error("登录已过期，正在跳转登录页…")}const d=await r.json().catch(()=>({error:"服务器响应无法解析"}));if(!r.ok)throw new Error(d.error||"请求失败");return d}
@@ -993,7 +1004,6 @@ function render(){
    updateSaveButtonLabel();
    articleBaseline=currentArticleSnapshot();
    updateArticleDirtyState();
-   $("saveDraft").textContent=a.draft?"保存草稿修改":"转为草稿";
    $("publish").textContent=a.draft?"发布这篇文章":"保存修改并发布";
    $("delete").disabled=false;
    say(
@@ -1017,22 +1027,6 @@ function render(){
    "hover:bg-rose-50 hover:text-rose-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-500/40",
    "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100"
   ].join(" ");
-
-  del.onclick=async event=>{
-   event.stopPropagation();
-   if(!confirm("确定删除“"+a.title+"”？此操作会提交到 GitHub 并触发部署。"))return;
-   del.disabled=true;
-   try{
-    await api("DELETE",{path:a.path,sha:a.sha});
-    if(selected&&selected.path===a.path)reset();
-    say("文章已删除，正在刷新列表…");
-    await refresh();
-   }catch(e){
-    say(e.message,true);
-   }finally{
-    del.disabled=false;
-   }
-  };
 
   row.dataset.adminArticlePath=a.path;
   row.append(item,del);
@@ -1601,7 +1595,7 @@ $("visualTab").onclick=showVisualTab;$("editorTab").onclick=showEditorTab;$("pre
 // Save is handled by the single four-stage handler below. Keeping one submit
 // listener prevents duplicate GitHub writes from competing event handlers.
 
-$("delete").onclick=async()=>{if(!selected||!confirm("确定删除 "+selected.title+"？此操作会提交到 GitHub。"))return;$("delete").disabled=true;try{await api("DELETE",{path:selected.path,sha:selected.sha});say("文章已删除");reset();await refresh()}catch(e){say(e.message,true)}finally{$("delete").disabled=false}};
+// 列表和编辑页均使用下方统一的删除确认弹窗事件委托。
 
 let aiDraftResult = null;
 function setAiStatus(message, isError = false) {
@@ -1809,8 +1803,7 @@ reset();refresh();loadSettings();
     event.preventDefault();
     event.stopPropagation();
     event.stopImmediatePropagation();
-    const row = button.closest(".group");
-    const path = row?.querySelectorAll("span")?.[1]?.textContent?.trim();
+    const path = articlePathForDeleteButton(button);
     const article = button.id === "delete" ? selected : articles.find(a => a.path === path);
     if (!article || !await confirmDelete((article.title || "未命名文章") + " · " + article.path)) return;
     button.disabled = true;
@@ -1946,7 +1939,10 @@ reset();refresh();loadSettings();
     if ($("body").value.length > 500000) { say("阶段 1/4：正文超过 500 KB 限制。", true); return; }
     if (mode === "publish" && !window.confirm("直接发布会立即公开文章，并清除定时发布时间。确定继续吗？")) return;
     if (mode === "publish") $("date").value = "";
-    const isDraft = mode === "publish" ? false : $("draft").checked;
+    const convertingToDraft = shouldConvertToDraft(mode, selected, $("draft").checked, date);
+    const isDraft = mode === "publish" ? false : convertingToDraft || $("draft").checked;
+    // 直接转为草稿时取消旧定时字段，避免以后的发布受历史日期影响。
+    if (convertingToDraft) { date = ""; $("date").value = ""; }
     $("draft").checked = isDraft;
     const password = $("articlePassword").value;
     const passwordHint = $("passwordHint").value;
