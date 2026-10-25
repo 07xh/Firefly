@@ -146,13 +146,84 @@ point = 3, 5
 
 `print(name, age)` 会输出 `小明 18`。另外，`point = 3, 5` 实际上创建了一个元组。
 
-### 3. 点号 `.`
+### 3. 点号 `.`：不只是“访问”，还要弄懂调用方法
+
+初学时看到 `scores.append(95)`，如果只记住“点号表示访问”，依然可能不理解：**访问了谁？找到了什么？为什么后面有括号？结果保存在哪里？**
+
+#### 第一步：什么是对象与方法？
+
+在 Python 中，字符串 `"python"`、列表 `[88, 92]` 等值，都可以看成不同类型的**对象**。
+
+可以暂时把它们想成不同的工具箱：
+
+- 字符串有转换大小写、去掉首尾空格等功能。
+- 列表有添加元素、删除元素、排序等功能。
+
+和对象关联的可调用功能，叫作**方法（method）**。点号 `.` 用来访问对象的成员，而方法名后面的 `()` 才表示**真正调用**。
+
+把 `name.upper()` 分成四部分：
+
+| 部分 | 含义 |
+| --- | --- |
+| `name` | 变量，指向一个字符串对象 |
+| `.` | 从这个对象上访问成员 |
+| `upper` | 字符串提供的转大写方法 |
+| `()` | 调用这个方法 |
+
+**先记一句：点号负责找到方法，圆括号负责调用。**
+
+#### 第二步：`name.upper()` 如何一步步执行？
 
 ```python
 name = "python"
-print(name.upper())
-print(name.capitalize())
+new_name = name.upper()
 
+print(new_name)
+print(name)
+```
+
+**运行结果：**
+
+```text
+PYTHON
+python
+```
+
+一行一行看：
+
+1. `name = "python"`：让 `name` 引用字符串 `"python"`。
+2. `name.upper`：访问字符串对象的 `upper` 方法。
+3. `name.upper()`：调用方法，**返回一个新的大写字符串** `"PYTHON"`。
+4. `new_name = ...`：把这个新字符串保存到 `new_name`。
+5. 再打印 `name`，仍然是 `"python"`。
+
+因为 Python 的字符串不能原地修改，`upper()` 只会返回一个新字符串。
+
+一个典型的初学者错误：
+
+```python
+name = "python"
+name.upper()   # 结果没有保存
+print(name)
+```
+
+**运行结果：**
+
+```text
+python
+```
+
+如果想让变量以后引用大写结果，应写成：
+
+```python
+name = "python"
+name = name.upper()
+print(name)  # PYTHON
+```
+
+#### 第三步：`scores.append(95)` 为什么又能改变原列表？
+
+```python
 scores = [88, 92]
 scores.append(95)
 print(scores)
@@ -161,12 +232,123 @@ print(scores)
 **运行结果：**
 
 ```text
-PYTHON
-Python
 [88, 92, 95]
 ```
 
-> **小提醒：** 点号 `.` 用于访问方法，圆括号 `()` 用于调用方法。
+`scores` 是列表，`.` 表示从列表上访问成员，`append` 是**添加元素的方法**，`(95)` 把 95 交给这个方法。与 `upper()` 不同，`append()` **会修改原列表**。
+
+再看一个非常重要的反例：
+
+```python
+scores = [88, 92]
+result = scores.append(95)
+
+print(scores)
+print(result)
+```
+
+**运行结果：**
+
+```text
+[88, 92, 95]
+None
+```
+
+`None` 可以先理解为“没有返回一个可用的值”。因此**不要写** `scores = scores.append(95)`，否则 `scores` 会变成 `None`，不再是列表。
+
+> **真正重要的区别：** `upper()` 返回新字符串；`append()` 修改原列表。有些方法返回新值，有些方法修改原对象，学习方法时要弄清两者的区别。
+
+#### 第四步：点号后面不一定有 `()`——属性与方法
+
+**属性**是可以通过点号读到的信息；**方法**是可以调用的功能。例如：
+
+```python
+import math
+
+print(math.pi > 3)
+print(math.sqrt(9))
+```
+
+**运行结果：**
+
+```text
+True
+3.0
+```
+
+`import math` 表示引入 Python 自带的数学模块。可以先把 `math` 看作数学工具箱：
+
+- `math.pi`：访问一个圆周率数值，**不需要调用**。
+- `math.sqrt(9)`：找到计算平方根的函数，再调用并传入 9。
+
+严格说，`math.sqrt` 是模块里的函数，`name.upper` 是对象的方法；两者都可以使用点号访问，但不是完全相同的概念。
+
+#### 第五步：点号 `.` 与方括号 `[]` 不是一回事
+
+```python
+scores = [88, 92]
+student = {"name": "小明", "score": 92}
+
+print(scores[0])
+print(student["name"])
+```
+
+**运行结果：**
+
+```text
+88
+小明
+```
+
+- `scores[0]`：按**索引**从列表取元素。
+- `student["name"]`：按**键**从字典取数据。
+- `scores.append(95)`：通过点号**访问并调用列表的方法**。
+
+所以普通字典的 `student["name"]` 不能随意写成 `student.name`。
+
+| 常见误写 | 错误原因 | 正确写法 |
+| --- | --- | --- |
+| `scores.length` | Python 列表没有这个属性 | `len(scores)` |
+| `scores.push(95)` | Python 列表没有 `push` 方法 | `scores.append(95)` |
+| `student.name` | 普通字典需要按键取值 | `student["name"]` |
+| `name.upper` | 只找到方法，没有调用 | `name.upper()` |
+| `scores = scores.append(95)` | `append()` 返回 `None` | 直接 `scores.append(95)` |
+
+访问不存在的属性或方法，通常会出现 `AttributeError`。这时应该检查：**点号左边是什么类型？它是否支持右边的方法名称？**
+
+#### 第六步：连续两个点号，是怎样工作的？
+
+```python
+message = "  hello python  "
+result = message.strip().upper()
+
+print(result)
+print(message)
+```
+
+**运行结果：**
+
+```text
+HELLO PYTHON
+  hello python  
+```
+
+`message.strip().upper()` 的顺序是：
+
+1. `strip()` 去掉原字符串**首尾**的空格，返回 `"hello python"`，中间空格仍在。
+2. 在返回的新字符串上调用 `upper()`，得到 `"HELLO PYTHON"`。
+3. 把最终结果保存到 `result`；原来的 `message` 没有变化。
+
+这叫**链式调用**。怕看不懂时，可以先分成两步：
+
+```python
+message = "  hello python  "
+cleaned = message.strip()
+result = cleaned.upper()
+print(result)  # HELLO PYTHON
+```
+
+**掌握点号的关键，不是背“访问”两个字，而是每次都问：左边是什么对象？右边是什么方法或属性？调用后返回新值还是修改原数据？**
 
 ---
 
