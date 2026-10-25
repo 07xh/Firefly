@@ -1,3 +1,4 @@
+// biome-ignore-all format: Keep this small article-validation helper stable across Biome versions.
 export type ExistingArticle = { path: string; title?: string };
 
 const ROOT = "src/content/posts/";
