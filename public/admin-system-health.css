@@ -1,0 +1,8 @@
+.admin-workspace .admin-system-health-report { display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:10px; margin-top:14px; }
+.admin-workspace .admin-system-health-row { min-width:0; display:flex; flex-direction:column; gap:5px; border:1px solid #dce8de; border-radius:11px; padding:12px; background:#fbfdfb; }
+.admin-workspace .admin-system-health-row strong { font-size:12px; color:#365442; }
+.admin-workspace .admin-system-health-row span { font-size:14px; color:#263c2f; overflow-wrap:anywhere; }
+.admin-workspace #adminSystemHealthStatus { margin-top:12px; line-height:1.7; }
+.admin-workspace #adminSystemHealthProbe { min-height:40px; }
+.admin-workspace #adminSystemHealthProbe:focus-visible { outline:2px solid #248052; outline-offset:2px; }
+.admin-workspace #adminSystemHealthProbe:disabled { opacity:.6; cursor:progress; }

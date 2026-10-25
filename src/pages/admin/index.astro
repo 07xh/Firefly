@@ -418,6 +418,7 @@ export const prerender = false;
 </style>
 <link rel="stylesheet" href="/admin-workspace.css?v=20261021-01">
 <link rel="stylesheet" href="/admin-mint.css?v=20261021-center-01">
+<link rel="stylesheet" href="/admin-system-health.css?v=20261025">
 </head>
 <body class="admin-workspace">
 <a class="admin-skip-link" href="#adminMain">跳转到后台内容</a>
@@ -820,7 +821,14 @@ export const prerender = false;
     <section class="admin-dashboard-card"><h3>部署记录</h3><p>查看 GitHub Actions 的构建和 Cloudflare 部署执行结果。</p><a class="admin-shortcut" href="https://github.com/07xh/Firefly/actions" target="_blank" rel="noopener noreferrer">查看部署日志 ↗</a></section>
     <section class="admin-dashboard-card"><h3>后台权限</h3><p>登录、文章写入和 AI 配置仍受现有服务端会话保护。本页不读取或展示密钥。</p><button type="button" class="admin-shortcut" data-admin-go="ai">查看 AI 配置 ↗</button></section>
   </div>
-  <p class="admin-utility-note">实时运行状态尚未接入监控 API。以上是管理入口，不代表实时健康检查已通过。</p>
+  <section class="admin-dashboard-card" aria-labelledby="adminSystemHealthTitle">
+  <h3 id="adminSystemHealthTitle">后台运行检查（只读）</h3>
+  <p>检查管理员登录、文章管理和可选服务配置。点击按钮后仅执行 GitHub 读取测试，不读取或展示 API Key、文章正文，也不会写入数据。</p>
+  <button id="adminSystemHealthProbe" class="btn" type="button">检测 GitHub 连通性</button>
+  <p id="adminSystemHealthStatus" role="status" aria-live="polite" class="muted">打开此页面后读取配置状态，连接测试需要手动触发。</p>
+  <div id="adminSystemHealthReport" class="admin-system-health-report" aria-label="后台服务配置状态"></div>
+</section>
+<p class="admin-utility-note">本检查只代表当前运行环境配置与只读连接状态，不代表文章发布、完整备份恢复或生产部署已经验收。</p>
 </section>
 </main>
 <script>
@@ -2048,4 +2056,4 @@ reset();refresh();loadSettings();
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=20261018-editor-reading-controls"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=20261018-editor-reading-controls"></script><script type="module" src="/admin-system-health.js?v=20261025"></script></body></html>
