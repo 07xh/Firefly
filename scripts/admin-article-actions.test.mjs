@@ -4,6 +4,7 @@ import test from "node:test";
 // Keep dedicated create/duplicate regressions in the existing protected admin test step.
 import "./admin-article-duplicates.test.mjs";
 import "./admin-article-create.test.mjs";
+import "./admin-pagescms-workspace.test.mjs";
 
 const root = new URL("../", import.meta.url);
 const admin = readFileSync(new URL("src/pages/admin/index.astro", root), "utf8");
