@@ -1,0 +1,13 @@
+.admin-workspace .admin-media-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:14px 0; }
+.admin-workspace .admin-media-toolbar input { flex:1 1 220px; min-width:0; padding:10px 12px; border:1px solid #dce6dd; border-radius:10px; background:#fff; color:#25362b; }
+.admin-workspace .admin-media-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(170px,1fr)); gap:14px; margin-top:16px; }
+.admin-workspace .admin-media-item { min-width:0; padding:10px; border:1px solid #dfe8e1; border-radius:14px; background:#fff; display:flex; flex-direction:column; gap:8px; }
+.admin-workspace .admin-media-item a { display:block; overflow:hidden; border-radius:10px; background:#f4f6f4; }
+.admin-workspace .admin-media-item img { display:block; width:100%; aspect-ratio:4/3; object-fit:contain; }
+.admin-workspace .admin-media-filename, .admin-workspace .admin-media-path { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.admin-workspace .admin-media-filename { font-size:13px; color:#263b2d; }
+.admin-workspace .admin-media-path { font-size:11px; color:#66796a; }
+.admin-workspace .admin-media-actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:auto; }
+.admin-workspace .admin-media-actions button { min-height:36px; padding:6px 8px; font-size:12px; }
+.admin-workspace .admin-media-item :focus-visible { outline:2px solid #26845e; outline-offset:3px; }
+@media (max-width:640px) { .admin-workspace .admin-media-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; } .admin-workspace .admin-media-item { padding:7px; } .admin-workspace .admin-media-actions { flex-direction:column; } }
