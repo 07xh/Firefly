@@ -3,6 +3,7 @@ import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEdita
 import { filterSlashItems, SLASH_ITEMS, validateImageSource } from "/admin-editor-commands.js?v=20261026-visual";
 import { parseEditableMath, serializeEditableMath } from "/admin-math-editor.js?v=20261026-1";
 import { validateEditorLink } from "/admin-editor-links.js?v=20261026-1";
+import { validateVisualImageAttributes, matchesOriginalImage } from "/admin-image-properties.js?v=20261026-1";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
@@ -2388,7 +2389,7 @@ async function loadTiptapModules() {
     document.head.append(style);
   }
 
-  function openImagePreview(src, alt = "", title = "") {
+  function openImagePreview(src, alt = "", title = "", imagePosition = null) {
     const imageSrc = typeof src === "string" ? src.trim() : "";
     if (!imageSrc) return;
 
@@ -2437,7 +2438,13 @@ async function loadTiptapModules() {
       close.className = "firefly-image-preview__button";
       close.textContent = "关闭";
       close.addEventListener("click", () => dialog.close());
-      actions.append(original, close);
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "firefly-image-preview__button";
+      edit.dataset.imageEdit = "true";
+      edit.textContent = "编辑图片信息";
+      edit.hidden = true;
+      actions.append(original, edit, close);
       bar.append(caption, actions);
       const imageWrap = document.createElement("div");
       imageWrap.className = "firefly-image-preview__image-wrap";
@@ -2460,6 +2467,19 @@ async function loadTiptapModules() {
     const previewImage = dialog.querySelector(".firefly-image-preview__image");
     const caption = dialog.querySelector("[data-image-caption]");
     const original = dialog.querySelector("[data-image-original]");
+    const edit = dialog.querySelector("[data-image-edit]");
+    const node = Number.isInteger(imagePosition) ? editor?.state.doc.nodeAt(imagePosition) : null;
+    const originalDoc = editor?.state.doc;
+    const snapshot = node?.type.name === "image" ? {
+      src: node.attrs.src || "",
+      alt: node.attrs.alt || "",
+      title: node.attrs.title || "",
+    } : null;
+    edit.hidden = !snapshot;
+    edit.onclick = snapshot ? () => {
+      dialog.close();
+      openVisualImageProperties(imagePosition, snapshot, originalDoc);
+    } : null;
     previewImage.src = imageSrc;
     previewImage.alt = alt || title || "图片预览";
     previewImage.title = title || "";
@@ -2480,6 +2500,127 @@ async function loadTiptapModules() {
     } else {
       dialog.setAttribute("open", "");
     }
+  }
+
+
+  // Update an existing image without touching its neighboring Markdown/MDX.
+  // The image is selected by a validated position captured from its preview.
+  function openVisualImageProperties(position, originalAttrs, originalDoc) {
+    if (!editor || visualLoadFailed || !Number.isInteger(position) ||
+        !originalAttrs || document.getElementById("firefly-image-properties-dialog")) return;
+    const dialog = document.createElement("dialog");
+    dialog.id = "firefly-image-properties-dialog";
+    dialog.setAttribute("aria-labelledby", "firefly-image-properties-title");
+    const form = document.createElement("form");
+    form.noValidate = true;
+    form.className = "firefly-image-properties";
+    const heading = document.createElement("h2");
+    heading.id = "firefly-image-properties-title";
+    heading.textContent = "编辑文章图片";
+    const note = document.createElement("p");
+    note.textContent = "更换图片地址、说明或标题。只有点击应用才会修改当前编辑器；最后仍需要保存文章。";
+    const labeledInput = (labelText, initial, maxLength, placeholder) => {
+      const label = document.createElement("label");
+      label.textContent = labelText;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.maxLength = maxLength;
+      input.value = initial || "";
+      input.placeholder = placeholder;
+      label.append(input);
+      return { label, input };
+    };
+    const url = labeledInput("图片链接", originalAttrs.src, 2048, "https://example.com/pic.png");
+    const alt = labeledInput("图片说明（无障碍替代文本）", originalAttrs.alt, 160, "例如：工程制图三视图");
+    const title = labeledInput("鼠标提示标题（可选）", originalAttrs.title, 160, "例如：补第三视图示例");
+    const image = document.createElement("img");
+    image.alt = "图片修改前预览";
+    image.loading = "lazy";
+    image.className = "firefly-image-properties__preview";
+    const message = document.createElement("p");
+    message.className = "firefly-image-properties__error";
+    message.hidden = true;
+    message.setAttribute("role","alert");
+    const actions = document.createElement("div");
+    actions.className = "firefly-image-properties__actions";
+    const cancel = document.createElement("button");
+    cancel.type = "button";
+    cancel.textContent = "取消";
+    const save = document.createElement("button");
+    save.className = "primary";
+    save.type = "submit";
+    save.textContent = "应用图片修改";
+    actions.append(cancel,save);
+    form.append(heading,note,url.label,alt.label,title.label,image,message,actions);
+    dialog.append(form);
+    const style = document.createElement("style");
+    style.textContent = [
+      "#firefly-image-properties-dialog{width:min(550px,calc(100vw - 24px));max-width:none;border:1px solid #d5e2d7;border-radius:14px;padding:0;background:#fff;color:#24372b;box-shadow:0 20px 70px #152b1b55}",
+      "#firefly-image-properties-dialog::backdrop{background:#13291a99}",
+      ".firefly-image-properties{display:grid;gap:11px;padding:20px}",
+      ".firefly-image-properties h2{font-size:18px;margin:0}",
+      ".firefly-image-properties p{font-size:12px;line-height:1.6;margin:0;color:#64766a}",
+      ".firefly-image-properties label{display:grid;gap:5px;font-size:13px;font-weight:650}",
+      ".firefly-image-properties input{width:100%;box-sizing:border-box;border:1px solid #c6d9cc;border-radius:8px;background:#fff;color:#273c2c;padding:9px;font:14px system-ui}",
+      ".firefly-image-properties__preview{max-width:100%;max-height:160px;object-fit:contain;border:1px solid #dce6db;border-radius:8px}",
+      ".firefly-image-properties .firefly-image-properties__error{color:#b42318}",
+      ".firefly-image-properties__actions{display:flex;justify-content:flex-end;gap:8px}",
+      ".firefly-image-properties__actions button{padding:9px 12px;border:1px solid #c9dccb;border-radius:8px;color:#274032;background:#fff;cursor:pointer}",
+      ".firefly-image-properties__actions .primary{background:#177d45;border-color:#177d45;color:#fff}",
+      "@media(max-width:520px){.firefly-image-properties{padding:14px}.firefly-image-properties__actions button{flex:1}}",
+    ].join("\n");
+    document.head.append(style);
+    document.body.append(dialog);
+    let closed = false;
+    const cleanup = () => {
+      if (closed) return;
+      closed = true;
+      image.removeAttribute("src");
+      dialog.remove();
+      style.remove();
+    };
+    const close = () => {
+      if (dialog.open && typeof dialog.close === "function") dialog.close();
+      else cleanup();
+    };
+    dialog.addEventListener("close",cleanup,{once:true});
+    cancel.addEventListener("click",close);
+    const updatePreview = () => {
+      const checked = validateVisualImageAttributes({src:url.input.value,alt:alt.input.value,title:title.input.value});
+      if (checked.ok) {
+        image.hidden = false;
+        image.src = checked.attrs.src;
+      } else {
+        image.hidden = true;
+        image.removeAttribute("src");
+      }
+    };
+    image.addEventListener("error",() => { image.hidden = true; });
+    url.input.addEventListener("input",updatePreview);
+    form.addEventListener("input",() => { message.hidden = true; });
+    form.addEventListener("submit",event => {
+      event.preventDefault();
+      const checked = validateVisualImageAttributes({src:url.input.value,alt:alt.input.value,title:title.input.value});
+      if (!checked.ok) {
+        message.textContent = checked.error;
+        message.hidden = false;
+        return;
+      }
+      const current = editor.state.doc.nodeAt(position);
+      if (!editor.state.doc.eq(originalDoc) || !matchesOriginalImage(current, originalAttrs)) {
+        message.textContent = "原始图片已改变或移动，已阻止覆盖，请重新打开图片。";
+        message.hidden = false;
+        return;
+      }
+      const transaction = editor.state.tr.setNodeMarkup(position, undefined, {...current.attrs,...checked.attrs});
+      editor.view.dispatch(transaction);
+      status("图片信息已更新到当前草稿，保存文章后才写入 GitHub。");
+      close();
+    });
+    updatePreview();
+    if (typeof dialog.showModal === "function") dialog.showModal();
+    else dialog.setAttribute("open","");
+    url.input.focus();
   }
 
   const markdownPreviewElement = $("markdownPreview");
@@ -3085,7 +3226,7 @@ async function loadTiptapModules() {
         handleClickOn(_view, _position, node, _nodePosition, event) {
           if (node.type.name !== "image" || event.button !== 0) return false;
           event.preventDefault();
-          openImagePreview(node.attrs.src, node.attrs.alt, node.attrs.title);
+          openImagePreview(node.attrs.src, node.attrs.alt, node.attrs.title, _nodePosition);
           return true;
         },
         handleKeyDown(_view, event) {
@@ -3097,10 +3238,13 @@ async function loadTiptapModules() {
             return false;
           }
           event.preventDefault();
+          const pos = _view.posAtDOM(target, 0);
+          const imageNode = Number.isInteger(pos) ? _view.state.doc.nodeAt(pos) : null;
           openImagePreview(
             target.getAttribute("src") || "",
             target.getAttribute("alt") || "",
             target.getAttribute("title") || "",
+            imageNode?.type.name === "image" ? pos : null,
           );
           return true;
         },
