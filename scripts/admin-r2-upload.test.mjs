@@ -1,14 +1,16 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { stripTypeScriptTypes } from "node:module";
 import test from "node:test";
 
-import {
-  normalizeR2PublicBaseUrl,
-  newR2ImageKey,
-  uploadImageToR2,
-} from "../src/lib/admin-r2-image-upload.ts";
-
 const root = new URL("../", import.meta.url);
+// The parent CI runs Node tests BEFORE pnpm install on both Node 22/23.
+// Execute the real TS implementation using Node's own built-in type-strip
+// instead of requiring tsx or a downloaded dependency.
+const r2Source = readFileSync(new URL("src/lib/admin-r2-image-upload.ts", root), "utf8");
+const r2Code = stripTypeScriptTypes(r2Source, { mode: "strip" });
+const { normalizeR2PublicBaseUrl, newR2ImageKey, uploadImageToR2 } =
+  await import("data:text/javascript;base64," + Buffer.from(r2Code).toString("base64"));
 const route = readFileSync(new URL("src/pages/api/admin/upload.ts", root), "utf8");
 const middleware = readFileSync(new URL("src/middleware.ts", root), "utf8");
 const sourceEditor = readFileSync(new URL("public/admin-enhancements.js", root), "utf8");
