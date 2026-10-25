@@ -16,9 +16,9 @@
 <line x1="530" y1="390" x2="290" y2="338" stroke="#9364C3" stroke-width="4" stroke-dasharray="11 9" stroke-linecap="round" />
 <circle cx="630" cy="342" r="9" fill="#18A071" stroke="white" stroke-width="5" /><circle cx="530" cy="540" r="9" fill="#3984CC" stroke="white" stroke-width="5" /><circle cx="290" cy="338" r="9" fill="#9364C3" stroke="white" stroke-width="5" /><circle cx="530" cy="390" r="11" fill="#203B41" stroke="white" stroke-width="5" />
 <text x="540" y="370" font-size="25" fill="#203B41" font-weight="700" >P = (40, 25, 30)</text>
-<text x="645" y="332" font-size="27" fill="#18A071" font-weight="700" >Pᵥ</text>
-<text x="543" y="573" font-size="27" fill="#3984CC" font-weight="700" >Pₕ</text>
-<text x="250" y="317" font-size="27" fill="#9364C3" font-weight="700" >P𝓌</text>
+<text x="645" y="332" font-size="27" fill="#18A071" font-weight="700" >P_V</text>
+<text x="543" y="573" font-size="27" fill="#3984CC" font-weight="700" >P_H</text>
+<text x="250" y="317" font-size="27" fill="#9364C3" font-weight="700" >P_W</text>
 <text x="770" y="277" font-size="25" fill="#18A071" font-weight="700" >V 面：x 与 z</text>
 <text x="770" y="322" font-size="25" fill="#3984CC" font-weight="700" >H 面：x 与 y</text>
 <text x="770" y="367" font-size="25" fill="#9364C3" font-weight="700" >W 面：y 与 z</text>
