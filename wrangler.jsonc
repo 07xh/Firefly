@@ -21,6 +21,17 @@
       "binding": "FIREFLY_SESSIONS"
     }
   ],
-  "previews": {},
+  "previews": {
+    "kv_namespaces": [
+      {
+        "binding": "FIREFLY_SESSIONS",
+        "id": "d2577742cfde47719ec224ba3ad57446"
+      },
+      {
+        "binding": "SESSION",
+        "id": "58d75098ced44eea98ec20fb46fe006c"
+      }
+    ]
+  },
   "main": "@astrojs/cloudflare/entrypoints/server"
 }
