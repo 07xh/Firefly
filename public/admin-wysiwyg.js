@@ -1,6 +1,7 @@
 import { prepareMarkdownForVisualEditing, restoreProtectedMarkdownStrict } from "/admin-markdown-guard.js?v=20261021-strict-integrity";
 import { inspectProtectedMarkdown, serializeEditableStepTimeline, serializeEditableTabGroup, serializeEditableCallout, serializeEditableTaskList, serializeEditableDetails } from "/admin-visual-preview.js?v=20261018-details-editor";
 import { filterSlashItems, SLASH_ITEMS, validateImageSource } from "/admin-editor-commands.js?v=20261026-visual";
+import { parseEditableMath, serializeEditableMath } from "/admin-math-editor.js?v=20261026-1";
 
 let Editor, NodeExtension, StarterKit, Markdown, Image, TableKit;
 
@@ -1764,6 +1765,96 @@ async function loadTiptapModules() {
     titleInput.select();
   }
 
+
+  // A safe, scoped editor for exactly one display or inline TeX expression.
+  // On cancel nothing is changed; on save the original marker and surrounding
+  // paragraphs are retained, only the TeX expression is replaced.
+  function openVisualMathEditor(activeEditor, getPos, node, parsed) {
+    if (document.getElementById("firefly-math-edit-dialog")) return;
+    const dialog = document.createElement("dialog");
+    dialog.id = "firefly-math-edit-dialog";
+    dialog.setAttribute("aria-label","可视化编辑数学公式");
+    const wrap = document.createElement("div");
+    wrap.className = "firefly-math-edit__body";
+    const title = document.createElement("h2");
+    title.textContent = parsed.kind === "display" ? "编辑块级数学公式" : "编辑行内数学公式";
+    const hint = document.createElement("p");
+    hint.textContent = "只修改公式表达式，周围的 Markdown/MDX 内容保持原样。取消操作不会保存。";
+    const label = document.createElement("label");
+    label.textContent = "公式表达式（LaTeX）";
+    const field = document.createElement("textarea");
+    field.rows = 5; field.maxLength = 4000;
+    field.setAttribute("aria-label","LaTeX 公式表达式");
+    field.value = parsed.tex;
+    label.append(field);
+    const previewTitle = document.createElement("strong");
+    previewTitle.textContent = "效果预览";
+    const preview = document.createElement("div");
+    preview.className = "firefly-math-edit__preview";
+    preview.setAttribute("aria-live","polite");
+    const error = document.createElement("p");
+    error.className = "firefly-math-edit__error";
+    error.setAttribute("role","alert"); error.hidden = true;
+    const actions = document.createElement("div");
+    actions.className = "firefly-math-edit__actions";
+    const cancel = document.createElement("button");
+    cancel.type = "button"; cancel.textContent = "取消";
+    const save = document.createElement("button");
+    save.type = "button"; save.textContent = "应用公式修改";
+    save.className = "primary";
+    actions.append(cancel,save);
+    wrap.append(title,hint,label,previewTitle,preview,error,actions);
+    dialog.append(wrap);
+    const style=document.createElement("style");
+    style.textContent=[
+      "#firefly-math-edit-dialog{width:min(660px,calc(100vw - 24px));max-width:none;border:1px solid #cbdccf;border-radius:14px;padding:0;background:#fff;color:#26392c;box-shadow:0 18px 70px #172d2255}",
+      "#firefly-math-edit-dialog::backdrop{background:#13251c99}",
+      ".firefly-math-edit__body{display:grid;gap:12px;padding:20px}",
+      ".firefly-math-edit__body h2{font-size:18px;margin:0}",
+      ".firefly-math-edit__body p{font-size:12px;margin:0;line-height:1.6;color:#637268}",
+      ".firefly-math-edit__body label{font-size:12px;font-weight:650;display:grid;gap:6px}",
+      ".firefly-math-edit__body textarea{min-height:110px;border:1px solid #cadacc;border-radius:8px;padding:10px;font:13px/1.6 ui-monospace,monospace;resize:vertical;background:#fff;color:#26392c}",
+      ".firefly-math-edit__preview{min-height:60px;overflow-x:auto;border:1px solid #e1eae2;background:#f8fbf8;border-radius:8px;padding:12px}",
+      ".firefly-math-edit__error{color:#b42318!important}",
+      ".firefly-math-edit__actions{display:flex;gap:8px;justify-content:flex-end}",
+      ".firefly-math-edit__actions button{border:1px solid #cadaca;border-radius:8px;padding:9px 12px;background:#fff;color:#26392c;cursor:pointer}",
+      ".firefly-math-edit__actions .primary{background:#18834d;color:#fff;border-color:#18834d}",
+      "@media(max-width:520px){.firefly-math-edit__body{padding:14px}.firefly-math-edit__actions button{flex:1}}"
+    ].join("\n");
+    document.head.append(style);
+    document.body.append(dialog);
+    const close=()=> { if (dialog.open && typeof dialog.close==="function") dialog.close();else cleanup(); };
+    let cleaned=false;
+    const cleanup=()=> { if(cleaned)return;cleaned=true;dialog.remove();style.remove(); };
+    dialog.addEventListener("close",cleanup,{once:true});
+    cancel.addEventListener("click",close);
+    const redraw=()=> {
+      error.hidden=true;
+      try {
+        serializeEditableMath(parsed,field.value);
+        renderKatexInto(preview,field.value,parsed.kind==="display");
+      } catch (e) { preview.textContent="当前公式暂无法预览"; }
+    };
+    field.addEventListener("input",redraw);
+    save.addEventListener("click",()=>{
+      let raw;
+      try { raw=serializeEditableMath(parsed,field.value); }
+      catch(e){error.textContent=e instanceof Error?e.message:"公式格式不正确";error.hidden=false;return;}
+      const pos=getPos();
+      const current=typeof pos==="number"?activeEditor.state.doc.nodeAt(pos):null;
+      if (!current || current.type.name!=="protectedMarkdownBlock" || current.attrs.marker!==node.attrs.marker || current.attrs.raw!==node.attrs.raw) {
+        error.textContent="原始公式在编辑期间发生变化，已阻止覆盖，请重新打开公式编辑器。";
+        error.hidden=false;return;
+      }
+      activeEditor.view.dispatch(activeEditor.state.tr.setNodeMarkup(pos,undefined,{...current.attrs,raw}));
+      status("公式已更新到当前草稿，尚未提交到 GitHub。");
+      close();
+    });
+    redraw();
+    if(typeof dialog.showModal==="function")dialog.showModal();else dialog.setAttribute("open","");
+    field.focus();
+  }
+
   function visualPreviewElement(tag, className, text) {
     const element = document.createElement(tag);
     if (className) element.className = className;
@@ -2083,6 +2174,19 @@ async function loadTiptapModules() {
             header.append(label, edit);
             const raw = typeof currentNode.attrs.raw === "string" ? currentNode.attrs.raw : "";
             const model = inspectProtectedMarkdown(raw, currentNode.attrs.reason || "扩展 Markdown");
+            const mathModel = (model.kind === "math" || model.kind === "inline-math")
+              ? parseEditableMath(raw, currentNode.attrs.reason || "") : null;
+            if (mathModel) {
+              const mathEdit=document.createElement("button");
+              mathEdit.type="button"; mathEdit.className="firefly-protected-markdown__edit";
+              mathEdit.textContent="可视化编辑公式";
+              mathEdit.addEventListener("mousedown",event=>event.preventDefault());
+              mathEdit.addEventListener("click",event=>{
+                event.preventDefault();event.stopPropagation();
+                openVisualMathEditor(activeEditor,getPos,currentNode,mathModel);
+              });
+              header.append(mathEdit);
+            }
             if ((model.kind === "steps" || model.kind === "timeline") && model.editable) {
               const visualEdit = document.createElement("button");
               visualEdit.type = "button";
