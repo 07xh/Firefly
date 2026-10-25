@@ -1,0 +1,24 @@
+name: Temporary R2 admin code format diagnostic
+
+on:
+  pull_request:
+    paths:
+      - 'src/lib/admin-r2-image-upload.ts'
+      - 'src/pages/api/admin/upload.ts'
+      - '.github/workflows/admin-r2-format-diagnostic.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  show-only:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: biomejs/setup-biome@f382a98e582959e6aaac8e5f8b17b31749018780
+        with:
+          version: 2.5.15
+      - name: Show proposed formatting of only two admin source files
+        run: |
+          biome format --write src/lib/admin-r2-image-upload.ts src/pages/api/admin/upload.ts
+          git diff -- src/lib/admin-r2-image-upload.ts src/pages/api/admin/upload.ts
