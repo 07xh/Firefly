@@ -568,8 +568,9 @@ export const prerender = false;
   </div>
 </details>
 <form id="editor">
-<div class="field"><label for="title">标题 *</label><input id="title" required maxlength="200"></div>
-<div class="grid"><div class="field"><label for="slug">文件名 *</label><input id="slug" required placeholder="my-post"></div><div class="field"><label for="published">展示发布日期 *</label><input id="published" type="date" required></div></div>
+<div class="field"><label for="title">标题 *</label><input id="title" required maxlength="200" aria-describedby="articleDuplicateError"></div>
+<div class="grid"><div class="field"><label for="slug">文件名 *</label><input id="slug" required placeholder="my-post" aria-describedby="articleDuplicateError"></div><div class="field"><label for="published">展示发布日期 *</label><input id="published" type="date" required></div></div>
+<p id="articleDuplicateError" role="alert" style="color:#b42318;font-size:12px" hidden></p>
 <div class="grid"><div class="field"><label for="date">定时发布时间（北京时间）</label><input id="date" type="datetime-local" step="60"><small class="muted">留空表示立即生效；填写未来时间后，系统会自动安排重建。</small></div><div class="field"><label for="articlePassword">访问密码（可选）</label><input id="articlePassword" type="password" maxlength="200" autocomplete="new-password" placeholder="留空则不启用密码保护"><small class="muted">输入后，前台将显示密码解锁页面。</small></div></div>
 <div class="field"><label for="passwordHint">密码提示（可选）</label><input id="passwordHint" maxlength="120" placeholder="例如：课程名称"></div>
 <p class="muted" style="color:#b42318">安全提醒：当前 GitHub 仓库是公开的，Markdown 原文和 password 字段都可能被直接读取。现有密码保护只加密构建后的网页，不能保护公开仓库中的原文和密码；不要在此保存真正机密的内容。</p>
@@ -895,6 +896,17 @@ window.addEventListener("beforeunload", event => {
 });
 
 function say(s,bad=false){$("status").textContent=s;$("status").style.color=bad?"#b42318":"#657267"}
+function validateArticleDuplicate(){
+ const title=$("title").value.trim().toLocaleLowerCase(),slug=$("slug").value.trim().toLocaleLowerCase();
+ const others=articles.filter(article=>article.path!==selected?.path);
+ const slugTaken=!selected&&slug&&others.some(article=>article.path?.replace(/^src\/content\/posts\//,"").replace(/\.mdx?$/i,"").toLocaleLowerCase()===slug);
+ const titleTaken=title&&others.some(article=>article.title?.trim().toLocaleLowerCase()===title);
+ const field=slugTaken?"slug":titleTaken?"title":null;
+ const error=$("articleDuplicateError");error.hidden=!field;error.textContent=field==="slug"?"同名文章已存在：文件名已被使用。":field==="title"?"同名文章已存在：标题已被使用。":"";
+ $("title").setAttribute("aria-invalid",String(field==="title"));$("slug").setAttribute("aria-invalid",String(field==="slug"));
+ return field;
+}
+for(const id of ["title","slug"])$(id).addEventListener("input",validateArticleDuplicate);
 function todayInBeijing() {
  const parts = new Intl.DateTimeFormat("en-CA", { timeZone:"Asia/Shanghai", year:"numeric", month:"2-digit", day:"2-digit" }).formatToParts(new Date());
  const values = Object.fromEntries(parts.map(part => [part.type, part.value]));
@@ -1033,8 +1045,8 @@ function render(){
   list.append(row);
  }
 }
-async function refresh(){try{say("正在读取 GitHub…");articles=await api("GET");render();updateDashboard();say("已读取 "+articles.length+" 篇文章")}catch(e){say(e.message,true);$("list").textContent="读取失败，请确认服务端令牌和仓库权限已配置。";$("dashboardLoadStatus").textContent="文章统计暂不可用，请检查文章管理接口。";$("dashboardRecentList").replaceChildren(Object.assign(document.createElement("p"),{className:"admin-recent-empty",textContent:"文章列表暂不可用，请检查连接后重试。"}));for(const id of ["dashboardArticleCount","dashboardDraftCount","dashboardPublishedCount","dashboardScheduledCount"])$(id).textContent="—"}}
-function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} $("draft").checked=true;$("slug").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
+async function refresh(){try{say("正在读取 GitHub…");articles=await api("GET");render();updateDashboard();validateArticleDuplicate();say("已读取 "+articles.length+" 篇文章")}catch(e){say(e.message,true);$("list").textContent="读取失败，请确认服务端令牌和仓库权限已配置。";$("dashboardLoadStatus").textContent="文章统计暂不可用，请检查文章管理接口。";$("dashboardRecentList").replaceChildren(Object.assign(document.createElement("p"),{className:"admin-recent-empty",textContent:"文章列表暂不可用，请检查连接后重试。"}));for(const id of ["dashboardArticleCount","dashboardDraftCount","dashboardPublishedCount","dashboardScheduledCount"])$(id).textContent="—"}}
+function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} validateArticleDuplicate();$("draft").checked=true;$("slug").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
 function showVisualTab(){
  $("body").hidden=true;$("wysiwygPane").hidden=false;$("markdownPreview").hidden=true;
  $("visualTab").classList.add("active");$("editorTab").classList.remove("active");$("previewTab").classList.remove("active");
@@ -1934,6 +1946,8 @@ reset();refresh();loadSettings();
     let date = mode === "publish" ? "" : fromBeijingDateTimeLocal(rawSchedule);
     if (!title || title.length > 200) { say("阶段 1/4：标题不能为空且最多 200 个字符。", true); $("title").focus(); return; }
     if (!selected && !/^[\p{L}\p{N}][\p{L}\p{N}_-]{0,79}$/u.test(slug)) { say("阶段 1/4：文件名须以字母或数字开头，且仅包含字母、数字、连字符或下划线；支持中文。", true); $("slug").focus(); return; }
+    const duplicateField=validateArticleDuplicate();
+    if(duplicateField){say($("articleDuplicateError").textContent,true);$(duplicateField).focus();return;}
     if (!/^\d{4}-\d{2}-\d{2}$/.test(published) || Number.isNaN(Date.parse(published + "T00:00:00Z"))) { say("阶段 1/4：请选择有效的发布日期。", true); $("published").focus(); return; }
     if (rawSchedule && mode !== "publish" && !date) { say("阶段 1/4：定时发布时间无效，请重新选择。", true); $("date").focus(); return; }
     if ($("body").value.length > 500000) { say("阶段 1/4：正文超过 500 KB 限制。", true); return; }

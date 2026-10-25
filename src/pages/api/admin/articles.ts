@@ -1,6 +1,7 @@
 import { env as workerEnv } from "cloudflare:workers";
 
 import type { APIRoute } from "astro";
+import { duplicateArticle, isGitHubPathConflict, safeGitHubMessage } from "../../../lib/admin-article-duplicates";
 
 type RuntimeEnv = {
 	FIREFLY_CONTENTS_TOKEN?: string;
@@ -38,15 +39,25 @@ function getConfig(): { token: string; repo: string; branch: string } {
 
 async function githubFailure(response: Response, operation: string): Promise<string> {
 	let message = "";
+	let details = "";
 	try {
-		const payload = (await response.clone().json()) as { message?: unknown };
+		const payload = (await response.clone().json()) as { message?: unknown; errors?: unknown };
 		if (typeof payload.message === "string") {
-			message = payload.message.replace(/\s+/g, " ").trim().slice(0, 240);
+			message = safeGitHubMessage(payload.message);
+		}
+		if (Array.isArray(payload.errors)) {
+			details = payload.errors.slice(0, 3).map((error: unknown) => {
+				if (!error || typeof error !== "object") return "";
+				const item = error as { field?: unknown; code?: unknown; message?: unknown };
+				const field = typeof item.field === "string" && /^[\w.-]{1,40}$/.test(item.field) ? item.field : "";
+				const code = typeof item.code === "string" && /^[\w.-]{1,40}$/.test(item.code) ? item.code : "";
+				return [field, code, safeGitHubMessage(item.message)].filter(Boolean).join(" / ");
+			}).filter(Boolean).join("；").slice(0, 240);
 		}
 	} catch {
 		// GitHub may return a non-JSON error body; keep the HTTP status either way.
 	}
-	return `${operation} (${response.status})${message ? `：${message}` : ""}`;
+	return `${operation} (${response.status})${message ? `：${message}` : ""}${details ? `（${details}）` : ""}`;
 }
 
 function json(data: unknown, status = 200): Response {
@@ -250,12 +261,23 @@ export const POST: APIRoute = async ({ request }) => {
 		const path = `${ROOT}${slug}.${extension}`;
 		const content = makeMarkdown({ ...input, slug });
 		if (!content) return json({ error: "标题、发布日期或正文格式不合法" }, 400);
+		const files = await findPostFiles(config);
+		const existing = await Promise.all(files.map(async (file) => {
+			const post = await readPost(file.path, config);
+			const frontmatter = post.content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+			return { path: file.path, title: frontmatter ? frontmatterText(frontmatter[1], "title") : "" };
+		}));
+		const duplicate = duplicateArticle(existing, slug, String(input.title));
+		if (duplicate) return json({ error: duplicate === "slug" ? "同名文章已存在：文件名已被使用" : "同名文章已存在：标题已被使用", field: duplicate }, 409);
 		const response = await github(`contents/${path}`, config, {
 			method: "PUT",
 			body: JSON.stringify({ message: `Add article: ${slug}`, content: encodeBase64(content), branch: config.branch }),
 		});
 
-		if (response.status === 422) return json({ error: "同名文章已存在" }, 409);
+		if (response.status === 422) {
+			const payload = await response.clone().json().catch(() => null);
+			if (isGitHubPathConflict(payload)) return json({ error: "同名文章已存在：文件名已被使用", field: "slug" }, 409);
+		}
 
 		if (!response.ok) return json({ error: await githubFailure(response, "GitHub 写入失败") }, 502);
 		const written = (await response.json()) as { commit?: { sha?: string; html_url?: string } };
