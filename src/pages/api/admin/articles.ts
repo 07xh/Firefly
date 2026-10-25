@@ -1,6 +1,8 @@
 import { env as workerEnv } from "cloudflare:workers";
 
 import type { APIRoute } from "astro";
+import { mapWithConcurrency } from "../../../lib/admin-article-batch";
+import { readAdminArticleMetadata } from "../../../lib/admin-article-metadata";
 
 type RuntimeEnv = {
 	FIREFLY_CONTENTS_TOKEN?: string;
@@ -103,34 +105,6 @@ function removeFrontmatterField(content: string, key: string): string {
 }
 
 
-function frontmatterText(content: string, key: string): string {
-	const match = content.match(new RegExp("^" + key + ":\\s*(.*?)\\s*$", "m"));
-	if (!match) return "";
-	const raw = match[1].trim();
-	try {
-		const parsed = JSON.parse(raw) as unknown;
-		return typeof parsed === "string" ? parsed : "";
-	} catch {
-		return raw.replace(/^['"]|['"]$/g, "");
-	}
-}
-
-function frontmatterTags(content: string): string[] {
-	const match = content.match(/^tags:\s*(.*?)\s*$/m);
-	if (!match) return [];
-	const raw = match[1].trim();
-	if (!raw) return [];
-	try {
-		const parsed = JSON.parse(raw) as unknown;
-		if (Array.isArray(parsed)) {
-			return [...new Set(parsed.filter((tag): tag is string => typeof tag === "string").map((tag) => tag.trim()).filter(Boolean))];
-		}
-	} catch {
-		// Also support common YAML list forms such as [tech, notes].
-	}
-	return [...new Set(raw.replace(/^\[|\]$/g, "").split(",").map((tag) => tag.trim().replace(/^['"]|['"]$/g, "")).filter(Boolean))];
-}
-
 function validDate(value: unknown): value is string {
 	if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
 	const date = new Date(value + "T00:00:00Z");
@@ -214,26 +188,17 @@ export const GET: APIRoute = async () => {
 	try {
 		const config = getConfig();
 		const files = await findPostFiles(config);
-		const posts = await Promise.all(files.map(async (file) => {
-			try {
-				const post = await readPost(file.path, config);
-				const match = post.content.match(/^title:\s*(?:"([^"]*)"|'([^']*)'|(.+))\s*$/m);
-				const date = post.content.match(/^published:\s*(\d{4}-\d{2}-\d{2})\s*$/m);
-				return {
-					path: post.path,
-					sha: post.sha,
-					content: post.content,
-					title: (match?.[1] ?? match?.[2] ?? match?.[3] ?? file.path.split("/").pop() ?? "").trim(),
-					published: date?.[1] ?? "",
-					date: frontmatterText(post.content, "date"),
-					category: frontmatterText(post.content, "category"),
-					tags: frontmatterTags(post.content),
-					draft: /^draft:\s*true\s*$/m.test(post.content),
-				};
-			} catch {
-				return { path: file.path, sha: file.sha, title: file.path.split("/").pop() ?? file.path, published: "", draft: false };
-			}
-		}));
+		// Bound parallel GitHub requests; preserve list order and fail closed if a
+		// source read fails rather than presenting a broken entry as "published".
+		const posts = await mapWithConcurrency(files, 6, async (file) => {
+			const post = await readPost(file.path, config);
+			return {
+				path: post.path,
+				sha: post.sha,
+				content: post.content,
+				...readAdminArticleMetadata(post.content, file.path.split("/").pop() ?? file.path),
+			};
+		});
 		return json(posts.sort((a, b) => b.published.localeCompare(a.published)));
 	} catch (error) {
 		return json({ error: error instanceof Error ? error.message : "Internal error" }, 503);

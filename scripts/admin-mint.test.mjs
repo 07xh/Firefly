@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 const root=new URL("../",import.meta.url);
 const html=readFileSync(new URL("src/pages/admin/index.astro",root),"utf8");
 const css=readFileSync(new URL("public/admin-mint.css",root),"utf8");
@@ -51,4 +53,23 @@ test("recent article preview safely delegates to existing editor and handles mis
  assert.match(html, /title\.textContent=article\.title/);
  assert.match(html, /articles\.slice\(0,5\)/);
  assert.match(css, /\.admin-workspace \.admin-recent-button/);
+});
+
+// Existing CI already runs this file before installing dependencies. Invoke the
+// TypeScript batch tests with Node's built-in type stripping (no new packages).
+test("admin GitHub batch reader unit tests", () => {
+  const result = spawnSync(process.execPath, [
+    "--experimental-strip-types",
+    "--test",
+    "scripts/admin-article-batch.test.mjs",
+    "scripts/admin-article-metadata.test.mjs",
+  ], { cwd: fileURLToPath(root), encoding: "utf8" });
+  assert.equal(result.status, 0, (result.stdout || "") + (result.stderr || ""));
+});
+
+test("article refresh failure clears stale list data without resetting the editor", () => {
+  assert.match(html, /async function refresh\(\)/);
+  assert.match(html, /catch\(e\)\{articles=\[\];say\(e\.message,true\)/);
+  assert.match(html, /\$\("list"\)\.textContent="读取失败/);
+  assert.match(html, /function isArticleDirty\(\)/);
 });
