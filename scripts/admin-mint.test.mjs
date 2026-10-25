@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 const root=new URL("../",import.meta.url);
 const html=readFileSync(new URL("src/pages/admin/index.astro",root),"utf8");
 const css=readFileSync(new URL("public/admin-mint.css",root),"utf8");
@@ -51,4 +53,11 @@ test("recent article preview safely delegates to existing editor and handles mis
  assert.match(html, /title\.textContent=article\.title/);
  assert.match(html, /articles\.slice\(0,5\)/);
  assert.match(css, /\.admin-workspace \.admin-recent-button/);
+});
+
+test("read-only system status regression suite runs in existing admin CI", () => {
+ const result=spawnSync(process.execPath, [
+  "--experimental-strip-types", "--test", "scripts/admin-system-health.test.mjs",
+ ], { cwd:fileURLToPath(root),encoding:"utf8" });
+ assert.equal(result.status,0,(result.stdout||"")+(result.stderr||""));
 });
