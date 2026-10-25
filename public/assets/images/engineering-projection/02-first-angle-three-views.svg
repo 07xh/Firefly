@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 688" role="img" aria-labelledby="title desc">
+<title id="title">图 2｜第一角法展开后的三视图位置</title><desc id="desc">同一个 P = (40,25,30)，在三张平面图上显示为三个二维点。</desc>
+<defs><pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M 26 0 L 0 0 0 26" fill="none" stroke="#E5EFEC" stroke-width="1"/></pattern><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#809A9D"/></marker></defs>
+<rect width="1020" height="688" rx="22" fill="#F4F9F7"/>
+<rect x="15" y="15" width="990" height="658" rx="20" fill="#FFFFFF" stroke="#E4EDEB" stroke-width="2"/>
+<g font-family="'Noto Sans CJK SC','Noto Sans SC','Microsoft YaHei','PingFang SC',system-ui,sans-serif">
+<text x="52" y="74" font-size="35" fill="#203B41" font-weight="750" >图 2｜第一角法展开后的三视图位置</text>
+<text x="52" y="116" font-size="22" fill="#53717A" font-weight="400" >同一个 P = (40,25,30)，在三张平面图上显示为三个二维点。</text>
+
+<rect x="80" y="157" width="390" height="192" rx="18" fill="#F4FBF8" stroke="#A7D8BF" stroke-width="2"/><rect x="80" y="408" width="390" height="200" rx="18" fill="#F5FAFE" stroke="#B3D5F1" stroke-width="2"/><rect x="585" y="157" width="354" height="192" rx="18" fill="#FAF7FE" stroke="#D1BDE6" stroke-width="2"/>
+<text x="108" y="192" font-size="29" fill="#18A071" font-weight="700" >主视图 V</text><text x="108" y="443" font-size="29" fill="#3984CC" font-weight="700" >俯视图 H</text><text x="612" y="192" font-size="29" fill="#9364C3" font-weight="700" >左视图 W</text>
+<line x1="130" y1="310" x2="445" y2="310" stroke="#B8CBC6" stroke-width="2"  stroke-linecap="round" /><line x1="130" y1="310" x2="130" y2="205" stroke="#B8CBC6" stroke-width="2"  stroke-linecap="round" />
+<line x1="130" y1="435" x2="445" y2="435" stroke="#B8CBC6" stroke-width="2"  stroke-linecap="round" /><line x1="130" y1="435" x2="130" y2="582" stroke="#B8CBC6" stroke-width="2"  stroke-linecap="round" />
+<line x1="640" y1="310" x2="915" y2="310" stroke="#B8CBC6" stroke-width="2"  stroke-linecap="round" /><line x1="640" y1="310" x2="640" y2="205" stroke="#B8CBC6" stroke-width="2"  stroke-linecap="round" />
+<line x1="330" y1="225" x2="330" y2="535" stroke="#3984CC" stroke-width="3" stroke-dasharray="11 9" stroke-linecap="round" />
+<line x1="330" y1="225" x2="742" y2="225" stroke="#18A071" stroke-width="3" stroke-dasharray="11 9" stroke-linecap="round" />
+<circle cx="330" cy="225" r="10" fill="#18A071" stroke="white" stroke-width="5" /><circle cx="330" cy="535" r="10" fill="#3984CC" stroke="white" stroke-width="5" /><circle cx="742" cy="225" r="10" fill="#9364C3" stroke="white" stroke-width="5" />
+<text x="349" y="218" font-size="24" fill="#18A071" font-weight="650" >Pᵥ (40,30)</text><text x="348" y="530" font-size="24" fill="#3984CC" font-weight="650" >Pₕ (40,25)</text><text x="755" y="219" font-size="24" fill="#9364C3" font-weight="650" >P𝓌 (25,30)</text>
+<text x="149" y="367" font-size="24" fill="#3984CC" font-weight="650" >长对正：同一个 x</text>
+<text x="500" y="235" font-size="22" fill="#18A071" font-weight="650" >高平齐：同一个 z</text>
+<text x="505" y="460" font-size="22" fill="#9364C3" font-weight="650" >宽相等：同一个 y</text>
+<rect x="80" y="628" width="859" height="44" rx="12" fill="#EDF8F3" stroke="#CFE9D8" stroke-width="2"/>
+<text x="95" y="658" font-size="22" fill="#203B41" font-weight="650" >第一角法：俯视图在主视图下方，左视图在主视图右侧。</text>
+
+</g></svg>
