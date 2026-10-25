@@ -23,7 +23,7 @@ test("published article converts to draft while saving scheduled articles preser
   assert.equal(convert("save", { draft: true }, false, ""), false);
   assert.equal(convert("save", null, false, ""), false);
   assert.match(admin, /const isDraft = mode === "publish" \? false : convertingToDraft \|\| \$\("draft"\)\.checked/);
-  assert.match(admin, /content = updateFrontmatterField\(content, "draft", String\(input\.draft\)\)/);
+  assert.match(api, /content = updateFrontmatterField\(content, "draft", String\(input\.draft\)\)/);
 });
 
 test("delete resolves a stable article path, never display text or status labels", () => {
@@ -40,5 +40,5 @@ test("delete resolves a stable article path, never display text or status labels
 
 test("production hides drafts rather than exposing source after save", () => {
   assert.match(listing, /if \(data\.draft === true\) return false/);
-  assert.match(api, /draft: \^draft:/);
+  assert.ok(api.includes("draft: /^draft:"), "backend must return draft status");
 });
