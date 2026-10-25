@@ -1,6 +1,11 @@
 import { env as workerEnv } from "cloudflare:workers";
+
 import type { APIRoute } from "astro";
-import { uploadImageToR2, type FireflyR2Bucket } from "../../../lib/admin-r2-image-upload";
+
+import {
+	type FireflyR2Bucket,
+	uploadImageToR2,
+} from "../../../lib/admin-r2-image-upload";
 
 export const prerender = false;
 
@@ -108,11 +113,20 @@ export const POST: APIRoute = async ({ request }) => {
 			return json({ error: "文件内容与图片类型不匹配，已拒绝上传。" }, 415);
 
 		if (provider === "r2") {
-			if (!env.FIREFLY_IMAGE_R2 || typeof env.FIREFLY_IMAGE_R2.put !== "function") {
-				return json({ error: "R2 图床未启用：请为 Worker 绑定 FIREFLY_IMAGE_R2 存储桶。" }, 503);
+			if (
+				!env.FIREFLY_IMAGE_R2 ||
+				typeof env.FIREFLY_IMAGE_R2.put !== "function"
+			) {
+				return json(
+					{ error: "R2 图床未启用：请为 Worker 绑定 FIREFLY_IMAGE_R2 存储桶。" },
+					503,
+				);
 			}
 			if (!env.FIREFLY_R2_PUBLIC_BASE_URL?.trim()) {
-				return json({ error: "R2 图床缺少公开图片地址 FIREFLY_R2_PUBLIC_BASE_URL。" }, 503);
+				return json(
+					{ error: "R2 图床缺少公开图片地址 FIREFLY_R2_PUBLIC_BASE_URL。" },
+					503,
+				);
 			}
 			try {
 				const uploaded = await uploadImageToR2({
@@ -121,23 +135,29 @@ export const POST: APIRoute = async ({ request }) => {
 					bytes,
 					mime,
 				});
-				return json({
-					ok: true,
-					storage: "r2",
-					path: uploaded.key,
-					filename: uploaded.filename,
-					imageUrl: uploaded.imageUrl,
-					commitSha: null,
-					commitUrl: null,
-				}, 201);
+				return json(
+					{
+						ok: true,
+						storage: "r2",
+						path: uploaded.key,
+						filename: uploaded.filename,
+						imageUrl: uploaded.imageUrl,
+						commitSha: null,
+						commitUrl: null,
+					},
+					201,
+				);
 			} catch (error) {
 				// Do not expose bucket names, internal errors or Cloudflare credentials.
 				console.error("[Firefly] optional R2 image upload failed", {
 					error: error instanceof Error ? error.name : "UnknownError",
 				});
-				return json({
-					error: "R2 上传失败。请检查 Worker 存储桶绑定、公开域名及运行日志；旧图床未受影响。",
-				}, 502);
+				return json(
+					{
+						error: "R2 上传失败。请检查 Worker 存储桶绑定、公开域名及运行日志；旧图床未受影响。",
+					},
+					502,
+				);
 			}
 		}
 
