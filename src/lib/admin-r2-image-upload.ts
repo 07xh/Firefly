@@ -26,7 +26,9 @@ const MAX_BYTES = 4 * 1024 * 1024;
 export function normalizeR2PublicBaseUrl(raw: string): string {
 	const input = raw.trim();
 	if (!input || input.length > 2048 || /[\\?#]/.test(input)) {
-		throw new Error("FIREFLY_R2_PUBLIC_BASE_URL 必须是没有查询参数的 HTTPS 公开地址。");
+		throw new Error(
+			"FIREFLY_R2_PUBLIC_BASE_URL 必须是没有查询参数的 HTTPS 公开地址。",
+		);
 	}
 	let url: URL;
 	try {
@@ -79,7 +81,9 @@ export async function uploadImageToR2(args: {
 	uuid?: string;
 }): Promise<{ key: string; imageUrl: string; filename: string }> {
 	if (!args.bucket || typeof args.bucket.put !== "function") {
-		throw new Error("R2 图床尚未绑定：请在 Cloudflare Worker 中配置 FIREFLY_IMAGE_R2。");
+		throw new Error(
+			"R2 图床尚未绑定：请在 Cloudflare Worker 中配置 FIREFLY_IMAGE_R2。",
+		);
 	}
 	if (!args.publicBaseUrl) {
 		throw new Error("R2 图床尚未配置公开图片地址 FIREFLY_R2_PUBLIC_BASE_URL。");
