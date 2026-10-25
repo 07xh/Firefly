@@ -249,6 +249,7 @@ async function loadTiptapModules() {
       date: $("date")?.value || "",
       category: $("category")?.value || "",
       tags: $("tags")?.value || "",
+      image: $("image")?.value || "",
       description: $("description")?.value || "",
       body: source,
       draft: Boolean($("draft")?.checked),
@@ -295,6 +296,7 @@ async function loadTiptapModules() {
       date: snapshot.date,
       category: snapshot.category,
       tags: snapshot.tags,
+      image: snapshot.image || "",
       description: snapshot.description,
       body: snapshot.body
     };
@@ -2591,6 +2593,72 @@ async function loadTiptapModules() {
     syncSourceFromEditor();
   }
 
+
+  // Inspired by the Pages CMS editor command palette; keep the existing Tiptap/MDX serializer.
+  function createSlashPalette() {
+    const actions = [
+      ["paragraph", "正文段落"], ["h1", "一级标题"], ["h2", "二级标题"],
+      ["h3", "三级标题"], ["bullet", "无序列表"], ["ordered", "有序列表"],
+      ["quote", "引用"], ["code", "代码块"], ["rule", "分隔线"],
+      ["callout", "提示卡片"], ["table", "表格"], ["imagePicker", "插入图片"],
+    ];
+    const menu = document.createElement("div");
+    menu.className = "firefly-slash-menu";
+    menu.hidden = true;
+    menu.setAttribute("role", "listbox");
+    menu.setAttribute("aria-label", "快速插入内容");
+    const style = document.createElement("style");
+    style.textContent = [
+      ".firefly-slash-menu[hidden]{display:none!important}",
+      ".firefly-slash-menu{position:relative;z-index:40;display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:5px;margin:6px 0 12px;padding:10px;background:var(--admin-panel-bg,#fff);border:1px solid #cde1d3;border-radius:12px;box-shadow:0 8px 20px #1835261a;max-height:230px;overflow:auto}",
+      ".firefly-slash-menu button{border:1px solid transparent;border-radius:8px;background:#f5f9f6;color:#285c3d;text-align:left;padding:9px;cursor:pointer;font:13px system-ui,sans-serif}",
+      ".firefly-slash-menu button:hover,.firefly-slash-menu button:focus-visible{background:#e3f5e9;border-color:#82cba0;outline:2px solid transparent}",
+    ].join("\n");
+    document.head.append(style);
+    editorElement.insertAdjacentElement("beforebegin", menu);
+    for (const [command, label] of actions) {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.setAttribute("role", "option");
+      button.textContent = label;
+      button.addEventListener("mousedown", event => event.preventDefault());
+      button.addEventListener("click", () => {
+        menu.hidden = true;
+        runAction(command);
+      });
+      menu.append(button);
+    }
+    const close = () => { menu.hidden = true; };
+    editorElement.addEventListener("keydown", event => {
+      if (!menu.hidden) {
+        if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(); editor.commands.focus(); return; }
+        if (event.key === "ArrowDown" || event.key === "Enter") {
+          event.preventDefault(); event.stopPropagation(); menu.querySelector("button")?.focus(); return;
+        }
+      }
+      if (event.key !== "/" || event.ctrlKey || event.altKey || event.metaKey || event.isComposing || !editor || visualLoadFailed) return;
+      const selection = editor.state.selection;
+      if (!selection.empty || selection.$from.parent.type.name !== "paragraph" || selection.$from.parent.textContent.length !== 0) return;
+      event.preventDefault();
+      event.stopPropagation();
+      menu.hidden = false;
+      menu.querySelector("button")?.focus();
+    }, true);
+    menu.addEventListener("keydown", event => {
+      const buttons = [...menu.querySelectorAll("button")];
+      const index = buttons.indexOf(document.activeElement);
+      if (event.key === "Escape") { event.preventDefault(); close(); editor.commands.focus(); }
+      if (event.key === "ArrowDown" || event.key === "ArrowRight") { event.preventDefault(); buttons[(index+1)%buttons.length]?.focus(); }
+      if (event.key === "ArrowUp" || event.key === "ArrowLeft") { event.preventDefault(); buttons[(index-1+buttons.length)%buttons.length]?.focus(); }
+      if (event.key === "Enter" && index >= 0) { event.preventDefault(); buttons[index].click(); }
+    });
+    document.addEventListener("pointerdown", event => {
+      if (!menu.hidden && !menu.contains(event.target) && !editorElement.contains(event.target)) close();
+    });
+    window.addEventListener("firefly:source-loaded", close);
+    window.addEventListener("firefly:mode", event => { if (event.detail?.mode !== "visual") close(); });
+  }
+
   async function init() {
     const providerName = await loadTiptapModules();
     ensureCalloutStyles();
@@ -2772,6 +2840,7 @@ async function loadTiptapModules() {
     window.addEventListener("firefly:clear-recovery", event => clearRecovery(event.detail || {}));
     window.addEventListener("firefly:save-complete", event => clearRecovery(event.detail || {}));
 
+    createSlashPalette();
     const loadedVisually = loadSourceIntoEditor();
     if (loadedVisually) setMode("visual");
     refreshRecoveryAvailability();

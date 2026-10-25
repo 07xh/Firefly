@@ -577,6 +577,7 @@ export const prerender = false;
 <div class="field"><label for="passwordHint">密码提示（可选）</label><input id="passwordHint" maxlength="120" placeholder="例如：课程名称"></div>
 <p class="muted" style="color:#b42318">安全提醒：当前 GitHub 仓库是公开的，Markdown 原文和 password 字段都可能被直接读取。现有密码保护只加密构建后的网页，不能保护公开仓库中的原文和密码；不要在此保存真正机密的内容。</p>
 <div class="grid"><div class="field"><label for="category">分类</label><input id="category" maxlength="100"></div><div class="field"><label for="tags">标签（逗号分隔）</label><input id="tags" placeholder="技术, 随笔"></div></div>
+<div class="field"><label for="image">文章封面图片</label><input id="image" maxlength="2048" placeholder="https://... 或 /assets/..."><small class="muted">支持 HTTPS 图床地址或以 / 开头的站内图片路径。</small></div>
 <div class="field"><label for="description">摘要</label><input id="description" maxlength="500"></div>
 <div class="field">
 <label for="body">文章正文</label>
@@ -870,7 +871,7 @@ function markSettingsSaved() {
   updateSettingsDirtyState();
 }
 function currentArticleSnapshot() {
-  return JSON.stringify(["title", "slug", "published", "date", "articlePassword", "passwordHint", "category", "tags", "description", "body"]
+  return JSON.stringify(["title", "slug", "published", "date", "articlePassword", "passwordHint", "category", "tags", "image", "description", "body"]
     .map(id => [id, $(id).value]).concat([["draft", $("draft").checked]]));
 }
 function isArticleDirty() {
@@ -1012,6 +1013,7 @@ function render(){
    $("articlePassword").value=frontmatterValue(a.content||"","password");
    $("passwordHint").value=frontmatterValue(a.content||"","passwordHint");
    $("category").value=frontmatterValue(a.content||"","category");
+   $("image").value=frontmatterValue(a.content||"","image");
    $("description").value=frontmatterValue(a.content||"","description");
    $("tags").value=frontmatterValue(a.content||"","tags");
    $("draft").checked=a.draft;
@@ -1048,7 +1050,7 @@ function render(){
  }
 }
 async function refresh(){try{say("正在读取 GitHub…");articles=await api("GET");render();updateDashboard();validateArticleDuplicate();say("已读取 "+articles.length+" 篇文章")}catch(e){say(e.message,true);$("list").textContent="读取失败，请确认服务端令牌和仓库权限已配置。";$("dashboardLoadStatus").textContent="文章统计暂不可用，请检查文章管理接口。";$("dashboardRecentList").replaceChildren(Object.assign(document.createElement("p"),{className:"admin-recent-empty",textContent:"文章列表暂不可用，请检查连接后重试。"}));for(const id of ["dashboardArticleCount","dashboardDraftCount","dashboardPublishedCount","dashboardScheduledCount"])$(id).textContent="—"}}
-function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} validateArticleDuplicate();$("draft").checked=true;$("slug").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
+function reset(){selected=null;for(const id of ["title","slug","published","date","articlePassword","passwordHint","category","tags","image","description","body"]){const field=$(id);if(field)field.value=id==="published"?todayInBeijing():""} validateArticleDuplicate();$("draft").checked=true;$("slug").disabled=false;$("formTitle").textContent="新建文章";updateSaveButtonLabel();$("publish").textContent="直接发布";$("delete").disabled=true;showVisualTab();window.dispatchEvent(new CustomEvent("firefly:source-loaded"));$("deployLink").hidden=true;$("deployLink").removeAttribute("href");articleBaseline=currentArticleSnapshot();updateArticleDirtyState()}
 function showVisualTab(){
  $("body").hidden=true;$("wysiwygPane").hidden=false;$("markdownPreview").hidden=true;
  $("visualTab").classList.add("active");$("editorTab").classList.remove("active");$("previewTab").classList.remove("active");
@@ -1723,7 +1725,17 @@ $("aiApply").onclick = async () => {
   await renderMarkdownPreview();
 };
 
+window.FireflyAdminContent = {
+  articles: () => articles.slice(),
+  selected: () => selected,
+  open: path => openRecentArticle(path),
+  refresh: () => refresh(),
+  status: articleStatus,
+};
 reset();refresh();loadSettings();
+const initialCmsView = new URLSearchParams(location.search).get("view");
+if (initialCmsView === "articles") setAdminTab("articles");
+if (initialCmsView === "new") { reset(); setAdminTab("editor"); }
 /* Firefly admin editor enhancements: image paste/drop, filters, accessible delete modal, deployment stages. */
 (() => {
   const $ = (id) => document.getElementById(id);
@@ -1968,7 +1980,7 @@ reset();refresh();loadSettings();
     }
     const metadata = {
       title, published, date, password, passwordHint,
-      category: $("category").value, description: $("description").value,
+      category: $("category").value, image: $("image").value.trim(), description: $("description").value,
       tags: $("tags").value.split(",").map(x => x.trim()).filter(Boolean), draft: isDraft
     };
     const data = selected
@@ -2056,8 +2068,8 @@ reset();refresh();loadSettings();
 
   // Refresh the filter options after the initial asynchronous article fetch.
   const initialRefresh = refresh;
-  refresh = async function() { await initialRefresh(); populateFilters(); render(); };
+  refresh = async function() { await initialRefresh(); populateFilters(); render(); window.dispatchEvent(new CustomEvent("firefly:articles-refreshed")); };
   refresh();
 })();
 
-</script><script type="module" src="/admin-wysiwyg.js?v=20261018-editor-reading-controls"></script></body></html>
+</script><script type="module" src="/admin-wysiwyg.js?v=20261026-slash"></script><script type="module" src="/admin-pagescms-workspace.js?v=20261026-01"></script></body></html>
