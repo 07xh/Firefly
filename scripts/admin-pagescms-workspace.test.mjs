@@ -2,7 +2,7 @@ import "./admin-editor-commands.test.mjs";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import test from "node:test";
-import { appendTag, categoryFromArticle, historyUrl, tagsFromArticle, validArticlePath } from "../public/admin-pagescms-workspace.js";
+import { appendTag, categoryFromArticle, historyUrl, tagsFromArticle, validArticlePath, safeCoverPreviewSource } from "../public/admin-pagescms-workspace.js";
 
 const root = new URL("../", import.meta.url);
 const page = readFileSync(new URL("src/pages/admin/index.astro", root),"utf8");
@@ -58,4 +58,22 @@ test("Pages CMS pilot defaults are non-destructive and preserve unknown frontmat
   assert.match(config,/rename: false/);
   assert.match(config,/delete: false/);
   assert.match(config,/type: code/);
+});
+
+
+test("cover-image visual preview accepts site images and HTTPS and rejects unsafe sources",()=>{
+  assert.equal(safeCoverPreviewSource("/assets/images/cover.png"),"/assets/images/cover.png");
+  assert.equal(safeCoverPreviewSource("https://tu.example.org/posts/cover.webp"),"https://tu.example.org/posts/cover.webp");
+  for(const source of ["javascript:alert(1)","data:image/svg+xml,<svg>","//evil.test/x.png","/../secrets.png","https://a.test/a b.png"])
+    assert.equal(safeCoverPreviewSource(source),null);
+});
+
+test("cover preview is metadata-only, with zero additional save handlers",()=>{
+  const source=readFileSync(new URL("../public/admin-pagescms-workspace.js",import.meta.url),"utf8");
+  assert.match(source,/coverInput\.insertAdjacentElement\("afterend",wrap\)/);
+  assert.match(source,/image\.addEventListener\("error"/);
+  assert.match(source,/coverInput\.addEventListener\("input",update\)/);
+  assert.match(source,/firefly:source-loaded/);
+  assert.doesNotMatch(source,/fetch\s*\(/);
+  assert.doesNotMatch(source,/setContent\(|setMarkdown\(/);
 });
