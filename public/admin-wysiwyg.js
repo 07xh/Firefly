@@ -2834,7 +2834,7 @@ async function loadTiptapModules() {
       case "redo": chain.redo().run(); break;
       case "table":
         openTableInsertDialog();
-        break;
+        return; // opening/cancelling must never reserialize Markdown
       case "addRowBefore": if (typeof editor.commands.addRowBefore === "function") editor.chain().focus().addRowBefore().run(); else status("无法在当前位置插入行，请先点入表格单元格。", true); break;
       case "addRowAfter": if (typeof editor.commands.addRowAfter === "function") editor.chain().focus().addRowAfter().run(); else status("无法在当前位置插入行，请先点入表格单元格。", true); break;
       case "addColumnBefore": if (typeof editor.commands.addColumnBefore === "function") editor.chain().focus().addColumnBefore().run(); else status("无法在当前位置插入列，请先点入表格单元格。", true); break;
@@ -2845,8 +2845,8 @@ async function loadTiptapModules() {
       case "deleteTable": if (typeof editor.commands.deleteTable === "function") editor.chain().focus().deleteTable().run(); else status("无法删除表格，请先点入表格单元格。", true); break;
       case "link": openVisualLinkDialog(); return;
       case "unlink": chain.unsetLink().run(); break;
-      case "imagePicker": $("wysiwygFile")?.click(); break;
-      case "imageUrl": openImageUrlDialog(); break;
+      case "imagePicker": $("wysiwygFile")?.click(); return; // file dialog is read-only until upload succeeds
+      case "imageUrl": openImageUrlDialog(); return; // closing dialog must not normalize source
       default: break;
     }
     syncSourceFromEditor();
@@ -3309,7 +3309,10 @@ async function loadTiptapModules() {
     });
     document.querySelectorAll("[data-editor-action]").forEach(button => {
       button.addEventListener("mousedown", event => {
-        if (button.closest("#tableEditorTools")) event.preventDefault();
+        // Pages CMS-style formatting commands act on the editor's selection.
+        // Preserve that selection even when the toolbar is mouse-clicked.
+        // Keyboard navigation remains native because only mousedown is handled.
+        if (event.button === 0) event.preventDefault();
       });
       button.addEventListener("click", () => runAction(button.getAttribute("data-editor-action")));
     });
