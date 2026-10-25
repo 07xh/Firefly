@@ -1,0 +1,83 @@
+---
+export const prerender = false;
+---
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>动态管理 · Firefly</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#24352a;background:#f2f6f2}
+    *{box-sizing:border-box}body{margin:0}button,input,textarea{font:inherit}
+    a{color:#188250;text-decoration:none}button{cursor:pointer}
+    .topbar{padding:16px max(18px,calc((100vw - 1160px)/2));display:flex;justify-content:space-between;gap:14px;align-items:center;background:#fff;border-bottom:1px solid #dce8df}
+    .topbar h1{margin:0;font-size:19px}.topbar nav{display:flex;gap:16px;align-items:center;font-size:13px}
+    main{max-width:1160px;margin:24px auto;padding:0 16px 30px}
+    .intro{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+    .intro h2{font-size:20px;margin:0 0 5px}.intro p,.muted{color:#75867a;font-size:12px;margin:0;line-height:1.7}
+    .layout{display:grid;grid-template-columns:330px minmax(0,1fr);gap:16px;align-items:start}
+    .card{background:#fff;border:1px solid #e0e9e1;border-radius:16px;padding:20px;box-shadow:0 4px 15px #234d2910;min-width:0}
+    .card h3{font-size:15px;margin:0 0 13px}
+    .controls{display:flex;gap:8px;margin-bottom:12px}
+    input[type="text"],input[type="search"],input[type="datetime-local"],textarea{display:block;min-width:0;width:100%;border:1px solid #d5e1d8;border-radius:10px;padding:11px 12px;color:#24352a;background:#fff}
+    textarea{min-height:320px;resize:vertical;line-height:1.7}
+    input:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #16a064;outline-offset:2px}
+    .btn{border:1px solid #d5e0d7;border-radius:10px;padding:10px 14px;color:#31513e;background:#fff;font-size:13px;font-weight:600}
+    .btn:disabled{opacity:.5;cursor:wait}
+    .primary{color:#fff;background:#188b54;border-color:#188b54}.danger{color:#bd2d2d;border-color:#ebc8c7}.soft{background:#e9f7ee;border-color:#bde4ca}
+    .list{display:grid;gap:8px;max-height:70vh;overflow:auto}
+    .item{display:block;text-align:left;width:100%;padding:12px;border:1px solid #e4ebe4;background:#fff;border-radius:11px;color:inherit}
+    .item.selected{border-color:#1ca866;background:#edf9f1}.item strong{display:block;font-size:13px;margin:7px 0;line-height:1.5;overflow-wrap:anywhere}
+    .item small{color:#7a8b7e}.pill{background:#edf7ef;color:#187b4a;border-radius:15px;padding:3px 8px;font-size:11px}
+    .fields{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+    .field{display:grid;gap:7px;margin-bottom:14px}.field label{font-size:13px;font-weight:650;color:#465e4b}
+    .check{display:flex;align-items:center;gap:8px;font-size:13px;padding:9px 0}.check input{width:17px;height:17px;accent-color:#138d51}
+    .editor-nav,.actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+    .preview{min-height:180px;border:1px solid #d8e4da;border-radius:10px;background:#fbfdfa;padding:14px;overflow:auto;line-height:1.7}
+    .preview img{max-width:100%;border-radius:8px}.preview pre{overflow:auto;background:#eef5ee;padding:11px;border-radius:8px}.preview table{display:block;overflow:auto;border-collapse:collapse}.preview td,.preview th{border:1px solid #dce7dc;padding:5px}
+    .status{min-height:24px;margin-top:13px;font-size:13px;color:#28794e;white-space:pre-wrap;overflow-wrap:anywhere}
+    .status.bad{color:#b42318}
+    .help{border-left:3px solid #80c4a1;background:#f5faf7;padding:10px 13px;border-radius:5px;font-size:12px;line-height:1.75;color:#55735b;margin-top:18px}
+    .upload{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+    @media(max-width:790px){main{margin-top:14px}.layout{grid-template-columns:1fr}.list{max-height:280px}.card{padding:15px}.topbar{padding:12px 16px}.fields{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <header class="topbar"><h1>✦ Firefly · 动态管理</h1><nav><a href="/admin/">返回控制台</a><a href="/dynamic/" target="_blank" rel="noopener noreferrer">查看动态 ↗</a></nav></header>
+  <main>
+    <div class="intro"><div><h2>动态工作台</h2><p>直接管理现有短动态，沿用 GitHub Markdown 存储与 Cloudflare 部署。</p></div><button class="btn soft" type="button" id="new">＋ 发布新动态</button></div>
+    <div class="layout">
+      <section class="card" aria-label="动态列表">
+        <h3>已保存的动态 <span class="muted" id="count"></span></h3>
+        <div class="controls"><input type="search" id="search" placeholder="搜索正文、时间、地点…" aria-label="搜索动态"><button class="btn" type="button" id="refresh">刷新</button></div>
+        <div id="list" class="list" aria-live="polite"><p class="muted">正在加载动态…</p></div>
+      </section>
+      <section class="card" aria-label="编辑动态">
+        <h3 id="editorTitle">发布新动态</h3>
+        <form id="editor">
+          <div class="fields">
+            <div class="field"><label for="published">发布时间（按站点时间填写） *</label><input type="datetime-local" step="1" id="published" required></div>
+            <div class="field"><label for="location">地点（可选）</label><input type="text" id="location" maxlength="100" placeholder="例如：学校 / 校园"></div>
+          </div>
+          <label class="check"><input type="checkbox" id="pinned">置顶显示此动态</label>
+          <div class="field">
+            <label for="body">动态内容 · Markdown *</label>
+            <div class="editor-nav"><button class="btn soft" type="button" id="edit">编辑正文</button><button class="btn" type="button" id="previewButton">预览</button></div>
+            <textarea id="body" required maxlength="200000" placeholder="今天有什么新鲜事？支持 Markdown、链接与图片。" spellcheck="false"></textarea>
+            <div class="preview" id="preview" hidden></div>
+          </div>
+          <div class="upload"><label class="btn" for="imageFile">上传图片并插入动态</label><input type="file" id="imageFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden><button type="button" class="btn" id="insertImage">插入图片链接</button><span class="muted">图片使用已有 GitHub 上传接口；单张不超过 4 MB</span></div>
+          <div class="actions"><button class="btn primary" type="submit" id="save">发布动态</button><button class="btn danger" id="remove" type="button" hidden>删除动态</button><button class="btn" type="button" id="reset">清空 / 新建</button></div>
+          <p class="muted">修改和删除会核对 GitHub 文件 SHA，避免覆盖其他位置的更新。</p>
+        </form>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
+        <div id="commitDetails" hidden><a id="commitLink" target="_blank" rel="noopener noreferrer">查看 GitHub 提交 ↗</a></div>
+        <p class="help">发布或更新后会写入 GitHub，并由现有 Cloudflare 工作流重新构建。<strong>前台动态页要等部署完成后才会看到新内容。</strong>这里不会修改博客的前台主题与布局。</p>
+      </section>
+    </div>
+  </main>
+  <script src="/admin-dynamics.js"></script>
+</body>
+</html>
