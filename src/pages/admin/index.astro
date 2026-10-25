@@ -840,6 +840,7 @@ Object.defineProperty(window, "FireflyArticleContext", {
   }
 });
 let settingsReady = false;
+let settingsRevision = null;
 let settingsSaving = false;
 let savedSettingsSnapshot = "";
 let articleBaseline = "";
@@ -1452,6 +1453,8 @@ $("backgroundMusic").addEventListener("input",updateMusicPreview);
 
 async function loadSettings(){
  const status=$("settingsStatus");
+ settingsReady = false;
+ settingsRevision = null;
  $("settingsForm").inert = true;
  updateSettingsDirtyState();
  status.textContent="正在读取全局配置…";status.style.color="#657267";
@@ -1460,6 +1463,8 @@ async function loadSettings(){
   if(response.status===401){goLogin();return}
   const data=await response.json().catch(()=>({error:"配置接口返回无法解析的响应"}));
   if(!response.ok)throw new Error(data.error||"读取全局配置失败");
+  const loadedRevision=response.headers.get("ETag");
+  if(!/^"(?:[0-9a-f]{40}|missing)"$/i.test(loadedRevision||""))throw new Error("服务器未返回可靠的配置版本，已阻止保存。");
   for(const id of ["bannerTitle","bannerSubtitle","backgroundImage","backgroundColor","avatar","nickname","bio","announcement","githubUrl","email","backgroundMusic","aboutContent","sourceGithubUrl","donationQrCode"]){
    $(id).value=typeof data[id]==="string"?data[id]:"";
   }
@@ -1485,6 +1490,7 @@ async function loadSettings(){
   $("showNavLinks").checked=data.showNavLinks!==false;
   $("showNavAbout").checked=data.showNavAbout!==false;
   updateImagePreview();updateAvatarPreview();updateMusicPreview();
+  settingsRevision=loadedRevision;
   $("settingsForm").inert = false;
   markSettingsSaved();
   status.textContent="已加载仓库中的配置。";
@@ -1527,7 +1533,7 @@ $("discardSettings").onclick=async()=>{
 $("settingsForm").addEventListener("submit",async event=>{
  event.preventDefault();
  const status=$("settingsStatus");
- if(!settingsReady||settingsSaving){status.textContent="配置尚未成功读取，已阻止保存，避免覆盖仓库中的现有设置。";status.style.color="#b42318";return}
+ if(!settingsReady||settingsSaving||!settingsRevision){status.textContent="配置尚未成功读取或版本失效，已阻止保存，避免覆盖仓库中的现有设置。";status.style.color="#b42318";return}
  const values={
   bannerTitle:$("bannerTitle").value,
   bannerSubtitle:$("bannerSubtitle").value,
@@ -1572,10 +1578,16 @@ $("settingsForm").addEventListener("submit",async event=>{
  if(values.email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)){status.textContent="请填写有效的邮箱地址。";status.style.color="#b42318";$("email").focus();return}
  settingsSaving=true;updateSettingsDirtyState();status.style.color="#657267";status.textContent="正在保存到 GitHub…";
  try{
-  const response=await fetch("/api/admin/settings/",{method:"PUT",credentials:"same-origin",headers:{"Content-Type":"application/json"},body:JSON.stringify(values)});
+  const response=await fetch("/api/admin/settings/",{method:"PUT",credentials:"same-origin",headers:{"Content-Type":"application/json","If-Match":settingsRevision},body:JSON.stringify(values)});
   if(response.status===401){goLogin();return}
   const data=await response.json().catch(()=>({error:"保存接口返回无法解析的响应"}));
   if(!response.ok)throw new Error(data.error||"保存全局配置失败");
+  if(!/^[0-9a-f]{40}$/i.test(data.settingsVersion||"")){
+   settingsRevision=null;settingsReady=false;updateSettingsDirtyState();
+   status.textContent="配置已写入 GitHub，但没有取得新版本号。请重新读取配置后再修改，避免覆盖更新。";
+   status.style.color="#b42318";return;
+  }
+  settingsRevision='"'+data.settingsVersion.toLowerCase()+'"';
   markSettingsSaved();
   status.textContent="配置已写入 GitHub，正在触发部署…";
   if(data.commitSha)watchSettingsDeployment(data.commitSha);
