@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 617" role="img" aria-labelledby="title desc">
+<title id="title">图 4｜主视图重合，不代表两个空间点相同</title><desc id="desc">两个点左右位置 x 和高度 z 相同，但前后深度 y 不同。</desc>
+<defs><pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M 26 0 L 0 0 0 26" fill="none" stroke="#E5EFEC" stroke-width="1"/></pattern><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#809A9D"/></marker></defs>
+<rect width="1020" height="617" rx="22" fill="#F4F9F7"/>
+<rect x="15" y="15" width="990" height="587" rx="20" fill="#FFFFFF" stroke="#E4EDEB" stroke-width="2"/>
+<g font-family="'Noto Sans CJK SC','Noto Sans SC','Microsoft YaHei','PingFang SC',system-ui,sans-serif">
+<text x="52" y="74" font-size="35" fill="#203B41" font-weight="750" >图 4｜主视图重合，不代表两个空间点相同</text>
+<text x="52" y="116" font-size="22" fill="#53717A" font-weight="400" >两个点左右位置 x 和高度 z 相同，但前后深度 y 不同。</text>
+
+<rect x="60" y="155" width="438" height="312" rx="18" fill="#F4FBF8" stroke="#B0DBC5" stroke-width="2"/><rect x="522" y="155" width="438" height="312" rx="18" fill="#F5FAFE" stroke="#BDD8F1" stroke-width="2"/>
+<text x="82" y="198" font-size="26" fill="#18A071" font-weight="700" >主视图 V｜保留 (x,z)</text>
+<text x="544" y="198" font-size="26" fill="#3984CC" font-weight="700" >俯视图 H｜保留 (x,y)</text>
+<line x1="130" y1="395" x2="453" y2="395" stroke="#CADAD5" stroke-width="2"  stroke-linecap="round" /><line x1="130" y1="395" x2="130" y2="225" stroke="#CADAD5" stroke-width="2"  stroke-linecap="round" />
+<line x1="595" y1="425" x2="924" y2="425" stroke="#CADAD5" stroke-width="2"  stroke-linecap="round" /><line x1="595" y1="425" x2="595" y2="225" stroke="#CADAD5" stroke-width="2"  stroke-linecap="round" />
+<circle cx="298" cy="292" r="12" fill="#18A071" stroke="white" stroke-width="5" /><text x="321" y="279" font-size="26" fill="#18A071" font-weight="750" >Aᵥ = Bᵥ</text>
+<text x="321" y="317" font-size="22" fill="#53717A" font-weight="500" >(40,30) 重合</text>
+<line x1="753" y1="240" x2="753" y2="373" stroke="#3984CC" stroke-width="3" stroke-dasharray="11 9" stroke-linecap="round" />
+<circle cx="753" cy="260" r="12" fill="#3984CC" stroke="white" stroke-width="5" /><circle cx="753" cy="380" r="12" fill="#9364C3" stroke="white" stroke-width="5" />
+<text x="777" y="254" font-size="24" fill="#3984CC" font-weight="680" >Aₕ (40,10)</text>
+<text x="777" y="382" font-size="24" fill="#9364C3" font-weight="680" >Bₕ (40,60)</text>
+<text x="120" y="438" font-size="23" fill="#53717A" font-weight="600" >一个二维点</text>
+<text x="548" y="445" font-size="23" fill="#53717A" font-weight="600" >两个不同的深度位置</text>
+<rect x="60" y="494" width="900" height="103" rx="14" fill="#EDF8F3" stroke="#CFE9D8" stroke-width="2"/>
+<text x="89" y="537" font-size="26" fill="#203B41" font-weight="650" >A = (40,10,30)        B = (40,60,30)</text>
+<text x="89" y="574" font-size="24" fill="#53717A" font-weight="550" >只看 V 无法区分；H 保存了 y，因此可以区分这两个空间点。</text>
+
+</g></svg>
