@@ -74,3 +74,18 @@ test("does not invent published metadata when frontmatter is missing", () => {
     /Frontmatter/,
   );
 });
+
+test("supports Windows CRLF frontmatter and never reads body metadata", () => {
+  const source = "---\r\ntitle: CRLF example\r\ntags: [Windows, Markdown]\r\ndraft: false\r\n---\r\ndraft: true";
+  const meta = readAdminArticleMetadata(source, "fallback.md");
+  assert.equal(meta.title, "CRLF example");
+  assert.deepEqual(meta.tags, ["Windows", "Markdown"]);
+  assert.equal(meta.draft, false);
+});
+
+test("rejects malformed quoted tag lists rather than fabricating tags", () => {
+  assert.throws(
+    () => readAdminArticleMetadata("---\ntitle: Broken tags\ntags: [\"unfinished, good]\n---\n", "fallback.md"),
+    /未闭合的引号/,
+  );
+});
