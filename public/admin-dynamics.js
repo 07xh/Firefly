@@ -12,9 +12,15 @@
   }
 
   function localNow() {
-    const date = new Date();
-    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
-    return local.toISOString().slice(0, 19);
+    const zone = document.documentElement.dataset.siteTimezone || "Asia/Shanghai";
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: zone,
+      year: "numeric", month: "2-digit", day: "2-digit",
+      hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
+    }).formatToParts(new Date());
+    const values = Object.fromEntries(parts.filter((part) => part.type !== "literal").map((part) => [part.type, part.value]));
+    return values.year + "-" + values.month + "-" + values.day + "T" +
+      values.hour + ":" + values.minute + ":" + values.second;
   }
 
   function setBusy(value) {
