@@ -14,6 +14,7 @@ const allowed = [
   /^public\/admin\/[^\0]+$/,
   /^public\/admin-[^/]+\.(?:css|js)$/,
   /^scripts\/admin-[^/]+\.(?:test\.)?(?:mjs|js|ts)$/,
+  /^scripts\/ai-draft\.test\.mjs$/,
   /^docs\/(?:ADMIN_[^/]+|admin-[^/]+)\.md$/,
   /^\.github\/workflows\/admin-only-guard\.yml$/,
   /^scripts\/guard-admin-only-changes(?:\.test)?\.mjs$/,
