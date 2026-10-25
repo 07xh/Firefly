@@ -66,3 +66,10 @@ test("admin GitHub batch reader unit tests", () => {
   ], { cwd: fileURLToPath(root), encoding: "utf8" });
   assert.equal(result.status, 0, (result.stdout || "") + (result.stderr || ""));
 });
+
+test("article refresh failure clears stale list data without resetting the editor", () => {
+  assert.match(html, /async function refresh\(\)/);
+  assert.match(html, /catch\(e\)\{articles=\[\];say\(e\.message,true\)/);
+  assert.match(html, /\$\("list"\)\.textContent="读取失败/);
+  assert.match(html, /function isArticleDirty\(\)/);
+});
