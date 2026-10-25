@@ -18,7 +18,7 @@
 <line x1="470" y1="400" x2="640" y2="400" stroke="#C2D0CB" stroke-width="2" stroke-dasharray="11 9" stroke-linecap="round" />
 <circle cx="330" cy="230" r="10" fill="#18A071" stroke="white" stroke-width="5" /><circle cx="330" cy="530" r="10" fill="#3984CC" stroke="white" stroke-width="5" /><circle cx="770" cy="230" r="10" fill="#9364C3" stroke="white" stroke-width="5" />
 <circle cx="770" cy="530" r="8" fill="#D68C28" stroke="white" stroke-width="5" />
-<text x="346" y="219" font-size="26" fill="#18A071" font-weight="750" >Pᵥ</text><text x="345" y="524" font-size="26" fill="#3984CC" font-weight="750" >Pₕ</text><text x="788" y="219" font-size="26" fill="#9364C3" font-weight="750" >P𝓌</text>
+<text x="346" y="219" font-size="26" fill="#18A071" font-weight="750" >P_V</text><text x="345" y="524" font-size="26" fill="#3984CC" font-weight="750" >P_H</text><text x="788" y="219" font-size="26" fill="#9364C3" font-weight="750" >P_W</text>
 <text x="788" y="520" font-size="23" fill="#D68C28" font-weight="680" >转折点</text>
 <text x="830" y="606" font-size="28" fill="#D68C28" font-weight="750" >45°</text>
 <text x="645" y="385" font-size="22" fill="#53717A" font-weight="650" >O</text>
