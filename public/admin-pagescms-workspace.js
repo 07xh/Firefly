@@ -1,3 +1,4 @@
+import { validateImageSource } from "./admin-editor-commands.js";
 // Pages CMS-inspired helpers for the existing Firefly article workspace.
 // Keep GitHub state and writes in /api/admin/articles; this file never writes content.
 export function tagsFromArticle(article) {
@@ -33,6 +34,10 @@ export function historyUrl(path) {
   if (!validArticlePath(path)) return "";
   return "https://github.com/07xh/Firefly/commits/master/" +
     path.split("/").map(encodeURIComponent).join("/");
+}
+
+export function safeCoverPreviewSource(value) {
+  return validateImageSource(value);
 }
 
 function mountWorkspace() {
@@ -85,6 +90,57 @@ function mountWorkspace() {
   tagChoices.className = "cms-tag-suggestions";
   tagChoices.setAttribute("aria-label", "已有标签，点击添加");
   tagInput.insertAdjacentElement("afterend", tagChoices);
+
+
+  // The cover is a metadata field, not Markdown: previews must never rewrite body.
+  const coverInput = byId("image");
+  if (coverInput && !byId("cmsCoverPreview")) {
+    const wrap=document.createElement("div");
+    wrap.id="cmsCoverPreview";
+    wrap.className="cms-cover-preview";
+    const image=document.createElement("img");
+    image.alt="文章封面预览";
+    image.loading="lazy";
+    image.decoding="async";
+    image.hidden=true;
+    const hint=document.createElement("p");
+    hint.className="cms-cover-preview__note";
+    hint.setAttribute("role","status");
+    hint.setAttribute("aria-live","polite");
+    wrap.append(image,hint);
+    coverInput.insertAdjacentElement("afterend",wrap);
+    const style=document.createElement("style");
+    style.textContent=[
+      ".cms-cover-preview{display:grid;gap:7px;margin:10px 0;border:1px solid #dce7de;border-radius:10px;padding:12px;background:#f9fcfa}",
+      ".cms-cover-preview img:not([hidden]){display:block;width:100%;max-width:320px;max-height:170px;object-fit:contain;border-radius:7px;background:#f1f6f2}",
+      ".cms-cover-preview__note{font-size:12px;color:#61766a;line-height:1.5;margin:0}",
+      "@media(prefers-color-scheme:dark){.cms-cover-preview{background:#1d2b22;border-color:#45634e}.cms-cover-preview__note{color:#bdcfc0}}",
+    ].join("\n");
+    document.head.append(style);
+    const update=()=>{
+      const entered=coverInput.value.trim();
+      const safe=safeCoverPreviewSource(entered);
+      if (!entered) {
+        image.hidden=true; image.removeAttribute("src");
+        hint.textContent="还没有设置封面。可填写图片 URL，实时检查效果。";
+      } else if (!safe) {
+        image.hidden=true; image.removeAttribute("src");
+        hint.textContent="封面地址格式不受支持，请使用 HTTPS URL 或 / 开头的站内路径。";
+      } else {
+        image.hidden=false; image.src=safe;
+        hint.textContent="封面预览，仅供确认图片效果；尚未保存到 GitHub。";
+      }
+    };
+    image.addEventListener("error",()=>{
+      image.hidden=true;
+      hint.textContent="图片预览加载失败，请检查图床链接、访问权限或跨站资源。";
+    });
+    coverInput.addEventListener("input",update);
+    window.addEventListener("firefly:source-loaded",()=>queueMicrotask(update));
+    byId("list")?.addEventListener("click",()=>queueMicrotask(update));
+    byId("reset")?.addEventListener("click",()=>queueMicrotask(update));
+    update();
+  }
 
   function refreshMetadata() {
     const items = state.articles();
