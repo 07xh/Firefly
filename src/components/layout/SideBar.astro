@@ -1,5 +1,6 @@
 ---
 import type { MarkdownHeading } from "astro";
+import { Icon } from "astro-icon/components";
 import Advertisement from "@/components/widget/Advertisement.astro";
 import Announcement from "@/components/widget/Announcement.astro";
 import Calendar from "@/components/widget/Calendar.astro";
@@ -17,7 +18,7 @@ import type {
 	WidgetComponentConfig,
 } from "@/types/config";
 import { isWidgetVisibleOnPageType } from "@/utils/responsive-utils";
-import { isArticleDetailPage } from "@/utils/url-utils";
+import { isArticleDetailPage, url } from "@/utils/url-utils";
 
 interface Props {
 	class?: string;
@@ -169,6 +170,39 @@ const hasInitiallyVisibleTopComponents = topComponents.some(
 {
 	(topComponents.length > 0 || stickyComponents.length > 0 || bottomComponents.length > 0) && (
 		<div id={`${side}-sidebar`} class:list={[className, "flex flex-col w-full pt-0"]}>
+			{/* 只改布局：已展开的原有头像、简介、公告等组件保持原样。 */}
+			{!isMobileBottom && (
+				<div class="firefly-sidebar-control">
+					<button
+					type="button"
+						class="firefly-sidebar-toggle"
+						data-sidebar-toggle={side}
+						aria-controls={`${side}-sidebar`}
+						aria-expanded={side === "right" ? "true" : "false"}
+						aria-label={side === "left" ? "展开左侧栏" : "收起右侧栏"}
+						title={side === "left" ? "展开左侧栏" : "收起右侧栏"}
+					>
+						<Icon name={side === "left" ? "material-symbols:chevron-left-rounded" : "material-symbols:chevron-right-rounded"} class="firefly-sidebar-chevron" />
+					</button>
+				</div>
+			)}
+			{!isMobileBottom && (
+				<nav class="firefly-sidebar-rail" aria-label={side === "left" ? "快捷导航" : "快捷信息"}>
+					{side === "left" ? (
+						<>
+							<a href={url("/")} aria-label="首页" title="首页"><Icon name="material-symbols:home-rounded" /></a>
+							<a href={url("/archive/")} aria-label="文章归档" title="文章归档"><Icon name="material-symbols:article-rounded" /></a>
+							<a href={url("/categories/")} aria-label="分类" title="分类"><Icon name="material-symbols:category-rounded" /></a>
+							<a href={url("/tags/")} aria-label="标签" title="标签"><Icon name="material-symbols:label-rounded" /></a>
+						</>
+					) : (
+						<>
+							<button type="button" data-sidebar-toggle="right" aria-label="展开最新动态与目录" title="展开最新动态与目录"><Icon name="material-symbols:format-list-bulleted-rounded" /></button>
+							<a href={url("/archive/")} aria-label="文章归档" title="文章归档"><Icon name="material-symbols:schedule-rounded" /></a>
+						</>
+					)}
+				</nav>
+			)}
 			{/* Mobile bottom components - 直接渲染所有组件，不分组 */}
 			{isMobileBottom ? (
 				<div class="flex flex-col w-full gap-4">

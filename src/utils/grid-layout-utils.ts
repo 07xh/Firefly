@@ -6,6 +6,10 @@ import {
 	computeGridColumns,
 	gridColumnVarsToStyle,
 } from "@/utils/responsive-utils";
+import {
+	getSidebarCollapseState,
+	syncSidebarToggleButtons,
+} from "@/utils/sidebar-collapse-utils";
 import { isArticleDetailPage } from "@/utils/url-utils";
 
 const sidebarStickyState: Record<
@@ -34,6 +38,10 @@ export function updateMainGridCols(): void {
 	if (!mainGrid || !varHost) return;
 
 	const isPostPage = isCurrentPagePost();
+	const collapseState = getSidebarCollapseState();
+	mainGrid.dataset.sidebarLeftState = collapseState.left;
+	mainGrid.dataset.sidebarRightState = collapseState.right;
+	syncSidebarToggleButtons(collapseState);
 	// 缺省视为 true（fail-open）：属性缺失时不要误把整列折叠掉
 	const flag = (name: string): boolean =>
 		mainGrid.getAttribute(name) !== "false";
@@ -62,6 +70,8 @@ export function updateMainGridCols(): void {
 			isPostPage ? "data-has-right-on-post" : "data-has-right-on-non-post",
 		),
 		noSidebarContentWidth: Number.isFinite(capNum) ? capNum : undefined,
+		leftCollapsed: collapseState.left === "collapsed",
+		rightCollapsed: collapseState.right === "collapsed",
 	});
 
 	const serialized = gridColumnVarsToStyle(vars);

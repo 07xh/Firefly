@@ -47,6 +47,9 @@ export function getEffectiveSidebarState(
 			? sidebarConfig.hasRightWidgetsOnPost
 			: sidebarConfig.hasRightWidgetsOnNonPost,
 		noSidebarContentWidth: sidebarLayoutConfig.noSidebarContentWidth,
+		// 首次访问默认展示方案 B 的图标左栏，客户端可用本机偏好恢复展开态。
+		leftCollapsed: true,
+		rightCollapsed: false,
 	});
 
 	return {
@@ -61,6 +64,8 @@ export function getEffectiveSidebarState(
 		gridColumnStyle: gridColumnVarsToStyle(gridColumnVars),
 		gridDataAttrs: {
 			"data-sidebar-enable": sidebarLayoutConfig.enable ? "true" : "false",
+			"data-sidebar-left-state": "collapsed",
+			"data-sidebar-right-state": "expanded",
 			"data-grid-hide-sidebar-on-post": hideSidebarOnPostPage
 				? "true"
 				: "false",
