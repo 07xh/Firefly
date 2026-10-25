@@ -4,7 +4,7 @@ published: 2026-10-25
 description: "零基础友好的 Python 符号速查图鉴，分 5 类认识括号、代码结构、运算比较、f-string 与进阶语法，含 20 张符号卡片、代码示例和自测练习。"
 category: "Python"
 draft: false
-tags: ["Python", "编程入门", "语法基础", "符号速查"]
+tags: ["Python","编程入门","语法基础","符号速查"]
 slug: "python-symbol-guide"
 ---
 
