@@ -916,7 +916,8 @@ if is_ready():
 ```python
 print(True == 1)     # True
 print(False == 0)    # True
-print(True is 1)     # False
+one = 1
+print(True is one)   # False
 print(True + True)   # 2
 ```
 
