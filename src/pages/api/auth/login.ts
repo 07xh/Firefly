@@ -121,7 +121,7 @@ async function handleLogin({ request }: Parameters<APIRoute>[0]): Promise<Respon
 
 		await sessions.delete(rateKey);
 		const token = createSessionToken();
-		await storeAdminSession(sessions, token);
+		await storeAdminSession(sessions, token, password);
 		return jsonResponse({ ok: true, expiresIn: SESSION_TTL_SECONDS }, 200, {
 			"set-cookie": sessionCookie(token),
 		});
