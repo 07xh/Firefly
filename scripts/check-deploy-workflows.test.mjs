@@ -54,3 +54,15 @@ test("missing files or missing top-level triggers fail closed", () => {
 	assert.match(errors(file), /missing workflow file/);
 	assert.match(errors(modify(PRODUCTION, (text) => text.replace("on:\n  push:", "events:\n  push:"))), /Canonical Cloudflare deployment/);
 });
+
+
+test("Cloudflare Workers Builds cutover requires explicit two-stage opt-in", () => {
+	assert.match(errors(modify(PRODUCTION, (text) => text.replace("FIREFLY_WORKERS_BUILDS_DISCONNECTED == 'true'", "FIREFLY_WORKERS_BUILDS_DISCONNECTED == 'false'"))), /verified Builds disconnection/);
+	assert.match(errors(modify(PRODUCTION, (text) => text.replace("ENABLE_FIREFLY_GHA_DEPLOY == 'true'", "ENABLE_FIREFLY_GHA_DEPLOY == 'false'"))), /automatic deployment opt-in/);
+	assert.match(errors(modify(SCHEDULED, (text) => text.replace("ENABLE_FIREFLY_GHA_DEPLOY == 'true'", "ENABLE_FIREFLY_GHA_DEPLOY == 'false'"))), /Scheduled publisher must not dispatch/);
+});
+
+test("canonical Worker deploy preserves Cloudflare runtime vars and does not prepublish secrets", () => {
+	assert.match(errors(modify(PRODUCTION, (text) => text.replace("wrangler.json --keep-vars", "wrangler.json"))), /preserve dashboard runtime vars/);
+	assert.match(errors(modify(PRODUCTION, (text) => text.replace('      - name: Deploy Worker', '      - run: echo secret | pnpm exec wrangler secret put FIREFLY_ADMIN_PASSWORD\\n      - name: Deploy Worker'))), /must not deploy unreviewed runtime secret/);
+});
