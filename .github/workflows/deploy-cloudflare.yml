@@ -14,9 +14,9 @@ concurrency:
 
 jobs:
   deploy:
-    # First disconnect Cloudflare Workers Builds. Manual run is available for
+    # Stop Cloudflare automatic Builds without deleting its Git connection. Manual run is available for
     # the first controlled deployment; automatic deploy is a separate opt-in.
-    if: ${{ vars.FIREFLY_WORKERS_BUILDS_DISCONNECTED == 'true' && (github.event_name == 'workflow_dispatch' || vars.ENABLE_FIREFLY_GHA_DEPLOY == 'true') }}
+    if: ${{ vars.FIREFLY_CLOUDFLARE_BUILDS_STOPPED == 'true' && (github.event_name == 'workflow_dispatch' || vars.ENABLE_FIREFLY_GHA_DEPLOY == 'true') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

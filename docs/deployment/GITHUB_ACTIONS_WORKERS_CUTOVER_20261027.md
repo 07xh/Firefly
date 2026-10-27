@@ -13,9 +13,9 @@
 ## 首次切换：先人工验收，再启用自动发布
 
 1. 在 Cloudflare Workers & Pages → `firefly` → **Deployments** 记录 Active Version / 配置；在 **Settings → Domains & Routes** 记录 `0701000.xyz` 具体绑定类型；在 **Settings → Variables and Secrets / Bindings** 记录绑定名称（不要导出 Secret 明文）。
-2. Workers & Pages → `firefly` → **Settings → Builds → Disconnect**。只断开源仓库自动构建；**不要**删除 Worker、域名、DNS、KV、R2、D1 或 Secrets。额度耗尽导致 Cloudflare Builds 自动暂停，但不自动关闭 GitHub Actions。
+2. Workers & Pages → `firefly` → **Settings → Builds** 中优先使用界面提供的「禁用构建」或相应构建触发控制，让生产分支和预览分支的自动 Builds 均暂停，**保留原 Git 仓库连接**。按界面实际提供的选项核实配置；某些 Workers Builds 页面可能不支持无条件关闭生产构建，此时不能假称关闭成功。不要误把 `wrangler versions upload` 当作关闭构建，它仍消耗构建分钟。仅在无法暂停自动构建时，才考虑备选的 `Disconnect`，而非首选。
 3. GitHub → `07xh/Firefly` → Settings → Secrets and variables → Actions。核对 **Secrets**：`CLOUDFLARE_API_TOKEN`、`CLOUDFLARE_ACCOUNT_ID`、`FIREFLY_CONTENTS_TOKEN`；需要重新写入实际值时在 GitHub 安全设置操作，绝不写在 Git 仓库中。`FIREFLY_ADMIN_PASSWORD` 等运行时 Secrets 必须在 Cloudflare Worker 中已存在，本 GitHub Workflow 不调用 `wrangler secret put` 来偷跑一次生产部署。
-4. GitHub **Variables** 先只设置 `FIREFLY_WORKERS_BUILDS_DISCONNECTED=true`；**暂不**设置 `ENABLE_FIREFLY_GHA_DEPLOY`。通过 GitHub Actions 手动运行 **Deploy to Cloudflare Workers**，做首轮受控 GitHub 构建和 Wrangler 发布。此操作仍需真实部署权限，并会发布到线上现有 Worker；设置前核对资源绑定。
+4. 完成 Cloudflare 生产与预览构建暂停并确认未来额度恢复也不会自动启动后，GitHub **Variables** 先只设置 `FIREFLY_CLOUDFLARE_BUILDS_STOPPED=true`；**暂不**设置 `ENABLE_FIREFLY_GHA_DEPLOY`。通过 GitHub Actions 手动运行 **Deploy to Cloudflare Workers**，做首轮受控 GitHub 构建和 Wrangler 发布。此操作仍需真实部署权限，并会发布到线上现有 Worker；设置前核对资源绑定。
 5. 核实 Actions 的构建日志、实际 Active Worker 版本、原域名首页、后台登录保护、`/api/admin/articles/` 未授权返回 401、KV 登录、图片上传、文章后台与原已使用功能；确认与 `master` SHA 一致。遇到验证失败，应停止发布并使用 Cloudflare 版本历史回滚，核对差异，而不是删除 KV 或重新建 Worker。
 6. 首次生产验收成功后，在 GitHub Actions **Variables** 设置 `ENABLE_FIREFLY_GHA_DEPLOY=true`；之后只有 `master` 的 GitHub Actions（以及到期文章触发的重建）发布，不占 Cloudflare **Workers Builds** 分钟。不要同时恢复 Cloudflare Git Builds，以防竞争发布。
 
@@ -24,9 +24,9 @@
 ## 恢复原 Cloudflare Builds
 
 1. 首先将 GitHub Actions Variables `ENABLE_FIREFLY_GHA_DEPLOY` 设为 `false`，停止自动 GitHub 发布。定时发布调度会相应跳过派发。
-2. Cloudflare Worker → **Settings → Builds → Connect**，重新关联原仓库 `07xh/Firefly` 和生产分支 `master`，恢复迁移前记录的构建环境、构建命令和部署命令。
+2. 如果原 GitHub 仓库连接还在，只需到 Cloudflare Worker → **Settings → Builds** 重新启用此前暂停的生产/预览构建规则，并恢复迁移前记录的构建参数；**不需要重新 Connect**。只有确实断开过 Git 连接时才需要重新关联 `07xh/Firefly`、`master`。
 3. 做一次 Cloudflare Builds 正式验证，核对 Active 版本、`0701000.xyz`、KV、R2、后台登录和图片服务。
-4. 若不再使用 GitHub Actions 发布，将 `FIREFLY_WORKERS_BUILDS_DISCONNECTED` 保持为 `false`；不必删除 Workflow 及其历史记录。
+4. 恢复 Cloudflare 自动构建前，将 GitHub Variables `FIREFLY_CLOUDFLARE_BUILDS_STOPPED` 改为 `false`，避免旧新系统同时发布；不必删除 Workflow 及其历史记录。
 
 ## 未改变的安全门禁
 
