@@ -64,5 +64,10 @@ test("Cloudflare Workers Builds cutover requires explicit two-stage opt-in", () 
 
 test("canonical Worker deploy preserves Cloudflare runtime vars and does not prepublish secrets", () => {
 	assert.match(errors(modify(PRODUCTION, (text) => text.replace("wrangler.json --keep-vars", "wrangler.json"))), /preserve dashboard runtime vars/);
-	assert.match(errors(modify(PRODUCTION, (text) => text.replace('      - name: Deploy Worker', '      - name: Bad runtime secret mutation\\n        run: echo secret | pnpm exec wrangler secret put FIREFLY_ADMIN_PASSWORD\\n      - name: Deploy Worker'))), /must not deploy unreviewed runtime secret/);
+	const unsafeStep = [
+		"      - name: Bad runtime secret mutation",
+		"        run: echo secret | pnpm exec wrangler secret put FIREFLY_ADMIN_PASSWORD",
+		"      - name: Deploy Worker",
+	].join("\n");
+	assert.match(errors(modify(PRODUCTION, (text) => text.replace("      - name: Deploy Worker", unsafeStep))), /must not deploy unreviewed runtime secret/);
 });
