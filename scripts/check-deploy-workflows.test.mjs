@@ -56,8 +56,8 @@ test("missing files or missing top-level triggers fail closed", () => {
 });
 
 
-test("Cloudflare Workers Builds cutover requires explicit two-stage opt-in", () => {
-	assert.match(errors(modify(PRODUCTION, (text) => text.replace("FIREFLY_WORKERS_BUILDS_DISCONNECTED == 'true'", "FIREFLY_WORKERS_BUILDS_DISCONNECTED == 'false'"))), /verified Builds disconnection/);
+test("Cloudflare Workers Builds pause or disconnect requires explicit two-stage opt-in", () => {
+	assert.match(errors(modify(PRODUCTION, (text) => text.replace("FIREFLY_CLOUDFLARE_BUILDS_STOPPED == 'true'", "FIREFLY_CLOUDFLARE_BUILDS_STOPPED == 'false'"))), /verified Builds pause or disconnection/);
 	assert.match(errors(modify(PRODUCTION, (text) => text.replace("ENABLE_FIREFLY_GHA_DEPLOY == 'true'", "ENABLE_FIREFLY_GHA_DEPLOY == 'false'"))), /automatic deployment opt-in/);
 	assert.match(errors(modify(SCHEDULED, (text) => text.replace("ENABLE_FIREFLY_GHA_DEPLOY == 'true'", "ENABLE_FIREFLY_GHA_DEPLOY == 'false'"))), /Scheduled publisher must not dispatch/);
 });
