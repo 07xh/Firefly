@@ -26,5 +26,7 @@ jobs:
           node-version: "22"
       - name: Test deployment-policy rule coverage
         run: node --test scripts/check-deploy-workflows.test.mjs
+      - name: Verify optional R2 binding fails closed and preserves existing production config
+        run: node --test scripts/admin-r2-deployment-binding.test.mjs
       - name: Reject competing or uncontrolled production deploy workflows
         run: node scripts/check-deploy-workflows.mjs
