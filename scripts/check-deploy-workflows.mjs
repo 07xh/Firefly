@@ -57,6 +57,12 @@ export function deploymentPolicyViolations(files) {
 		failures.push("Canonical Cloudflare workflow must serialize deployments without cancelling in-flight runs.");
 	if (!primary.includes("wrangler deploy"))
 		failures.push("Canonical deployment command is missing; audit workflow before release.");
+	if (!isOptIn(primary, "FIREFLY_WORKERS_BUILDS_DISCONNECTED") || !isOptIn(primary, "ENABLE_FIREFLY_GHA_DEPLOY"))
+		failures.push("Canonical production deploy must require verified Builds disconnection and explicit automatic deployment opt-in.");
+	if (!primary.includes("wrangler deploy --config dist/server/wrangler.json --keep-vars"))
+		failures.push("Canonical Worker deployment must preserve dashboard runtime vars with --keep-vars.");
+	if (/^\s*run:\s*.*wrangler secret put/m.test(primary) || /^\s*printf[^\n]*\|[^\n]*wrangler secret put/m.test(primary))
+		failures.push("Canonical Worker workflow must not deploy unreviewed runtime secret versions before production smoke tests.");
 
 	const oldWorker = files[LEGACY_WORKER];
 	if (eventEnabled(oldWorker, "push") || eventEnabled(oldWorker, "schedule"))
@@ -93,6 +99,8 @@ export function deploymentPolicyViolations(files) {
 		failures.push("Scheduled publishing must retain its scheduled trigger.");
 	if (!scheduled.includes("actions/workflows/deploy-cloudflare.yml/dispatches"))
 		failures.push("Scheduled publishing must target the canonical Cloudflare workflow.");
+	if (!isOptIn(scheduled, "FIREFLY_WORKERS_BUILDS_DISCONNECTED") || !isOptIn(scheduled, "ENABLE_FIREFLY_GHA_DEPLOY"))
+		failures.push("Scheduled publisher must not dispatch production builds before controlled GitHub Actions cutover.");
 	return failures;
 }
 
