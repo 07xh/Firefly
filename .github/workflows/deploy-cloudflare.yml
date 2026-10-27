@@ -14,6 +14,9 @@ concurrency:
 
 jobs:
   deploy:
+    # First disconnect Cloudflare Workers Builds. Manual run is available for
+    # the first controlled deployment; automatic deploy is a separate opt-in.
+    if: ${{ vars.FIREFLY_WORKERS_BUILDS_DISCONNECTED == 'true' && (github.event_name == 'workflow_dispatch' || vars.ENABLE_FIREFLY_GHA_DEPLOY == 'true') }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -28,7 +31,7 @@ jobs:
           version: 11.22.0
           run_install: false
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
       - name: Build for Cloudflare Workers
         run: pnpm run build
         env:
@@ -116,9 +119,10 @@ jobs:
             config.workers_dev = false;
             console.log("Custom-domain route explicitly enabled by ENABLE_CUSTOM_DOMAIN_ROUTE.");
           } else {
-            delete config.routes;
-            config.workers_dev = true;
-            console.log("Custom-domain route disabled by default; using workers.dev so deployment does not require Zone route permissions.");
+            // Do not erase Astro-provided route or workers.dev settings.
+            // Any existing Cloudflare Dashboard domain mapping must be verified
+            // independently before enabling the new publisher.
+            console.log("No requested custom-domain route changes; keeping generated settings.");
           }
           fs.writeFileSync(configPath, JSON.stringify(config, null, 2) + "\n");
           console.log("Bound FIREFLY_SESSIONS and Astro SESSION KV namespaces in generated Worker config.");
@@ -150,28 +154,11 @@ jobs:
           fi
           echo "GitHub token authentication and repository access verified (token value not printed)."
 
-      - name: Sync optional runtime secrets from GitHub Actions
-        shell: bash
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          FIREFLY_ADMIN_PASSWORD: ${{ secrets.FIREFLY_ADMIN_PASSWORD }}
-          FIREFLY_CONTENTS_TOKEN: ${{ secrets.FIREFLY_CONTENTS_TOKEN }}
-        run: |
-          set -euo pipefail
-          config="dist/server/wrangler.json"
-          if [ -n "${FIREFLY_ADMIN_PASSWORD:-}" ]; then
-            printf '%s' "$FIREFLY_ADMIN_PASSWORD" | pnpm exec wrangler secret put FIREFLY_ADMIN_PASSWORD --config "$config"
-          else
-            echo "::notice::FIREFLY_ADMIN_PASSWORD was not supplied as an Actions secret; keep/configure it in the Cloudflare Worker settings."
-          fi
-          if [ -n "${FIREFLY_CONTENTS_TOKEN:-}" ]; then
-            printf '%s' "$FIREFLY_CONTENTS_TOKEN" | pnpm exec wrangler secret put FIREFLY_CONTENTS_TOKEN --config "$config"
-          else
-            echo "::notice::FIREFLY_CONTENTS_TOKEN was not supplied as an Actions secret; keep/configure it in the Cloudflare Worker settings."
-          fi
+      # Never call "wrangler secret put" here: it creates a live Worker
+      # deployment *before* the supervised Wrangler deploy and smoke tests.
+      # Existing Cloudflare runtime secrets are preserved by wrangler deploy.
       - name: Deploy Worker
-        run: pnpm exec wrangler deploy --config dist/server/wrangler.json
+        run: pnpm exec wrangler deploy --config dist/server/wrangler.json --keep-vars
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
