@@ -16,7 +16,7 @@ concurrency:
 jobs:
   check-due-posts:
     # Avoid dispatching skipped deployments every ten minutes before cutover.
-    if: ${{ vars.FIREFLY_WORKERS_BUILDS_DISCONNECTED == 'true' && vars.ENABLE_FIREFLY_GHA_DEPLOY == 'true' }}
+    if: ${{ vars.FIREFLY_CLOUDFLARE_BUILDS_STOPPED == 'true' && vars.ENABLE_FIREFLY_GHA_DEPLOY == 'true' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
