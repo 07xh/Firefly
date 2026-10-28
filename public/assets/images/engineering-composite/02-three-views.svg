@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="780" viewBox="0 0 1120 780" role="img" aria-labelledby="title desc">
+<title id="title">台阶组合体第一角法三视图</title><desc id="desc">主视图左上呈L形，俯视图位于主视图下方呈矩形并在右侧分出竖线，左视图位于主视图右方呈矩形并在高度二十处水平分界。主俯长对正，主左高平齐，俯左宽相等。</desc>
+<style>
+text{font-family:"Noto Sans SC","Microsoft YaHei","PingFang SC",sans-serif}
+.title{font-size:29px;font-weight:800;fill:#17263c}
+.sub{font-size:17px;fill:#5d708c}
+.head{font-size:22px;font-weight:700;fill:#1e395e}
+.label{font-size:18px;fill:#233e60}
+.small{font-size:15px;fill:#59708c}
+.outline{stroke:#163454;stroke-width:4;stroke-linejoin:round;stroke-linecap:round;fill:none}
+.guide{stroke:#7bb0e4;stroke-width:2;stroke-dasharray:9 8;fill:none}
+</style><rect width="1120" height="780" fill="#f7fbff"/><rect x="12" y="12" width="1096" height="756" rx="24" fill="#fff" stroke="#dce9f7" stroke-width="2"/>
+<text x="58" y="65" class="title">同一个台阶体，三个方向看到的线不一样</text>
+<text x="58" y="97" class="sub">第一角法：主视图在左上、俯视图在其下、左视图在其右</text>
+<g class="guide">
+<path d="M120 330V670 M300 166V670 M440 166V670"/>
+<path d="M105 165H948 M105 245H948 M105 325H948"/>
+</g>
+<path d="M120 325H440V165H300V245H120Z" class="outline"/>
+<path d="M120 445H440V645H120Z M300 445V645" class="outline"/>
+<path d="M710 165H910V325H710Z M710 245H910" class="outline"/>
+<g fill="#3173b8" font-family="sans-serif">
+<text x="145" y="147" class="head">① 主视图 V</text>
+<text x="140" y="696" class="head">② 俯视图 H</text>
+<text x="718" y="147" class="head">③ 左视图 W</text>
+</g>
+<text x="130" y="369" class="label">长 80，高 40：外轮廓像“L”</text>
+<text x="132" y="722" class="label">长 80，宽 50：竖线在距左 45 处</text>
+<text x="700" y="371" class="label">宽 50，高 40：台阶线在高 20 处</text>
+<text x="478" y="604" class="small">蓝色虚线 = 作图联系线</text>
+<text x="478" y="632" class="small">不是物体的虚线！</text>
+<text x="478" y="668" class="small">图中粗深蓝线 = 可见轮廓/棱线</text>
+<text x="700" y="733" class="small">各视图共用同一比例尺</text>
+</svg>

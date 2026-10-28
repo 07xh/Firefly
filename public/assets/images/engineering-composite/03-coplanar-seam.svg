@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="510" viewBox="0 0 1100 510" role="img" aria-labelledby="title desc">
+<title id="title">组合体三视图接缝：平齐时不画多余分界线</title><desc id="desc">左图为正确的L形主视图，没有在右侧平齐的共面前表面多画横线；右图为错误画法，在右侧台阶下方多加红色线段。</desc>
+<style>
+text{font-family:"Noto Sans SC","Microsoft YaHei","PingFang SC",sans-serif}
+.title{font-size:29px;font-weight:800;fill:#17263c}
+.sub{font-size:17px;fill:#5d708c}
+.head{font-size:22px;font-weight:700;fill:#1e395e}
+.label{font-size:18px;fill:#233e60}
+.small{font-size:15px;fill:#59708c}
+.outline{stroke:#163454;stroke-width:4;stroke-linejoin:round;stroke-linecap:round;fill:none}
+.guide{stroke:#7bb0e4;stroke-width:2;stroke-dasharray:9 8;fill:none}
+</style><rect width="1100" height="510" fill="#f7fbff"/><rect x="12" y="12" width="1076" height="486" rx="24" fill="#fff" stroke="#dce9f7" stroke-width="2"/>
+<text x="55" y="65" class="title">为什么有时要“删线”？——同面不留接缝</text>
+<text x="55" y="98" class="sub">不是把两个小长方体的全部边线照抄到最终三视图。</text>
+<rect x="52" y="130" width="482" height="314" rx="18" fill="#edf8f2" stroke="#badbcb" stroke-width="2"/>
+<rect x="566" y="130" width="482" height="314" rx="18" fill="#fff1f1" stroke="#f1cccc" stroke-width="2"/>
+<text x="82" y="175" class="head" fill="#167b59">✓ 正确：前表面平齐</text>
+<text x="598" y="175" class="head" fill="#bb3030">✗ 错误：多画一条分界线</text>
+<path d="M125 366H445V206H305V286H125Z" class="outline"/>
+<path d="M639 366H959V206H819V286H639Z" class="outline"/>
+<path d="M819 286H959" stroke="#e14747" stroke-width="6" stroke-linecap="round"/>
+<circle cx="889" cy="286" r="16" fill="none" stroke="#e14747" stroke-width="2.5"/>
+<path d="M878 275L900 297M900 275L878 297" stroke="#e14747" stroke-width="2.5"/>
+<text x="100" y="413" class="small">上、下两个前表面在同一平面</text>
+<text x="612" y="413" class="small">这段不是合并后物体的真实边界</text>
+<text x="55" y="478" class="small">只有实际发生轮廓或表面方向改变的位置，才应保留可见棱线。</text>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="560" viewBox="0 0 1080 560" role="img" aria-labelledby="title desc">
+<title id="title">组合体：两个长方体叠加得到台阶形</title><desc id="desc">底座八十乘五十乘二十，右侧叠加三十五乘五十乘二十，整体八十乘五十乘四十。按统一比例的轴测示意。</desc>
+<style>
+text{font-family:"Noto Sans SC","Microsoft YaHei","PingFang SC",sans-serif}
+.title{font-size:29px;font-weight:800;fill:#17263c}
+.sub{font-size:17px;fill:#5d708c}
+.head{font-size:22px;font-weight:700;fill:#1e395e}
+.label{font-size:18px;fill:#233e60}
+.small{font-size:15px;fill:#59708c}
+.outline{stroke:#163454;stroke-width:4;stroke-linejoin:round;stroke-linecap:round;fill:none}
+.guide{stroke:#7bb0e4;stroke-width:2;stroke-dasharray:9 8;fill:none}
+</style><rect width="1080" height="560" fill="#f7fbff"/><rect x="12" y="12" width="1056" height="536" rx="24" fill="#fff" stroke="#dce9f7" stroke-width="2"/>
+<text x="58" y="70" class="title">先拆成两块，再把它们合起来</text>
+<text x="58" y="101" class="sub">教材核心：形体分析法 ｜ 叠加式组合体</text>
+<polygon points="580,438 497.5,395.5 497.5,255.5 580,298" fill="#91bbeb" stroke="#1f466b" stroke-width="3.6" stroke-linejoin="round"/>
+<polygon points="457.5,268.3 580,298 497.5,255.5 375,225.8" fill="#c8e5ff" stroke="#1f466b" stroke-width="3.6" stroke-linejoin="round"/>
+<polygon points="300,300 457.5,338.3 375,295.8 217.5,257.5" fill="#e7f3ff" stroke="#1f466b" stroke-width="3.6" stroke-linejoin="round"/>
+<polygon points="300,370 580,438 580,298 457.5,268.3 457.5,338.3 300,300" fill="#d8eaff" stroke="#1f466b" stroke-width="3.6" stroke-linejoin="round"/>
+<text x="680" y="175" class="head">A 底座（主形体）</text>
+<text x="680" y="212" class="label">长 80 × 宽 50 × 高 20</text>
+<text x="680" y="282" class="head">B 右上凸台（附加形体）</text>
+<text x="680" y="320" class="label">长 35 × 宽 50 × 高 20</text>
+<text x="680" y="389" class="head">整体外形尺寸</text>
+<text x="680" y="427" class="label">长 80 × 宽 50 × 高 40</text>
+<text x="680" y="484" class="small">单位：mm ｜ 示意图不代替正式尺寸标注</text>
+<path d="M662 190 L558 235" fill="none" stroke="#4f94d5" stroke-width="2.5"/><circle cx="558" cy="235" r="5" fill="#4f94d5"/>
+<path d="M662 298 L455 252" fill="none" stroke="#4f94d5" stroke-width="2.5"/><circle cx="455" cy="252" r="5" fill="#4f94d5"/>
+<text x="74" y="502" class="sub">注意：两个方体只是分析方法；最终画的是合并后的物体外表面。</text>
+</svg>
