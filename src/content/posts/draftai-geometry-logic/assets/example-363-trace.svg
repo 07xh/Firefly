@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 510" role="img" aria-label="3-6-3：先在主视定高度，再从辅助圆找前后两个点"><rect width="900" height="510" rx="24" fill="#f7fafc"/><style>text{font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#16344f;font-size:18px}.title{font-size:25px;font-weight:bold}.subtitle{font-size:16px;fill:#57718b}.panel{fill:#fff;stroke:#c9d8e5;stroke-width:2}.edge{stroke:#203c58;stroke-width:3;fill:none}.fine{stroke:#86a6bd;stroke-width:1.9;stroke-dasharray:7 5;fill:none}.work{stroke:#1c83ac;stroke-width:3;fill:none}.result{stroke:#0c8a77;stroke-width:4;fill:none}.point{fill:#f28b43;stroke:#fff;stroke-width:2}</style><text class="title" x="30" y="42">3-6-3：先在主视定高度，再从辅助圆找前后两个点</text>
+<rect class="panel" x="28" y="68" width="395" height="393" rx="12"/><rect class="panel" x="446" y="68" width="426" height="393" rx="12"/>
+<text x="48" y="103">① 主视：斜截线 ∩ 水平细线</text>
+<path class="edge" d="M77 340 L232 145 L388 340"/><path class="fine" d="M232 125 V370"/><path stroke="#e37e4e" stroke-width="4" d="M126 295 L314 220"/><path class="fine" d="M88 258 H382"/>
+<circle class="point" cx="218.7" cy="258" r="7"/><circle class="point" cx="142.6" cy="258" r="5"/><circle class="point" cx="321.4" cy="258" r="5"/>
+<text x="228" y="250">Pᵥ</text><text class="subtitle" x="91" y="395">同一高度的圆锥宽度由母线决定</text>
+<text x="467" y="103">② 俯视：同高度细圆 ∩ Pᵥ投射线</text>
+<circle cx="660" cy="274" r="111" class="work"/><path class="fine" d="M660 144 V399 M536 274 H784"/>
+<line class="fine" x1="647" y1="135" x2="647" y2="415"/>
+<circle class="point" cx="647" cy="163.8" r="7"/><circle class="point" cx="647" cy="384.2" r="7"/>
+<text x="664" y="160">前侧候选点</text><text x="664" y="400">后侧候选点</text>
+<text class="subtitle" x="470" y="443">两个交点不同深度，不能直接跨圆连直线</text>
+<text class="subtitle" x="28" y="488">示意图：仅说明两种条件相交求点，不按教材比例，也不预先判定曲线名称。</text></svg>
