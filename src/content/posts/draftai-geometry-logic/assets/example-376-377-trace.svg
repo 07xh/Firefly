@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 510" role="img" aria-label="3-7-6 / 3-7-7：从一个视图取点，另一个视图补齐条件"><rect width="900" height="510" rx="24" fill="#f7fafc"/><style>text{font-family:"Noto Sans CJK SC","Microsoft YaHei",sans-serif;fill:#16344f;font-size:18px}.title{font-size:25px;font-weight:bold}.subtitle{font-size:16px;fill:#57718b}.panel{fill:#fff;stroke:#c9d8e5;stroke-width:2}.edge{stroke:#203c58;stroke-width:3;fill:none}.fine{stroke:#86a6bd;stroke-width:1.9;stroke-dasharray:7 5;fill:none}.work{stroke:#1c83ac;stroke-width:3;fill:none}.result{stroke:#0c8a77;stroke-width:4;fill:none}.point{fill:#f28b43;stroke:#fff;stroke-width:2}</style><text class="title" x="30" y="42">3-7-6 / 3-7-7：从一个视图取点，另一个视图补齐条件</text>
+<rect class="panel" x="26" y="74" width="411" height="367" rx="12"/><rect class="panel" x="460" y="74" width="414" height="367" rx="12"/>
+<text x="44" y="106">3-7-6：从左视圆周出发</text><circle class="work" cx="162" cy="236" r="94"/><path class="fine" d="M162 130 V342 M57 236 H267"/><circle class="point" cx="211" cy="155.7" r="7"/>
+<path class="fine" d="M211 155.7 H369 M211 155.7 V350"/><path class="work" d="M313 343 A85 85 0 0 0 313 173"/><circle class="point" cx="364" cy="240" r="7"/>
+<text class="subtitle" x="47" y="390">左视给“深度+高度”；俯视补左右</text><text class="subtitle" x="47" y="415">最后主视 = 左右位置与高度相遇</text>
+<text x="478" y="106">3-7-7：从俯视圆周出发</text><circle class="work" cx="586" cy="265" r="96"/><path class="fine" d="M586 153 V371 M475 265 H696"/><circle class="point" cx="528" cy="188.3" r="7"/>
+<path class="fine" d="M528 188 V144 H812"/><path class="result" d="M730 180 Q773 330 817 180"/><circle class="point" cx="773" cy="255" r="7"/>
+<text class="subtitle" x="480" y="390">俯视给“左右+深度”；左视补高度</text><text class="subtitle" x="480" y="415">主视点不由曲线外形猜测</text>
+<text class="subtitle" x="27" y="479">两个方向的求点流程图；圆形与曲线不表示教材实体的真实位置或比例。</text></svg>
