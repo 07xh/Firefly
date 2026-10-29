@@ -4,6 +4,6 @@
 <text x="334" y="105">② 同高度辅助圆求点</text><circle class="work" cx="450" cy="269" r="97"/><path class="fine" d="M450 155 V382 M341 269 H559"/><path class="fine" d="M503 169 V366"/><circle class="point" cx="503" cy="187.8" r="7"/><circle class="point" cx="503" cy="350.2" r="7"/>
 <text class="subtitle" x="330" y="394">先找到前、后两个点</text><text class="subtitle" x="330" y="417">再换高度重复</text>
 <text x="624" y="105">③ 点列指向同一转折处</text>
-<path class="result" d="M650 178 Q846 266 650 354"/><circle class="point" cx="650" cy="178" r="7"/><circle class="point" cx="759" cy="234" r="7"/><circle class="point" cx="796" cy="266" r="7"/><circle class="point" cx="759" cy="298" r="7"/><circle class="point" cx="650" cy="354" r="7"/>
+<path class="result" d="M650 178 Q942 266 650 354"/><circle class="point" cx="650" cy="178" r="7"/><circle class="point" cx="759.5" cy="222" r="7"/><circle class="point" cx="796" cy="266" r="7"/><circle class="point" cx="759.5" cy="310" r="7"/><circle class="point" cx="650" cy="354" r="7"/>
 <text class="subtitle" x="623" y="394">转折点不等于圆锥尖顶</text><text class="subtitle" x="623" y="417">名称留到求完点以后</text>
 <text class="subtitle" x="27" y="484">示意中的曲线只是“连续点列”的画法提示，不是原题截交线尺寸或最终线型。</text></svg>
