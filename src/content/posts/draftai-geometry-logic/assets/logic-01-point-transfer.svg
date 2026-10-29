@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 510" role="img" aria-label="先问：同一个点在三个视图各提供什么？"><rect width="900" height="510" fill="#f7fafc" rx="18"/><style>text{font-family:'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#1a3654;font-size:20px}.head{font-size:25px;font-weight:bold}.hint{font-size:16px;fill:#526b80}.paper{fill:#fff;stroke:#bfd3e0;stroke-width:2}.solid{stroke:#294768;stroke-width:3;fill:none}.guide{stroke:#91adc4;stroke-width:2;stroke-dasharray:8 6;fill:none}.blue{stroke:#2176b4;stroke-width:3;fill:none}.orange{stroke:#eb803b;stroke-width:3;fill:none}.point{fill:#eb803b;stroke:#fff;stroke-width:2}</style><text class="head" x="28" y="43">先问：同一个点在三个视图各提供什么？</text>
+<rect class="paper" x="40" y="69" width="350" height="172" rx="10"/><rect class="paper" x="40" y="262" width="350" height="203" rx="10"/><rect class="paper" x="428" y="69" width="430" height="172" rx="10"/>
+<text x="56" y="103">主视：确定左右、高低</text><text x="56" y="296">俯视：确定左右、前后</text><text x="448" y="103">左视：确定前后、高低</text>
+<circle class="point" cx="234" cy="171" r="8"/><circle class="point" cx="234" cy="380" r="8"/><circle class="point" cx="647" cy="171" r="8"/>
+<line class="guide" x1="234" y1="171" x2="647" y2="171"/><line class="guide" x1="234" y1="171" x2="234" y2="380"/>
+<text x="248" y="155">同名点</text><text x="248" y="365">同名点</text><text x="661" y="155">结果</text>
+<path class="blue" d="M234 380 L448 380 L647 181" /><path class="blue" d="M455 466 L644 277"/>
+<line class="guide" x1="647" y1="181" x2="647" y2="171"/>
+<text class="hint" x="450" y="306">↖ 本例 45° 转移方向</text><text class="hint" x="449" y="334">先传深度，再与高度线相交</text>
+<text class="hint" x="39" y="493">本图是投影步骤示意；转移线实际位置依你的第一角法视图布局放置。</text></svg>
