@@ -3,6 +3,6 @@
 <text x="49" y="121">第1步：找边界</text><text x="343" y="121">第2步：增加点</text><text x="635" y="121">第3步：按分支连接</text>
 <circle class="point" cx="89" cy="338" r="8"/><circle class="point" cx="219" cy="176" r="8"/><line class="guide" x1="89" y1="338" x2="219" y2="176"/>
 <circle class="point" cx="372" cy="338" r="8"/><circle class="point" cx="504" cy="176" r="8"/><circle class="point" cx="446" cy="198" r="8"/><circle class="point" cx="405" cy="237" r="8"/><circle class="point" cx="383" cy="284" r="8"/>
-<path class="blue" d="M665 338 Q646 236 796 176"/><circle class="point" cx="665" cy="338" r="7"/><circle class="point" cx="718" cy="208" r="7"/><circle class="point" cx="796" cy="176" r="7"/>
+<path class="blue" d="M665 338 Q646 236 796 176"/><circle class="point" cx="665" cy="338" r="7"/><circle class="point" cx="688" cy="247" r="7"/><circle class="point" cx="796" cy="176" r="7"/>
 <text class="hint" x="43" y="387">端点来自真实边界</text><text class="hint" x="335" y="387">中间点来自共同条件</text><text class="hint" x="629" y="387">连错分支就不是交线</text>
 <text class="hint" x="29" y="474">图仅展示求点与排序的思路，曲线真实形状由具体题目求出的全部点决定。</text></svg>
