@@ -4,7 +4,7 @@
 <circle class="point" cx="234" cy="171" r="8"/><circle class="point" cx="234" cy="380" r="8"/><circle class="point" cx="647" cy="171" r="8"/>
 <line class="guide" x1="234" y1="171" x2="647" y2="171"/><line class="guide" x1="234" y1="171" x2="234" y2="380"/>
 <text x="248" y="155">同名点</text><text x="248" y="365">同名点</text><text x="661" y="155">结果</text>
-<path class="blue" d="M234 380 L448 380 L647 181" /><path class="blue" d="M455 466 L644 277"/>
-<line class="guide" x1="647" y1="181" x2="647" y2="171"/>
-<text class="hint" x="450" y="306">↖ 本例 45° 转移方向</text><text class="hint" x="449" y="334">先传深度，再与高度线相交</text>
+<path class="blue" d="M234 380 H647 V171" /><path class="blue" d="M587 320 L727 460"/>
+<line class="guide" x1="647" y1="171" x2="647" y2="380"/>
+<text class="hint" x="450" y="306">↘ 本例45°斜线由左上至右下</text><text class="hint" x="449" y="334">先传深度，再与高度线相交</text>
 <text class="hint" x="39" y="493">本图是投影步骤示意；转移线实际位置依你的第一角法视图布局放置。</text></svg>
