@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 510" role="img" aria-label="教材 3-7-6 / 3-7-7：分别取两项，交点落回主视"><rect width="900" height="510" fill="#f7fafc" rx="18"/><style>text{font-family:'Microsoft YaHei','Noto Sans CJK SC',sans-serif;fill:#1a3654;font-size:20px}.head{font-size:25px;font-weight:bold}.hint{font-size:16px;fill:#526b80}.paper{fill:#fff;stroke:#bfd3e0;stroke-width:2}.solid{stroke:#294768;stroke-width:3;fill:none}.guide{stroke:#91adc4;stroke-width:2;stroke-dasharray:8 6;fill:none}.blue{stroke:#2176b4;stroke-width:3;fill:none}.orange{stroke:#eb803b;stroke-width:3;fill:none}.point{fill:#eb803b;stroke:#fff;stroke-width:2}</style><text class="head" x="28" y="43">教材 3-7-6 / 3-7-7：分别取两项，交点落回主视</text>
 <rect class="paper" x="24" y="80" width="370" height="180" rx="11"/><rect class="paper" x="24" y="275" width="370" height="190" rx="11"/><rect class="paper" x="422" y="80" width="450" height="180" rx="11"/>
 <text x="43" y="112">主视：所求点 = 左右 + 高低</text><text x="43" y="308">俯视：已知左右与前后</text><text x="443" y="112">左视：按前后位置在圆弧上求高低</text>
-<circle class="point" cx="241" cy="190" r="8"/><circle class="point" cx="241" cy="383" r="8"/><circle class="point" cx="666" cy="190" r="8"/>
-<path class="guide" d="M241 190 V383 M241 190 H666"/>
+<circle class="point" cx="273" cy="148" r="8"/><circle class="point" cx="273" cy="336" r="8"/><circle class="point" cx="646" cy="148" r="8"/>
+<path class="guide" d="M273 148 V336 M273 148 H646"/>
 <circle cx="241" cy="383" r="57" fill="none" stroke="#2176b4" stroke-width="2.5"/>
 <path class="blue" d="M602 209 A64 64 0 0 1 730 209"/>
-<path class="guide" d="M666 209 V190"/>
-<path class="blue" d="M250 383 H463 L601 245"/>
-<text class="hint" x="443" y="289">45°转移深度（示意）</text>
+<path class="guide" d="M646 148 V336"/>
+<path class="blue" d="M273 336 H646 V148 M526 216 L726 416"/>
+<text class="hint" x="443" y="289">45°转移线 ↘（示意）</text>
 <text class="hint" x="442" y="330">从侧视读高低，再水平回到主视</text>
 <text class="hint" x="442" y="361">从俯视读左右，再竖直回到主视</text>
 <text class="hint" x="28" y="493">确认这三个影子属于同一空间点；圆弧上一点未必已在两曲面交线上。</text></svg>
