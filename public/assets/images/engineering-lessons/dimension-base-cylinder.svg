@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 712" role="img" aria-labelledby="title desc">
+<title id="title">底座加圆柱凸台的三视图尺寸示意</title><desc id="desc">底座长60毫米、宽40毫米、高20毫米；顶部同心圆柱直径20毫米、高15毫米，中心线确定轴线居中。示意图给出正视和俯视的尺寸标注。</desc>
+<rect width="940" height="712" rx="22" fill="#ffffff"/>
+<style>
+text{font-family:"Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;fill:#243244}
+.tt{font-size:28px;font-weight:700}.sub{font-size:18px;fill:#596b83}.label{font-size:19px;font-weight:600}.small{font-size:17px}.dim{font-size:18px;fill:#536780}
+.object{fill:none;stroke:#1f334c;stroke-width:4;stroke-linejoin:round}
+.hidden{fill:none;stroke:#c36a35;stroke-width:2.5;stroke-dasharray:10 7}
+.helper{fill:none;stroke:#2982b4;stroke-width:1.8;stroke-dasharray:6 6}
+.dline{fill:none;stroke:#6a7b91;stroke-width:1.6}
+.blue{fill:#167bb1}.orange{fill:#c36a35}
+</style><defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto-start-reverse"><path d="M0 0 L9 4.5 L0 9 Z" fill="#6a7b91"/></marker></defs>
+
+<text x="46" y="44" class="tt">底座＋圆柱凸台：定形、定位、总体要分开</text>
+<text x="47" y="73" class="sub">教学自拟：底座 60 × 40 × 20 mm；凸台 Ø20 × 15 mm，轴线居中</text>
+<text x="86" y="112" class="label">主视图 V</text>
+<rect x="130" y="232" width="300" height="100" class="object"/>
+<path d="M230 232 V157 H330 V232" class="object"/>
+<path d="M280 130 V342" class="helper"/>
+<line x1="230" y1="147" x2="330" y2="147" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<text x="256" y="135" class="dim">Ø20</text>
+<path d="M130 350 V374 M430 350 V374 M130 363 H430" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<text x="267" y="357" class="dim">60</text>
+<path d="M115 232 H76 M115 332 H76 M88 232 V332" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<text x="70" y="292" class="dim" transform="rotate(-90 70 292)">20</text>
+<path d="M444 157 H476 M444 232 H476 M467 157 V232" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<text x="493" y="205" class="dim">15</text>
+<text x="86" y="411" class="label">俯视图 H</text>
+<rect x="130" y="434" width="300" height="200" class="object"/>
+<circle cx="280" cy="534" r="50" class="object"/>
+<path d="M280 419 V645 M116 534 H446" class="helper"/>
+<circle cx="280" cy="534" r="3.5" fill="#167bb1"/>
+<path d="M115 434 H82 M115 634 H82 M92 434 V634" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<text x="76" y="542" class="dim" transform="rotate(-90 76 542)">40</text>
+<path d="M314 499 L352 457 L470 457" class="dline"/>
+<text x="482" y="463" class="small">中心与两轴对称线重合</text>
+<text x="482" y="508" class="small">Ø20：圆柱定形</text>
+<text x="482" y="542" class="small">60 × 40 × 20：底座定形</text>
+<text x="482" y="576" class="small">15：凸台高</text>
+<text x="482" y="610" class="small">总体高 35，可推导，</text>
+<text x="482" y="641" class="small">无需机械重复标控制尺寸</text>
+<text x="49" y="688" class="sub">线条为教学示意，不代表标准要求在每一处重复标注。实际标注还须检查尺寸链。</text>
+</svg>
