@@ -7,6 +7,7 @@ text{font-family:"Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;fill:#243
 .object{fill:none;stroke:#1f334c;stroke-width:4;stroke-linejoin:round}
 .hidden{fill:none;stroke:#c36a35;stroke-width:2.5;stroke-dasharray:10 7}
 .helper{fill:none;stroke:#2982b4;stroke-width:1.8;stroke-dasharray:6 6}
+.center{fill:none;stroke:#2982b4;stroke-width:1.7;stroke-dasharray:15 4 2 4}
 .dline{fill:none;stroke:#6a7b91;stroke-width:1.6}
 .blue{fill:#167bb1}.orange{fill:#c36a35}
 </style><defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto-start-reverse"><path d="M0 0 L9 4.5 L0 9 Z" fill="#6a7b91"/></marker></defs>
@@ -16,21 +17,25 @@ text{font-family:"Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;fill:#243
 <text x="86" y="112" class="label">主视图 V</text>
 <rect x="130" y="232" width="300" height="100" class="object"/>
 <path d="M230 232 V157 H330 V232" class="object"/>
-<path d="M280 130 V342" class="helper"/>
+<path d="M280 130 V342" class="center"/>
 <line x1="230" y1="147" x2="330" y2="147" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
 <text x="256" y="135" class="dim">Ø20</text>
-<path d="M130 350 V374 M430 350 V374 M130 363 H430" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<path d="M130 350 V376 M430 350 V376" class="dline"/>
+<line x1="130" y1="363" x2="430" y2="363" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
 <text x="267" y="357" class="dim">60</text>
-<path d="M115 232 H76 M115 332 H76 M88 232 V332" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<path d="M115 232 H76 M115 332 H76" class="dline"/>
+<line x1="88" y1="232" x2="88" y2="332" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
 <text x="70" y="292" class="dim" transform="rotate(-90 70 292)">20</text>
-<path d="M444 157 H476 M444 232 H476 M467 157 V232" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<path d="M444 157 H476 M444 232 H476" class="dline"/>
+<line x1="467" y1="157" x2="467" y2="232" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
 <text x="493" y="205" class="dim">15</text>
 <text x="86" y="411" class="label">俯视图 H</text>
 <rect x="130" y="434" width="300" height="200" class="object"/>
 <circle cx="280" cy="534" r="50" class="object"/>
-<path d="M280 419 V645 M116 534 H446" class="helper"/>
+<path d="M280 419 V645 M116 534 H446" class="center"/>
 <circle cx="280" cy="534" r="3.5" fill="#167bb1"/>
-<path d="M115 434 H82 M115 634 H82 M92 434 V634" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<path d="M115 434 H82 M115 634 H82" class="dline"/>
+<line x1="92" y1="434" x2="92" y2="634" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
 <text x="76" y="542" class="dim" transform="rotate(-90 76 542)">40</text>
 <path d="M314 499 L352 457 L470 457" class="dline"/>
 <text x="482" y="463" class="small">中心与两轴对称线重合</text>

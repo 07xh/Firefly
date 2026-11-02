@@ -7,6 +7,7 @@ text{font-family:"Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;fill:#243
 .object{fill:none;stroke:#1f334c;stroke-width:4;stroke-linejoin:round}
 .hidden{fill:none;stroke:#c36a35;stroke-width:2.5;stroke-dasharray:10 7}
 .helper{fill:none;stroke:#2982b4;stroke-width:1.8;stroke-dasharray:6 6}
+.center{fill:none;stroke:#2982b4;stroke-width:1.7;stroke-dasharray:15 4 2 4}
 .dline{fill:none;stroke:#6a7b91;stroke-width:1.6}
 .blue{fill:#167bb1}.orange{fill:#c36a35}
 </style><defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto-start-reverse"><path d="M0 0 L9 4.5 L0 9 Z" fill="#6a7b91"/></marker></defs>
@@ -16,20 +17,25 @@ text{font-family:"Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;fill:#243
 <text x="126" y="123" class="label">主视图 V</text>
 <path d="M150 188 H320 V238 H380 V188 H550 V338 H150 Z" class="object"/>
 <path d="M150 188 V338" class="object"/>
-<path d="M350 164 V354" class="helper"/>
-<path d="M150 353 V374 M550 353 V374 M150 366 H550" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<path d="M350 164 V354" class="center"/>
+<path d="M150 353 V376 M550 353 V376" class="dline"/>
+<line x1="150" y1="366" x2="550" y2="366" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
 <text x="344" y="357" class="dim">80</text>
-<path d="M143 188 H105 M143 338 H105 M116 188 V338" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<path d="M143 188 H105 M143 338 H105" class="dline"/>
+<line x1="116" y1="188" x2="116" y2="338" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
 <text x="96" y="271" transform="rotate(-90 96 271)" class="dim">30</text>
-<path d="M320 179 V142 M380 179 V142 M320 153 H380" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<path d="M320 179 V142 M380 179 V142" class="dline"/>
+<line x1="320" y1="153" x2="380" y2="153" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
 <text x="339" y="142" class="dim">12</text>
-<path d="M566 188 H598 M566 238 H598 M589 188 V238" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<path d="M566 188 H598 M566 238 H598" class="dline"/>
+<line x1="589" y1="188" x2="589" y2="238" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
 <text x="608" y="218" class="dim">10</text>
 <text x="126" y="420" class="label">俯视图 H</text>
 <rect x="150" y="444" width="400" height="250" class="object"/>
 <path d="M320 444 V694 M380 444 V694" class="object"/>
-<path d="M350 427 V711" class="helper"/>
-<path d="M565 444 H596 M565 694 H596 M586 444 V694" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
+<path d="M350 427 V711" class="center"/>
+<path d="M565 444 H596 M565 694 H596" class="dline"/>
+<line x1="586" y1="444" x2="586" y2="694" class="dline" marker-start="url(#arrow)" marker-end="url(#arrow)"/>
 <text x="609" y="570" class="dim" transform="rotate(-90 609 570)">50</text>
 <path d="M355 564 H738" class="helper"/>
 <text x="668" y="540" class="small">槽沿宽度</text><text x="668" y="570" class="small">全部贯通</text>
