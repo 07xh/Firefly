@@ -10,9 +10,6 @@ lang: zh-CN
 series: "Python·零基础系统课"
 seriesOrder: 7
 ---
-
-# 为什么 Python 的索引从 0 开始？从内存偏移到切片与算法的深度理解
-
 刚学习 Python，你大概写过这段代码：
 
 ```python

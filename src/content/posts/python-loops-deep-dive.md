@@ -10,9 +10,6 @@ lang: zh-CN
 series: "Python·零基础系统课"
 seriesOrder: 6
 ---
-
-# 真正理解 Python 循环：从重复执行到状态、遍历与算法思维
-
 刚学 Python 时，我们很快就会写出：
 
 ```python

@@ -10,9 +10,6 @@ lang: zh-CN
 series: "Python·零基础系统课"
 seriesOrder: 4
 ---
-
-# Python 到底怎样读懂字符串？从引号、变量到 f-string 花括号的运行原理
-
 你可能已经会写：
 
 ```python

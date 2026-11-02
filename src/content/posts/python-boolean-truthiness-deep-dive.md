@@ -10,9 +10,6 @@ lang: zh-CN
 series: "Python·零基础系统课"
 seriesOrder: 5
 ---
-
-# 真正理解 Python 布尔值：True、False、真假判断与 if 的底层逻辑
-
 刚学 Python 时，我们很容易看懂：
 
 ```python
