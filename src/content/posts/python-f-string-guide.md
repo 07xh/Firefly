@@ -10,7 +10,6 @@ lang: zh-CN
 series: "Python·零基础系统课"
 seriesOrder: 12
 ---
-
 ## 一、f-string 是什么
 
 f-string 也叫格式化字符串字面量，是 Python 3.6 引入的写法：在字符串前加 `f` 或 `F`，用 `{}` 嵌入表达式。

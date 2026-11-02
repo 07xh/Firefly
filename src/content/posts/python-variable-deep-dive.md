@@ -10,6 +10,7 @@ lang: zh-CN
 series: "Python·零基础系统课"
 seriesOrder: 2
 ---
+
 刚学 Python 时，我们经常看到这样的代码：
 
 ```python
