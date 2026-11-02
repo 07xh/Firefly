@@ -13,7 +13,10 @@ interface Props {
 
 const { seriesName, posts, currentPostId } = Astro.props;
 const currentIndex = posts.findIndex((post) => post.id === currentPostId);
-const progressLabel = currentIndex < 0 ? String(posts.length) : `${currentIndex + 1}/${posts.length}`;
+const progressLabel =
+	currentIndex < 0
+		? String(posts.length)
+		: `${currentIndex + 1}/${posts.length}`;
 const seriesListId = "current-post-series-list";
 ---
 
