@@ -12,6 +12,9 @@ interface Props {
 }
 
 const { seriesName, posts, currentPostId } = Astro.props;
+const currentIndex = posts.findIndex((post) => post.id === currentPostId);
+const progressLabel = currentIndex < 0 ? String(posts.length) : `${currentIndex + 1}/${posts.length}`;
+const seriesListId = "current-post-series-list";
 ---
 
 {
@@ -20,6 +23,7 @@ const { seriesName, posts, currentPostId } = Astro.props;
       <button
         type="button"
         aria-expanded="false"
+        aria-controls={seriesListId}
         class="series-nav-toggle flex w-full items-center gap-2 px-3 py-2.5 min-h-11 rounded-lg bg-(--btn-plain-bg-hover) group cursor-pointer select-none text-left"
       >
         <Icon name="material-symbols:format-list-bulleted" aria-hidden="true" class="shrink-0 text-lg text-(--primary)" />
@@ -27,7 +31,7 @@ const { seriesName, posts, currentPostId } = Astro.props;
           {i18n(I18nKey.seriesPartOf)}：{seriesName}
         </span>
         <span class="shrink-0 text-xs px-2 py-0.5 rounded-full bg-(--btn-regular-bg) text-(--btn-content) transition">
-          {posts.length}
+          {progressLabel}
         </span>
         <Icon
           name="material-symbols:keyboard-arrow-down-rounded"
@@ -36,7 +40,7 @@ const { seriesName, posts, currentPostId } = Astro.props;
         />
       </button>
 
-      <div class="series-nav-content overflow-hidden max-h-0 transition-[max-height,opacity] duration-300 ease-in-out">
+      <div id={seriesListId} class="series-nav-content overflow-hidden max-h-0 transition-[max-height,opacity] duration-300 ease-in-out">
         <ol class="flex flex-col mt-1">
           {posts.map((post, idx) => {
             const part = i18n(I18nKey.seriesPart).replace("{n}", String(idx + 1));
