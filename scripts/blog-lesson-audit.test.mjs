@@ -99,6 +99,11 @@ test("dimension scale geometry is consistent at 5 px per millimetre", () => {
   assert.match(groove, /<path d="M150 188 H320 V238 H380 V188 H550 V338 H150 Z" class="object"\/>/);
   assert.match(groove, /<rect x="150" y="444" width="400" height="250" class="object"\/>/);
   assert.match(groove, /<path d="M320 444 V694 M380 444 V694" class="object"\/>/);
+  const occlusion = readFileSync(join(figuresDir, "edge-occlusion-segments.svg"), "utf8");
+  // 80 mm depth -> 480 px, 40 mm height -> 240 px: single 6 px/mm scale.
+  assert.match(occlusion, /<path d="M135 402 V222 H375 V162 H615 V402 Z" class="object"\/>/);
+  assert.match(occlusion, /<path d="M135 282 H375" class="object"\/>/);
+  assert.match(occlusion, /<path d="M375 222 H615" class="hidden"\/>/);
 });
 function pythonBlocks(slug) {
   const rx = new RegExp("^" + fence + "python[^\\n]*\\n([\\s\\S]*?)^" + fence + "\\s*$", "gm");

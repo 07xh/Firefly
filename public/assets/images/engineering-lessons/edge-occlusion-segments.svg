@@ -15,21 +15,21 @@ text{font-family:"Noto Sans CJK SC","Microsoft YaHei",Arial,sans-serif;fill:#243
 <text x="49" y="79" class="sub">左视图 W，第一角法：图纸左侧 = 物体后端，右侧 = 前端</text>
 <text x="108" y="134" class="label">后段 y = 80 → 40</text>
 <text x="504" y="134" class="label">前段 y = 40 → 0</text>
-<path d="M135 402 V232 H390 V168 H670 V402 Z" class="object"/>
-<path d="M135 291 H390" class="object"/>
-<path d="M135 232 H390" stroke="#167bb1" stroke-width="6"/>
-<path d="M390 232 H670" class="hidden"/>
-<path d="M390 168 V402" class="helper"/>
-<text x="230" y="221" class="small blue">远侧顶部 30（可见）</text>
-<text x="433" y="249" class="small orange">远侧顶部 30（被遮挡）</text>
-<text x="188" y="315" class="small">近侧顶部 20（可见）</text>
-<text x="484" y="157" class="small">近侧高台 40（可见）</text>
-<path d="M92 402 V168" class="dline"/>
-<path d="M84 402 H98 M84 168 H98" class="dline"/>
+<path d="M135 402 V222 H375 V162 H615 V402 Z" class="object"/>
+<path d="M135 282 H375" class="object"/>
+<path d="M135 222 H375" stroke="#167bb1" stroke-width="6"/>
+<path d="M375 222 H615" class="hidden"/>
+<path d="M375 162 V402" class="helper"/>
+<text x="175" y="210" class="small blue">远侧顶部 30（可见）</text>
+<text x="412" y="242" class="small orange">远侧顶部 30（被遮挡）</text>
+<text x="175" y="304" class="small">近侧顶部 20（可见）</text>
+<text x="442" y="150" class="small">近侧高台 40（可见）</text>
+<path d="M92 402 V162" class="dline"/>
+<path d="M84 402 H98 M84 162 H98" class="dline"/>
 <text x="60" y="293" class="dim" transform="rotate(-90 60 293)">高低 z</text>
-<text x="135" y="443" class="dim">后端 y=80</text><text x="343" y="443" class="dim">分界 y=40</text>
-<text x="590" y="443" class="dim">前端 y=0</text>
-<line x1="135" y1="466" x2="670" y2="466" class="dline" marker-end="url(#arrow)"/>
+<text x="135" y="443" class="dim">后端 y=80</text><text x="333" y="443" class="dim">分界 y=40</text>
+<text x="575" y="443" class="dim">前端 y=0</text>
+<line x1="135" y1="466" x2="615" y2="466" class="dline" marker-end="url(#arrow)"/>
 <text x="293" y="496" class="small">纸面向右：越靠物体前端</text>
 <path d="M126 540 H216" stroke="#167bb1" stroke-width="5"/><text x="229" y="547" class="small">可见轮廓 / 棱线</text>
 <path d="M480 540 H565" class="hidden"/><text x="576" y="547" class="small">需要表达的隐藏棱线</text>
