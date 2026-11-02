@@ -5,8 +5,10 @@ description: "从零理解复杂组合体的空间分层、第三视图定位与
 category: "工程制图"
 draft: false
 pinned: false
-tags: ["工程制图", "组合体", "补第三视图", "第一角法", "实线虚线", "空间逻辑", "DraftAI"]
+tags: ["工程制图", "组合体", "补第三视图", "第一角法", "实线与虚线", "空间逻辑", "DraftAI"]
 lang: zh-CN
+series: "工程制图·从投影到解题"
+seriesOrder: 4
 ---
 
 > **先回答两个不同的问题，复杂组合体就容易理解了：**

@@ -2,13 +2,14 @@
 title: "Python f-string 学习指南：从入门到进阶"
 published: 2026-10-25
 description: "一篇面向初学者的 f-string 学习笔记，讲解基本插值、格式说明符、对齐宽度、进制与日期格式化、调试用 = 写法，以及引号嵌套和反斜杠等常见坑。"
-category: "Python 基础"
+category: "Python"
 draft: false
 tags: ["Python","f-string","字符串格式化","教程"]
 slug: "python-f-string-guide"
+lang: zh-CN
+series: "Python·零基础系统课"
+seriesOrder: 12
 ---
-# Python f-string 学习指南
-
 ## 一、f-string 是什么
 
 f-string 也叫格式化字符串字面量，是 Python 3.6 引入的写法：在字符串前加 `f` 或 `F`，用 `{}` 嵌入表达式。

@@ -4,12 +4,12 @@ published: 2026-10-26
 description: "从零拆解 Python for 和 while 的执行过程：循环变量为何变化、range 为何不包含终点、break 与 continue 怎样改变流程、for-else 为何存在，以及迭代器、循环不变量、复杂度和真实数据处理。"
 category: "Python"
 draft: false
-tags: ["Python", "循环结构", "for循环", "while循环", "迭代器", "算法思维", "Python基础"]
+tags: ["Python", "循环结构", "for循环", "while循环", "迭代器", "算法思维", "Python 入门"]
 slug: "python-loops-deep-dive"
+lang: zh-CN
+series: "Python·零基础系统课"
+seriesOrder: 6
 ---
-
-# 真正理解 Python 循环：从重复执行到状态、遍历与算法思维
-
 刚学 Python 时，我们很快就会写出：
 
 ```python

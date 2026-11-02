@@ -4,12 +4,12 @@ published: 2026-10-25
 description: "专为零基础学习者编写：理解 Python 程序怎样换行、缩进、分块和运行，区分强制语法与 PEP 8 风格，并用变量、条件、循环、函数和完整案例一步步练习。"
 category: "Python"
 draft: false
-tags: ["Python基础", "程序书写规范", "代码格式", "缩进", "编程入门"]
+tags: ["Python 入门", "程序书写规范", "代码格式", "缩进", "编程入门"]
 slug: "python-program-writing-guide"
+lang: zh-CN
+series: "Python·零基础系统课"
+seriesOrder: 1
 ---
-
-# Python 程序书写格式完全教程：从第一行代码到规范程序
-
 刚学 Python，很多人能看懂 `print("你好")`，但真正自己写程序时，问题就来了：
 
 - 为什么有的语句末尾有冒号 `:`，有的没有？

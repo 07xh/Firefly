@@ -4,12 +4,12 @@ published: 2026-10-26
 description: "为什么第一个元素是 list[0]，而不是 list[1]？从位置与数量、内存偏移、半开区间、range、负索引、enumerate 和边界错误出发，真正理解 Python 索引设计背后的数学与程序思想。"
 category: "Python"
 draft: false
-tags: ["Python", "索引", "切片", "列表", "range", "数据结构", "算法思维", "Python基础"]
+tags: ["Python", "索引", "切片", "列表", "range", "数据结构", "算法思维", "Python 入门"]
 slug: "python-zero-based-indexing-deep-dive"
+lang: zh-CN
+series: "Python·零基础系统课"
+seriesOrder: 7
 ---
-
-# 为什么 Python 的索引从 0 开始？从内存偏移到切片与算法的深度理解
-
 刚学习 Python，你大概写过这段代码：
 
 ```python

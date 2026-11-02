@@ -4,12 +4,12 @@ published: 2026-10-26
 description: "从零理解 Python 布尔值到底是什么、为什么 if 和 while 能直接判断数字与字符串，全面拆解真值测试、比较运算、and/or/not、bool/all/any/filter、短路求值与常见逻辑陷阱。"
 category: "Python"
 draft: false
-tags: ["Python", "布尔值", "bool", "真假判断", "条件判断", "逻辑运算", "Python基础"]
+tags: ["Python", "布尔值", "bool", "真假判断", "条件判断", "逻辑运算", "Python 入门"]
 slug: "python-boolean-truthiness-deep-dive"
+lang: zh-CN
+series: "Python·零基础系统课"
+seriesOrder: 5
 ---
-
-# 真正理解 Python 布尔值：True、False、真假判断与 if 的底层逻辑
-
 刚学 Python 时，我们很容易看懂：
 
 ```python

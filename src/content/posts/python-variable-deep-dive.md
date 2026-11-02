@@ -4,8 +4,11 @@ published: 2026-10-25
 description: "面向 Python 初学者，从第一行赋值开始，逐步讲懂变量名、对象、引用、读取、复制、可变性、函数参数和作用域；每个难点都有可运行的代码、输出与原因分析。"
 category: "Python"
 draft: false
-tags: ["Python", "变量", "引用", "作用域", "对象模型", "Python基础"]
+tags: ["Python", "变量", "引用", "作用域", "对象模型", "Python 入门"]
 slug: "python-variable-deep-dive"
+lang: zh-CN
+series: "Python·零基础系统课"
+seriesOrder: 2
 ---
 
 刚学 Python 时，我们经常看到这样的代码：

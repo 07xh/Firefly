@@ -45,6 +45,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Audit blog articles, figures and Python examples
+        run: node --test scripts/blog-lesson-audit.test.mjs
+
       - name: Run Astro Check
         run: pnpm astro check
 

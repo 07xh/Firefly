@@ -4,11 +4,12 @@ published: 2026-10-19
 description: "用通俗例子总结 Python 常见格式字符：%s、%d、%f、%x、%% 以及 f-string 的宽度、精度和对齐写法，适合初学者快速查阅。"
 category: "Python"
 draft: false
-tags: ["字符串格式化","格式字符","python"]
+tags: ["字符串格式化","格式字符","Python"]
 slug: "python-format-characters"
+lang: zh-CN
+series: "Python·零基础系统课"
+seriesOrder: 11
 ---
-# Python 格式字符简短总结
-
 Python 里常说的“格式字符”，最常见的是 `%` 格式化里的占位符，比如 `%s`、`%d`。现在更推荐用 f-string，但读旧代码时仍会经常遇到 `%` 写法。
 
 ## 一、% 格式化常用字符
