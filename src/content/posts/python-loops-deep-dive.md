@@ -8,7 +8,7 @@ tags: ["Python", "循环结构", "for循环", "while循环", "迭代器", "算�
 slug: "python-loops-deep-dive"
 lang: zh-CN
 series: "Python·零基础系统课"
-seriesOrder: 9
+seriesOrder: 6
 ---
 
 # 真正理解 Python 循环：从重复执行到状态、遍历与算法思维

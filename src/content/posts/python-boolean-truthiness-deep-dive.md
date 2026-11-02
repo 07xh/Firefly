@@ -8,7 +8,7 @@ tags: ["Python", "布尔值", "bool", "真假判断", "条件判断", "逻辑运
 slug: "python-boolean-truthiness-deep-dive"
 lang: zh-CN
 series: "Python·零基础系统课"
-seriesOrder: 8
+seriesOrder: 5
 ---
 
 # 真正理解 Python 布尔值：True、False、真假判断与 if 的底层逻辑

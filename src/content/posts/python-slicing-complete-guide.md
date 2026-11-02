@@ -7,7 +7,7 @@ draft: false
 tags: ["Python", "Python 入门", "切片", "列表", "负索引"]
 lang: zh-CN
 series: "Python·零基础系统课"
-seriesOrder: 7
+seriesOrder: 9
 ---
 
 > **先修知识**：列表、索引从 0 开始、`len`。先读[列表方法](/posts/python-list-methods-complete-guide/)和[零基索引的原理](/posts/python-zero-based-indexing-deep-dive/)，再进入本篇。

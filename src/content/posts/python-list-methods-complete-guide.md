@@ -7,7 +7,7 @@ draft: false
 tags: ["Python", "Python 入门", "列表", "列表方法", "可变对象"]
 lang: zh-CN
 series: "Python·零基础系统课"
-seriesOrder: 6
+seriesOrder: 8
 ---
 
 > **先修知识**：变量、`[]` 列表、`print()`、`len()`、`if` 和基本循环。若你还不熟悉方括号，请先读[常见符号详解](/posts/Python2/)。

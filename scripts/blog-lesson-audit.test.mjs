@@ -13,9 +13,9 @@ const fence = String.fromCharCode(96).repeat(3);
 const groups = {
   "Python·零基础系统课": [
     "python-program-writing-guide", "python-variable-deep-dive", "Python2",
-    "python-how-strings-are-read", "python-zero-based-indexing-deep-dive",
+    "python-how-strings-are-read", "python-boolean-truthiness-deep-dive",
+    "python-loops-deep-dive", "python-zero-based-indexing-deep-dive",
     "python-list-methods-complete-guide", "python-slicing-complete-guide",
-    "python-boolean-truthiness-deep-dive", "python-loops-deep-dive",
     "python-functions-from-zero", "python-format-characters", "python-f-string-guide",
   ],
   "工程制图·从投影到解题": [
@@ -48,6 +48,8 @@ test("course order, article metadata, stable URLs, and balanced markup", () => {
       assert.equal(field(meta, "lang"), "zh-CN", slug);
       assert.equal(body.split("\n").filter(line => line.startsWith(fence)).length % 2, 0, slug + " code fences");
       assert.equal((body.match(/<details\b/g) ?? []).length, (body.match(/<\/details>/g) ?? []).length, slug + " details");
+      const prose = body.replace(new RegExp("^" + fence + "[^\\n]*\\n[\\s\\S]*?^" + fence + "\\s*$", "gm"), "");
+      assert.doesNotMatch(prose, /^# [^\n]+$/m, slug + " duplicate H1");
       for (const m of body.matchAll(/\]\(\/posts\/([^/#?)]+)\/(?:#[^)]*)?\)/g)) {
         assert.ok(known.has(decodeURIComponent(m[1])), slug + " broken link /posts/" + m[1]);
       }
