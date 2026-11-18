@@ -54,3 +54,13 @@ test("tablet navigation and reduced-motion layout are covered", () => {
   assert.match(styles, /prefers-reduced-motion:reduce/);
   assert.match(styles, /max-height:720px/);
 });
+
+test("site navigation separates the main destinations and identifies the owner's GitHub", async () => {
+  const navigation = await readFile(new URL("src/config/navBarConfig.ts", root), "utf8");
+  assert.match(navigation, /name: "博客"/);
+  assert.match(navigation, /name: "项目档案"/);
+  assert.match(navigation, /name: "知识专题"/);
+  assert.match(navigation, /name: "我的 GitHub"/);
+  assert.match(navigation, /https:\/\/github\.com\/07xh/);
+  assert.match(navigation, /Firefly 模板源码/);
+});
