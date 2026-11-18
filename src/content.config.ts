@@ -44,6 +44,7 @@ type ProjectLink = {
 
 type ProjectData = {
 	subtitle: string;
+	highlights: { title: string; detail: string; state: "implemented" | "verifying" | "planned" }[];
 	repository: string;
 	title: string;
 	published: Date;
@@ -114,6 +115,11 @@ const projectsCollection: ContentCollection<ProjectData> = defineCollection({
 	schema: z.object({
 		title: z.string(),
 		subtitle: z.string().default(""),
+		highlights: z.array(z.object({
+			title: z.string().min(1).max(50),
+			detail: z.string().min(1).max(150),
+			state: z.enum(["implemented", "verifying", "planned"]),
+		})).max(3).optional().default([]),
 		repository: z
 			.string()
 			.regex(/^[\w.-]+\/[\w.-]+$/)

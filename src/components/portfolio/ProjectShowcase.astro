@@ -25,7 +25,8 @@ interface Props {
 
 const { entry, previous, next, position, total } = Astro.props;
 const { Content } = await render(entry);
-const { title, subtitle, description, link, status, tags } = entry.data;
+const { title, subtitle, description, link, status, tags, highlights } = entry.data;
+const highlightStates = { implemented: "已有功能", verifying: "验证中", planned: "规划中" } as const;
 const statusLabel = getProjectStatusMeta(status || "").label;
 const zoomImage = await resolveProjectImage(entry.data.image, entry.filePath);
 const hasPhonePreview = entry.id.startsWith("dorm-os");
@@ -71,6 +72,20 @@ const hasPhonePreview = entry.id.startsWith("dorm-os");
 				{subtitle && <p class="space-project-subtitle">{subtitle}</p>}
 				<h1 id="project-title" data-pagefind-meta="title">{title}</h1>
 				{description && <p class="space-project-description">{description}</p>}
+				{highlights.length > 0 && (
+					<div class="space-project-capabilities" aria-label={title + "的核心功能"}>
+						<p class="space-project-capabilities-heading">它可以做什么</p>
+						<ul class="space-project-capabilities-list">
+							{highlights.map(({ title: featureTitle, detail, state }) => (
+								<li class="space-project-capability">
+									<span class="space-project-capability-icon" aria-hidden="true"><Icon name="material-symbols:check-circle-outline-rounded" /></span>
+									<span class="space-project-capability-text"><strong>{featureTitle}</strong><span>{detail}</span></span>
+									<span class:list={["space-project-capability-state", "is-" + state]}>{highlightStates[state]}</span>
+								</li>
+							))}
+						</ul>
+					</div>
+				)}
 				<div class="space-project-meta" aria-label="项目状态与技术方向">
 					{statusLabel && <span class="space-project-status"><span aria-hidden="true"></span>{statusLabel}</span>}
 					{tags.slice(0, 3).map((tag) => <span class="space-project-tag">{tag}</span>)}
@@ -146,8 +161,8 @@ const hasPhonePreview = entry.id.startsWith("dorm-os");
 
 		<section class="portfolio-detail-body space-project-details" id="project-details" aria-label={title + "项目详情"}>
 			<div class="space-project-details-heading">
-				<span>项目详情</span>
-				<h2>{title}</h2>
+				<span>功能与使用说明</span>
+				<h2>了解 {title}</h2>
 			</div>
 			<div data-pagefind-body>
 				<Markdown class="markdown-content"><Content /></Markdown>
