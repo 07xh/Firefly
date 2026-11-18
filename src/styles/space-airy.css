@@ -361,3 +361,23 @@ html.dark .space-home-hero::after { border-color:#ffffff2a; background:linear-gr
 @media (max-width:720px) {
   .portfolio--space-home .space-home-art { width:min(100%,380px); }
 }
+
+/* Fit a sixth top-level navigation destination without compressing page content. */
+@media (min-width: 901px) and (max-width: 1140px) {
+  .portfolio-header-inner { grid-template-columns: 1fr auto; gap: 12px; }
+  .portfolio-menu { display: inline-flex; }
+  .portfolio-nav-links {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    padding: 10px;
+    border: 1px solid var(--pf-border);
+    border-radius: 15px;
+    background: var(--pf-surface);
+    box-shadow: 0 15px 30px #10245418;
+  }
+  portfolio-nav[data-open] .portfolio-nav-links { display: grid; }
+  .portfolio-nav-links a { min-height: 46px; height: auto; padding: 10px 14px; font-size: 14px; }
+}
