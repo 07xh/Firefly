@@ -44,14 +44,14 @@ test("project showcase uses cyclic scene navigation and full-screen preview", as
 test("site uses a single coherent rocket mark and a light spaceship illustration", async () => {
   const [mark, craft, css] = await Promise.all([
     readFile(new URL("public/brand/07xh-mark.svg", root), "utf8"),
-    readFile(new URL("public/brand/07xh-ship.svg", root), "utf8"),
+    readFile(new URL("public/brand/07xh-ship-refined.svg", root), "utf8"),
     readFile(new URL("src/styles/space-airy.css", root), "utf8"),
   ]);
   assert.match(mark, /<svg/);
   assert.match(mark, /07xh Space 飞船标识/);
   assert.match(craft, /轻盈飞船/);
   assert.match(craft, /<path/);
-  assert.match(home, /src=\{url\("\/brand\/07xh-ship\.svg"\)\}/);
+  assert.match(home, /src=\{url\("\/brand\/07xh-ship-refined\.svg"\)\}/);
   assert.match(layout, /src=\{url\("\/brand\/07xh-mark\.svg"\)\}/);
   assert.match(layout, /styles\/space-airy\.css/);
   assert.match(css, /--pf-accent: #2b61df/);
@@ -64,4 +64,16 @@ test("navigation and links remain real and independent", () => {
   assert.match(layout, /path: "\/topics\/",\s*icon:/);
   assert.match(layout, /data-theme-toggle/);
   assert.match(layout, /data-menu-toggle/);
+});
+
+test("hero art is bounded at desktop, tablet and mobile sizes", async () => {
+  const style = await readFile(new URL("src/styles/space-airy.css", root), "utf8");
+  const ship = await readFile(new URL("public/brand/07xh-ship-refined.svg", root), "utf8");
+  assert.match(style, /width:min\(100%,570px\); max-width:570px/);
+  assert.match(style, /\.space-home-art img \{\s*display:block; width:100%; max-width:100%/);
+  assert.doesNotMatch(style, /width:120%;/);
+  assert.doesNotMatch(style, /width:min\(111%/);
+  assert.match(style, /space-home-hero::after \{ display:none; \}/);
+  assert.match(ship, /比例修正版/);
+  assert.match(ship, /rx="296" ry="104"/);
 });
