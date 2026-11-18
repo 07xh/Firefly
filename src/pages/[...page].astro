@@ -14,7 +14,11 @@ export const getStaticPaths = (async ({ paginate }) => {
 	const allBlogPosts = await getSortedPosts();
 	// 使用配置中的文章数量
 	const pageSize = siteConfig.pagination.postsPerPage;
-	return paginate(allBlogPosts, { pageSize });
+	// The first page is now /index.astro (07xh Space).
+	// Keep legacy numbered archive URLs working without generating a second / route.
+	return paginate(allBlogPosts, { pageSize }).filter(
+		(route) => route.params.page !== undefined,
+	);
 }) satisfies GetStaticPaths;
 // https://github.com/withastro/astro/issues/6507#issuecomment-1489916992
 
