@@ -35,6 +35,12 @@ const links = [
 		enabled: siteConfig.pages.projects,
 	},
 	{
+		label: "动态",
+		path: "/dynamic/",
+		icon: "material-symbols:forum-rounded",
+		enabled: siteConfig.pages.dynamic,
+	},
+	{
 		label: "博客",
 		path: "/posts/",
 		icon: "material-symbols:article-rounded",
@@ -101,7 +107,6 @@ const isActive = (path: string) => {
 		<footer class="portfolio-wrap portfolio-footer">
 			<a class="portfolio-footer-brand" href={url("/")}>{siteConfig.title}</a>
 			<nav aria-label="更多入口">
-				{siteConfig.pages.dynamic && <a href={url("/dynamic/")}>动态</a>}
 				<a href={url("/archive/")}>归档</a>
 				<a href={url("/rss.xml")}>RSS</a>
 				<a href="https://github.com/07xh/Firefly">站点源码 <Icon name="material-symbols:arrow-outward-rounded" /></a>
