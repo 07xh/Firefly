@@ -113,3 +113,67 @@ test("series disclosure and about page preserve real published content and edita
 	assert.match(css, /\.space-about-page/);
 	assert.match(css, /@media \(max-width: 550px\)/);
 });
+
+test("public utility pages all use the 07xh Space layout, not legacy MainGrid", async () => {
+	const routes = [
+		"src/pages/404.astro",
+		"src/pages/booknav.astro",
+		"src/pages/friends.astro",
+		"src/pages/guestbook.astro",
+		"src/pages/gallery/index.astro",
+		"src/pages/gallery/[album].astro",
+		"src/pages/sponsor.astro",
+	];
+	for (const route of routes) {
+		const code = await source(route);
+		assert.match(code, /PortfolioLayout/);
+		assert.match(code, /space-utility\.css/);
+		assert.doesNotMatch(code, /MainGridLayout/);
+	}
+});
+
+test("gallery keeps original album records, photo lightbox and protected content", async () => {
+	const [index, detail] = await Promise.all([
+		source("src/pages/gallery/index.astro"),
+		source("src/pages/gallery/[album].astro"),
+	]);
+	assert.match(index, /galleryConfig\.albums\.map/);
+	assert.match(index, /scanAlbumPhotos\(album\.id\)/);
+	assert.match(index, /data-album/);
+	assert.match(index, /demoIds\.has/);
+	assert.match(detail, /getStaticPaths\(\)/);
+	assert.match(detail, /<EncryptedContent password=/);
+	assert.match(detail, /<PhotoCard src=/);
+});
+
+test("bookmarks and friends preserve real configured links and search by actual data", async () => {
+	const [links, friends] = await Promise.all([
+		source("src/pages/booknav.astro"),
+		source("src/pages/friends.astro"),
+	]);
+	assert.match(links, /getEnabledBooknavGroups\(\)/);
+	assert.match(links, /resolveBooknavIcon/);
+	assert.match(links, /data-group-target/);
+	assert.match(links, /data-search-text/);
+	assert.match(links, /handleIconError|onIconError/);
+	assert.match(friends, /getEnabledFriends\(\)/);
+	assert.match(friends, /friend\.siteurl/);
+	assert.match(friends, /data-tags=\{JSON\.stringify/);
+	assert.match(friends, /friendsPageConfig\.showCustomContent/);
+	assert.match(friends, /<Comment post=\{entry\}/);
+});
+
+test("guestbook does not pretend comments work and theme donor payment examples are disabled", async () => {
+	const [guestbook, support, config] = await Promise.all([
+		source("src/pages/guestbook.astro"),
+		source("src/pages/sponsor.astro"),
+		source("src/config/sponsorConfig.ts"),
+	]);
+	assert.match(guestbook, /commentsEnabled \?/);
+	assert.match(guestbook, /留言暂未开放/);
+	assert.match(support, /methods\.length > 0/);
+	assert.match(support, /暂未配置支持方式/);
+	assert.match(config, /showButtonInPost: false/);
+	assert.match(config, /sponsors: \[\]/);
+	assert.doesNotMatch(config, /enabled: true/);
+});
