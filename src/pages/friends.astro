@@ -3,7 +3,12 @@ import { getEntry, render } from "astro:content";
 import Comment from "@components/comment/index.astro";
 import Markdown from "@components/common/Markdown.astro";
 import { Icon } from "astro-icon/components";
-import { commentConfig, friendsPageConfig, getEnabledFriends, siteConfig } from "@/config";
+import {
+	commentConfig,
+	friendsPageConfig,
+	getEnabledFriends,
+	siteConfig,
+} from "@/config";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
@@ -15,10 +20,14 @@ const entry = await getEntry("spec", "friends");
 if (!entry) throw new Error("friends page content not found");
 const { Content } = await render(entry);
 const friends = getEnabledFriends();
-const tags = [...new Set(friends.flatMap((friend) => friend.tags || []))].sort();
+const tags = [
+	...new Set(friends.flatMap((friend) => friend.tags || [])),
+].sort();
 const title = friendsPageConfig.title || i18n(I18nKey.friends);
-const description = friendsPageConfig.description || "推荐的网站与值得关注的创作者。";
-const commentsEnabled = commentConfig.type !== "none" && friendsPageConfig.showComment !== false;
+const description =
+	friendsPageConfig.description || "推荐的网站与值得关注的创作者。";
+const commentsEnabled =
+	commentConfig.type !== "none" && friendsPageConfig.showComment !== false;
 ---
 
 <PortfolioLayout title={title} description={description}>
