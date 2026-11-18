@@ -1,6 +1,10 @@
 ---
 import { Icon } from "astro-icon/components";
-import { getEnabledFriends, getPublicGalleryAlbums, siteConfig } from "@/config";
+import {
+	getEnabledFriends,
+	getPublicGalleryAlbums,
+	siteConfig,
+} from "@/config";
 import siteSettings from "@/data/settings.json";
 import { url } from "@/utils/url-utils";
 import Layout from "./Layout.astro";
@@ -27,8 +31,10 @@ const isProjectScene =
 	pathname === "/" ||
 	pathname === "/projects" ||
 	(pathname.startsWith("/projects/") && pathname !== "/projects/all");
-const hasPublicAlbums = siteConfig.pages.gallery && getPublicGalleryAlbums().length > 0;
-const hasPublicFriends = siteConfig.pages.friends && getEnabledFriends().length > 0;
+const hasPublicAlbums =
+	siteConfig.pages.gallery && getPublicGalleryAlbums().length > 0;
+const hasPublicFriends =
+	siteConfig.pages.friends && getEnabledFriends().length > 0;
 const links = [
 	{
 		label: "项目",
