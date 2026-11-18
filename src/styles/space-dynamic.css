@@ -236,3 +236,77 @@ html.dark .space-dynamic .page-search input {
 	.space-dynamic .page-entry,
 	.space-dynamic .page-permalink { transition: none; }
 }
+
+/* Filter and network feedback live alongside the same understated card language. */
+.space-dynamic { scroll-margin-top: 110px; }
+.space-dynamic-results {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	margin: -6px 0 18px;
+	padding: 10px 14px;
+	border: 1px solid var(--pf-border);
+	border-radius: 14px;
+	color: var(--pf-muted);
+	background: color-mix(in srgb, var(--pf-surface) 82%, transparent);
+	font-size: 13px;
+	line-height: 1.6;
+}
+.space-dynamic-results strong { color: var(--pf-text); font-weight: 760; font-variant-numeric: tabular-nums; }
+.space-dynamic-results button,
+.space-dynamic-retry {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 37px;
+	padding: 7px 14px;
+	border: 1px solid var(--pf-border);
+	border-radius: 10px;
+	color: var(--pf-accent);
+	background: var(--pf-tint);
+	font-weight: 690;
+	font-size: 13px;
+	cursor: pointer;
+	transition: background .18s ease, border-color .18s ease;
+}
+.space-dynamic-results button:hover,
+.space-dynamic-retry:hover {
+	border-color: color-mix(in srgb, var(--pf-accent) 32%, var(--pf-border));
+	background: color-mix(in srgb, var(--pf-tint) 80%, var(--pf-surface));
+}
+.space-dynamic-results button:focus-visible,
+.space-dynamic-retry:focus-visible {
+	outline: 2px solid var(--pf-accent);
+	outline-offset: 3px;
+}
+.space-dynamic .space-dynamic-error { gap: 15px; text-align: center; }
+.space-dynamic .space-dynamic-error p { margin: 0; color: var(--pf-muted); }
+.space-dynamic .responsive-pagination { gap: 9px; padding-block: 8px; }
+.space-dynamic .responsive-pagination .btn-card {
+	border: 1px solid var(--pf-border);
+	border-radius: 12px;
+	background: var(--pf-surface);
+	color: var(--pf-text);
+	box-shadow: none;
+}
+.space-dynamic .responsive-pagination button:not(:disabled) { transition: background .18s ease, color .18s ease; }
+.space-dynamic .responsive-pagination button:not(:disabled):hover {
+	background: var(--pf-tint);
+	color: var(--pf-accent);
+}
+.space-dynamic .responsive-pagination button[aria-current="page"] {
+	border: 1px solid transparent;
+	border-radius: 12px;
+	background: var(--pf-accent);
+	color: white;
+}
+@media (max-width: 440px) {
+	.space-dynamic-results { padding: 9px 11px; }
+	.space-dynamic-results button { min-height: 35px; padding-inline: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.space-dynamic-results button,
+	.space-dynamic-retry,
+	.space-dynamic .responsive-pagination button { transition: none; }
+}
