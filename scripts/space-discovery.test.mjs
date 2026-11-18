@@ -207,8 +207,8 @@ test("portfolio footer shows real utility sections but hides demo-only galleries
 		source("src/config/galleryConfig.ts"),
 		source("src/config/friendsConfig.ts"),
 	]);
-	assert.match(layout, /hasPublicAlbums = siteConfig\.pages\.gallery && getPublicGalleryAlbums\(\)\.length > 0/);
-	assert.match(layout, /hasPublicFriends = siteConfig\.pages\.friends && getEnabledFriends\(\)\.length > 0/);
+	assert.match(layout, /hasPublicAlbums =\s+siteConfig\.pages\.gallery && getPublicGalleryAlbums\(\)\.length > 0/);
+	assert.match(layout, /hasPublicFriends =\s+siteConfig\.pages\.friends && getEnabledFriends\(\)\.length > 0/);
 	assert.match(layout, /siteConfig\.pages\.booknav && <a href=/);
 	assert.match(layout, /hasPublicAlbums && <a href=/);
 	assert.match(layout, /hasPublicFriends && <a href=/);
