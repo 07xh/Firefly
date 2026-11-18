@@ -25,6 +25,7 @@ jobs:
           version: 11.22.0
           run_install: false
       - run: pnpm install --frozen-lockfile
+      - run: node --test scripts/portfolio-repositories.test.mjs
       - name: Build Astro Worker
         run: pnpm run build
         env:
@@ -45,7 +46,7 @@ jobs:
           grep -q '小慌的个人站' /tmp/portfolio-home.html
           curl --fail --silent --show-error --max-time 20 "$PREVIEW_URL/projects/engineering-drawing-study/" -o /tmp/portfolio-project.html
           grep -q 'id="project-details"' /tmp/portfolio-project.html
-          curl --fail --silent --show-error --retry 3 --max-time 20 "$PREVIEW_URL/api/portfolio/repositories.json" -o /tmp/portfolio-repositories.json
+          curl --fail --silent --show-error --retry 6 --retry-max-time 80 --max-time 20 "$PREVIEW_URL/api/portfolio/repositories.json" -o /tmp/portfolio-repositories.json
           node -e 'const r=require("/tmp/portfolio-repositories.json"); if(!r.repositories?.some(x=>x.name==="engineering-drawing-study")) process.exit(1); console.log(r.repositories.length, "public repositories")'
           test "$(curl --silent --show-error --max-time 20 --output /dev/null --write-out '%{http_code}' "$PREVIEW_URL/api/admin/articles/")" = 404
           curl --fail --silent --show-error --head --max-time 20 "$PREVIEW_URL/" | grep -qi '^x-robots-tag: noindex'

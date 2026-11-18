@@ -18,21 +18,35 @@ interface GithubRepository {
 	archived?: boolean;
 }
 
-async function loadRepositories() {
+type RepositorySource = "github-list" | "github-search";
+
+const headers = {
+	Accept: "application/vnd.github+json",
+	"User-Agent": "07xh-portfolio",
+};
+
+class GithubRateLimit extends Error {}
+
+async function loadRepositories(source: RepositorySource = "github-list") {
 	const repositories = [];
 	for (let page = 1; ; page++) {
+		const endpoint =
+			source === "github-list"
+				? `/users/${owner}/repos?type=owner&sort=full_name`
+				: `/search/repositories?q=${encodeURIComponent(`user:${owner} is:public fork:true`)}`;
 		const response = await fetch(
-			`https://api.github.com/users/${owner}/repos?type=owner&sort=full_name&per_page=${pageSize}&page=${page}`,
-			{
-				headers: {
-					Accept: "application/vnd.github+json",
-					"User-Agent": "07xh-portfolio",
-				},
-				signal: AbortSignal.timeout(10000),
-			},
+			`https://api.github.com${endpoint}&per_page=${pageSize}&page=${page}`,
+			{ headers, signal: AbortSignal.timeout(7000) },
 		);
+		if (response.status === 403 || response.status === 429)
+			throw new GithubRateLimit("GitHub rate limited the request");
 		if (!response.ok) throw new Error(`GitHub returned ${response.status}`);
-		const items: GithubRepository[] = await response.json();
+
+		const body = await response.json();
+		if (source === "github-search" && body.incomplete_results)
+			throw new Error("Incomplete repository search");
+		const items: GithubRepository[] =
+			source === "github-list" ? body : body.items;
 		if (!Array.isArray(items)) throw new Error("Invalid repository list");
 		for (const item of items) {
 			if (
@@ -54,7 +68,16 @@ async function loadRepositories() {
 		}
 		if (!response.headers.get("Link")?.includes('rel="next"')) break;
 	}
-	return { repositories, checkedAt: new Date().toISOString() };
+	return { repositories, checkedAt: new Date().toISOString(), source };
+}
+
+async function fetchPublicRepositories() {
+	try {
+		return await loadRepositories();
+	} catch (error) {
+		if (!(error instanceof GithubRateLimit)) throw error;
+		return loadRepositories("github-search");
+	}
 }
 
 let cached: Awaited<ReturnType<typeof loadRepositories>> | undefined;
@@ -64,7 +87,7 @@ let pending: ReturnType<typeof loadRepositories> | undefined;
 export const GET: APIRoute = async () => {
 	try {
 		if (!cached || expires <= Date.now()) {
-			pending ??= loadRepositories();
+			pending ??= fetchPublicRepositories();
 			try {
 				cached = await pending;
 				expires = Date.now() + cacheDuration;
