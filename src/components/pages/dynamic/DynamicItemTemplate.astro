@@ -16,9 +16,10 @@ const profileLabel = i18n(I18nKey.dynamicProfile).replace(
 	profileConfig.name,
 );
 const profileUrl = url(dynamicConfig.profileUrl || "/about/");
-const dynamicAvatar = siteSettings.avatar.trim()
-	? profileConfig.avatar
-	: "/brand/07xh-mark.svg";
+const dynamicAvatar =
+	siteSettings.avatar.trim() && profileConfig.avatar
+		? profileConfig.avatar
+		: "/brand/07xh-mark.svg";
 ---
 
 <template data-dynamic-item-template>
