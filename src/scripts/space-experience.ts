@@ -280,7 +280,7 @@ function navigate(index: number, updateUrl = true) {
   nameLabel!.textContent = name;
   app!.querySelectorAll<HTMLButtonElement>("[data-prev]").forEach(b => { b.disabled = active === 0; });
   app!.querySelectorAll<HTMLButtonElement>("[data-next]").forEach(b => { b.disabled = active >= nodes.length - 1; });
-  indexList!.querySelectorAll<HTMLButtonElement>("[data-go-project]").forEach(b => b.setAttribute("aria-current", String(b.dataset.goProject === project)));
+  indexList!.querySelectorAll<HTMLButtonElement>("[data-go-project]").forEach(b => { b.setAttribute("aria-current", String(b.dataset.goProject === project)); });
   if (updateUrl) {
     const url = new URL(window.location.href);
     if (project === "home") url.searchParams.delete("project");
@@ -319,7 +319,8 @@ stage?.addEventListener("touchstart", e => {
 }, {passive:true});
 stage?.addEventListener("touchend", e => {
   const t = e.changedTouches[0]; if (!t || !touchStart) return;
-  const dx = t.screenX - touchStart.x, dy = t.screenY - touchStart.y;
+  const dx = t.screenX - touchStart.x;
+  const dy = t.screenY - touchStart.y;
   if (Math.abs(dx) >= 70 && Math.abs(dx) > Math.abs(dy)*1.4) navigate(active + (dx < 0 ? 1 : -1));
   touchStart = null;
 }, {passive:true});
