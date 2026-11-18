@@ -18,8 +18,10 @@ export const sponsorConfig: SponsorConfig = {
 	showComment: true,
 
 	// 是否在文章详情页底部显示打赏按钮
-	showButtonInPost: true,
+	showButtonInPost: false,
 
+	// 以下仅保留主题示例配置，未核实收款账号归属前一律禁用。
+	// 后续必须填写自己的真实收款信息并逐项确认才可启用。
 	// 打赏方式列表
 	methods: [
 		{
@@ -29,7 +31,7 @@ export const sponsorConfig: SponsorConfig = {
 			qrCode: "/assets/images/sponsor/alipay.png",
 			link: "",
 			description: "使用 支付宝 扫码打赏",
-			enabled: true,
+			enabled: false,
 		},
 		{
 			name: "微信",
@@ -37,7 +39,7 @@ export const sponsorConfig: SponsorConfig = {
 			qrCode: "/assets/images/sponsor/wechat.png",
 			link: "",
 			description: "使用 微信 扫码打赏",
-			enabled: true,
+			enabled: false,
 		},
 		{
 			name: "ko-fi",
@@ -45,7 +47,7 @@ export const sponsorConfig: SponsorConfig = {
 			qrCode: "",
 			link: "https://ko-fi.com/cuteleaf",
 			description: "Buy a Coffee for Firefly",
-			enabled: true,
+			enabled: false,
 		},
 		{
 			name: "爱发电",
@@ -53,27 +55,11 @@ export const sponsorConfig: SponsorConfig = {
 			qrCode: "",
 			link: "https://ifdian.net/a/cuteleaf",
 			description: "通过 爱发电 进行打赏",
-			enabled: true,
+			enabled: false,
 		},
 	],
 
 	// 打赏者列表（可选）
-	sponsors: [
-		// 示例：已实名打赏者
-		{
-			name: "夏叶",
-			avatar:
-				"https://weavatar.com/avatar/d252655d40d6874417a720bad0a6c5f77f8f6a1fd2f882f8f338402dc37e4190?s=640",
-			amount: "¥50",
-			date: "2025-10-01",
-		},
-
-		// 示例：匿名打赏者
-		{
-			name: "匿名用户",
-			// avatar: "",
-			amount: "¥20",
-			date: "2025-10-01",
-		},
-	],
+	// 原主题的打赏记录不是本站真实打赏记录，默认不展示。
+	sponsors: [],
 };
