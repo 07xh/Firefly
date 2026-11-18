@@ -33,7 +33,7 @@ test("first project can swipe back to the site introduction and other project pa
 test("site uses a single coherent rocket mark and a light spaceship illustration", async () => {
   const [mark, craft, css] = await Promise.all([
     readFile(new URL("public/brand/07xh-mark.svg", root), "utf8"),
-    readFile(new URL("public/brand/07xh-ship.svg", root), "utf8"),
+    readFile(new URL("public/brand/07xh-ship-refined.svg", root), "utf8"),
     readFile(new URL("src/styles/space-airy.css", root), "utf8"),
   ]);
   assert.match(mark, /<svg/);
@@ -57,7 +57,7 @@ test("navigation and links remain real and independent", () => {
 
 test("hero art is bounded at desktop, tablet and mobile sizes", async () => {
   const style = await readFile(new URL("src/styles/space-airy.css", root), "utf8");
-  const ship = await readFile(new URL("public/brand/07xh-ship.svg", root), "utf8");
+  const ship = await readFile(new URL("public/brand/07xh-ship-refined.svg", root), "utf8");
   assert.match(style, /width:min\(100%,570px\); max-width:570px/);
   assert.match(style, /\.space-home-art img \{\s*display:block; width:100%; max-width:100%/);
   assert.doesNotMatch(style, /width:120%;/);
