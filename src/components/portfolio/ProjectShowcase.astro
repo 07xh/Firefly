@@ -4,7 +4,10 @@ import { render } from "astro:content";
 import { Icon } from "astro-icon/components";
 import Markdown from "@/components/common/Markdown.astro";
 import ProjectVisual from "@/components/portfolio/ProjectVisual.astro";
-import { getProjectStatusMeta, resolveProjectImage } from "@/utils/projects-utils";
+import {
+	getProjectStatusMeta,
+	resolveProjectImage,
+} from "@/utils/projects-utils";
 import { url } from "@/utils/url-utils";
 
 interface NavigationProject {

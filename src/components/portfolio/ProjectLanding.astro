@@ -9,7 +9,10 @@ import { url } from "@/utils/url-utils";
 const scenes = await getPortfolioScenes();
 const first = scenes[0];
 const cover = first
-	? await resolveProjectImageAbsolute(first.entry.data.image, first.entry.filePath)
+	? await resolveProjectImageAbsolute(
+			first.entry.data.image,
+			first.entry.filePath,
+		)
 	: "";
 ---
 

@@ -14,7 +14,8 @@ export async function getPortfolioScenes() {
 			projects.filter((project) => removeFileExtension(project.id) === id),
 		),
 		...projects.filter(
-			(project) => !featuredProjectIds.includes(removeFileExtension(project.id)),
+			(project) =>
+				!featuredProjectIds.includes(removeFileExtension(project.id)),
 		),
 	];
 	return ordered.map((entry, index) => ({
@@ -22,17 +23,22 @@ export async function getPortfolioScenes() {
 		slug: removeFileExtension(entry.id),
 		position: index + 1,
 		total: ordered.length,
-		previous: ordered.length > 1
-			? {
-				slug: removeFileExtension(ordered[(index - 1 + ordered.length) % ordered.length].id),
-				title: ordered[(index - 1 + ordered.length) % ordered.length].data.title,
-			}
-			: null,
-		next: ordered.length > 1
-			? {
-				slug: removeFileExtension(ordered[(index + 1) % ordered.length].id),
-				title: ordered[(index + 1) % ordered.length].data.title,
-			}
-			: null,
+		previous:
+			ordered.length > 1
+				? {
+						slug: removeFileExtension(
+							ordered[(index - 1 + ordered.length) % ordered.length].id,
+						),
+						title:
+							ordered[(index - 1 + ordered.length) % ordered.length].data.title,
+					}
+				: null,
+		next:
+			ordered.length > 1
+				? {
+						slug: removeFileExtension(ordered[(index + 1) % ordered.length].id),
+						title: ordered[(index + 1) % ordered.length].data.title,
+					}
+				: null,
 	}));
 }
