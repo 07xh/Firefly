@@ -2,7 +2,7 @@
 import { Icon } from "astro-icon/components";
 import EncryptedContent from "@/components/features/EncryptedContent.astro";
 import PhotoCard from "@/components/pages/gallery/PhotoCard.astro";
-import { galleryConfig, siteConfig } from "@/config";
+import { galleryConfig, getPublicGalleryAlbums, siteConfig } from "@/config";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
@@ -16,17 +16,15 @@ export const prerender = true;
 if (!siteConfig.pages.gallery) return Astro.redirect("/404/");
 
 export function getStaticPaths() {
-	return galleryConfig.albums.map((album) => ({ params: { album: album.id } }));
+	return getPublicGalleryAlbums().map((album) => ({ params: { album: album.id } }));
 }
 
 const { album: albumId } = Astro.params;
-const albumMeta = galleryConfig.albums.find((item) => item.id === albumId);
+const albumMeta = getPublicGalleryAlbums().find((item) => item.id === albumId);
 if (!albumMeta) return Astro.redirect("/404/");
 const photos = scanAlbumPhotos(albumMeta.id);
 const cover = getAlbumCover(albumMeta, photos);
 const columnWidth = galleryConfig.columnWidth || 240;
-const demo =
-	albumMeta.id === "firefly-2026" || albumMeta.id === "encrypted-test";
 ---
 
 <PortfolioLayout title={albumMeta.name} description={albumMeta.description || ""}>
@@ -36,7 +34,6 @@ const demo =
 			返回全部相册
 		</a>
 		<header class="space-gallery-detail-heading">
-			{demo && <span class="space-gallery-demo-chip">原主题示例相册</span>}
 			<h1>{albumMeta.name}</h1>
 			{albumMeta.description && <p>{albumMeta.description}</p>}
 			<div class="space-gallery-detail-meta">
