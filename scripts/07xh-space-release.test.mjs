@@ -115,6 +115,25 @@ test("showcase switches authentic project screenshots without distorting images"
 	assert.match(css, /\.space-project-preview-controls button\[aria-pressed="true"\]/);
 });
 
+test("project details provide grounded feature links and section navigation", async () => {
+	const [showcase, css] = await Promise.all([
+		source("src/components/portfolio/ProjectShowcase.astro"),
+		source("src/styles/space-project-showcase.css"),
+	]);
+	assert.match(showcase, /const \{ Content, headings \} = await render\(entry\)/);
+	assert.match(showcase, /detailHeadings = headings\.filter/);
+	assert.match(showcase, /aria-label="项目功能导览"/);
+	assert.match(showcase, /space-project-details-grid/);
+	assert.match(showcase, /data-detail-anchor/);
+	assert.match(showcase, /observeDetailSections/);
+	assert.match(showcase, /aria-current", "location"/);
+	assert.match(showcase, /id="project-details"/);
+	assert.match(css, /\.space-project-details-nav \{/);
+	assert.match(css, /position: sticky/);
+	assert.match(css, /scroll-margin-top: 116px/);
+	assert.match(css, /prefers-reduced-motion: reduce/);
+});
+
 test("site artwork and its responsive rules remain available", async () => {
 	const [mark, craft, css, layout] = await Promise.all([
 		source("public/brand/07xh-mark.svg"),

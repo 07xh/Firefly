@@ -23,20 +23,14 @@ interface Props {
 }
 
 const pathname = Astro.url.pathname.replace(/\/$/, "") || "/";
-const isHome = pathname === "/";
 const isProjectScene =
+	pathname === "/" ||
 	pathname === "/projects" ||
 	(pathname.startsWith("/projects/") && pathname !== "/projects/all");
 const links = [
 	{
-		label: "首页",
-		path: "/",
-		icon: "material-symbols:home-rounded",
-		enabled: true,
-	},
-	{
 		label: "项目",
-		path: "/projects/",
+		path: "/",
 		icon: "material-symbols:dashboard-rounded",
 		enabled: siteConfig.pages.projects,
 	},
@@ -60,7 +54,7 @@ const links = [
 	},
 ].filter(({ enabled }) => enabled);
 const isActive = (path: string) => {
-	if (path === "/") return isHome;
+	if (path === "/") return isProjectScene;
 	const target = url(path).replace(/\/$/, "") || "/";
 	return (
 		pathname === target || (target !== "/" && pathname.startsWith(target + "/"))
@@ -70,7 +64,7 @@ const isActive = (path: string) => {
 
 <Layout {...Astro.props}>
 	<slot slot="head" name="head" />
-	<div class:list={["portfolio", { "portfolio--project-scene": isProjectScene, "portfolio--space-home": isHome }]} data-no-swup id="portfolio">
+	<div class:list={["portfolio", { "portfolio--project-scene": isProjectScene }]} data-no-swup id="portfolio">
 		<div class="space-scroll-progress" aria-hidden="true"></div>
 		<a class="portfolio-skip" href="#portfolio-main">跳到主要内容</a>
 		<header class="portfolio-header">
