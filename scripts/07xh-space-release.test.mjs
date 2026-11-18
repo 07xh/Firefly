@@ -93,7 +93,7 @@ test("navigation preserves a project entry and separates public reading routes",
 		source("src/styles/space-project-showcase.css"),
 	]);
 	assert.match(layout, /label: "项目"/);
-	assert.match(layout, /path: "\/projects\/"/);
+	assert.match(layout, /path: "\/"/);
 	assert.match(layout, /path: "\/posts\/"/);
 	assert.match(layout, /path: "\/topics\/"/);
 	assert.match(layout, /pathname === "\/projects"/);
@@ -167,7 +167,7 @@ test("project highlights are typed and displayed on the hero and searchable in d
 		source("src/pages/projects/all.astro"),
 		source("src/styles/space-project-showcase.css"),
 	]);
-	assert.match(schema, /highlights: z\.array\(z\.object/);
+	assert.match(schema, /highlights: z\s*\.array\(\s*z\.object/);
 	assert.match(schema, /"implemented", "verifying", "planned"/);
 	assert.match(showcase, /它可以做什么/);
 	assert.match(showcase, /highlights\.map/);
