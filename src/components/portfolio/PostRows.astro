@@ -6,21 +6,44 @@ import { getPostUrlBySlug } from "@/utils/url-utils";
 
 interface Props {
 	posts: PostForList[];
+	showSequence?: boolean;
 }
 
-const { posts } = Astro.props;
+const { posts, showSequence = false } = Astro.props;
 ---
 
-<ul class="portfolio-post-list">
-	{posts.map(({ id, data }) => (
-		<li>
+<ul class:list={["portfolio-post-list", { "space-post-list-numbered": showSequence }]}>
+	{posts.map(({ id, data }, index) => (
+		<li
+			data-post-item
+			data-category={(data.category || "").trim()}
+			data-post-search={[
+				data.title,
+				data.description,
+				data.category,
+				data.series,
+				...(data.tags || []),
+			].filter(Boolean).join(" ").toLocaleLowerCase()}
+		>
 			<a href={getPostUrlBySlug(id)} class="portfolio-post-row">
+				{showSequence && (
+					<span class="space-post-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+				)}
 				<span class="portfolio-post-main">
-					{data.category && <span class="portfolio-label">{data.category}</span>}
+					<span class="space-post-kicker">
+						{data.category && <span class="portfolio-label">{data.category}</span>}
+						{data.series && <span class="space-post-series">{data.series}</span>}
+					</span>
 					<strong>{data.title}</strong>
+					{data.description && <span class="space-post-excerpt">{data.description}</span>}
+					{data.tags && data.tags.length > 0 && (
+						<span class="space-post-tags">
+							{data.tags.slice(0, 3).map((tag) => <span>#{tag}</span>)}
+						</span>
+					)}
 				</span>
 				<time datetime={data.published.toISOString()}>{formatDateToYYYYMMDD(data.published)}</time>
-				<Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" />
+				<Icon name="material-symbols:arrow-forward-rounded" aria-hidden="true" />
 			</a>
 		</li>
 	))}
