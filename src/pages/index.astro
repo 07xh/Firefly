@@ -1,7 +1,60 @@
 ---
-import ProjectLanding from "@/components/portfolio/ProjectLanding.astro";
+import { Icon } from "astro-icon/components";
+import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
+import { url } from "@/utils/url-utils";
 
 export const prerender = true;
 ---
 
-<ProjectLanding />
+<PortfolioLayout
+	title="个人空间"
+	description="07xh Space：写代码、做工具，也记录学习和折腾的过程。"
+>
+	<section class="space-home-hero" aria-labelledby="space-home-title">
+		<div class="space-home-copy">
+			<p class="space-home-eyebrow">
+				<Icon name="material-symbols:explore-outline-rounded" aria-hidden="true" />
+				07xh <span aria-hidden="true">/</span> PERSONAL SPACE
+			</p>
+			<h1 class="space-home-title" id="space-home-title">
+				<em>07xh</em> Space
+			</h1>
+			<p class="space-home-subtitle">我的个人空间</p>
+			<p class="space-home-lead">
+				写代码、做工具，也记录一些学习和折腾的过程。
+				这里放着我做的项目，以及它们从想法变成实际作品的过程。
+			</p>
+			<div class="portfolio-actions space-home-actions">
+				<a class="portfolio-button portfolio-button-solid" href={url("/projects/")}>
+					<span>看看项目</span>
+					<Icon name="material-symbols:arrow-forward-rounded" aria-hidden="true" />
+				</a>
+				<a class="portfolio-button portfolio-button-secondary" href={url("/posts/")}>
+					<Icon name="material-symbols:article-outline-rounded" aria-hidden="true" />
+					<span>阅读博客</span>
+				</a>
+				<a class="portfolio-button portfolio-button-secondary" href="https://github.com/07xh" target="_blank" rel="noopener noreferrer">
+					<Icon name="fa7-brands:github" aria-hidden="true" />
+					<span>GitHub</span>
+					<Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" />
+				</a>
+			</div>
+		</div>
+		<div class="space-home-art">
+			<img
+				src={url("/brand/07xh-ship-refined.svg")}
+				width="570"
+				height="570"
+				alt="07xh Space 的轻盈飞船插画"
+				loading="eager"
+				fetchpriority="high"
+			/>
+		</div>
+		<div class="space-home-bottom">
+			<p class="space-home-directions">
+				<span aria-hidden="true">↗</span>
+				<span>从这里出发，看看我正在做的东西。</span>
+			</p>
+		</div>
+	</section>
+</PortfolioLayout>
