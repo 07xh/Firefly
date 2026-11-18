@@ -40,3 +40,14 @@ export const galleryConfig: GalleryConfig = {
 	// 值越小列数越多，值越大列数越少
 	columnWidth: 240,
 };
+
+/**
+ * Keep original theme example assets in the repository for reference,
+ * but never list them as the site owner's personal albums.
+ * If an example ID is deliberately repurposed, remove it from this set.
+ */
+const legacyThemeAlbumIds = new Set(["firefly-2026", "encrypted-test"]);
+
+export function getPublicGalleryAlbums() {
+	return galleryConfig.albums.filter(({ id }) => !legacyThemeAlbumIds.has(id));
+}
