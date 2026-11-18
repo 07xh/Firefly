@@ -5,18 +5,85 @@ import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
 import { url } from "@/utils/url-utils";
 
 export const prerender = true;
+const firstProject = url("/projects/dorm-os/");
 ---
 
-<PortfolioLayout title="个人中心">
-	<section class="portfolio-home-intro" aria-labelledby="home-title">
-		<div>
-			<p class="portfolio-label">07xh · 个人中心</p>
-			<h1 id="home-title">小慌的个人站</h1>
-			<p class="portfolio-home-lead">我在读电气工程及其自动化。这里收录我做的软件项目、编程笔记和工程制图专题。</p>
-			<div class="portfolio-actions">
-				{siteConfig.pages.projects && <a class="portfolio-button portfolio-button-solid" href={url("/projects/")}>浏览项目 <Icon name="material-symbols:arrow-forward-rounded" /></a>}
-				<a class="portfolio-button portfolio-button-secondary" href={url("/posts/")}>阅读博客</a>
+<PortfolioLayout title="个人数字空间">
+	<portfolio-home data-next-project={siteConfig.pages.projects ? firstProject : undefined}>
+		<section class="portfolio-home-intro" aria-labelledby="home-title">
+			<div>
+				<p class="portfolio-label">WELCOME TO 07XH SPACE</p>
+				<h1 id="home-title">07xh Space</h1>
+				<p class="portfolio-home-lead">这里是小慌的个人数字空间，记录正在开发的软件、真实的技术实践，以及 Python、工程制图和自动化领域的学习与探索。</p>
+				<p class="portfolio-home-note">这里的每一个重点作品都有自己的一面：左右切换项目，上下阅读当前项目的完整介绍。博客与知识专题则保留独立的阅读页面。</p>
+				<div class="portfolio-actions">
+					{siteConfig.pages.projects && <a class="portfolio-button portfolio-button-solid" href={firstProject}>从校序开始探索 <Icon name="material-symbols:arrow-forward-rounded" /></a>}
+					<a class="portfolio-button portfolio-button-secondary" href={url("/posts/")}>阅读博客</a>
+				</div>
+				{siteConfig.pages.projects && <p class="portfolio-home-gesture" aria-label="向左滑动页面可以进入下一个项目，也可按键盘右方向键。"><Icon name="material-symbols:swipe-left-rounded" aria-hidden="true" /> 向左滑动进入第一个项目 · 上下滚动阅读详情</p>}
 			</div>
-		</div>
-	</section>
+		</section>
+	</portfolio-home>
 </PortfolioLayout>
+
+<script>
+	class PortfolioHome extends HTMLElement {
+		private point: { id: number; x: number; y: number } | null = null;
+		private wheelDistance = 0;
+		private wheelTime = 0;
+		private navigating = false;
+		private readonly interactive = "a,button,input,textarea,select,summary,[contenteditable],[role=dialog],pre,table";
+
+		connectedCallback() {
+			this.addEventListener("pointerdown", this.start);
+			this.addEventListener("pointerup", this.end);
+			this.addEventListener("pointercancel", this.cancel);
+			this.addEventListener("wheel", this.onWheel, { passive: false });
+			document.addEventListener("keydown", this.onKey);
+			window.addEventListener("pageshow", this.reset);
+		}
+		disconnectedCallback() {
+			this.removeEventListener("pointerdown", this.start);
+			this.removeEventListener("pointerup", this.end);
+			this.removeEventListener("pointercancel", this.cancel);
+			this.removeEventListener("wheel", this.onWheel);
+			document.removeEventListener("keydown", this.onKey);
+			window.removeEventListener("pageshow", this.reset);
+		}
+		private readonly canMove = (event: Event) =>
+			!(event.target instanceof Element && event.target.closest(this.interactive));
+		private readonly move = () => {
+			const target = this.dataset.nextProject;
+			if (!target || this.navigating) return false;
+			this.navigating = true;
+			window.location.assign(target);
+			return true;
+		};
+		private readonly start = (event: PointerEvent) => {
+			if (!event.isPrimary || event.pointerType === "mouse" || !this.canMove(event)) return;
+			this.point = { id: event.pointerId, x: event.clientX, y: event.clientY };
+		};
+		private readonly end = (event: PointerEvent) => {
+			const start = this.point;
+			this.point = null;
+			if (!start || start.id !== event.pointerId) return;
+			const dx = event.clientX - start.x;
+			const dy = event.clientY - start.y;
+			if (dx < -70 && Math.abs(dx) > Math.abs(dy) * 1.6) this.move();
+		};
+		private readonly cancel = () => { this.point = null; };
+		private readonly reset = () => { this.navigating = false; this.wheelDistance = 0; };
+		private readonly onWheel = (event: WheelEvent) => {
+			if (event.ctrlKey || !this.canMove(event) || event.deltaX <= 0 || Math.abs(event.deltaX) < Math.abs(event.deltaY) * 1.6) return;
+			if (event.timeStamp - this.wheelTime > 180 || this.wheelDistance < 0) this.wheelDistance = 0;
+			this.wheelTime = event.timeStamp;
+			this.wheelDistance += event.deltaX * (event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : 1);
+			if (this.wheelDistance > 90 && this.move()) event.preventDefault();
+		};
+		private readonly onKey = (event: KeyboardEvent) => {
+			if (event.key !== "ArrowRight" || event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || !this.canMove(event) || window.getSelection()?.toString()) return;
+			if (this.move()) event.preventDefault();
+		};
+	}
+	if (!customElements.get("portfolio-home")) customElements.define("portfolio-home", PortfolioHome);
+</script>

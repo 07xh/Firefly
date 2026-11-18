@@ -47,7 +47,7 @@ const isActive = (path: string) => {
 			<portfolio-nav class="portfolio-wrap portfolio-header-inner">
 				<a class="portfolio-brand" href={url("/")}>
 					<span class="portfolio-brand-mark" aria-hidden="true"><Icon name="material-symbols:code" /></span>
-					<span>{siteConfig.title} <small>07xh</small></span>
+					<span>{siteConfig.title}</span>
 				</a>
 				<nav id="portfolio-nav-links" class="portfolio-nav-links" aria-label="主导航">
 					{links.map(({ path, label }) => (
@@ -75,7 +75,7 @@ const isActive = (path: string) => {
 			<slot />
 		</main>
 		<footer class="portfolio-wrap portfolio-footer">
-			<a class="portfolio-footer-brand" href={url("/")}>{siteConfig.title} <small>07xh</small></a>
+			<a class="portfolio-footer-brand" href={url("/")}>{siteConfig.title}</a>
 			<nav aria-label="更多入口">
 				{siteConfig.pages.dynamic && <a href={url("/dynamic/")}>动态</a>}
 				<a href={url("/archive/")}>归档</a>
