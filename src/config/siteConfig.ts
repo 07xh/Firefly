@@ -57,23 +57,24 @@ const pages = resolvePageToggles({
 
 export const siteConfig: SiteConfig = {
 	// 站点标题
-	title: "小慌",
+	title: "07xh Space",
 
 	// 站点副标题
-	subtitle: "个人中心",
+	subtitle: "小慌的个人数字空间",
 
 	// 站点 URL
 	site_url: "https://0701000.xyz",
 
 	// 站点描述
 	description:
-		"小慌（07xh）的个人网站，收录软件作品、Python 与工程制图专题，以及开发和学习笔记。",
+		"07xh Space 是小慌的个人数字空间，展示公开软件作品、编程与工程学习专题、技术实践及开发记录。",
 	// 站点关键词
 	keywords: [
 		"xiaohuang",
 		"Fuwari",
 		"Astro",
 		"ACGN",
+		"07xh Space",
 		"个人网站",
 		"软件作品",
 		"技术博客",
@@ -125,13 +126,12 @@ export const siteConfig: SiteConfig = {
 		// 例如: { type: "image", value: "assets/images/logo.png", valueDark: "assets/images/logo-dark.png", alt: "Logo" }
 		// 使用 Astro 图标库时不需要设置 valueDark，图标会自动跟随主题亮暗色切换
 		logo: {
-			type: "image",
-			value: "assets/images/logo/firefly-light.png",
-			valueDark: "assets/images/logo/firefly-dark.png",
-			alt: "🍀",
+			type: "icon",
+			value: "material-symbols:code",
+			alt: "07xh Space",
 		},
 		// 导航栏标题
-		title: "Firefly Blog",
+		title: "07xh Space",
 		// 全宽导航栏，导航栏是否占满屏幕宽度
 		widthFull: false,
 		// 导航菜单对齐方式，left：左对齐，center：居中

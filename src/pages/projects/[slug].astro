@@ -75,7 +75,7 @@ const sections = headings.filter(({ depth }) => depth === 2);
 <PortfolioLayout title={title} description={description || title} lang={entry.data.lang || undefined} setOGTypeArticle={true} postCoverImage={cover}>
 	<project-page class="portfolio-project-page">
 	<nav class="portfolio-project-switch" aria-label="项目切换">
-		{previous ? <a href={url(`/projects/${previous.slug}/`)} data-previous rel="prev" aria-label={`上一个项目：${previous.title}`}><Icon name="material-symbols:arrow-back-rounded" /> <span>{previous.title}</span></a> : <span></span>}
+		{previous ? <a href={url(`/projects/${previous.slug}/`)} data-previous rel="prev" aria-label={`上一个项目：${previous.title}`}><Icon name="material-symbols:arrow-back-rounded" /> <span>{previous.title}</span></a> : position === 1 ? <a href={url("/")} data-previous rel="prev" aria-label="返回 07xh Space"><Icon name="material-symbols:arrow-back-rounded" /> <span>07xh Space</span></a> : <span></span>
 		<a href={url("/projects/")} class="portfolio-project-position">全部项目 {position > 0 && <small>{position} / {total}</small>}</a>
 		{next ? <a href={url(`/projects/${next.slug}/`)} data-next rel="next" aria-label={`下一个项目：${next.title}`}><span>{next.title}</span> <Icon name="material-symbols:arrow-forward-rounded" /></a> : <span></span>}
 	</nav>

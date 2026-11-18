@@ -372,3 +372,14 @@ html.dark .portfolio-theme-sun { display: block; }
 .portfolio-live-repo-list a:hover { border-color: var(--pf-accent); }
 .portfolio-live-repo-list strong { display: block; }
 .portfolio-live-repo-list span, .portfolio-live-repo-list p { color: var(--pf-muted); font-size: 13px; }
+
+/* 07xh Space homepage: horizontal gesture changes scene; vertical scrolling remains native. */
+portfolio-home { display: block; touch-action: pan-y pinch-zoom; }
+.portfolio-home-note { max-width: 42rem; margin-top: 18px; color: var(--pf-muted); line-height: 1.8; font-size: 15px; }
+.portfolio-home-gesture { display: inline-flex; align-items: center; gap: 9px; margin-top: 28px; font-size: 13px; color: var(--pf-accent); font-weight: 650; }
+.portfolio-home-gesture svg { font-size: 22px; flex: none; }
+@media (max-width: 780px) {
+ .portfolio-home-intro { padding: clamp(24px, 5vw, 42px); min-height: min(76svh, 740px); }
+ .portfolio-home-note { font-size: 14px; }
+ .portfolio-home-gesture { line-height: 1.6; }
+}
