@@ -10,6 +10,7 @@ test("website identity is 07xh Space, not the former blog template", () => {
   assert.match(site, /title: "07xh Space"/);
   assert.match(site, /subtitle: "小慌的个人数字空间"/);
   assert.doesNotMatch(site, /title: "Firefly Blog"/);
+  assert.match(site, /favicon\/07xh-space-64\.png/);
   assert.equal(JSON.parse(settings).bannerTitle, "07xh Space");
   assert.match(layout, /\{siteConfig.title\}/);
 });
