@@ -40,11 +40,15 @@ function kindOf(result: SearchResult): ResultKind | "other" {
 	return "other";
 }
 
-$: visibleResults = activeKind === "all"
-	? results
-	: results.filter((result) => kindOf(result) === activeKind);
+$: visibleResults =
+	activeKind === "all"
+		? results
+		: results.filter((result) => kindOf(result) === activeKind);
 $: pages = Math.max(1, Math.ceil(visibleResults.length / limit));
-$: pageResults = visibleResults.slice((currentPage - 1) * limit, currentPage * limit);
+$: pageResults = visibleResults.slice(
+	(currentPage - 1) * limit,
+	currentPage * limit,
+);
 
 function countOf(kind: ResultKind): number {
 	return kind === "all"
@@ -61,7 +65,9 @@ function changePage(next: number) {
 	currentPage = Math.max(1, Math.min(next, pages));
 	document.querySelector(".space-search-result-heading")?.scrollIntoView({
 		block: "start",
-		behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+		behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+			? "auto"
+			: "smooth",
 	});
 }
 
@@ -80,7 +86,9 @@ async function search() {
 	isSearching = true;
 	try {
 		const found = await window.pagefind.search(term);
-		const items = await Promise.all(found.results.map((result) => result.data()));
+		const items = await Promise.all(
+			found.results.map((result) => result.data()),
+		);
 		if (id !== requestId) return;
 		results = items;
 	} catch (error) {
@@ -103,7 +111,9 @@ function handleInput() {
 		void search();
 		return;
 	}
-	timer = window.setTimeout(() => { void search(); }, 260);
+	timer = window.setTimeout(() => {
+		void search();
+	}, 260);
 }
 
 function clearSearch() {
