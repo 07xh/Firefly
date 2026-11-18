@@ -14,6 +14,7 @@ const title = sponsorConfig.title || i18n(I18nKey.sponsorTitle);
 const description = sponsorConfig.description || i18n(I18nKey.sponsorDescription);
 const methods = sponsorConfig.methods.filter((method) => method.enabled);
 const commentsEnabled = commentConfig.type !== "none" && sponsorConfig.showComment !== false;
+const sponsors = sponsorConfig.sponsors || [];
 ---
 
 <PortfolioLayout title={title} description={description}>
@@ -54,11 +55,11 @@ const commentsEnabled = commentConfig.type !== "none" && sponsorConfig.showComme
 				</div>
 			</div>
 		)}
-		{sponsorConfig.showSponsorsList !== false && sponsorConfig.sponsors.length > 0 && (
+		{sponsorConfig.showSponsorsList !== false && sponsors.length > 0 && (
 			<section class="space-sponsor-supporters">
 				<h2>{i18n(I18nKey.sponsorList)}</h2>
 				<div class="space-sponsor-supporter-grid">
-					{sponsorConfig.sponsors.map((sponsor) => (
+					{sponsors.map((sponsor) => (
 						<div class="space-sponsor-supporter">
 							<span class="space-sponsor-supporter-avatar">
 								{sponsor.avatar ? <img src={url(sponsor.avatar)} alt="" loading="lazy" /> : sponsor.name.charAt(0)}
