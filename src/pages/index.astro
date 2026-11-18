@@ -1,0 +1,137 @@
+---
+import { Icon } from "astro-icon/components";
+import PostRows from "@/components/portfolio/PostRows.astro";
+import ProjectVisual from "@/components/portfolio/ProjectVisual.astro";
+import { siteConfig } from "@/config";
+import { featuredProjectIds, portfolioTopics } from "@/config/portfolioConfig";
+import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
+import { getSortedPostsList, getSortedProjects } from "@/utils/content-utils";
+import { removeFileExtension, url } from "@/utils/url-utils";
+
+export const prerender = true;
+
+const [projects, posts] = await Promise.all([getSortedProjects(), getSortedPostsList()]);
+const featured = siteConfig.pages.projects
+	? featuredProjectIds.flatMap((id) => {
+		const project = projects.find((entry) => removeFileExtension(entry.id) === id);
+		return project ? [project] : [];
+	})
+	: [];
+const otherProjects = projects.filter(({ data, id }) => data.repository && !featuredProjectIds.includes(removeFileExtension(id))).slice(0, 3);
+const latestPosts = [...posts].sort((a, b) => b.data.published.getTime() - a.data.published.getTime()).slice(0, 4);
+---
+
+<PortfolioLayout>
+	<h1 class="sr-only">小慌 · 软件作品与技术笔记</h1>
+	{featured.length > 0 && (
+		<featured-projects class="portfolio-hero" aria-label="精选项目">
+			{featured.map((project, index) => {
+				const { title, subtitle, description, repository } = project.data;
+				const id = removeFileExtension(project.id);
+				return (
+					<section class="portfolio-hero-slide" data-slide data-project={id} hidden={index > 0}>
+						<div class="portfolio-hero-copy">
+							<p class="portfolio-hero-kicker">精选作品</p>
+							<h2>{title}</h2>
+							<p class="portfolio-hero-subtitle">{subtitle}</p>
+							<p class="portfolio-hero-description">{description}</p>
+							<div class="portfolio-actions">
+								<a class="portfolio-button portfolio-button-primary" href={url(`/projects/${id}/`)}>
+									了解项目 <Icon name="material-symbols:arrow-forward-rounded" />
+								</a>
+								<a class="portfolio-button portfolio-button-outline" href={`https://github.com/${repository}`}>
+									<Icon name="fa7-brands:github" /> GitHub <Icon name="material-symbols:arrow-outward-rounded" />
+								</a>
+							</div>
+						</div>
+						<ProjectVisual project={project} priority={index === 0} />
+					</section>
+				);
+			})}
+			{featured.length > 1 && (
+				<div class="portfolio-hero-controls" aria-label="选择精选项目">
+					<div class="portfolio-hero-select">
+						{featured.map(({ data }, index) => (
+							<button type="button" data-index={index} aria-pressed={index === 0 ? "true" : "false"}>{data.title}</button>
+						))}
+					</div>
+					<div class="portfolio-hero-arrows">
+						<button type="button" data-step="-1" aria-label="上一个项目"><Icon name="material-symbols:arrow-back-rounded" /></button>
+						<button type="button" data-step="1" aria-label="下一个项目"><Icon name="material-symbols:arrow-forward-rounded" /></button>
+					</div>
+				</div>
+			)}
+			<p class="sr-only" aria-live="polite" data-announcement></p>
+		</featured-projects>
+	)}
+	{siteConfig.pages.projects && otherProjects.length > 0 && (
+		<section class="portfolio-section">
+			<div class="portfolio-section-heading">
+				<h2>更多作品</h2>
+				<a class="portfolio-text-link" href={url("/projects/")}>全部项目 <Icon name="material-symbols:arrow-outward-rounded" /></a>
+			</div>
+			<div class="portfolio-project-strip">
+				{otherProjects.map(({ id, data }) => (
+					<a href={url(`/projects/${removeFileExtension(id)}/`)}>
+						<span><strong>{data.title}</strong><span>{data.description}</span></span>
+						<Icon name="material-symbols:arrow-outward-rounded" />
+					</a>
+				))}
+			</div>
+		</section>
+	)}
+	<div class="portfolio-home-reading portfolio-section">
+		<section>
+			<div class="portfolio-section-heading">
+				<h2>最近文章</h2>
+				<a class="portfolio-text-link" href={url("/posts/")}>全部文章 <Icon name="material-symbols:arrow-outward-rounded" /></a>
+			</div>
+			<PostRows posts={latestPosts} />
+		</section>
+		<section class="portfolio-home-topics">
+			<div class="portfolio-section-heading">
+				<h2>知识专题</h2>
+				<a class="portfolio-text-link" href={url("/topics/")}>全部专题 <Icon name="material-symbols:arrow-outward-rounded" /></a>
+			</div>
+			{portfolioTopics.map(({ id, title, description }) => (
+				<a class="portfolio-topic-link" href={url(`/topics/${id}/`)}>
+					<span><strong>{title}</strong><span>{description}</span></span>
+					<Icon name="material-symbols:arrow-outward-rounded" />
+				</a>
+			))}
+		</section>
+	</div>
+</PortfolioLayout>
+
+<script>
+	class FeaturedProjects extends HTMLElement {
+		private current = 0;
+
+		connectedCallback() {
+			this.addEventListener("click", this.select);
+		}
+
+		disconnectedCallback() {
+			this.removeEventListener("click", this.select);
+		}
+
+		private select = (event: MouseEvent) => {
+			if (!(event.target instanceof Element)) return;
+			const button = event.target.closest<HTMLButtonElement>("button");
+			if (!button) return;
+			const slides = this.querySelectorAll<HTMLElement>("[data-slide]");
+			const target = button.dataset.index === undefined
+				? this.current + Number(button.dataset.step)
+				: Number(button.dataset.index);
+			this.current = (target + slides.length) % slides.length;
+			slides.forEach((slide, index) => { slide.hidden = index !== this.current; });
+			this.querySelectorAll("[data-index]").forEach((item, index) => {
+				item.setAttribute("aria-pressed", String(index === this.current));
+			});
+			const announcement = this.querySelector("[data-announcement]");
+			if (announcement) announcement.textContent = slides[this.current].querySelector("h2")?.textContent ?? "";
+		};
+	}
+
+	if (!customElements.get("featured-projects")) customElements.define("featured-projects", FeaturedProjects);
+</script>

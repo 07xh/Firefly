@@ -1,3 +1,4 @@
+import type { MiddlewareHandler } from "astro";
 import { defineMiddleware } from "astro:middleware";
 import {
 	getSessionToken,
@@ -66,7 +67,7 @@ function redirectToLogin(context: Parameters<Parameters<typeof defineMiddleware>
 	);
 }
 
-export const onRequest = defineMiddleware(async (context, next) => {
+export const onRequest: MiddlewareHandler = defineMiddleware(async (context, next) => {
 	const pathname = context.url.pathname;
 	const isAdminPage = pathname === "/admin" || pathname.startsWith("/admin/");
 	const isAdminApi =

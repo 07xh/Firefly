@@ -8,7 +8,7 @@ import * as mdxComponents from "@components/firefly-mdx";
 import License from "@components/misc/License.astro";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
-import MainGridLayout from "@layouts/MainGridLayout.astro";
+import PortfolioLayout from "@layouts/PortfolioLayout.astro";
 import "@/styles/banner-post.css";
 import {
 	getRelatedPosts,
@@ -71,18 +71,7 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const { Content, headings } = await render(entry);
-
-const { remarkPluginFrontmatter } = await render(entry);
-
-const bannerPostMeta = {
-	title: entry.data.title,
-	description: entry.data.description,
-	published: entry.data.published,
-	updated: entry.data.updated,
-	words: remarkPluginFrontmatter.words,
-	minutes: remarkPluginFrontmatter.minutes,
-};
+const { Content, headings, remarkPluginFrontmatter } = await render(entry);
 
 // 处理随机图：如果image为"api"，则从配置的API获取随机图
 const processedImage = processCoverImageSync(entry.data.image, entry.id);
@@ -204,22 +193,19 @@ const jsonLd = {
 
 const relatedPosts = await getRelatedPosts(entry, 5);
 const seriesData = await getSeriesPosts(entry);
+const readingHeadings = headings.filter(({ depth }) => depth >= 2 && depth <= 4);
 ---
 
-<MainGridLayout
+<PortfolioLayout
   title={entry.data.title}
   description={entry.data.description || entry.data.title}
   lang={entry.data.lang}
   setOGTypeArticle={true}
   postSlug={entry.id}
   postCoverImage={coverImage?.url}
-  postCategory={entry.data.category || undefined}
   ogImageWidth={coverImage?.width}
   ogImageHeight={coverImage?.height}
   ogImageAlt={entry.data.title}
-  headings={headings}
-  encrypted={!!entry.data.password}
-  bannerPostMeta={bannerPostMeta}
 >
   <!-- KaTeX 按需加载 - 仅在文章页面 -->
   <KatexManager slot="head" />
@@ -247,6 +233,10 @@ const seriesData = await getSeriesPosts(entry);
     type="application/ld+json"
     set:html={JSON.stringify(jsonLd)}
   />
+  <div class="portfolio-reading">
+    <a class="portfolio-back" href={url("/posts/")}><Icon name="material-symbols:arrow-back-rounded" /> 技术文章</a>
+    <div class="portfolio-reading-grid">
+      <article>
   <div
     class="flex w-full rounded-(--radius-large) overflow-hidden relative mb-4"
   >
@@ -292,14 +282,14 @@ const seriesData = await getSeriesPosts(entry);
               )}
             </div>
             <div class="absolute inset-x-0 bottom-0 px-6 md:px-9 pt-10 pb-3 bg-gradient-to-t from-black/80 via-black/45 to-transparent">
-              <div
+              <h1
                 data-pagefind-body
                 data-pagefind-weight="10"
                 data-pagefind-meta="title"
                 class="mb-2 text-xl md:text-2xl font-bold leading-tight text-white"
               >
                 {entry.data.title}
-              </div>
+              </h1>
               <PostMetadata
                 variant="cover"
                 className="gap-x-4 gap-y-1"
@@ -369,7 +359,7 @@ const seriesData = await getSeriesPosts(entry);
       {
         !usePostCoverOverlay && (
           <div class="relative onload-animation">
-            <div
+            <h1
               data-pagefind-body
               data-pagefind-weight="10"
               data-pagefind-meta="title"
@@ -380,7 +370,7 @@ const seriesData = await getSeriesPosts(entry);
                         before:absolute before:top-3 before:-left-4.5"
             >
               {entry.data.title}
-            </div>
+            </h1>
           </div>
         )
       }
@@ -737,4 +727,21 @@ const seriesData = await getSeriesPosts(entry);
 
   <!-- 评论 -->
   {entry.data.comment && !entry.data.password && <Comment post={entry} />}
-</MainGridLayout>
+      </article>
+      {!entry.data.password && readingHeadings.length > 0 && (
+        <aside class="portfolio-reading-toc">
+          <details open>
+            <summary>目录</summary>
+            <nav aria-label="文章目录">
+              <ul>
+                {readingHeadings.map(({ slug, text, depth }) => (
+                  <li data-depth={depth}><a href={`#${slug}`}>{text}</a></li>
+                ))}
+              </ul>
+            </nav>
+          </details>
+        </aside>
+      )}
+    </div>
+  </div>
+</PortfolioLayout>

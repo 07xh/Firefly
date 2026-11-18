@@ -134,6 +134,13 @@ export default defineConfig({
 				"#right-sidebar-dynamic",
 				"#floating-toc-wrapper",
 			],
+			// The portfolio shell and the legacy grid have different Swup containers.
+			ignore: (url) => {
+				const pathname = new URL(url, window.location.href).pathname;
+				return /^(?:\/|\/(?:projects|posts|topics|about|archive|search|dynamic|series|categories|tags)(?:\/.*)?)$/.test(
+					pathname,
+				);
+			},
 			smoothScrolling: false,
 			cache: true,
 			preload: {

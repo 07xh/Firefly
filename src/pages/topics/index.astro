@@ -1,0 +1,29 @@
+---
+import { Icon } from "astro-icon/components";
+import { portfolioTopics } from "@/config/portfolioConfig";
+import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
+import { getSortedPostsList } from "@/utils/content-utils";
+import { url } from "@/utils/url-utils";
+
+export const prerender = true;
+
+const posts = await getSortedPostsList();
+---
+
+<PortfolioLayout title="知识专题" description="按章节学习 Python 和工程制图。">
+	<header class="portfolio-page-intro">
+		<h1>知识专题</h1>
+		<p>从基础概念到完整练习，按章节顺序展开。</p>
+	</header>
+	<div class="portfolio-topic-grid">
+		{portfolioTopics.map(({ id, title, description, series }) => (
+			<a class="portfolio-topic-card" href={url(`/topics/${id}/`)}>
+				<Icon name={id === "python" ? "material-symbols:code-rounded" : "material-symbols:architecture-rounded"} />
+				<h2>{title}</h2>
+				<p>{description}</p>
+				<div>{posts.filter(({ data }) => data.series === series).length} 篇文章 <Icon name="material-symbols:arrow-outward-rounded" /></div>
+			</a>
+		))}
+	</div>
+	<p class="portfolio-section"><a class="portfolio-text-link" href={url("/series/")}>浏览所有文章系列 <Icon name="material-symbols:arrow-outward-rounded" /></a></p>
+</PortfolioLayout>

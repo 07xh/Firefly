@@ -1,4 +1,86 @@
 {
+	"07xh/dorm-os": {
+		"description": null,
+		"language": "JavaScript",
+		"avatarUrl": "https://avatars.githubusercontent.com/u/313783339?v=4",
+		"license": null,
+		"stars": 0,
+		"pushedAt": "2026-11-18T10:14:47Z",
+		"checkedAt": "2026-11-18T12:53:22.819Z",
+		"release": {
+			"tag": "xiaoxu-android-v0.8.14",
+			"url": "https://github.com/07xh/dorm-os/releases/tag/xiaoxu-android-v0.8.14",
+			"prerelease": false
+		}
+	},
+	"07xh/kingo-assistant": {
+		"description": null,
+		"language": "Python",
+		"avatarUrl": "https://avatars.githubusercontent.com/u/313783339?v=4",
+		"license": null,
+		"stars": 0,
+		"pushedAt": "2026-11-17T06:26:46Z",
+		"checkedAt": "2026-11-18T12:48:04.775Z",
+		"release": null
+	},
+	"07xh/momoflow": {
+		"description": null,
+		"language": "Kotlin",
+		"avatarUrl": "https://avatars.githubusercontent.com/u/313783339?v=4",
+		"license": null,
+		"stars": 0,
+		"pushedAt": "2026-11-18T12:33:13Z",
+		"checkedAt": "2026-11-18T12:47:58.896Z",
+		"release": null
+	},
+	"07xh/reqable-bridge": {
+		"description": null,
+		"language": "Python",
+		"avatarUrl": "https://avatars.githubusercontent.com/u/313783339?v=4",
+		"license": null,
+		"stars": 0,
+		"pushedAt": "2026-11-11T17:18:17Z",
+		"checkedAt": "2026-11-18T12:53:22.556Z",
+		"release": null
+	},
+	"07xh/studyflow": {
+		"description": null,
+		"language": "Python",
+		"avatarUrl": "https://avatars.githubusercontent.com/u/313783339?v=4",
+		"license": "GPL-3.0",
+		"stars": 0,
+		"pushedAt": "2026-11-18T02:35:04Z",
+		"checkedAt": "2026-11-18T12:47:58.896Z",
+		"release": {
+			"tag": "v0.1.1-rc.42",
+			"url": "https://github.com/07xh/StudyFlow/releases/tag/v0.1.1-rc.42",
+			"prerelease": true
+		}
+	},
+	"07xh/wordflow": {
+		"description": null,
+		"language": "Java",
+		"avatarUrl": "https://avatars.githubusercontent.com/u/313783339?v=4",
+		"license": null,
+		"stars": 0,
+		"pushedAt": "2026-11-09T08:35:36Z",
+		"checkedAt": "2026-11-18T12:47:58.769Z",
+		"release": null
+	},
+	"07xh/zhidao-assistant": {
+		"description": null,
+		"language": "PowerShell",
+		"avatarUrl": "https://avatars.githubusercontent.com/u/313783339?v=4",
+		"license": "GPL-3.0",
+		"stars": 0,
+		"pushedAt": "2026-11-14T07:28:59Z",
+		"checkedAt": "2026-11-18T12:47:58.745Z",
+		"release": {
+			"tag": "v5.2.9-beta.2",
+			"url": "https://github.com/07xh/zhidao-assistant/releases/tag/v5.2.9-beta.2",
+			"prerelease": true
+		}
+	},
 	"cuteleaf/firefly": {
 		"description": "🍀Firefly, fresh and aesthetic Astro blog theme template. ",
 		"language": "Astro",

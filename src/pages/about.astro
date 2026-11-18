@@ -6,14 +6,14 @@ import { siteConfig } from "@/config/siteConfig";
 import siteSettings from "@/data/settings.json";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
-import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
 import { getAuthorAvatarUrl } from "@/utils/schema-image";
 import { buildProfilePage } from "@/utils/schema-utils";
 import Markdown from "@components/common/Markdown.astro";
 import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
 
-export const prerender = false;
+export const prerender = true;
 
 if (!siteSettings.showAbout || !siteSettings.showNavAbout) {
 	return Astro.redirect("/");
@@ -78,15 +78,15 @@ const jsonLd = buildProfilePage({
 	description: profileConfig.bio,
 });
 ---
-<MainGridLayout title={i18n(I18nKey.about)} description={i18n(I18nKey.about)}>
+<PortfolioLayout title={i18n(I18nKey.about)} description={i18n(I18nKey.about)}>
 	<script
 		is:inline
 		slot="head"
 		type="application/ld+json"
 		set:html={JSON.stringify(jsonLd)}
 	/>
-	<div class="flex w-full rounded-(--radius-large) overflow-hidden relative min-h-32">
-		<div class="card-base z-10 px-9 py-6 relative w-full">
+	<header class="portfolio-page-intro"><h1>{i18n(I18nKey.about)}</h1></header>
+	<div class="portfolio-about">
 			<Markdown class="mt-2">
 				{aboutContentHtml ? <div set:html={aboutContentHtml} /> : <Content />}
 			</Markdown>
@@ -117,6 +117,5 @@ const jsonLd = buildProfilePage({
 							)}
 						</div>
 					)}
-		</div>
 	</div>
-</MainGridLayout>
+</PortfolioLayout>
