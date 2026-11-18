@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" fill="none" role="img" aria-labelledby="t">
+<title id="t">07xh Space 飞船标识</title>
+<defs>
+<linearGradient id="bg" x1="10" y1="90" x2="86" y2="4" gradientUnits="userSpaceOnUse"><stop stop-color="#4EB9F9"/><stop offset=".49" stop-color="#367AF4"/><stop offset="1" stop-color="#514BE7"/></linearGradient>
+<linearGradient id="ship" x1="29" y1="72" x2="67" y2="17" gradientUnits="userSpaceOnUse"><stop stop-color="#D6F4FF"/><stop offset=".52" stop-color="#FFFFFF"/><stop offset="1" stop-color="#F5F7FF"/></linearGradient>
+<filter id="shadow" x="0" y="0" width="96" height="96"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#1B318B" flood-opacity=".25"/></filter>
+</defs>
+<rect x="2" y="2" width="92" height="92" rx="25" fill="url(#bg)"/>
+<path d="M16 67C25 78 46 76 66 58C83 43 86 28 78 21" stroke="#C7E9FF" stroke-width="2.5" stroke-linecap="round" opacity=".68"/>
+<path d="M25 20V26M22 23H28" stroke="#EAF8FF" stroke-width="2" stroke-linecap="round"/>
+<circle cx="79" cy="18" r="2" fill="#FFF"/>
+<g filter="url(#shadow)" transform="rotate(13 48 46)">
+<path d="M39 56C33 60 29 66 27 73L39 67 46 65Z" fill="#B8EAFF"/>
+<path d="M52 54C58 58 64 59 70 56L62 50Z" fill="#D3EAFF"/>
+<path d="M35 62C37 39 52 23 68 17C73 33 67 50 49 62C45 65 39 66 35 62Z" fill="url(#ship)"/>
+<path d="M43 48C46 35 57 26 66 22" stroke="#E7F3FF" stroke-width="2" stroke-linecap="round"/>
+<circle cx="56" cy="35" r="8" fill="#3D72EA" stroke="#B5E7FF" stroke-width="3"/>
+<path d="M34 64L44 61 43 72 32 77Z" fill="#F5FDFF"/>
+</g>
+<path d="M32 70L23 85 28 71 20 80" stroke="#B4F5FF" stroke-width="4" stroke-linecap="round" opacity=".83"/>
+<path d="M78 13L79 10 80 13 84 14.5 80 16 79 20 78 16 74 14.5Z" fill="#F5FBFF"/>
+</svg>
