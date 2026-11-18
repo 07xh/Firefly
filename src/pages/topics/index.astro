@@ -2,28 +2,63 @@
 import { Icon } from "astro-icon/components";
 import { portfolioTopics } from "@/config/portfolioConfig";
 import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
+import "@/styles/space-discovery.css";
 import { getSortedPostsList } from "@/utils/content-utils";
 import { url } from "@/utils/url-utils";
 
 export const prerender = true;
 
 const posts = await getSortedPostsList();
+const topics = portfolioTopics.map((topic) => {
+	const chapters = posts
+		.filter(({ data }) => data.series === topic.series)
+		.sort(
+			(a, b) =>
+				(a.data.seriesOrder ?? Number.POSITIVE_INFINITY) -
+					(b.data.seriesOrder ?? Number.POSITIVE_INFINITY) ||
+				a.data.published.getTime() - b.data.published.getTime(),
+		);
+	return { ...topic, chapters };
+});
 ---
 
-<PortfolioLayout title="知识专题" description="按章节学习 Python 和工程制图。">
-	<header class="portfolio-page-intro">
-		<h1>知识专题</h1>
-		<p>从基础概念到完整练习，按章节顺序展开。</p>
-	</header>
-	<div class="portfolio-topic-grid">
-		{portfolioTopics.map(({ id, title, description, series }) => (
-			<a class="portfolio-topic-card" href={url(`/topics/${id}/`)}>
-				<Icon name={id === "python" ? "material-symbols:code-rounded" : "material-symbols:architecture-rounded"} />
-				<h2>{title}</h2>
-				<p>{description}</p>
-				<div>{posts.filter(({ data }) => data.series === series).length} 篇文章 <Icon name="material-symbols:arrow-outward-rounded" /></div>
+<PortfolioLayout title="知识专题" description="Python 与工程制图的章节式学习笔记。">
+	<section class="space-content-page space-topics-page">
+		<header class="space-content-intro">
+			<div>
+				<h1>知识专题</h1>
+				<p>按章节整理的学习笔记，打开后可直接选择一篇开始。</p>
+			</div>
+			<a class="space-content-quiet-link" href={url("/series/")}>
+				所有系列 <Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" />
 			</a>
-		))}
-	</div>
-	<p class="portfolio-section"><a class="portfolio-text-link" href={url("/series/")}>浏览所有文章系列 <Icon name="material-symbols:arrow-outward-rounded" /></a></p>
+		</header>
+		<div class="space-topics-grid">
+			{topics.map(({ id, title, description, chapters }) => (
+				<a class="space-topic-card" href={url(`/topics/${id}/`)}>
+					<div class="space-topic-card-heading">
+						<span class="space-topic-icon" aria-hidden="true">
+							<Icon name={id === "python" ? "material-symbols:code-rounded" : "material-symbols:architecture-rounded"} />
+						</span>
+						<span class="space-topic-count">{chapters.length} 篇</span>
+					</div>
+					<h2>{title}</h2>
+					<p>{description}</p>
+					{chapters.length > 0 ? (
+						<ol class="space-topic-preview" aria-label={title + "的部分章节"}>
+							{chapters.slice(0, 3).map(({ data }, index) => (
+								<li><span>{String(index + 1).padStart(2, "0")}</span><span>{data.title}</span></li>
+							))}
+						</ol>
+					) : (
+						<p class="space-topic-no-chapters">暂无已发布的章节</p>
+					)}
+					<div class="space-topic-card-bottom">
+						<span>查看章节</span>
+						<Icon name="material-symbols:arrow-forward-rounded" aria-hidden="true" />
+					</div>
+				</a>
+			))}
+		</div>
+	</section>
 </PortfolioLayout>

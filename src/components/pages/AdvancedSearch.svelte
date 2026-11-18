@@ -4,189 +4,250 @@ import { i18n } from "@i18n/translation";
 import { onMount } from "svelte";
 import Icon from "@/components/common/Icon.svelte";
 import type { SearchResult } from "@/global";
-import { url as formatUrl } from "@/utils/url-utils";
 
-// --- Props ---
 export let title = i18n(I18nKey.search);
 export let description = "";
 
-// --- State ---
+type ResultKind = "all" | "posts" | "projects" | "topics";
+const kinds: { value: ResultKind; label: string }[] = [
+	{ value: "all", label: "全部" },
+	{ value: "posts", label: "文章" },
+	{ value: "projects", label: "项目" },
+	{ value: "topics", label: "专题" },
+];
+const limit = 8;
+
 let keyword = "";
 let results: SearchResult[] = [];
+let indexState: "loading" | "ready" | "unavailable" | "preview" = "loading";
 let isSearching = false;
-let initialized = false;
+let failed = false;
+let activeKind: ResultKind = "all";
+let currentPage = 1;
+let timer: ReturnType<typeof setTimeout> | undefined;
+let requestId = 0;
 
-// 在客户端获取 URL 参数
-const getInitialKeyword = (): string => {
-	if (typeof window !== "undefined") {
-		const searchParams = new URLSearchParams(window.location.search);
-		return searchParams.get("q") || "";
+function kindOf(result: SearchResult): ResultKind | "other" {
+	let pathname = "";
+	try {
+		pathname = new URL(result.url, window.location.href).pathname;
+	} catch {
+		return "other";
 	}
-	return "";
-};
+	if (pathname.includes("/posts/")) return "posts";
+	if (pathname.includes("/projects/") || pathname === "/") return "projects";
+	if (pathname.includes("/topics/")) return "topics";
+	return "other";
+}
 
-// --- Mocks for Dev Mode ---
-const fakeResult: SearchResult[] = [
-	{
-		url: formatUrl("/"),
-		meta: { title: "Dev Mode Search Result 1" },
-		excerpt: "This is a <mark>mock</mark> result for development.",
-	},
-	{
-		url: formatUrl("/"),
-		meta: { title: "Dev Mode Search Result 2" },
-		excerpt: "Pagefind only works in <mark>production</mark> build.",
-	},
-];
+$: visibleResults =
+	activeKind === "all"
+		? results
+		: results.filter((result) => kindOf(result) === activeKind);
+$: pages = Math.max(1, Math.ceil(visibleResults.length / limit));
+$: pageResults = visibleResults.slice(
+	(currentPage - 1) * limit,
+	currentPage * limit,
+);
 
-// --- Core Search Logic ---
-const search = async () => {
-	if (!initialized || !keyword.trim()) {
+function countOf(kind: ResultKind): number {
+	return kind === "all"
+		? results.length
+		: results.filter((result) => kindOf(result) === kind).length;
+}
+
+function chooseKind(kind: ResultKind) {
+	activeKind = kind;
+	currentPage = 1;
+}
+
+function changePage(next: number) {
+	currentPage = Math.max(1, Math.min(next, pages));
+	document.querySelector(".space-search-result-heading")?.scrollIntoView({
+		block: "start",
+		behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+			? "auto"
+			: "smooth",
+	});
+}
+
+async function search() {
+	const term = keyword.trim();
+	const id = ++requestId;
+	activeKind = "all";
+	currentPage = 1;
+	failed = false;
+	if (!term) {
 		results = [];
+		isSearching = false;
 		return;
 	}
+	if (indexState !== "ready" || !window.pagefind) return;
 	isSearching = true;
-
 	try {
-		if (import.meta.env.PROD && window.pagefind) {
-			const response = await window.pagefind.search(keyword);
-			const rawResults = await Promise.all(
-				response.results.map((item) => item.data()),
-			);
-			results = rawResults;
-		} else if (import.meta.env.DEV) {
-			// 开发模式下的模拟结果
-			results = fakeResult.filter(
-				(item) =>
-					item.excerpt.toLowerCase().includes(keyword.toLowerCase()) ||
-					item.meta.title.toLowerCase().includes(keyword.toLowerCase()),
-			);
-		}
+		const found = await window.pagefind.search(term);
+		const items = await Promise.all(
+			found.results.map((result) => result.data()),
+		);
+		if (id !== requestId) return;
+		results = items;
 	} catch (error) {
-		console.error("Search error:", error);
+		if (id !== requestId) return;
+		console.error("Search request failed:", error);
 		results = [];
+		failed = true;
 	} finally {
-		isSearching = false;
+		if (id === requestId) isSearching = false;
 	}
-};
+}
 
-// --- Initialization onMount ---
+function handleInput() {
+	const target = new URL(window.location.href);
+	if (keyword.trim()) target.searchParams.set("q", keyword.trim());
+	else target.searchParams.delete("q");
+	window.history.replaceState(window.history.state, "", target);
+	window.clearTimeout(timer);
+	if (!keyword.trim()) {
+		void search();
+		return;
+	}
+	timer = window.setTimeout(() => {
+		void search();
+	}, 260);
+}
+
+function clearSearch() {
+	keyword = "";
+	void handleInput();
+}
+
 onMount(() => {
-	const initialize = async () => {
-		initialized = true;
-
-		// 从 URL 获取初始关键词
-		const initialKeyword = getInitialKeyword();
-		if (initialKeyword) {
-			keyword = initialKeyword;
-		}
-
-		// 如果有关键词，自动执行搜索
-		if (keyword.trim()) {
-			await search();
-		}
-	};
-
-	// 开发环境直接初始化
+	keyword = new URLSearchParams(window.location.search).get("q") ?? "";
 	if (import.meta.env.DEV) {
-		initialize();
-	} else {
-		// 生产环境等待 Pagefind 加载
-		window.__loadPagefind?.();
-		if (window.pagefind) {
-			initialize();
-		} else {
-			document.addEventListener("pagefindready", initialize, {
-				once: true,
-			});
-		}
+		indexState = "preview";
+		return;
 	}
+	const onReady = () => {
+		indexState = "ready";
+		if (keyword.trim()) void search();
+	};
+	const onFailure = () => {
+		if (window.pagefind) return;
+		indexState = "unavailable";
+		isSearching = false;
+	};
+	document.addEventListener("pagefindready", onReady);
+	document.addEventListener("pagefindloaderror", onFailure);
+	if (window.pagefind) {
+		onReady();
+	} else {
+		void window.__loadPagefind?.();
+	}
+	return () => {
+		window.clearTimeout(timer);
+		requestId++;
+		document.removeEventListener("pagefindready", onReady);
+		document.removeEventListener("pagefindloaderror", onFailure);
+	};
 });
-
-let debounceTimer: NodeJS.Timeout;
-const handleInput = () => {
-	clearTimeout(debounceTimer);
-	debounceTimer = setTimeout(() => {
-		search();
-	}, 300);
-};
 </script>
 
-<div class="card-base px-6 py-6 md:px-9 md:py-6 mb-4 rounded-(--radius-large)">
-    <!-- Title Section -->
-    <div class="mb-4">
-        <div class="flex items-center gap-3 mb-3">
-            <div class="h-8 w-8 rounded-lg bg-(--primary) flex items-center justify-center text-white dark:text-black/70">
-                <Icon icon="material-symbols:search" class="text-[1.5rem]"></Icon>
-            </div>
-            <div class="text-3xl font-bold text-90">
-                {title}
-            </div>
-        </div>
-        {#if description}
-            <p class="text-base text-50 leading-relaxed">
-                {description}
-            </p>
-        {/if}
-    </div>
+<section class="space-search-page" aria-label="站内搜索">
+	<div class="space-search-header">
+		<h1>{title}</h1>
+		<p>{description || "查找文章、项目与学习专题。"}</p>
+	</div>
+	<div class="space-search-field">
+		<Icon icon="material-symbols:search-rounded" class="space-search-icon" />
+		<label class="sr-only" for="space-global-search">输入搜索关键词</label>
+		<input
+			id="space-global-search"
+			type="search"
+			autocomplete="off"
+			placeholder="搜索文章、项目或关键词"
+			bind:value={keyword}
+			on:input={handleInput}
+		/>
+		{#if keyword}
+			<button type="button" class="space-search-clear" on:click={clearSearch} aria-label="清除搜索">
+				<Icon icon="material-symbols:close-rounded" />
+			</button>
+		{/if}
+	</div>
 
-    <!-- Search Bar -->
-    <div class="relative flex">
-        <div class="relative flex-1">
-            <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                <Icon icon="material-symbols:search" class="text-2xl text-50" />
-            </div>
-            <input
-                type="text"
-                class="block w-full p-4 pl-10 text-sm bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:ring-2 focus:ring-(--primary) focus:border-(--primary) hover:border-black/20 dark:hover:border-white/20 text-75 placeholder:opacity-50 transition-colors outline-hidden"
-                placeholder={i18n(I18nKey.search)}
-                bind:value={keyword}
-                on:input={handleInput}
-            >
-        </div>
-    </div>
-</div>
+	{#if indexState === "loading"}
+		<div class="space-search-status" role="status">
+			<Icon icon="svg-spinners:ring-resize" class="space-search-spinner" />
+			<span>正在载入搜索索引…</span>
+		</div>
+	{:else if indexState === "unavailable"}
+		<div class="space-search-status" role="alert">
+			<p>搜索索引暂时无法载入，请检查网络后刷新页面。</p>
+			<button type="button" on:click={() => window.location.reload()}>重新加载</button>
+		</div>
+	{:else if indexState === "preview"}
+		<div class="space-search-status" role="status">本地开发预览未生成搜索索引；请在生产构建后验证搜索结果。</div>
+	{:else if !keyword.trim()}
+		<div class="space-search-status" role="status">输入关键词后，即可查找站内内容。</div>
+	{:else}
+		<div class="space-search-tabs" role="group" aria-label="搜索结果类型">
+			{#each kinds as kind}
+				<button
+					type="button"
+					aria-pressed={activeKind === kind.value}
+					on:click={() => chooseKind(kind.value)}
+				>
+					{kind.label}
+					<span>{countOf(kind.value)}</span>
+				</button>
+			{/each}
+		</div>
 
-<div class="grid grid-cols-1 gap-4">
-    <!-- Results Area -->
-    <div>
-        {#if isSearching}
-            <div class="flex justify-center py-10">
-                <Icon icon="svg-spinners:ring-resize" class="text-4xl text-(--primary)" />
-            </div>
-        {:else if results.length > 0}
-            <div class="space-y-4">
-                {#each results as result}
-                    <div class="card-base p-6 block rounded-(--radius-large)">
-                        <a href={result.url} class="block group">
-                            <h5 class="mb-2 text-2xl font-bold tracking-tight text-90 group-hover:text-(--primary) transition-colors">
-                                {@html result.meta.title}
-                            </h5>
-                            <p class="font-normal text-75">
-                                {@html result.excerpt}
-                            </p>
-                        </a>
-                    </div>
-                {/each}
-            </div>
-        {:else if keyword}
-            <div class="card-base p-10 text-center text-50 rounded-(--radius-large)">
-                {i18n(I18nKey.searchNoResults)}
-            </div>
-        {:else}
-             <div class="card-base p-10 text-center text-50 rounded-(--radius-large)">
-                {i18n(I18nKey.searchTypeSomething)}
-            </div>
-        {/if}
-    </div>
-</div>
-
-<style>
-    /* 关键字高亮效果 - 主题色 */
-    :global(mark) {
-        background: transparent;
-        color: var(--primary);
-        font-weight: 600;
-        padding: 0 0.1em;
-    }
-</style>
+		<div class="space-search-result-heading">
+			<h2>搜索结果</h2>
+			<span aria-live="polite">{isSearching ? "正在搜索…" : `共 ${visibleResults.length} 条`}</span>
+		</div>
+		{#if isSearching}
+			<div class="space-search-status" role="status">
+				<Icon icon="svg-spinners:ring-resize" class="space-search-spinner" />
+				<span>正在搜索…</span>
+			</div>
+		{:else if failed}
+			<div class="space-search-status" role="alert">
+				<p>搜索失败，请重新尝试。</p>
+				<button type="button" on:click={() => void search()}>重试</button>
+			</div>
+		{:else if visibleResults.length > 0}
+			<ol class="space-search-results">
+				{#each pageResults as result, index (result.url + index)}
+					<li>
+						<a href={result.url}>
+							<div class="space-search-result-meta">
+								<span>{kindOf(result) === "posts" ? "文章" : kindOf(result) === "projects" ? "项目" : kindOf(result) === "topics" ? "专题" : "站内页面"}</span>
+								<Icon icon="material-symbols:arrow-outward-rounded" />
+							</div>
+							<h3>{result.meta.title}</h3>
+							{#if result.excerpt}
+								<p>{@html result.excerpt}</p>
+							{/if}
+						</a>
+					</li>
+				{/each}
+			</ol>
+			{#if pages > 1}
+				<nav class="space-search-pagination" aria-label="搜索结果分页">
+					<button type="button" on:click={() => changePage(currentPage - 1)} disabled={currentPage === 1}>上一页</button>
+					<span>第 {currentPage} / {pages} 页</span>
+					<button type="button" on:click={() => changePage(currentPage + 1)} disabled={currentPage === pages}>下一页</button>
+				</nav>
+			{/if}
+		{:else}
+			<div class="space-search-status" role="status">
+				<p>{activeKind === "all" ? i18n(I18nKey.searchNoResults) : "这一类没有匹配的结果。"}</p>
+				{#if activeKind !== "all"}
+					<button type="button" on:click={() => chooseKind("all")}>查看全部结果</button>
+				{/if}
+			</div>
+		{/if}
+	{/if}
+</section>

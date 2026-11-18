@@ -2,30 +2,145 @@
 import { Icon } from "astro-icon/components";
 import PostRows from "@/components/portfolio/PostRows.astro";
 import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
+import "@/styles/space-discovery.css";
 import { getSortedPostsList } from "@/utils/content-utils";
-import { getCategoryUrl, url } from "@/utils/url-utils";
+import { url } from "@/utils/url-utils";
 
 export const prerender = true;
 
 const posts = await getSortedPostsList();
-const categories = [
-	...new Set(
-		posts.flatMap(({ data }) => (data.category ? [data.category] : [])),
-	),
-];
+const counts = new Map<string, number>();
+for (const { data } of posts) {
+	const category = data.category?.trim();
+	if (category) counts.set(category, (counts.get(category) ?? 0) + 1);
+}
+const categories = [...counts.entries()].sort(
+	(a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+);
 ---
 
-<PortfolioLayout title="技术文章" description="浏览 Python、工程制图及其他技术笔记。">
-	<header class="portfolio-page-intro">
-		<h1>技术文章</h1>
-		<p>编程基础、工程制图与学习实践笔记。</p>
-		<div class="portfolio-actions">
-			<a class="portfolio-button portfolio-button-solid" href={url("/search/")}><Icon name="material-symbols:search-rounded" /> 搜索文章</a>
-			<a class="portfolio-button portfolio-button-secondary" href={url("/archive/")}>查看归档 <Icon name="material-symbols:arrow-outward-rounded" /></a>
+<PortfolioLayout title="技术文章" description="Python、工程制图与开发笔记。">
+	<article-directory class="space-content-page space-directory-page">
+		<header class="space-content-intro">
+			<div>
+				<h1>技术文章</h1>
+				<p>学习笔记、实操过程和技术记录。</p>
+			</div>
+			<a class="space-content-quiet-link" href={url("/archive/")}>
+				按时间查看 <Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" />
+			</a>
+		</header>
+		<div class="space-directory-toolbar">
+			<label class="space-directory-search">
+				<Icon name="material-symbols:search-rounded" aria-hidden="true" />
+				<span class="sr-only">搜索当前文章列表</span>
+				<input data-directory-input type="search" autocomplete="off" placeholder="搜索标题、内容摘要或标签" />
+			</label>
+			<a class="space-directory-full-search" href={url("/search/")}>
+				全站搜索 <Icon name="material-symbols:arrow-forward-rounded" aria-hidden="true" />
+			</a>
 		</div>
-	</header>
-	<nav class="portfolio-directory-nav" aria-label="文章分类">
-		{categories.map((category) => <a href={getCategoryUrl(category)}>{category}</a>)}
-	</nav>
-	<PostRows posts={posts} />
+		<nav class="space-directory-filters" aria-label="按文章分类筛选">
+			<button type="button" data-category-filter="" aria-pressed="true">全部 <span>{posts.length}</span></button>
+			{categories.map(([category, count]) => (
+				<button type="button" data-category-filter={category} aria-pressed="false">
+					{category} <span>{count}</span>
+				</button>
+			))}
+		</nav>
+		<div class="space-directory-count-row">
+			<p data-directory-count role="status" aria-live="polite">{posts.length} 篇文章</p>
+			<button type="button" data-directory-reset hidden>清除筛选</button>
+		</div>
+		<PostRows posts={posts} />
+		<div class="space-content-empty" data-directory-empty hidden>
+			<p>没有找到匹配的文章。</p>
+			<button type="button" data-directory-reset-empty>查看全部文章</button>
+		</div>
+	</article-directory>
 </PortfolioLayout>
+
+<script>
+	class ArticleDirectory extends HTMLElement {
+		private category = "";
+
+		connectedCallback() {
+			const params = new URLSearchParams(window.location.search);
+			this.category = params.get("category") ?? "";
+			const input = this.querySelector<HTMLInputElement>("[data-directory-input]");
+			if (input) input.value = params.get("q") ?? "";
+			this.updateCategoryButtons();
+			this.addEventListener("click", this.onClick);
+			this.addEventListener("input", this.onInput);
+			this.apply();
+		}
+
+		disconnectedCallback() {
+			this.removeEventListener("click", this.onClick);
+			this.removeEventListener("input", this.onInput);
+		}
+
+		private onClick = (event: MouseEvent) => {
+			if (!(event.target instanceof Element)) return;
+			const filter = event.target.closest<HTMLButtonElement>("[data-category-filter]");
+			if (filter) {
+				this.category = filter.dataset.categoryFilter ?? "";
+				this.updateCategoryButtons();
+				this.apply(true);
+				return;
+			}
+			if (event.target.closest("[data-directory-reset], [data-directory-reset-empty]")) {
+				this.category = "";
+				const input = this.querySelector<HTMLInputElement>("[data-directory-input]");
+				if (input) input.value = "";
+				this.updateCategoryButtons();
+				this.apply(true);
+			}
+		};
+
+		private onInput = (event: Event) => {
+			if (event.target instanceof Element && event.target.matches("[data-directory-input]")) {
+				this.apply(true);
+			}
+		};
+
+		private updateCategoryButtons() {
+			this.querySelectorAll<HTMLButtonElement>("[data-category-filter]").forEach((button) => {
+				button.setAttribute(
+					"aria-pressed",
+					String((button.dataset.categoryFilter ?? "") === this.category),
+				);
+			});
+		}
+
+		private apply(updateUrl = false) {
+			const query = this.querySelector<HTMLInputElement>("[data-directory-input]")?.value.trim().toLocaleLowerCase() ?? "";
+			let visible = 0;
+			this.querySelectorAll<HTMLElement>("[data-post-item]").forEach((item) => {
+				const categoryMatches = !this.category || item.dataset.category === this.category;
+				const textMatches = !query || (item.dataset.postSearch ?? "").includes(query);
+				item.hidden = !(categoryMatches && textMatches);
+				if (!item.hidden) visible++;
+			});
+			const total = this.querySelectorAll("[data-post-item]").length;
+			const count = this.querySelector<HTMLElement>("[data-directory-count]");
+			if (count) count.textContent = `显示 ${visible} / ${total} 篇文章`;
+			const empty = this.querySelector<HTMLElement>("[data-directory-empty]");
+			if (empty) empty.hidden = visible !== 0;
+			const reset = this.querySelector<HTMLElement>("[data-directory-reset]");
+			if (reset) reset.hidden = !query && !this.category;
+			if (updateUrl) {
+				const target = new URL(window.location.href);
+				if (query) target.searchParams.set("q", query);
+				else target.searchParams.delete("q");
+				if (this.category) target.searchParams.set("category", this.category);
+				else target.searchParams.delete("category");
+				window.history.replaceState(window.history.state, "", target);
+			}
+		}
+	}
+
+	if (!customElements.get("article-directory")) {
+		customElements.define("article-directory", ArticleDirectory);
+	}
+</script>
