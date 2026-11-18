@@ -1,13 +1,22 @@
 ---
+import { Icon } from "astro-icon/components";
 import ArchivePanel from "@components/controls/ArchivePanel.astro";
-import I18nKey from "@i18n/i18nKey";
-import { i18n } from "@i18n/translation";
 import PortfolioLayout from "@layouts/PortfolioLayout.astro";
+import "@/styles/space-taxonomy.css";
+import { url } from "@/utils/url-utils";
 ---
 
-<PortfolioLayout title={i18n(I18nKey.archive)}>
-  <div class="portfolio-existing-page">
-    <h1 class="sr-only">{i18n(I18nKey.archive)}</h1>
-  <ArchivePanel />
-  </div>
+<PortfolioLayout title="文章归档" description="按年份查看网站已经发布的文章。">
+	<section class="space-library-page">
+		<header class="space-library-heading">
+			<div>
+				<h1>文章归档</h1>
+				<p>所有已发布的文章，按年份整理。</p>
+			</div>
+			<a href={url("/posts/")} class="space-library-secondary-link">
+				返回文章列表 <Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" />
+			</a>
+		</header>
+		<ArchivePanel />
+	</section>
 </PortfolioLayout>
