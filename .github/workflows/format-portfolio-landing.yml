@@ -1,0 +1,24 @@
+name: Temporary route refactor formatter
+on:
+  push:
+    paths:
+      - ".github/workflows/format-portfolio-landing.yml"
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: biomejs/setup-biome@v2
+        with:
+          version: "2.5.15"
+      - name: Generate exact formatted files
+        run: |
+          paths=("src/components/portfolio/ProjectLanding.astro" "src/components/portfolio/ProjectShowcase.astro" "src/pages/projects/[slug].astro" "src/utils/portfolio-scenes.ts")
+          biome format --write "${paths[@]}"
+          for path in "${paths[@]}"; do
+            echo "FORMAT_START:$path"
+            cat "$path"
+            echo "FORMAT_END:$path"
+          done
