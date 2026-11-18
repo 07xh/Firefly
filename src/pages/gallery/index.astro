@@ -14,7 +14,11 @@ const title = i18n(I18nKey.gallery);
 const description = i18n(I18nKey.galleryDescription);
 const albums = galleryConfig.albums.map((album) => {
 	const photos = scanAlbumPhotos(album.id);
-	return { ...album, cover: getAlbumCover(album, photos), photoCount: photos.length };
+	return {
+		...album,
+		cover: getAlbumCover(album, photos),
+		photoCount: photos.length,
+	};
 });
 const allTags = [...new Set(albums.flatMap(({ tags }) => tags || []))].sort();
 const demoIds = new Set(["firefly-2026", "encrypted-test"]);
