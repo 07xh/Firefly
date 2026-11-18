@@ -12,6 +12,7 @@ type PublicProject = {
 type SceneCopy = {
   title: string;
   category: string;
+  status: string;
   summary: string;
   story: string;
   points: [string, string][];
@@ -23,100 +24,86 @@ type SceneCopy = {
 
 const copies: Record<string, SceneCopy> = {
   "dorm-os": {
-    title: "校序", category: "ACADEMIC OS · ANDROID / WEB",
-    summary: "围绕个人校园学习、课程、任务与信息整合的应用项目。",
+    title: "校序", category: "ACADEMIC OS · ANDROID / WEB", status: "持续开发 · 真机验收中",
+    summary: "个人学业操作系统，以原生 Android 为主入口，整合课程、任务与校园信息。",
     story: "把分散的校园学习信息整理成清晰可用的个人工作流。原生 Android 是当前主要方向，Web 承担辅助与服务端能力；学校平台的真实数据对接需要逐项验收。",
     points: [["校园学习", "课表、任务与校园信息的统一组织"], ["跨平台架构", "Android 界面与 Cloudflare 服务端协作"], ["数据连接", "学习通、教务和第二课堂接入持续验证"], ["验证优先", "真实账号、实际设备与服务端状态分别验收"]],
     accent: "#a5eee0", visual: "#275e59", glow: "#367a6d",
     image: "https://raw.githubusercontent.com/07xh/dorm-os/main/apps/xiaoxu-android/docs/ui-verify/268/home-393dp-imported.webp",
   },
   "engineering-drawing-study": {
-    title: "绘序 · DraftAI", category: "ENGINEERING / GEOMETRY",
-    summary: "面向工程制图学习的几何推理与动态逐笔作图研究。",
+    title: "绘序 · DraftAI", category: "ENGINEERING / GEOMETRY", status: "持续开发 · 题型闭环验证中",
+    summary: "面向工程制图题图的几何约束推理、投影分析与动态逐笔作图系统。",
     story: "重点研究图形条件确认、几何约束求解、投影对应以及从数学结果生成逐笔作图步骤。复杂题型的能力必须依据可复核的数学和真题证据确认。",
     points: [["几何求解", "从已确认条件构建可验证的几何结果"], ["投影关联", "理解二维投影与三维结构的对应关系"], ["逐笔作图", "研究具有依赖关系的动态作图步骤"], ["学习导向", "提供可解释、可检查的作图过程"]],
     accent: "#bfd7ff", visual: "#344c81", glow: "#455dab",
   },
   StudyFlow: {
-    title: "学序 · StudyFlow", category: "WINDOWS / LEARNING",
-    summary: "多个学习平台共用统一 UI 和桌面应用基础架构。",
-    story: "将知到、雨课堂等不同平台的真实业务模块统一在桌面软件中，保留原模块边界，区分本地播放或执行状态与平台服务端确认的状态。",
-    points: [["统一界面", "紧凑导航与平台无关的公共组件"], ["桌面构建", "React、Tauri 与 Python sidecar 协同"], ["平台适配", "不同学习平台保留各自连接和功能"], ["可核验进度", "将本地事件与服务器状态明确区分"]],
+    title: "学序 · StudyFlow", category: "WINDOWS / LEARNING", status: "持续开发 · 平台验收中",
+    summary: "以 React + Tauri 2 + Python sidecar 构建多学习平台共用的 Windows 桌面客户端。",
+    story: "StudyFlow 将知到、长江雨课堂、学习通和 U 校园接入统一导航与 UI，同时保留各平台原有业务模块和执行边界。界面明确区分本机播放器位置、任务进程状态与服务器已核验进度；尚未通过真实账号验收的平台不会被标记为已完成接入。",
+    points: [["统一桌面架构", "React、Tauri 2 与 Python sidecar 协作"], ["多平台适配", "知到、雨课堂、学习通与 U 校园独立接入"], ["原版能力保留", "通过独立进程承载原平台业务模块"], ["进度可信", "本机事件与服务端确认分层展示"]],
     accent: "#e0caff", visual: "#534272", glow: "#73569a",
   },
   MomoFlow: {
-    title: "MomoFlow", category: "ANDROID / LEARNING",
-    summary: "围绕背单词体验、通知与前台反馈展开的 Android 个人工具。",
-    story: "关注通知交互、今日学习内容读取、离线释义，以及用户明确触发的前台反馈流程。尚未完成的私有接口写回不作为正式能力宣传。",
-    points: [["Android 体验", "围绕学习通知和交互展开设计"], ["单词信息", "研究今日词表与离线释义显示"], ["前台反馈", "区分系统点击和官方记录核验"], ["实际边界", "未经真机确认的效果不标记为已实现"]],
+    title: "MomoFlow", category: "ANDROID / LEARNING", status: "v0.5.5 · 前台反馈实验版",
+    summary: "围绕墨墨背单词的通知、今日词表、离线释义与前台反馈验证开发的 Android 工具。",
+    story: "当前公开版本保留官方只读数据读取与通知功能，并提供用户主动触发的前台反馈实验。Cortex 私有写回协议仍缺少完整请求与服务器回读证据，发送器保持阻断；不会把按钮点击或本地状态冒充服务器成功。",
+    points: [["通知交互", "展示今日词条并提供快捷反馈入口"], ["离线释义", "使用本地词典补充音标与中文释义"], ["前台反馈", "在用户授权并主动触发后进行单次交互尝试"], ["安全门禁", "私有接口写回未验收，当前不发送请求"]],
     accent: "#f5d8a8", visual: "#7f563e", glow: "#9c6946",
   },
   wordflow: {
-    title: "WordFlow", category: "DOCUMENTS / TOOLS",
-    summary: "个人文档处理工具的开发与实践。",
-    story: "关注常见文档任务的组织、处理与工具化。具体功能和可用版本以仓库公开内容为准。",
-    points: [["工具导向", "围绕实际文档处理需求设计"], ["个人项目", "记录功能取舍与实现过程"]],
+    title: "WordFlow", category: "ANDROID / VOCABULARY", status: "v0.5.3 · 离线优先",
+    summary: "离线优先的 Android 通知背词工具，支持本地词库与学习状态备份。",
+    story: "WordFlow 以本地 SQLite 词库为核心，提供词条管理、TXT/CSV 导入导出、通知快捷复习和多种出词模式。它不依赖云端账号，也不宣称实现完整 FSRS；完整学习状态可通过 JSON 备份迁移。",
+    points: [["本地词库", "SQLite 存储，支持添加、搜索、编辑和删除"], ["通知背词", "支持不会、记住、下一词等快捷操作"], ["数据迁移", "TXT/CSV 词库导入导出与完整 JSON 备份恢复"], ["离线优先", "无云端账号与联网权限，学习数据留在本机"]],
     accent: "#c2e2ff", visual: "#335e7a", glow: "#456c8d",
   },
   "reqable-bridge": {
-    title: "Reqable Bridge", category: "NETWORK / DEVELOPMENT",
-    summary: "跨设备查看与管理网络调试数据的个人工具。",
-    story: "探索电脑端网络调试与其他设备之间的数据传递、会话查看和记录导出。真实抓包和操作权限应由使用者自行控制。",
-    points: [["网络诊断", "面向个人的请求与响应数据查看"], ["跨设备", "研究 Windows 与移动端之间的调试工作流"], ["数据管理", "关注记录导出与会话状态"]],
+    title: "Reqable Bridge", category: "NETWORK / DEVELOPMENT", status: "v0.1 · 端到端真机验证待完成",
+    summary: "将 Windows Reqable 已完成的 HTTP 会话转发到 Android 端查看与管理。",
+    story: "Reqable Bridge 通过 Reqable Report Server 接收已完成的 HTTP 会话，再经本地桥接服务转发到 Android 接收端并保存到 SQLite。它不是原始 TCP/IP 抓包镜像；失败上传不会自动重试，端到端热点连接仍需真机验证。",
+    points: [["会话转发", "接收 Reqable Report Server 已完成的 HTTP 会话"], ["跨设备查看", "Android 端解压、解析并本地保存 HAR 数据"], ["远程控制", "手机端可请求 Windows 桥接端启动或暂停抓包"], ["能力边界", "不是原始数据包镜像，端到端连接需现场验收"]],
     accent: "#b0e6e3", visual: "#265a69", glow: "#357b87",
   },
   "kingo-assistant": {
-    title: "KingoAssistant", category: "EDUCATION / WINDOWS",
-    summary: "青果教务选课辅助与客户端研究。",
-    story: "研究真实教务流程、会话管理、查询与状态核验。未验证的线上提交能力不作为已经交付的功能展示。",
-    points: [["平台研究", "整理青果教务的客户端接入问题"], ["状态核验", "区分操作提交和服务端最终结果"], ["可靠性", "关注超时、重试与异常信息"]],
+    title: "KingoAssistant", category: "EDUCATION / WINDOWS", status: "只读监控可用 · 在线提交门禁关闭",
+    summary: "面向华北水利水电大学青果教务系统的 Windows 选课辅助客户端。",
+    story: "项目已具备 Windows 三页导航、选课计划预检、只读监控和独立状态机等开发能力；但线上提交依赖四项证据门禁，目前 0/4 已登记，实时自动提交保持关闭。查询延迟研究也以实测数据为准，不用离线模拟冒充学校端效果。",
+    points: [["Windows 客户端", "选课首页、官网备用入口与工具日志分层"], ["只读监控", "记录请求、解析与总耗时，支持离线诊断"], ["提交安全门禁", "四项证据未齐全前阻止真实写入"], ["状态可靠性", "区分成功、失败与待核验状态"]],
     accent: "#e9d29e", visual: "#6a5d37", glow: "#9a8540",
   },
   "zhidao-assistant": {
-    title: "知到助手", category: "WINDOWS / LEARNING",
-    summary: "知到学习场景下的桌面端个人工具。",
-    story: "作为学序整合前的独立项目，保留原有业务模块和研究历史。当前平台真实读取与进度验证需按实际证据判断。",
-    points: [["桌面实践", "围绕 Windows 客户端开发和打包"], ["平台接口", "研究登录、课程与任务数据读取"], ["集成关系", "与学序项目存在技术沿革"]],
+    title: "知到助手", category: "WINDOWS / LEARNING", status: "v5.2.9 Beta 2 · 独立前身项目",
+    summary: "知到平台的 Windows 桌面学习助手，现有功能与历史版本继续保留。",
+    story: "该项目是 StudyFlow 学序的技术前身。公开版本包含扫码与 Cookie 登录入口、课程读取、原版播放器和任务运行记录；服务端进度核验与本机播放状态分开展示。后续统一 UI 与多平台接入转入 StudyFlow。",
+    points: [["Windows 客户端", "WPF 桌面界面与安装包构建"], ["登录与课程", "提供扫码、Cookie 导入和课程读取入口"], ["进度证据", "区分本机播放位置、任务状态和服务端核验"], ["项目沿革", "后续统一多平台架构由 StudyFlow 承接"]],
     accent: "#bce5c3", visual: "#356653", glow: "#42846b",
   },
-  "campus-toolkit": {
-    title: "Campus Toolkit", category: "CAMPUS / TOOLKIT",
-    summary: "校园数据读取、协议诊断和个人工具链实践。",
-    story: "围绕校园服务的只读数据同步、协议适配和可视化诊断展开。只展示允许公开的工具说明和通用技术内容。",
-    points: [["工具链", "组织校园数据同步的独立工具"], ["协议研究", "整理读取与诊断方法"], ["安全边界", "不公开个人账号或认证材料"]],
-    accent: "#b6e1d2", visual: "#366b67", glow: "#3e887c",
-  },
   "kingo-live": {
-    title: "Kingo Live", category: "EXPERIMENT / RESEARCH",
+    title: "Kingo Live", category: "EXPERIMENT / RESEARCH", status: "实验研究 · 不在首页展示",
     summary: "教务协议客户端及网络延迟研究。",
     story: "将网络流程研究和离线延迟模拟分开记录，公开页面只提供非敏感的项目概览，不暴露任何认证样本、账号或会话数据。",
     points: [["协议实践", "实验性 HTTP 客户端研究"], ["离线分析", "不同延迟与运行条件的模拟"], ["研究记录", "保留可核验的技术结论"]],
     accent: "#dfc3fa", visual: "#554773", glow: "#745c8f",
   },
-  "ncwu-qiangke": {
-    title: "NCWU 选课研究", category: "EXPERIMENT / CAMPUS",
-    summary: "围绕高校教务系统展开的协议与流程研究。",
-    story: "记录公开允许的技术研究、功能边界与实验结论。项目展示不包含个人账号数据，也不暗示未经验证的线上效果。",
-    points: [["流程研究", "梳理教务平台的公开工作流程"], ["调试实践", "实验客户端与错误诊断"], ["研究边界", "不展示敏感请求或凭证"]],
-    accent: "#eac49f", visual: "#685541", glow: "#8b6849",
-  },
   "yuketang-heartbeat": {
-    title: "雨课堂通信诊断", category: "EXPERIMENT / NETWORK",
+    title: "雨课堂通信诊断", category: "EXPERIMENT / NETWORK", status: "诊断实验 · 不在首页展示",
     summary: "个人网络通信稳定性与日志诊断实验。",
     story: "用于分析本地通信异常和响应处理；离线测试结果不等于平台服务器确认，不宣传未验证的课程进度。",
     points: [["本地诊断", "网络异常分类与日志分析"], ["测试边界", "将模拟响应和真实服务端结果分开"]],
     accent: "#a6def1", visual: "#32647b", glow: "#4281a0",
   },
   Firefly: {
-    title: "07xh Space / Firefly", category: "WEBSITE / ENGINEERING",
+    title: "07xh Space / Firefly", category: "WEBSITE / ENGINEERING", status: "当前网站重构中",
     summary: "承载这个个人空间的 Astro 网站工程。",
     story: "在现有 Firefly 技术基础上，逐步演进为以个人介绍和真实作品为中心的动态网站。保留博客与后台能力，重新设计双轴展示体验。",
     points: [["站点架构", "Astro 与 Cloudflare 作为现有技术底座"], ["内容体系", "博客、项目、知识专题的独立组织"]],
     accent: "#bbecd9", visual: "#375e63", glow: "#41847c",
   },
   "CloudFlare-ImgBed": {
-    title: "CloudFlare-ImgBed", category: "OPEN SOURCE / FORK",
-    summary: "公开 Fork 的 Cloudflare 图床与文件托管项目。",
+    title: "CloudFlare-ImgBed", category: "OPEN SOURCE / FORK", status: "Fork · 开源学习实践",
+    summary: "基于上游开源项目的 Cloudflare 图床与文件托管 Fork。",
     story: "该仓库来自其他开源项目，网站明确标注为 Fork 与学习实践，不将上游成果作为个人原创作品宣传。",
     points: [["开源学习", "研究 Cloudflare 文件托管方案"], ["来源说明", "保留原作者及仓库归属信息"]],
     accent: "#f1d8b1", visual: "#7a6044", glow: "#a27c45",
@@ -173,7 +160,7 @@ function paletteFor(index: number): SceneCopy {
   ];
   const p = colors[index % colors.length];
   return {
-    title: "", category: "PUBLIC GITHUB REPOSITORY",
+    title: "", category: "PUBLIC GITHUB REPOSITORY", status: "公开项目 · 以仓库记录为准",
     summary: "公开 GitHub 项目，详细能力与进展以仓库说明为准。",
     story: "这个公开仓库记录了具体开发实践。可以通过下方 GitHub 链接查看其 README、提交和发布记录。",
     points: [["公开仓库", "由 GitHub 公开接口实时验证可见性"], ["开发记录", "通过代码与提交历史了解项目"]],
@@ -201,10 +188,13 @@ function createScene(repo: PublicProject, idx: number) {
   const actions = el("div", "hero-ctas");
   const down = el("button", "space-button primary", "深入了解 ↓");
   down.type = "button";
-  down.addEventListener("click", () => scroll.scrollTo({top: scroll.clientHeight - 70, behavior: "smooth"}));
-  append(actions, down, link("GitHub 仓库", repo.url));
+  down.addEventListener("click", () => scroll.scrollTo({
+    top: scroll.clientHeight - 70,
+    behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+  }));
+  append(actions, down, link("GitHub 仓库", repo.url), link("README", repo.url + "#readme"));
   const info = el("div", "project-meta");
-  const infoFields = [repo.language || "公开项目", repo.fork ? "Fork · 开源实践" : "个人公开仓库", "GitHub 实时验证"];
+  const infoFields = [repo.language || "语言未标注", repo.fork ? "Fork · 来源已标注" : "个人公开仓库", copy.status];
   for (const field of infoFields) append(info, el("span", "", field));
   append(copyPanel, eyebrow, h, p, actions, info);
 
@@ -215,6 +205,10 @@ function createScene(repo: PublicProject, idx: number) {
     image.alt = titleText + " 仓库中的公开界面截图";
     image.loading = "lazy";
     image.referrerPolicy = "no-referrer";
+    image.addEventListener("error", () => {
+      visual.classList.remove("has-photo");
+      image.remove();
+    }, { once: true });
     visual.appendChild(image);
   }
   append(visual, el("span", "visual-wordmark", titleText));
@@ -235,9 +229,9 @@ function createScene(repo: PublicProject, idx: number) {
   const stats = el("div", "project-stats");
   const date = repo.updatedAt && !Number.isNaN(Date.parse(repo.updatedAt)) ? new Date(repo.updatedAt).toLocaleDateString("zh-CN") : "未提供";
   const values = [
-    [repo.language || "—", "主要语言"],
+    [String(repo.stars), "GitHub Stars"],
     [date, "最近代码更新"],
-    [repo.fork ? "Fork" : "Original", "仓库类型"],
+    [repo.language || "未标注", repo.fork ? "主要语言 · Fork" : "主要语言"],
   ];
   for (const [value, label] of values) {
     const stat = el("div");
@@ -285,7 +279,9 @@ function navigate(index: number, updateUrl = true) {
     const url = new URL(window.location.href);
     if (project === "home") url.searchParams.delete("project");
     else url.searchParams.set("project", project);
-    window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+    const nextUrl = url.pathname + url.search + url.hash;
+    const currentUrl = window.location.pathname + window.location.search + window.location.hash;
+    if (nextUrl !== currentUrl) window.history.pushState({ project }, "", nextUrl);
   }
 }
 function goToId(id: string, update = true) {
@@ -299,6 +295,7 @@ app.addEventListener("click", event => {
   else if (target.closest("[data-next]")) navigate(active + 1);
   else if (target.closest("[data-open-index]")) modal.showModal();
   else if (target.closest("#close-index")) modal.close();
+  else if (target === modal) modal.close();
   else {
     const b = target.closest<HTMLElement>("[data-go-project]");
     if (b?.dataset.goProject) { goToId(b.dataset.goProject); modal.close(); }
@@ -315,6 +312,11 @@ document.addEventListener("keydown", event => {
 const stage = document.getElementById("main");
 let touchStart: {x:number;y:number} | null = null;
 stage?.addEventListener("touchstart", e => {
+  const target = e.target as Element;
+  if (target.closest("a, button, input, textarea, select, [role=button]")) {
+    touchStart = null;
+    return;
+  }
   const t = e.changedTouches[0]; if (t) touchStart = {x:t.screenX, y:t.screenY};
 }, {passive:true});
 stage?.addEventListener("touchend", e => {
@@ -324,6 +326,7 @@ stage?.addEventListener("touchend", e => {
   if (Math.abs(dx) >= 70 && Math.abs(dx) > Math.abs(dy)*1.4) navigate(active + (dx < 0 ? 1 : -1));
   touchStart = null;
 }, {passive:true});
+stage?.addEventListener("touchcancel", () => { touchStart = null; }, {passive:true});
 stage?.addEventListener("wheel", e => {
   if (Math.abs(e.deltaX) < 60 || Math.abs(e.deltaX) <= Math.abs(e.deltaY)*1.3 || slideLocked) return;
   slideLocked = true;
