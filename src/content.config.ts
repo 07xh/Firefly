@@ -43,6 +43,8 @@ type ProjectLink = {
 };
 
 type ProjectData = {
+	subtitle: string;
+	repository: string;
 	title: string;
 	published: Date;
 	draft: boolean;
@@ -111,6 +113,12 @@ const projectsCollection: ContentCollection<ProjectData> = defineCollection({
 	loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/projects" }),
 	schema: z.object({
 		title: z.string(),
+		subtitle: z.string().default(""),
+		repository: z
+			.string()
+			.regex(/^[\w.-]+\/[\w.-]+$/)
+			.optional()
+			.default(""),
 		published: z.date(),
 		draft: z.boolean().optional().default(false),
 		order: z.number().optional(),

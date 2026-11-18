@@ -9,7 +9,7 @@ export interface SessionKV {
 }
 
 export const SESSION_COOKIE = "__Host-firefly_session";
-export const SESSION_TTL_SECONDS = 8 * 60 * 60;
+export const SESSION_TTL_SECONDS: number = 8 * 60 * 60;
 
 type StoredSession = {
 	kind: "firefly-admin-session";
@@ -98,7 +98,7 @@ export async function validateAdminSession(
 
 export function sessionCookie(
 	token: string,
-	maxAge = SESSION_TTL_SECONDS,
+	maxAge: number = SESSION_TTL_SECONDS,
 ): string {
 	return [
 		SESSION_COOKIE + "=" + token,

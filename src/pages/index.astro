@@ -1,0 +1,22 @@
+---
+import { Icon } from "astro-icon/components";
+import { siteConfig } from "@/config";
+import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
+import { url } from "@/utils/url-utils";
+
+export const prerender = true;
+---
+
+<PortfolioLayout title="个人中心">
+	<section class="portfolio-home-intro" aria-labelledby="home-title">
+		<div>
+			<p class="portfolio-label">07xh · 个人中心</p>
+			<h1 id="home-title">小慌的个人站</h1>
+			<p class="portfolio-home-lead">我在读电气工程及其自动化。这里收录我做的软件项目、编程笔记和工程制图专题。</p>
+			<div class="portfolio-actions">
+				{siteConfig.pages.projects && <a class="portfolio-button portfolio-button-solid" href={url("/projects/")}>浏览项目 <Icon name="material-symbols:arrow-forward-rounded" /></a>}
+				<a class="portfolio-button portfolio-button-secondary" href={url("/posts/")}>阅读博客</a>
+			</div>
+		</div>
+	</section>
+</PortfolioLayout>

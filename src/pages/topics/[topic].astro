@@ -1,0 +1,37 @@
+---
+import { Icon } from "astro-icon/components";
+import PostRows from "@/components/portfolio/PostRows.astro";
+import { portfolioTopics } from "@/config/portfolioConfig";
+import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
+import { getSortedPostsList } from "@/utils/content-utils";
+import { url } from "@/utils/url-utils";
+
+export const prerender = true;
+
+export function getStaticPaths() {
+	return portfolioTopics.map((topic) => ({
+		params: { topic: topic.id },
+		props: { topic },
+	}));
+}
+
+const { topic } = Astro.props;
+const posts = (await getSortedPostsList()).filter(
+	({ data }) => data.series === topic.series,
+);
+posts.sort(
+	(a, b) =>
+		(a.data.seriesOrder ?? Number.POSITIVE_INFINITY) -
+			(b.data.seriesOrder ?? Number.POSITIVE_INFINITY) ||
+		a.data.published.getTime() - b.data.published.getTime(),
+);
+---
+
+<PortfolioLayout title={topic.title} description={topic.description}>
+	<a class="portfolio-back" href={url("/topics/")}><Icon name="material-symbols:arrow-back-rounded" /> 知识专题</a>
+	<header class="portfolio-page-intro portfolio-page-intro-from-back">
+		<h1>{topic.title}</h1>
+		<p>{topic.description}</p>
+	</header>
+	<PostRows posts={posts} />
+</PortfolioLayout>

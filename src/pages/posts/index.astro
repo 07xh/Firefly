@@ -1,0 +1,31 @@
+---
+import { Icon } from "astro-icon/components";
+import PostRows from "@/components/portfolio/PostRows.astro";
+import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
+import { getSortedPostsList } from "@/utils/content-utils";
+import { getCategoryUrl, url } from "@/utils/url-utils";
+
+export const prerender = true;
+
+const posts = await getSortedPostsList();
+const categories = [
+	...new Set(
+		posts.flatMap(({ data }) => (data.category ? [data.category] : [])),
+	),
+];
+---
+
+<PortfolioLayout title="技术文章" description="浏览 Python、工程制图及其他技术笔记。">
+	<header class="portfolio-page-intro">
+		<h1>技术文章</h1>
+		<p>编程基础、工程制图与学习实践笔记。</p>
+		<div class="portfolio-actions">
+			<a class="portfolio-button portfolio-button-solid" href={url("/search/")}><Icon name="material-symbols:search-rounded" /> 搜索文章</a>
+			<a class="portfolio-button portfolio-button-secondary" href={url("/archive/")}>查看归档 <Icon name="material-symbols:arrow-outward-rounded" /></a>
+		</div>
+	</header>
+	<nav class="portfolio-directory-nav" aria-label="文章分类">
+		{categories.map((category) => <a href={getCategoryUrl(category)}>{category}</a>)}
+	</nav>
+	<PostRows posts={posts} />
+</PortfolioLayout>

@@ -1,205 +1,207 @@
 ---
 import { render } from "astro:content";
-import Markdown from "@components/common/Markdown.astro";
 import { Icon } from "astro-icon/components";
-import CoverImage from "@/components/common/CoverImage.astro";
+import Markdown from "@/components/common/Markdown.astro";
+import ProjectVisual from "@/components/portfolio/ProjectVisual.astro";
 import { siteConfig } from "@/config";
-import I18nKey from "@/i18n/i18nKey";
-import { i18n } from "@/i18n/translation";
-import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import { featuredProjectIds } from "@/config/portfolioConfig";
+import githubData from "@/constants/github-card-data.json";
+import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
 import { getSortedProjects } from "@/utils/content-utils";
-import { formatDateToYYYYMMDD } from "@/utils/date-utils";
 import {
 	getProjectStatusMeta,
-	resolveLinkIcon,
 	resolveProjectImage,
 	resolveProjectImageAbsolute,
 } from "@/utils/projects-utils";
-import {
-	getFileDirFromPath,
-	removeFileExtension,
-	url,
-} from "@/utils/url-utils";
+import { removeFileExtension, url } from "@/utils/url-utils";
 
 export const prerender = true;
 
-// 检查页面是否启用
-if (!siteConfig.pages.projects) {
-	return Astro.redirect("/404/");
-}
-
 export async function getStaticPaths() {
 	const projects = await getSortedProjects();
-	return projects.map((entry) => ({
-		params: { slug: removeFileExtension(entry.id) },
-		props: { entry },
-	}));
+	const pages = projects
+		.filter(({ data }) => data.repository)
+		.map(({ id, data }) => ({
+			slug: removeFileExtension(id),
+			title: data.title,
+		}));
+	const ordered = [
+		...featuredProjectIds.flatMap((id) =>
+			pages.filter(({ slug }) => slug === id),
+		),
+		...pages.filter(({ slug }) => !featuredProjectIds.includes(slug)),
+	];
+	return projects.map((entry) => {
+		const slug = removeFileExtension(entry.id);
+		const index = ordered.findIndex((page) => page.slug === slug);
+		return {
+			params: { slug },
+			props: {
+				entry,
+				position: index + 1,
+				total: ordered.length,
+				previous: index > 0 ? ordered[index - 1] : null,
+				next: index >= 0 ? (ordered[index + 1] ?? null) : null,
+			},
+		};
+	});
 }
 
-const { entry } = Astro.props;
+if (!siteConfig.pages.projects) return Astro.redirect(url("/404/"));
+
+const { entry, previous, next, position, total } = Astro.props;
 const { Content, headings } = await render(entry);
-
-const { title, description, published, tags, link, status } = entry.data;
-
-// OG 元数据用绝对 URL；页面内封面由 <CoverImage> 用原始 src + basePath 解析（同文章页）
-const coverOg = await resolveProjectImageAbsolute(
+const { title, subtitle, description, tags, status, link, repository } =
+	entry.data;
+const cover = await resolveProjectImageAbsolute(
 	entry.data.image,
 	entry.filePath,
 );
-// 灯箱用的同源可加载 URL（本地调试不指向远程域名）
-const coverLightboxSrc = await resolveProjectImage(
-	entry.data.image,
-	entry.filePath,
-);
-// 封面 basePath：封面本体走 <CoverImage>（astro:assets 才会真正产出资源）
-const coverBasePath = getFileDirFromPath(entry.filePath || "");
-
-// 状态元数据（标准 key → 本地化 + 配色）
-const statusMeta = status ? getProjectStatusMeta(status) : null;
-
-// 标签：详情页完整显示所有标签（不折叠成 +N）
-const visibleTags = tags || [];
+const zoomImage = await resolveProjectImage(entry.data.image, entry.filePath);
+interface RepositoryMetadata {
+	language?: string | null;
+	license?: string | null;
+	stars?: number;
+	pushedAt?: string;
+	checkedAt?: string;
+	release?: { tag: string; url: string; prerelease: boolean } | null;
+}
+const github = (githubData as Record<string, RepositoryMetadata>)[
+	repository.toLowerCase()
+];
+const sections = headings.filter(({ depth }) => depth === 2);
 ---
 
-<MainGridLayout
-  title={title}
-  description={description || title}
-  lang={entry.data.lang || undefined}
-  setOGTypeArticle={true}
-  headings={headings}
-  postCoverImage={coverOg}
->
-  <div class="flex w-full rounded-(--radius-large) overflow-hidden relative mb-4">
-    <div id="post-container" class="card-base z-10 px-6 md:px-9 pt-6 pb-4 relative w-full">
-      <!-- 返回列表 -->
-      <a
-        href={url("/projects/")}
-        class="inline-flex items-center gap-1.5 text-sm text-(--primary) hover:underline mb-4"
-      >
-        <Icon name="material-symbols:arrow-back" class="text-base" />
-        {i18n(I18nKey.projectBack)}
-      </a>
+<PortfolioLayout title={title} description={description || title} lang={entry.data.lang || undefined} setOGTypeArticle={true} postCoverImage={cover}>
+	<project-page class="portfolio-project-page">
+	<nav class="portfolio-project-switch" aria-label="项目切换">
+		{previous ? <a href={url(`/projects/${previous.slug}/`)} data-previous rel="prev" aria-label={`上一个项目：${previous.title}`}><Icon name="material-symbols:arrow-back-rounded" /> <span>{previous.title}</span></a> : <span></span>}
+		<a href={url("/projects/")} class="portfolio-project-position">全部项目 {position > 0 && <small>{position} / {total}</small>}</a>
+		{next ? <a href={url(`/projects/${next.slug}/`)} data-next rel="next" aria-label={`下一个项目：${next.title}`}><span>{next.title}</span> <Icon name="material-symbols:arrow-forward-rounded" /></a> : <span></span>}
+	</nav>
+	<header class="portfolio-detail-hero">
+		<div class="portfolio-detail-heading">
+			{status && <p class="portfolio-label">{getProjectStatusMeta(status).label}</p>}
+			<h1 data-pagefind-meta="title">{title}</h1>
+			{subtitle && <p class="portfolio-detail-subtitle">{subtitle}</p>}
+			<p>{description}</p>
+			{link.length > 0 && (
+				<div class="portfolio-actions">
+					{link.map(({ label, value }, index) => (
+						<a href={value} class:list={["portfolio-button", index === 0 ? "portfolio-button-solid" : "portfolio-button-secondary"]}>
+							{label === "GitHub" && <Icon name="fa7-brands:github" />}
+							{label} <Icon name="material-symbols:arrow-outward-rounded" />
+						</a>
+					))}
+				</div>
+			)}
+			{sections.length > 0 && <a class="portfolio-text-link portfolio-detail-more" href="#project-details">向下看项目详情 <Icon name="material-symbols:arrow-downward-rounded" /></a>}
+		</div>
+		<ProjectVisual project={entry} priority />
+	</header>
+	{(sections.length > 0 || repository) && (
+		<nav class="portfolio-detail-nav" aria-label="项目页章节">
+			{sections.map(({ slug, text }) => <a href={`#${slug}`}>{text}</a>)}
+			{repository && <a href="#project-repository">仓库与版本</a>}
+			{zoomImage && <a href={zoomImage} data-fancybox="project-cover" data-type="image">查看大图</a>}
+		</nav>
+	)}
+	<div class="portfolio-detail-body" id="project-details">
+		<div data-pagefind-body>
+			<Markdown class="markdown-content"><Content /></Markdown>
+		</div>
+		{(repository || tags.length > 0) && (
+			<aside class="portfolio-repo" id="project-repository">
+				<h2>{repository ? "仓库与版本" : "技术栈"}</h2>
+				{repository && <a class="portfolio-text-link" href={`https://github.com/${repository}`}>{repository} <Icon name="material-symbols:arrow-outward-rounded" /></a>}
+				{tags.length > 0 && <ul class="portfolio-tags" aria-label="技术栈">{tags.map((tag) => <li>{tag}</li>)}</ul>}
+				{github && (
+					<dl>
+						{github.language && <div><dt>主要语言</dt><dd>{github.language}</dd></div>}
+						{github.license && github.license !== "NOASSERTION" && <div><dt>许可证</dt><dd>{github.license}</dd></div>}
+						{github.stars !== undefined && <div><dt>Stars</dt><dd>{github.stars.toLocaleString("zh-CN")}</dd></div>}
+						{github.pushedAt && <div><dt>最近推送</dt><dd><time datetime={github.pushedAt}>{github.pushedAt.slice(0, 10)}</time></dd></div>}
+						{github.release && <div><dt>{github.release.prerelease ? "预发布" : "最近发布"}</dt><dd><a href={github.release.url}>{github.release.tag} <Icon name="material-symbols:arrow-outward-rounded" /></a></dd></div>}
+					</dl>
+				)}
+				{github?.checkedAt && <p class="portfolio-sync">仓库数据同步于 <time datetime={github.checkedAt}>{github.checkedAt.slice(0, 10)}</time></p>}
+			</aside>
+		)}
+	</div>
+	</project-page>
+</PortfolioLayout>
 
-      <!-- 项目头部：封面在上，信息在下（单栏） -->
-      <div class="mb-6">
-        <!-- 状态（名称前）+ 名称 -->
-        <div class="flex items-center gap-3 flex-wrap">
-          <div
-            data-pagefind-weight="10"
-            data-pagefind-meta="title"
-            class="text-3xl md:text-[2.25rem]/[2.75rem] font-bold leading-tight text-neutral-900 dark:text-neutral-100"
-          >
-            {title}
-          </div>
-          {statusMeta && (
-            <span class={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-lg ${statusMeta.className}`}>
-              {statusMeta.icon && <Icon name={statusMeta.icon} class="text-xl" />}
-              {statusMeta.label}
-            </span>
-          )}
-        </div>
+<script>
+	class ProjectPage extends HTMLElement {
+		private gesture: { id: number; x: number; y: number } | null = null;
+		private wheelDistance = 0;
+		private wheelTime = 0;
+		private navigating = false;
 
-        <!-- 日期 + 标签-->
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3">
-          <div class="flex items-center">
-            <div class="meta-icon">
-              <Icon name="material-symbols:calendar-today-outline-rounded" class="text-xl" />
-            </div>
-            <time datetime={published.toISOString()} class="text-50 text-sm font-medium">
-              {formatDateToYYYYMMDD(published)}
-            </time>
-          </div>
-          {visibleTags.length > 0 && (
-            <div class="flex items-center">
-              <div class="meta-icon">
-                <Icon name="material-symbols:tag-rounded" class="text-xl" />
-              </div>
-              <span class="flex flex-wrap items-center">
-                {visibleTags.map((tag, i) => (
-                  <span class="flex items-center">
-                    {i !== 0 && (
-                      <span class="mx-1.5 text-sm font-medium text-(--meta-divider)">/</span>
-                    )}
-                    <span class="text-50 text-sm font-medium whitespace-nowrap">{tag}</span>
-                  </span>
-                ))}
-              </span>
-            </div>
-          )}
-        </div>
+		connectedCallback() {
+			this.addEventListener("pointerdown", this.start);
+			this.addEventListener("pointerup", this.end);
+			this.addEventListener("pointercancel", this.cancel);
+			this.addEventListener("wheel", this.onWheel, { passive: false });
+			document.addEventListener("keydown", this.onKey);
+			window.addEventListener("pageshow", this.resetNavigation);
+		}
 
-        {description && (
-          <p class="mt-2 text-neutral-600 dark:text-neutral-400 leading-relaxed line-clamp-4">
-            {description}
-          </p>
-        )}
+		disconnectedCallback() {
+			this.removeEventListener("pointerdown", this.start);
+			this.removeEventListener("pointerup", this.end);
+			this.removeEventListener("pointercancel", this.cancel);
+			this.removeEventListener("wheel", this.onWheel);
+			document.removeEventListener("keydown", this.onKey);
+			window.removeEventListener("pageshow", this.resetNavigation);
+		}
 
-        <!-- 外链按钮-->
-        {link.length > 0 && (
-          <div class="flex flex-wrap items-center gap-2.5 mt-4">
-            {link.map((r, i) => {
-              const resolvedIcon = resolveLinkIcon(r.icon, r.label);
-              const isFirst = i === 0;
-              return (
-                <a
-                  href={r.value}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class:list={[
-                    "inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors",
-                    isFirst
-                      ? "bg-(--primary) text-white dark:text-black/70 hover:bg-(--primary)/80"
-                      : "border border-(--primary)/40 text-(--primary) hover:bg-(--primary)/10",
-                  ]}
-                >
-                  {resolvedIcon.kind === "icon" && <Icon name={resolvedIcon.value} class="text-base" />}
-                  {resolvedIcon.kind === "image" && (
-                    <img
-                      src={resolvedIcon.value}
-                      alt=""
-                      class="w-4 h-4 object-contain"
-                      loading="lazy"
-                      decoding="async"
-                    />
-                  )}
-                  {resolvedIcon.kind === "letter" && (
-                    <span class="text-sm font-bold">{resolvedIcon.value}</span>
-                  )}
-                  {r.label}
-                </a>
-              );
-            })}
-          </div>
-        )}
+		private readonly interactive = "a,button,input,select,textarea,summary,[contenteditable],[role=dialog],pre,table";
+		private canMove(event: Event) {
+			return !(event.target instanceof Element && event.target.closest(this.interactive));
+		}
 
-        <!-- 封面（在元数据与链接下方，完整显示、灯箱放大；未配置则不显示） -->
-        {entry.data.image && (
-          <div class="mt-4">
-            <div
-              data-fancybox="project-cover"
-              data-src={coverLightboxSrc}
-              data-type="image"
-              class="relative block w-full cursor-pointer overflow-hidden rounded-xl"
-            >
-              <CoverImage
-                src={entry.data.image}
-                basePath={coverBasePath}
-                alt={title}
-                class="w-full"
-                preview={false}
-                naturalHeight
-              />
-            </div>
-          </div>
-        )}
-      </div>
+		private move(forward: boolean) {
+			const link = this.querySelector<HTMLAnchorElement>(forward ? "[data-next]" : "[data-previous]");
+			if (!link) return false;
+			if (!this.navigating) {
+				this.navigating = true;
+				window.location.assign(link.href);
+			}
+			return true;
+		}
 
-      <!-- README 正文 -->
-      <div data-pagefind-body>
-        <Markdown class="mb-6 markdown-content">
-          <Content />
-        </Markdown>
-      </div>
-    </div>
-  </div>
-</MainGridLayout>
+		private start = (event: PointerEvent) => {
+			if (!event.isPrimary || event.pointerType === "mouse" || !this.canMove(event)) return;
+			this.gesture = { id: event.pointerId, x: event.clientX, y: event.clientY };
+		};
+
+		private end = (event: PointerEvent) => {
+			const start = this.gesture;
+			this.cancel();
+			if (!start || start.id !== event.pointerId) return;
+			const dx = event.clientX - start.x;
+			const dy = event.clientY - start.y;
+			if (Math.abs(dx) > 65 && Math.abs(dx) > Math.abs(dy) * 1.6) this.move(dx < 0);
+		};
+
+		private cancel = () => { this.gesture = null; };
+
+		private resetNavigation = () => { this.navigating = false; this.wheelDistance = 0; };
+
+		private onWheel = (event: WheelEvent) => {
+			if (event.ctrlKey || !this.canMove(event) || Math.abs(event.deltaX) < Math.abs(event.deltaY) * 1.6 || !event.deltaX) return;
+			if (event.timeStamp - this.wheelTime > 180 || this.wheelDistance * event.deltaX < 0) this.wheelDistance = 0;
+			this.wheelTime = event.timeStamp;
+			this.wheelDistance += event.deltaX * (event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : 1);
+			if (Math.abs(this.wheelDistance) > 90 && this.move(this.wheelDistance > 0)) event.preventDefault();
+		};
+
+		private onKey = (event: KeyboardEvent) => {
+			if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || !this.canMove(event) || window.getSelection()?.toString()) return;
+			if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && this.move(event.key === "ArrowRight")) event.preventDefault();
+		};
+	}
+
+	if (!customElements.get("project-page")) customElements.define("project-page", ProjectPage);
+</script>

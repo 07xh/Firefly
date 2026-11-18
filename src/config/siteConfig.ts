@@ -60,23 +60,23 @@ export const siteConfig: SiteConfig = {
 	title: "小慌",
 
 	// 站点副标题
-	subtitle: "小慌的个人博客",
+	subtitle: "个人中心",
 
 	// 站点 URL
 	site_url: "https://0701000.xyz",
 
 	// 站点描述
 	description:
-		"小慌的个人博客,分享技术、ACGN、生活等内容。使用 Astro 构建的静态博客，支持多种功能和自定义配置。",
+		"小慌（07xh）的个人网站，收录软件作品、Python 与工程制图专题，以及开发和学习笔记。",
 	// 站点关键词
 	keywords: [
 		"xiaohuang",
 		"Fuwari",
 		"Astro",
 		"ACGN",
-		"博客",
+		"个人网站",
+		"软件作品",
 		"技术博客",
-		"静态博客",
 	],
 
 	// 主题色

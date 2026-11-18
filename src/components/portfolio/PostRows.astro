@@ -1,0 +1,27 @@
+---
+import { Icon } from "astro-icon/components";
+import type { PostForList } from "@/utils/content-utils";
+import { formatDateToYYYYMMDD } from "@/utils/date-utils";
+import { getPostUrlBySlug } from "@/utils/url-utils";
+
+interface Props {
+	posts: PostForList[];
+}
+
+const { posts } = Astro.props;
+---
+
+<ul class="portfolio-post-list">
+	{posts.map(({ id, data }) => (
+		<li>
+			<a href={getPostUrlBySlug(id)} class="portfolio-post-row">
+				<span class="portfolio-post-main">
+					{data.category && <span class="portfolio-label">{data.category}</span>}
+					<strong>{data.title}</strong>
+				</span>
+				<time datetime={data.published.toISOString()}>{formatDateToYYYYMMDD(data.published)}</time>
+				<Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" />
+			</a>
+		</li>
+	))}
+</ul>

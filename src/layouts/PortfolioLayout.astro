@@ -1,0 +1,126 @@
+---
+import { Icon } from "astro-icon/components";
+import { siteConfig } from "@/config";
+import siteSettings from "@/data/settings.json";
+import { url } from "@/utils/url-utils";
+import Layout from "./Layout.astro";
+import "@/styles/portfolio.css";
+import "@/styles/expressive-code.css";
+
+interface Props {
+	title?: string;
+	description?: string;
+	lang?: string;
+	setOGTypeArticle?: boolean;
+	postSlug?: string;
+	postCoverImage?: string;
+	ogImageWidth?: number;
+	ogImageHeight?: number;
+	ogImageAlt?: string;
+}
+
+const pathname = Astro.url.pathname.replace(/\/$/, "") || "/";
+const links = [
+	{ label: "首页", path: "/", enabled: true },
+	{ label: "项目作品", path: "/projects/", enabled: siteConfig.pages.projects },
+	{ label: "博客", path: "/posts/", enabled: true },
+	{ label: "知识专题", path: "/topics/", enabled: true },
+	{
+		label: "关于",
+		path: "/about/",
+		enabled: siteSettings.showAbout && siteSettings.showNavAbout,
+	},
+].filter(({ enabled }) => enabled);
+const isActive = (path: string) => {
+	const target = url(path).replace(/\/$/, "") || "/";
+	return (
+		pathname === target || (target !== "/" && pathname.startsWith(target + "/"))
+	);
+};
+---
+
+<Layout {...Astro.props}>
+	<slot slot="head" name="head" />
+	<div class="portfolio" data-no-swup id="portfolio">
+		<a class="portfolio-skip" href="#portfolio-main">跳到主要内容</a>
+		<header class="portfolio-header">
+			<portfolio-nav class="portfolio-wrap portfolio-header-inner">
+				<a class="portfolio-brand" href={url("/")}>
+					<span class="portfolio-brand-mark" aria-hidden="true"><Icon name="material-symbols:code" /></span>
+					<span>{siteConfig.title} <small>07xh</small></span>
+				</a>
+				<nav id="portfolio-nav-links" class="portfolio-nav-links" aria-label="主导航">
+					{links.map(({ path, label }) => (
+						<a href={url(path)} aria-current={isActive(path) ? "page" : undefined}>{label}</a>
+					))}
+				</nav>
+				<div class="portfolio-header-actions">
+					<a class="portfolio-icon-button" href={url("/search/")} aria-label="搜索文章" title="搜索文章">
+						<Icon name="material-symbols:search-rounded" />
+					</a>
+					<button class="portfolio-icon-button" type="button" data-theme-toggle aria-label="切换深浅色主题" title="切换深浅色主题">
+						<Icon name="material-symbols:dark-mode-outline-rounded" class="portfolio-theme-moon" />
+						<Icon name="material-symbols:light-mode-outline-rounded" class="portfolio-theme-sun" />
+					</button>
+					<a class="portfolio-github" aria-label="07xh 的 GitHub" href="https://github.com/07xh">
+						<Icon name="fa7-brands:github" /> <span>GitHub</span>
+					</a>
+					<button class="portfolio-icon-button portfolio-menu" type="button" data-menu-toggle aria-controls="portfolio-nav-links" aria-expanded="false" aria-label="展开导航">
+						<Icon name="material-symbols:menu-rounded" />
+					</button>
+				</div>
+			</portfolio-nav>
+		</header>
+		<main id="portfolio-main" class="portfolio-wrap" tabindex="-1">
+			<slot />
+		</main>
+		<footer class="portfolio-wrap portfolio-footer">
+			<a class="portfolio-footer-brand" href={url("/")}>{siteConfig.title} <small>07xh</small></a>
+			<nav aria-label="更多入口">
+				{siteConfig.pages.dynamic && <a href={url("/dynamic/")}>动态</a>}
+				<a href={url("/archive/")}>归档</a>
+				<a href={url("/rss.xml")}>RSS</a>
+				<a href="https://github.com/07xh/Firefly">站点源码 <Icon name="material-symbols:arrow-outward-rounded" /></a>
+			</nav>
+		</footer>
+	</div>
+</Layout>
+
+<script>
+	import { setTheme } from "@/utils/setting-utils";
+
+	class PortfolioNav extends HTMLElement {
+		connectedCallback() {
+			this.addEventListener("click", this.onClick);
+			this.addEventListener("keydown", this.onKeydown);
+		}
+
+		disconnectedCallback() {
+			this.removeEventListener("click", this.onClick);
+			this.removeEventListener("keydown", this.onKeydown);
+		}
+
+		private setMenu(open: boolean) {
+			const toggle = this.querySelector("[data-menu-toggle]");
+			this.toggleAttribute("data-open", open);
+			toggle?.setAttribute("aria-expanded", String(open));
+			toggle?.setAttribute("aria-label", open ? "收起导航" : "展开导航");
+		}
+
+		private onClick = (event: MouseEvent) => {
+			if (!(event.target instanceof Element)) return;
+			if (event.target.closest("[data-menu-toggle]")) this.setMenu(!this.hasAttribute("data-open"));
+			if (event.target.closest("[data-theme-toggle]")) {
+				setTheme(document.documentElement.classList.contains("dark") ? "light" : "dark");
+			}
+		};
+
+		private onKeydown = (event: KeyboardEvent) => {
+			if (event.key !== "Escape" || !this.hasAttribute("data-open")) return;
+			this.setMenu(false);
+			this.querySelector<HTMLButtonElement>("[data-menu-toggle]")?.focus();
+		};
+	}
+
+	if (!customElements.get("portfolio-nav")) customElements.define("portfolio-nav", PortfolioNav);
+</script>
