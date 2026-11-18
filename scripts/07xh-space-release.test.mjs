@@ -24,10 +24,21 @@ test("homepage introduces only the site and supports horizontal gesture into the
   assert.match(home, /ArrowRight/);
   assert.match(home, /Math.abs\(dx\) > Math.abs\(dy\)/);
 });
-test("first project can swipe back to the site introduction and other project pages remain connected", () => {
-  assert.match(project, /position === 1/);
-  assert.match(project, /data-previous rel="prev" aria-label="返回 07xh Space"/);
-  assert.match(project, /data-next rel="next"/);
+test("project showcase uses cyclic scene navigation and full-screen preview", async () => {
+  const css = await readFile(new URL("src/styles/space-project-showcase.css", root), "utf8");
+  assert.match(project, /ordered\[\(index - 1 \+ ordered\.length\) % ordered\.length\]/);
+  assert.match(project, /ordered\[\(index \+ 1\) % ordered\.length\]/);
+  assert.match(project, /data-previous/);
+  assert.match(project, /data-next/);
+  assert.match(project, /space-project-hero/);
+  assert.match(project, /space-project-image-wrap/);
+  assert.match(project, /space-project-placeholder/);
+  assert.match(project, /id="project-details"/);
+  assert.match(project, /data-pagefind-body/);
+  assert.match(css, /\.space-project-switch\s*\{\s*position: fixed;/);
+  assert.match(css, /inset: 50% 0 auto/);
+  assert.match(css, /grid-template-columns: minmax\(0, 0\.88fr\) minmax\(0, 1\.12fr\)/);
+  assert.match(css, /@media \(max-width: 760px\)/);
 });
 
 test("site uses a single coherent rocket mark and a light spaceship illustration", async () => {
