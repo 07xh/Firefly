@@ -58,6 +58,8 @@ let currentPage = $state(1);
 let loading = $state(true);
 let failed = $state(false);
 let templateReady = $state(false);
+let filterActive = $state(false);
+let loadEntries: (() => Promise<void>) | null = null;
 let list: HTMLElement;
 let template: HTMLTemplateElement | null = null;
 let searchInput: HTMLInputElement | null = null;
@@ -86,11 +88,12 @@ function updateUrl(clearHash = false) {
 function applyFilters(resetPage = true) {
 	const query = searchInput?.value.toLocaleLowerCase().trim() || "";
 	const year = yearSelect?.value || "all";
+	filterActive = Boolean(query) || year !== "all";
 	filtered = entries.filter(
 		(entry) =>
 			(year === "all" ||
 				String(new Date(entry.published).getUTCFullYear()) === year) &&
-			(!query || entry.searchText.includes(query)),
+			(!query || (entry.searchText || "").toLocaleLowerCase().includes(query)),
 	);
 	if (resetPage) currentPage = 1;
 	const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
@@ -109,7 +112,7 @@ function populateYears() {
 		...new Set(
 			entries.map((entry) => new Date(entry.published).getUTCFullYear()),
 		),
-	];
+	].sort((a, b) => b - a);
 	for (const year of years) {
 		const option = document.createElement("option");
 		option.value = String(year);
@@ -284,6 +287,8 @@ onMount(() => {
 	yearSelect?.addEventListener("change", filter);
 
 	const load = async () => {
+		loading = true;
+		failed = false;
 		try {
 			if (memos?.enable) {
 				entries = await fetchMemos(memos.apiUrl, { parent: memos.parent });
@@ -317,11 +322,13 @@ onMount(() => {
 			loading = false;
 		}
 	};
+	loadEntries = load;
 	void load();
 
 	return () => {
 		searchInput?.removeEventListener("input", filter);
 		yearSelect?.removeEventListener("change", filter);
+		loadEntries = null;
 	};
 });
 </script>
@@ -331,7 +338,12 @@ onMount(() => {
 		<span class="page-loading-spinner" aria-hidden="true"></span>
 		<p>{loadingText}</p>
 	</div>
-{:else if failed || entries.length === 0}
+{:else if failed}
+	<div class="page-empty space-dynamic-error card-base" role="alert">
+		<p>动态加载失败，请检查网络连接后重试。</p>
+		<button class="space-dynamic-retry" type="button" onclick={() => void loadEntries?.()}>重新加载</button>
+	</div>
+{:else if entries.length === 0}
 	<div class="page-empty card-base">
 		<p>{emptyText}</p>
 	</div>
@@ -341,7 +353,18 @@ onMount(() => {
 	</div>
 {/if}
 
-<div class="page-feed" bind:this={list}></div>
+{#if !loading && !failed && filterActive}
+	<div class="space-dynamic-results" role="status">
+		<span>找到 <strong>{filtered.length}</strong> 条动态</span>
+		<button type="button" onclick={() => {
+			if (searchInput) searchInput.value = "";
+			if (yearSelect) yearSelect.value = "all";
+			applyFilters();
+		}}>清除筛选</button>
+	</div>
+{/if}
+
+<div class="page-feed" bind:this={list} aria-label="动态列表"></div>
 
 {#if !loading && !failed}
 	<ClientPagination
