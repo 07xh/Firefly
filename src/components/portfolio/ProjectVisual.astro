@@ -1,12 +1,7 @@
 ---
 import type { CollectionEntry } from "astro:content";
-import { Icon } from "astro-icon/components";
 import CoverImage from "@/components/common/CoverImage.astro";
-import {
-	getFileDirFromPath,
-	removeFileExtension,
-	url,
-} from "@/utils/url-utils";
+import { getFileDirFromPath } from "@/utils/url-utils";
 
 interface Props {
 	project: CollectionEntry<"projects">;
@@ -14,38 +9,17 @@ interface Props {
 }
 
 const { project, priority = false } = Astro.props;
-const id = removeFileExtension(project.id);
-const { title, subtitle, tags, image } = project.data;
-const images = {
-	loading: priority ? ("eager" as const) : ("lazy" as const),
-	fetchpriority: priority ? ("high" as const) : ("auto" as const),
-};
-const icon =
-	id === "studyflow"
-		? "material-symbols:terminal-rounded"
-		: id === "momoflow" || id === "wordflow"
-			? "material-symbols:translate-rounded"
-			: id === "reqable-bridge"
-				? "material-symbols:lan-outline-rounded"
-				: id === "engineering-drawing-study"
-					? "material-symbols:architecture-rounded"
-					: "material-symbols:code-rounded";
+const { title, image } = project.data;
 ---
 
-<div class="project-visual" data-project={id}>
-	{ id === "dorm-os" ? (
-		<div class="project-devices">
-			<img class="project-tablet" src={url(image)} alt="校序平板版总览页" width="1600" height="2560" {...images} />
-			<img class="project-phone" src={url("/project-media/dorm-os-home.webp")} alt="校序手机版总览页" width="1080" height="2340" {...images} />
-		</div>
-	) : image ? (
-		<CoverImage src={image} basePath={getFileDirFromPath(project.filePath || "")} alt={title} class="project-existing-cover" preview={false} />
-	) : (
-		<div class="project-art" aria-hidden="true">
-			<div class="project-art-orbit"></div>
-			<Icon name={icon} class="project-art-icon" />
-			<span class="project-art-platform">{tags[0]}</span>
-			<strong>{id === "studyflow" ? subtitle : title}</strong>
-		</div>
-	)}
-</div>
+{image && (
+	<CoverImage
+		src={image}
+		basePath={getFileDirFromPath(project.filePath || "")}
+		alt={`${title}界面`}
+		class="portfolio-project-screenshot"
+		preview={false}
+		loading={priority ? "eager" : "lazy"}
+		naturalHeight
+	/>
+)}

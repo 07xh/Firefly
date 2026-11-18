@@ -8,14 +8,15 @@ const [site, home, project, layout, settings] = await Promise.all(paths.map(p =>
 
 test("website identity is 07xh Space, not the former blog template", () => {
   assert.match(site, /title: "07xh Space"/);
-  assert.match(site, /subtitle: "小慌的个人数字空间"/);
+  assert.match(site, /description: "小慌的软件项目和学习笔记。"/);
   assert.doesNotMatch(site, /title: "Firefly Blog"/);
   assert.match(site, /favicon\/07xh-space-64\.png/);
   assert.equal(JSON.parse(settings).bannerTitle, "07xh Space");
   assert.match(layout, /\{siteConfig.title\}/);
 });
 test("homepage introduces only the site and supports horizontal gesture into the first project", () => {
-  assert.match(home, /<h1 id="home-title">07xh Space<\/h1>/);
+  assert.match(home, /<h1 id="home-title">\{siteConfig.title\}<\/h1>/);
+  assert.match(home, /<p class="portfolio-home-lead">\{siteConfig.description\}<\/p>/);
   assert.match(home, /data-next-project/);
   assert.match(home, /addEventListener\("pointerdown"/);
   assert.match(home, /addEventListener\("pointercancel"/);

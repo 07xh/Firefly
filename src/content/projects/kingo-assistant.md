@@ -4,7 +4,7 @@ subtitle: "教务辅助工具"
 published: 2026-11-17
 order: 160
 status: "developing"
-description: "整理选课计划、查看只读结果，并记录本地诊断。"
+description: "在 Windows 上整理选课志愿、检查冲突。"
 repository: "07xh/kingo-assistant"
 tags: ["Windows", "Python"]
 link:
@@ -13,10 +13,6 @@ link:
     value: "https://github.com/07xh/kingo-assistant"
 ---
 
-## 桌面工作台
+## 开放前准备
 
-Windows 端汇集选课计划、只读监测、托盘与日志工具。
-
-## 当前边界
-
-学校账号与真实课程数据仍需验收。线上自动提交处于禁用状态。
+整理备选课和顺序，到约定时间打开学校官网。选课提交由本人在官网完成。

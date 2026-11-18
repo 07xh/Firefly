@@ -8,19 +8,16 @@ export const prerender = true;
 const firstProject = url("/projects/dorm-os/");
 ---
 
-<PortfolioLayout title="个人数字空间">
+<PortfolioLayout>
 	<portfolio-home data-next-project={siteConfig.pages.projects ? firstProject : undefined}>
 		<section class="portfolio-home-intro" aria-labelledby="home-title">
 			<div>
-				<p class="portfolio-label">WELCOME TO 07XH SPACE</p>
-				<h1 id="home-title">07xh Space</h1>
-				<p class="portfolio-home-lead">这里是小慌的个人数字空间，记录正在开发的软件、真实的技术实践，以及 Python、工程制图和自动化领域的学习与探索。</p>
-				<p class="portfolio-home-note">这里的每一个重点作品都有自己的一面：左右切换项目，上下阅读当前项目的完整介绍。博客与知识专题则保留独立的阅读页面。</p>
+				<h1 id="home-title">{siteConfig.title}</h1>
+				<p class="portfolio-home-lead">{siteConfig.description}</p>
 				<div class="portfolio-actions">
-					{siteConfig.pages.projects && <a class="portfolio-button portfolio-button-solid" href={firstProject}>从校序开始探索 <Icon name="material-symbols:arrow-forward-rounded" /></a>}
-					<a class="portfolio-button portfolio-button-secondary" href={url("/posts/")}>阅读博客</a>
+					{siteConfig.pages.projects && <a class="portfolio-button portfolio-button-solid" href={firstProject}>看校序 <Icon name="material-symbols:arrow-forward-rounded" /></a>}
+					<a class="portfolio-button portfolio-button-secondary" href={url("/posts/")}>博客</a>
 				</div>
-				{siteConfig.pages.projects && <p class="portfolio-home-gesture" aria-label="向左滑动页面可以进入下一个项目，也可按键盘右方向键。"><Icon name="material-symbols:swipe-left-rounded" aria-hidden="true" /> 向左滑动进入第一个项目 · 上下滚动阅读详情</p>}
 			</div>
 		</section>
 	</portfolio-home>

@@ -1,6 +1,5 @@
 ---
 import { Icon } from "astro-icon/components";
-import ProjectVisual from "@/components/portfolio/ProjectVisual.astro";
 import PublicRepositories from "@/components/portfolio/PublicRepositories.astro";
 import { siteConfig } from "@/config";
 import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
@@ -20,10 +19,9 @@ const statuses = [
 ];
 ---
 
-<PortfolioLayout title="项目作品" description="小慌的个人软件作品、实现说明与 GitHub 仓库。">
+<PortfolioLayout title="项目" description="小慌的软件项目与公开仓库。">
 	<header class="portfolio-page-intro">
-		<h1>项目作品</h1>
-		<p>进入一个项目后，向下看详情，左右切换作品。</p>
+		<h1>项目</h1>
 	</header>
 	<portfolio-project-list>
 		<div class="portfolio-project-filters">
@@ -42,14 +40,13 @@ const statuses = [
 				return (
 					<li data-repository={repository.toLowerCase().startsWith("07xh/") ? repository.slice(5).toLowerCase() : ""} data-status={status} data-project-search={[title, description, repository, ...tags].join(" ").toLowerCase()}>
 						<a class="portfolio-project-card" href={url(`/projects/${id}/`)}>
-							<ProjectVisual project={project} />
 							<div class="portfolio-project-card-copy">
-								<p class="portfolio-label">{status && getProjectStatusMeta(status).label}</p>
 								<h2>{title}</h2>
 								<p>{description}</p>
-								<div class="portfolio-project-card-footer">
-									<span>{tags.slice(0, 3).join(" · ")}</span><Icon name="material-symbols:arrow-outward-rounded" />
-								</div>
+							</div>
+							<div class="portfolio-project-card-meta">
+								{status && <span>{getProjectStatusMeta(status).label}</span>}
+								<Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" />
 							</div>
 						</a>
 					</li>
