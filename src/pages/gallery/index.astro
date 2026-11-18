@@ -1,7 +1,7 @@
 ---
 import { Icon } from "astro-icon/components";
 import AlbumCard from "@/components/pages/gallery/AlbumCard.astro";
-import { galleryConfig, siteConfig } from "@/config";
+import { getPublicGalleryAlbums, siteConfig } from "@/config";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
@@ -12,7 +12,7 @@ if (!siteConfig.pages.gallery) return Astro.redirect("/404/");
 
 const title = i18n(I18nKey.gallery);
 const description = i18n(I18nKey.galleryDescription);
-const albums = galleryConfig.albums.map((album) => {
+const albums = getPublicGalleryAlbums().map((album) => {
 	const photos = scanAlbumPhotos(album.id);
 	return {
 		...album,
@@ -21,7 +21,6 @@ const albums = galleryConfig.albums.map((album) => {
 	};
 });
 const allTags = [...new Set(albums.flatMap(({ tags }) => tags || []))].sort();
-const demoIds = new Set(["firefly-2026", "encrypted-test"]);
 ---
 
 <PortfolioLayout title={title} description={description}>
@@ -58,7 +57,6 @@ const demoIds = new Set(["firefly-2026", "encrypted-test"]);
 							data-tags={JSON.stringify(album.tags || [])}
 							data-search-text={[album.name, album.description, album.location, ...(album.tags || [])].filter(Boolean).join(" ").toLocaleLowerCase()}
 						>
-							{demoIds.has(album.id) && <span class="space-gallery-demo-label">原主题示例</span>}
 							<AlbumCard
 								id={album.id}
 								name={album.name}
@@ -79,7 +77,7 @@ const demoIds = new Set(["firefly-2026", "encrypted-test"]);
 				</div>
 			</>
 		) : (
-			<div class="space-utility-empty"><p>{i18n(I18nKey.galleryNoAlbums)}</p></div>
+			<div class="space-utility-empty"><p>暂时没有公开相册。</p></div>
 		)}
 	</gallery-filter>
 </PortfolioLayout>
