@@ -24,7 +24,8 @@ interface Props {
 }
 
 const { entry, previous, next, position, total } = Astro.props;
-const { Content } = await render(entry);
+const { Content, headings } = await render(entry);
+const detailHeadings = headings.filter(({ depth }) => depth === 2);
 const { title, subtitle, description, link, status, tags, highlights } =
 	entry.data;
 const highlightStates = {
@@ -96,6 +97,16 @@ const hasPhonePreview = entry.id.startsWith("dorm-os");
 								</li>
 							))}
 						</ul>
+					</div>
+				)}
+				{highlights.length === 0 && detailHeadings.length > 0 && (
+					<div class="space-project-highlights" aria-label="项目功能导览">
+						<span class="space-project-highlights-heading">可以做什么</span>
+						<div class="space-project-highlights-links">
+							{detailHeadings.slice(0, 3).map(({ slug, text }) => (
+								<a href={`#${slug}`}><Icon name="material-symbols:arrow-forward-rounded" aria-hidden="true" />{text}</a>
+							))}
+						</div>
 					</div>
 				)}
 				<div class="space-project-meta" aria-label="项目状态与技术方向">
@@ -173,11 +184,27 @@ const hasPhonePreview = entry.id.startsWith("dorm-os");
 
 		<section class="portfolio-detail-body space-project-details" id="project-details" aria-label={title + "项目详情"}>
 			<div class="space-project-details-heading">
-				<span>功能与使用说明</span>
-				<h2>了解 {title}</h2>
+				<span>了解这个项目</span>
+				<h2>{title} · 功能与进展</h2>
 			</div>
-			<div data-pagefind-body>
-				<Markdown class="markdown-content"><Content /></Markdown>
+			<div class:list={["space-project-details-grid", { "space-project-details-grid-single": detailHeadings.length === 0 }]}>
+				{detailHeadings.length > 0 && (
+					<nav class="space-project-details-nav" aria-label={title + "内容目录"}>
+						<p>本页内容</p>
+						<ol>
+							{detailHeadings.map(({ slug, text }, index) => (
+								<li><a href={`#${slug}`} data-detail-anchor><span>{String(index + 1).padStart(2, "0")}</span>{text}</a></li>
+							))}
+						</ol>
+						<a class="space-project-details-top" href="#project-title">
+							<Icon name="material-symbols:arrow-upward-rounded" aria-hidden="true" /> 回到项目首屏
+						</a>
+					</nav>
+				)}
+				<div class="space-project-details-content" data-pagefind-body>
+					<Markdown class="markdown-content"><Content /></Markdown>
+					<a class="space-project-details-end" href={url("/projects/all/")}>浏览其他项目 <Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" /></a>
+				</div>
 			</div>
 		</section>
 	</project-page>
@@ -188,6 +215,7 @@ const hasPhonePreview = entry.id.startsWith("dorm-os");
 		private wheelDistance = 0;
 		private wheelTime = 0;
 		private navigating = false;
+		private detailObserver: IntersectionObserver | null = null;
 
 		connectedCallback() {
 			this.addEventListener("pointerdown", this.start);
@@ -197,6 +225,7 @@ const hasPhonePreview = entry.id.startsWith("dorm-os");
 			this.addEventListener("wheel", this.onWheel, { passive: false });
 			document.addEventListener("keydown", this.onKey);
 			window.addEventListener("pageshow", this.resetNavigation);
+			this.observeDetailSections();
 		}
 
 		disconnectedCallback() {
@@ -207,6 +236,7 @@ const hasPhonePreview = entry.id.startsWith("dorm-os");
 			this.removeEventListener("wheel", this.onWheel);
 			document.removeEventListener("keydown", this.onKey);
 			window.removeEventListener("pageshow", this.resetNavigation);
+			this.detailObserver?.disconnect();
 		}
 
 		private readonly interactive = "a,button,input,select,textarea,summary,[contenteditable],[role=dialog],pre,table";
@@ -224,6 +254,29 @@ const hasPhonePreview = entry.id.startsWith("dorm-os");
 				item.setAttribute("aria-pressed", String(item === button));
 			});
 		};
+		private observeDetailSections() {
+			if (!("IntersectionObserver" in window)) return;
+			const links = [...this.querySelectorAll<HTMLAnchorElement>("[data-detail-anchor]")];
+			if (!links.length) return;
+			const sections = links
+				.map((link) => document.getElementById(decodeURIComponent(link.hash.slice(1))))
+				.filter((section): section is HTMLElement => section instanceof HTMLElement);
+			if (!sections.length) return;
+			links[0].setAttribute("aria-current", "location");
+			this.detailObserver = new IntersectionObserver((entries) => {
+				const visible = entries
+					.filter((entry) => entry.isIntersecting)
+					.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+				const current = visible[0]?.target.id;
+				if (!current) return;
+				for (const link of links) {
+					if (decodeURIComponent(link.hash.slice(1)) === current) link.setAttribute("aria-current", "location");
+					else link.removeAttribute("aria-current");
+				}
+			}, { rootMargin: "-12% 0px -65% 0px", threshold: 0 });
+			sections.forEach((section) => this.detailObserver?.observe(section));
+		}
+
 		private canMove(event: Event) {
 			return !(event.target instanceof Element && event.target.closest(this.interactive));
 		}
