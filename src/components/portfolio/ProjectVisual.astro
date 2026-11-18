@@ -27,7 +27,9 @@ const icon =
 			? "material-symbols:translate-rounded"
 			: id === "reqable-bridge"
 				? "material-symbols:lan-outline-rounded"
-				: "material-symbols:code-rounded";
+				: id === "engineering-drawing-study"
+					? "material-symbols:architecture-rounded"
+					: "material-symbols:code-rounded";
 ---
 
 <div class="project-visual" data-project={id}>

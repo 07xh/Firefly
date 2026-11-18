@@ -1,6 +1,7 @@
 ---
 import { Icon } from "astro-icon/components";
 import ProjectVisual from "@/components/portfolio/ProjectVisual.astro";
+import PublicRepositories from "@/components/portfolio/PublicRepositories.astro";
 import { siteConfig } from "@/config";
 import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
 import { getSortedProjects } from "@/utils/content-utils";
@@ -12,7 +13,7 @@ export const prerender = true;
 if (!siteConfig.pages.projects) return Astro.redirect(url("/404/"));
 
 const projects = (await getSortedProjects()).filter(
-	({ id }) => removeFileExtension(id) !== "example-project",
+	({ id }) => !["example-project", "firefly"].includes(removeFileExtension(id)),
 );
 const statuses = [
 	...new Set(projects.map(({ data }) => data.status).filter(Boolean)),
@@ -22,7 +23,7 @@ const statuses = [
 <PortfolioLayout title="项目作品" description="小慌的个人软件作品、实现说明与 GitHub 仓库。">
 	<header class="portfolio-page-intro">
 		<h1>项目作品</h1>
-		<p>校园工具、桌面应用与 Android 实验。打开任一项目查看实现、当前状态和源码。</p>
+		<p>进入一个项目后，向下看详情，左右切换作品。</p>
 	</header>
 	<portfolio-project-list>
 		<div class="portfolio-project-filters">
@@ -39,7 +40,7 @@ const statuses = [
 				const { title, description, status, tags, repository } = project.data;
 				const id = removeFileExtension(project.id);
 				return (
-					<li data-status={status} data-project-search={[title, description, repository, ...tags].join(" ").toLowerCase()}>
+					<li data-repository={repository.toLowerCase().startsWith("07xh/") ? repository.slice(5).toLowerCase() : ""} data-status={status} data-project-search={[title, description, repository, ...tags].join(" ").toLowerCase()}>
 						<a class="portfolio-project-card" href={url(`/projects/${id}/`)}>
 							<ProjectVisual project={project} />
 							<div class="portfolio-project-card-copy">
@@ -56,22 +57,32 @@ const statuses = [
 			})}
 		</ul>
 		<p class="portfolio-empty" data-empty role="status" hidden={projects.length > 0}>没有符合条件的项目。</p>
+		<PublicRepositories featured={projects.flatMap(({ data }) => data.repository.toLowerCase().startsWith("07xh/") ? [data.repository.slice(5).toLowerCase()] : [])} />
 	</portfolio-project-list>
 </PortfolioLayout>
 
 <script>
 	class PortfolioProjectList extends HTMLElement {
 		private status = "";
+		private publicNames: Set<string> | null = null;
 
 		connectedCallback() {
 			this.addEventListener("input", this.filter);
 			this.addEventListener("click", this.select);
+			this.addEventListener("portfolio-repositories", this.onRepositories);
 		}
 
 		disconnectedCallback() {
 			this.removeEventListener("input", this.filter);
 			this.removeEventListener("click", this.select);
+			this.removeEventListener("portfolio-repositories", this.onRepositories);
 		}
+
+		private onRepositories = (event: Event) => {
+			if (!(event instanceof CustomEvent)) return;
+			this.publicNames = event.detail;
+			this.filter();
+		};
 
 		private select = (event: MouseEvent) => {
 			if (!(event.target instanceof Element)) return;
@@ -85,10 +96,12 @@ const statuses = [
 		};
 
 		private filter = () => {
-			const query = this.querySelector("input")?.value.trim().toLowerCase() ?? "";
+			const query = this.querySelector<HTMLInputElement>(".portfolio-project-filters input")?.value.trim().toLowerCase() ?? "";
 			let hasResults = false;
 			this.querySelectorAll<HTMLElement>("[data-project-search]").forEach((item) => {
-				const matches = (!this.status || item.dataset.status === this.status)
+				const repository = item.dataset.repository;
+				const listed = !repository || !this.publicNames || this.publicNames.has(repository);
+				const matches = listed && (!this.status || item.dataset.status === this.status)
 					&& (item.dataset.projectSearch?.includes(query) ?? false);
 				item.hidden = !matches;
 				hasResults ||= matches;

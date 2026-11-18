@@ -1,0 +1,96 @@
+---
+import { Icon } from "astro-icon/components";
+import { url } from "@/utils/url-utils";
+
+interface Props {
+	featured: string[];
+}
+
+const { featured } = Astro.props;
+---
+
+<public-repositories class="portfolio-live-repos" data-source={url("/api/portfolio/repositories.json")} data-featured={JSON.stringify(featured)}>
+	<div class="portfolio-section-heading">
+		<h2>更多 GitHub 项目</h2>
+		<a class="portfolio-text-link" href="https://github.com/07xh?tab=repositories">GitHub 仓库 <Icon name="material-symbols:arrow-outward-rounded" /></a>
+	</div>
+	<p class="portfolio-label" data-message role="status">正在读取公开仓库…</p>
+	<label hidden data-repo-filter><span class="sr-only">搜索公开仓库</span><input type="search" placeholder="搜索公开仓库" /></label>
+	<ul data-repositories class="portfolio-live-repo-list"></ul>
+</public-repositories>
+
+<script>
+	interface Repository {
+		name: string;
+		description: string | null;
+		language: string | null;
+		stars: number;
+		pushedAt: string | null;
+		archived: boolean;
+	}
+
+	class PublicRepositories extends HTMLElement {
+		private repositories: Repository[] = [];
+
+		connectedCallback() {
+			this.addEventListener("input", this.renderList);
+			void this.load();
+		}
+
+		disconnectedCallback() {
+			this.removeEventListener("input", this.renderList);
+		}
+
+		private async load() {
+			const message = this.querySelector("[data-message]");
+			try {
+				const response = await fetch(this.dataset.source ?? "", { signal: AbortSignal.timeout(25000) });
+				if (!response.ok) throw new Error("Repository request failed");
+				const { repositories, checkedAt } = await response.json();
+				const featured = new Set<string>(JSON.parse(this.dataset.featured ?? "[]"));
+				const publicNames = new Set<string>((repositories as Repository[]).map(({ name }) => name.toLowerCase()));
+				this.dispatchEvent(new CustomEvent("portfolio-repositories", { detail: publicNames, bubbles: true }));
+				this.repositories = (repositories as Repository[]).filter(({ name }) => !featured.has(name.toLowerCase()))
+					.sort((a, b) => Number(a.archived) - Number(b.archived) || (b.pushedAt ?? "").localeCompare(a.pushedAt ?? "") || a.name.localeCompare(b.name));
+				this.querySelector("[data-repo-filter]")?.toggleAttribute("hidden", this.repositories.length === 0);
+				if (message) message.textContent = `公开仓库 · 更新于 ${new Date(checkedAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}`;
+				this.renderList();
+			} catch {
+				if (message) message.textContent = "暂时无法读取公开仓库，可以在 GitHub 查看。";
+			}
+		}
+
+		private renderList = () => {
+			const list = this.querySelector("[data-repositories]");
+			if (!list) return;
+			const query = this.querySelector("input")?.value.trim().toLowerCase() ?? "";
+			const rows = this.repositories.filter(({ name, description, language }) =>
+				[name, description, language].join(" ").toLowerCase().includes(query));
+			const nodes = rows.map(({ name, description, language, archived }) => {
+				const row = document.createElement("li");
+				const link = document.createElement("a");
+				link.href = `https://github.com/07xh/${encodeURIComponent(name)}`;
+				const title = document.createElement("strong");
+				title.textContent = name;
+				const meta = document.createElement("span");
+				meta.textContent = [language, archived ? "已归档" : ""].filter(Boolean).join(" · ");
+				link.append(title, meta);
+				if (description) {
+					const summary = document.createElement("p");
+					summary.textContent = description;
+					link.append(summary);
+				}
+				row.append(link);
+				return row;
+			});
+			if (nodes.length === 0) {
+				const empty = document.createElement("li");
+				empty.textContent = query ? "没有符合条件的仓库。" : "暂无其他公开仓库。";
+				nodes.push(empty);
+			}
+			list.replaceChildren(...nodes);
+		};
+	}
+
+	if (!customElements.get("public-repositories")) customElements.define("public-repositories", PublicRepositories);
+</script>

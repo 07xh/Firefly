@@ -13,6 +13,15 @@
 			"prerelease": false
 		}
 	},
+	"07xh/engineering-drawing-study": {
+		"description": null,
+		"language": "JavaScript",
+		"avatarUrl": "https://avatars.githubusercontent.com/u/313783339?v=4",
+		"license": null,
+		"stars": 0,
+		"pushedAt": "2026-11-08T14:28:38Z",
+		"checkedAt": "2026-11-18T13:11:55.483Z"
+	},
 	"07xh/kingo-assistant": {
 		"description": null,
 		"language": "Python",

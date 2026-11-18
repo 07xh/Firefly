@@ -60,7 +60,7 @@ export const siteConfig: SiteConfig = {
 	title: "小慌",
 
 	// 站点副标题
-	subtitle: "作品与技术笔记",
+	subtitle: "个人中心",
 
 	// 站点 URL
 	site_url: "https://0701000.xyz",
@@ -74,9 +74,9 @@ export const siteConfig: SiteConfig = {
 		"Fuwari",
 		"Astro",
 		"ACGN",
-		"博客",
+		"个人网站",
+		"软件作品",
 		"技术博客",
-		"静态博客",
 	],
 
 	// 主题色

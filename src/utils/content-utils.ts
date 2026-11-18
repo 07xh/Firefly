@@ -2,6 +2,7 @@ import { type CollectionEntry, getCollection } from "astro:content";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { getCategoryUrl } from "@utils/url-utils";
+import githubData from "@/constants/github-card-data.json";
 
 function scheduledTimestamp(
 	value: Date | string | undefined,
@@ -78,7 +79,11 @@ export async function getSortedProjects(): Promise<
 	CollectionEntry<"projects">[]
 > {
 	const allProjects = await getCollection("projects", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
+		if (import.meta.env.PROD && data.draft) return false;
+		return (
+			!data.repository ||
+			Object.hasOwn(githubData, data.repository.toLowerCase())
+		);
 	});
 
 	return allProjects.sort((a, b) => {

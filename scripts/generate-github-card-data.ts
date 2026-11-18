@@ -67,19 +67,18 @@ async function fetchRepositoryData(
 	repo: string,
 	project: boolean,
 	cached?: GithubCardData,
-): Promise<GithubCardData> {
+): Promise<GithubCardData | null> {
 	const [owner, name] = repo.split("/");
 	const headers: Record<string, string> = {
 		Accept: "application/vnd.github+json",
 		"X-GitHub-Api-Version": "2022-11-28",
 	};
-	const token = process.env.GITHUB_TOKEN?.trim();
-	if (token) headers.Authorization = `Bearer ${token}`;
 
 	const endpoint = `https://api.github.com/repos/${encodeURIComponent(owner)}/${encodeURIComponent(name)}`;
 	const request = (suffix = "") =>
 		fetch(endpoint + suffix, { headers, signal: AbortSignal.timeout(12000) });
 	const response = await request();
+	if (response.status === 404 || response.status === 410) return null;
 	if (!response.ok) {
 		throw new Error(
 			`GitHub API returned ${response.status}${response.statusText ? ` ${response.statusText}` : ""}`,
@@ -87,6 +86,7 @@ async function fetchRepositoryData(
 	}
 
 	const data = await response.json();
+	if (data.private !== false || data.visibility !== "public") return null;
 	const result: GithubCardData = {
 		description:
 			typeof data.description === "string"
@@ -145,12 +145,15 @@ async function main() {
 				.slice(offset, offset + 4)
 				.map(async ([cacheKey, { repo, project }]) => {
 					try {
-						nextCache[cacheKey] = await fetchRepositoryData(
+						const result = await fetchRepositoryData(
 							repo,
 							project,
 							existingCache[cacheKey],
 						);
-						updated++;
+						if (result) {
+							nextCache[cacheKey] = result;
+							updated++;
+						}
 					} catch (error) {
 						if (existingCache[cacheKey]) {
 							nextCache[cacheKey] = existingCache[cacheKey];

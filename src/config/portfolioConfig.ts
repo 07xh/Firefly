@@ -2,6 +2,7 @@ export const featuredProjectIds: readonly string[] = [
 	"dorm-os",
 	"studyflow",
 	"momoflow",
+	"engineering-drawing-study",
 ];
 
 export const portfolioTopics: readonly {
