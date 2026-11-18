@@ -1,0 +1,79 @@
+---
+import { Icon } from "astro-icon/components";
+
+interface Props {
+	placeholder: string;
+	count: number;
+	unit: string;
+}
+
+const { placeholder, count, unit } = Astro.props;
+---
+
+<div class="space-library-filterbar">
+	<label class="space-library-search">
+		<Icon name="material-symbols:search-rounded" aria-hidden="true" />
+		<span class="sr-only">{placeholder}</span>
+		<input data-taxonomy-search type="search" autocomplete="off" placeholder={placeholder} />
+	</label>
+	<div class="space-library-count">
+		<span data-taxonomy-count role="status" aria-live="polite">{count} {unit}</span>
+		<button type="button" data-taxonomy-clear hidden>清除搜索</button>
+	</div>
+</div>
+
+<script>
+	class SpaceTaxonomyDirectory extends HTMLElement {
+		connectedCallback() {
+			const input = this.querySelector<HTMLInputElement>("[data-taxonomy-search]");
+			if (input) input.value = new URLSearchParams(window.location.search).get("q") ?? "";
+			this.addEventListener("input", this.onInput);
+			this.addEventListener("click", this.onClick);
+			this.update();
+		}
+
+		disconnectedCallback() {
+			this.removeEventListener("input", this.onInput);
+			this.removeEventListener("click", this.onClick);
+		}
+
+		private onInput = (event: Event) => {
+			if (event.target instanceof Element && event.target.matches("[data-taxonomy-search]")) this.update(true);
+		};
+
+		private onClick = (event: MouseEvent) => {
+			if (!(event.target instanceof Element) || !event.target.closest("[data-taxonomy-clear]")) return;
+			const input = this.querySelector<HTMLInputElement>("[data-taxonomy-search]");
+			if (input) {
+				input.value = "";
+				input.focus();
+			}
+			this.update(true);
+		};
+
+		private update(syncUrl = false) {
+			const input = this.querySelector<HTMLInputElement>("[data-taxonomy-search]");
+			const query = input?.value.trim().toLocaleLowerCase() ?? "";
+			let visible = 0;
+			const items = this.querySelectorAll<HTMLElement>("[data-taxonomy-item]");
+			items.forEach((item) => {
+				const matches = !query || (item.dataset.searchText ?? "").includes(query);
+				item.hidden = !matches;
+				if (matches) visible++;
+			});
+			const count = this.querySelector<HTMLElement>("[data-taxonomy-count]");
+			if (count) count.textContent = `显示 ${visible} / ${items.length} ${this.dataset.unit ?? "项"}`;
+			const clear = this.querySelector<HTMLElement>("[data-taxonomy-clear]");
+			if (clear) clear.hidden = !query;
+			const empty = this.querySelector<HTMLElement>("[data-taxonomy-empty]");
+			if (empty) empty.hidden = visible !== 0;
+			if (syncUrl) {
+				const target = new URL(window.location.href);
+				if (query) target.searchParams.set("q", query);
+				else target.searchParams.delete("q");
+				window.history.replaceState(window.history.state, "", target);
+			}
+		}
+	}
+	if (!customElements.get("taxonomy-directory")) customElements.define("taxonomy-directory", SpaceTaxonomyDirectory);
+</script>
