@@ -8,21 +8,38 @@ export const prerender = true;
 const firstProject = url("/projects/dorm-os/");
 ---
 
-<PortfolioLayout>
-	<portfolio-home data-next-project={siteConfig.pages.projects ? firstProject : undefined}>
-		<section class="portfolio-home-intro" aria-labelledby="home-title">
-			<div>
-				<h1 id="home-title">{siteConfig.title}</h1>
-				<p class="portfolio-home-lead">{siteConfig.description}</p>
-				<div class="portfolio-actions">
-					{siteConfig.pages.projects && <a class="portfolio-button portfolio-button-solid" href={firstProject}>看校序 <Icon name="material-symbols:arrow-forward-rounded" /></a>}
-					<a class="portfolio-button portfolio-button-secondary" href={url("/posts/")}>博客</a>
-				</div>
-			</div>
-		</section>
-	</portfolio-home>
+<PortfolioLayout title="个人数字空间">
+  <portfolio-home data-next-project={siteConfig.pages.projects ? firstProject : undefined}>
+    <section class="space-home-hero" aria-labelledby="home-title">
+      <div class="space-home-copy">
+        <p class="space-home-eyebrow"><Icon name="material-symbols:star-rounded" aria-hidden="true" /> 07xh Space <span aria-hidden="true">/</span> Personal Space</p>
+        <h1 id="home-title" class="space-home-title"><span>07xh</span> <em>Space</em><span class="space-home-title-spark" aria-hidden="true">✦</span></h1>
+        <h2 class="space-home-subtitle">小慌的个人数字空间</h2>
+        <p class="space-home-lead">这里展示我的公开项目、开发实践和学习专题，也记录一些正在慢慢实现的想法。</p>
+        <div class="portfolio-actions space-home-actions">
+          {siteConfig.pages.projects && <a class="portfolio-button portfolio-button-solid" href={firstProject}><Icon name="material-symbols:rocket-launch-rounded" aria-hidden="true" /> 探索项目 <Icon name="material-symbols:arrow-forward-rounded" aria-hidden="true" /></a>}
+          <a class="portfolio-button portfolio-button-secondary" href={url("/posts/")}><Icon name="material-symbols:article-rounded" aria-hidden="true" /> 阅读博客</a>
+          <a class="portfolio-button portfolio-button-secondary" href="https://github.com/07xh" target="_blank" rel="noopener noreferrer"><Icon name="fa7-brands:github" aria-hidden="true" /> GitHub <Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" /></a>
+        </div>
+        <div class="space-home-topics" aria-label="站点内容方向">
+          <span><Icon name="material-symbols:code-rounded" aria-hidden="true" /> 公开作品</span>
+          <span><Icon name="material-symbols:book-outline-rounded" aria-hidden="true" /> 技术笔记</span>
+          <span><Icon name="material-symbols:layers-rounded" aria-hidden="true" /> 学习专题</span>
+        </div>
+      </div>
+      <div class="space-home-art">
+        <img src={url("/brand/07xh-ship.svg")} alt="白蓝色的轻盈飞船向左前方飞行，尾部留下柔和的蓝色光迹" width="900" height="570" loading="eager" decoding="async" />
+      </div>
+      <div class="space-home-bottom">
+        <p class="space-home-directions"><span aria-hidden="true">← →</span> 左右切换项目 <i aria-hidden="true"></i> <span aria-hidden="true">↓</span> 项目内向下阅读详情</p>
+        {siteConfig.pages.projects && <nav class="space-home-progress" aria-label="场景导航">
+          <a href={url("/")} class="is-current" aria-label="当前：网站介绍" aria-current="page"></a>
+          <a href={firstProject} aria-label="进入第一个项目：校序"></a>
+        </nav>}
+      </div>
+    </section>
+  </portfolio-home>
 </PortfolioLayout>
-
 <script>
 	class PortfolioHome extends HTMLElement {
 		private point: { id: number; x: number; y: number } | null = null;
