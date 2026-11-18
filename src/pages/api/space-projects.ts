@@ -5,6 +5,9 @@ export const prerender = false;
 // Public endpoint only. Never authenticate this request: a token with private-repo
 // scope would make it possible to accidentally disclose private repository metadata.
 const OWNER = "07xh";
+// Some public repositories are explicitly labeled private/internal research by
+// their own README. Do not showcase them until the owner opts them in.
+const HIDDEN_REPOSITORIES = new Set(["kingo-live", "yuketang-heartbeat"]);
 const API_URL = "https://api.github.com/users/" + OWNER + "/repos";
 
 type GitHubRepo = {
@@ -26,7 +29,8 @@ function publicProject(repo: GitHubRepo) {
     (repo.visibility !== undefined && repo.visibility !== "public") ||
     String(repo.owner?.login ?? "").toLowerCase() !== OWNER ||
     typeof repo.name !== "string" ||
-    !/^[A-Za-z0-9_.-]+$/.test(repo.name)
+    !/^[A-Za-z0-9_.-]+$/.test(repo.name) ||
+    HIDDEN_REPOSITORIES.has(repo.name)
   ) return null;
 
   return {
