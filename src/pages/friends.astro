@@ -64,8 +64,8 @@ const commentsEnabled = commentConfig.type !== "none" && friendsPageConfig.showC
 							<span class="space-friend-info">
 								<strong>{friend.title}</strong>
 								<span class="space-friend-description">{friend.desc}</span>
-								{friend.tags?.length > 0 && (
-									<span class="space-friend-tags">{friend.tags.slice(0, 3).map((tag) => <small>{tag}</small>)}</span>
+								{(friend.tags || []).length > 0 && (
+									<span class="space-friend-tags">{(friend.tags || []).slice(0, 3).map((tag) => <small>{tag}</small>)}</span>
 								)}
 							</span>
 							<Icon class="space-friend-arrow" name="material-symbols:arrow-outward-rounded" aria-hidden="true" />
