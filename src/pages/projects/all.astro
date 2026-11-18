@@ -38,11 +38,18 @@ const statuses = [
 				const { title, description, status, tags, repository } = project.data;
 				const id = removeFileExtension(project.id);
 				return (
-					<li data-repository={repository.toLowerCase().startsWith("07xh/") ? repository.slice(5).toLowerCase() : ""} data-status={status} data-project-search={[title, description, repository, ...tags].join(" ").toLowerCase()}>
+					<li data-repository={repository.toLowerCase().startsWith("07xh/") ? repository.slice(5).toLowerCase() : ""} data-status={status} data-project-search={[title, description, repository, ...tags, ...project.data.highlights.flatMap(({ title: featureTitle, detail }) => [featureTitle, detail])].join(" ").toLowerCase()}>
 						<a class="portfolio-project-card" href={url(`/projects/${id}/`)}>
 							<div class="portfolio-project-card-copy">
 								<h2>{title}</h2>
 								<p>{description}</p>
+								{project.data.highlights.length > 0 && (
+									<ul class="portfolio-project-card-highlights" aria-label={title + "的代表功能"}>
+										{project.data.highlights.slice(0, 2).map(({ title: featureTitle }) => (
+											<li><Icon name="material-symbols:check-circle-outline-rounded" aria-hidden="true" />{featureTitle}</li>
+										))}
+									</ul>
+								)}
 							</div>
 							<div class="portfolio-project-card-meta">
 								{status && <span>{getProjectStatusMeta(status).label}</span>}
