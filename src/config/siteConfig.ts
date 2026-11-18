@@ -57,17 +57,17 @@ const pages = resolvePageToggles({
 
 export const siteConfig: SiteConfig = {
 	// 站点标题
-	title: "小慌",
+	title: "07xh Space",
 
 	// 站点副标题
-	subtitle: "小慌的个人博客",
+	subtitle: "小慌的个人数字空间",
 
 	// 站点 URL
 	site_url: "https://0701000.xyz",
 
 	// 站点描述
 	description:
-		"小慌的个人博客,分享技术、ACGN、生活等内容。使用 Astro 构建的静态博客，支持多种功能和自定义配置。",
+		"小慌的个人空间，展示公开软件项目、技术研究、知识笔记与开发历程。作品可横向切换、纵向阅读完整介绍。",
 	// 站点关键词
 	keywords: [
 		"xiaohuang",
@@ -131,7 +131,7 @@ export const siteConfig: SiteConfig = {
 			alt: "🍀",
 		},
 		// 导航栏标题
-		title: "Firefly Blog",
+		title: "07xh Space",
 		// 全宽导航栏，导航栏是否占满屏幕宽度
 		widthFull: false,
 		// 导航菜单对齐方式，left：左对齐，center：居中
