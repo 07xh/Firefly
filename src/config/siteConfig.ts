@@ -66,7 +66,8 @@ export const siteConfig: SiteConfig = {
 	site_url: "https://0701000.xyz",
 
 	// 站点描述
-	description: "小慌的软件项目和学习笔记。",
+	description:
+		"07xh Space 是小慌的个人数字空间，展示公开软件作品、技术实践、学习专题与开发记录。",
 	// 站点关键词
 	keywords: [
 		"xiaohuang",

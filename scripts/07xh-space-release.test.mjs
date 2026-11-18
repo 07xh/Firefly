@@ -8,15 +8,15 @@ const [site, home, project, layout, settings] = await Promise.all(paths.map(p =>
 
 test("website identity is 07xh Space, not the former blog template", () => {
   assert.match(site, /title: "07xh Space"/);
-  assert.match(site, /description: "小慌的软件项目和学习笔记。"/);
+  assert.match(site, /07xh Space 是小慌的个人数字空间/);
   assert.doesNotMatch(site, /title: "Firefly Blog"/);
   assert.match(site, /\/brand\/07xh-mark\.svg/);
   assert.equal(JSON.parse(settings).bannerTitle, "07xh Space");
   assert.match(layout, /\{siteConfig.title\}/);
 });
 test("homepage introduces only the site and supports horizontal gesture into the first project", () => {
-  assert.match(home, /<h1 id="home-title">\{siteConfig.title\}<\/h1>/);
-  assert.match(home, /<p class="portfolio-home-lead">\{siteConfig.description\}<\/p>/);
+  assert.match(home, /<h1 id="home-title" class="space-home-title"><span>07xh<\/span> <em>Space<\/em>/);
+  assert.match(home, /class="space-home-lead"/);
   assert.match(home, /data-next-project/);
   assert.match(home, /addEventListener\("pointerdown"/);
   assert.match(home, /addEventListener\("pointercancel"/);
@@ -50,7 +50,7 @@ test("site uses a single coherent rocket mark and a light spaceship illustration
 test("navigation and links remain real and independent", () => {
   assert.match(home, /href=\{url\("\/posts\/"\)\}/);
   assert.match(home, /https:\/\/github\.com\/07xh/);
-  assert.match(layout, /path: "\/topics\/"[^\n]*icon:/);
+  assert.match(layout, /path: "\/topics\/",\s*icon:/);
   assert.match(layout, /data-theme-toggle/);
   assert.match(layout, /data-menu-toggle/);
 });
