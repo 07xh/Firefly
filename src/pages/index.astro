@@ -8,12 +8,12 @@ export const prerender = true;
 const firstProject = url("/projects/dorm-os/");
 ---
 
-<PortfolioLayout title="07xh Space">
+<PortfolioLayout>
 	<portfolio-home data-next-project={siteConfig.pages.projects ? firstProject : undefined}>
 		<section class="portfolio-home-intro" aria-labelledby="home-title">
 			<div>
-				<h1 id="home-title">07xh Space</h1>
-				<p class="portfolio-home-lead">小慌的软件项目和学习笔记。</p>
+				<h1 id="home-title">{siteConfig.title}</h1>
+				<p class="portfolio-home-lead">{siteConfig.description}</p>
 				<div class="portfolio-actions">
 					{siteConfig.pages.projects && <a class="portfolio-button portfolio-button-solid" href={firstProject}>看校序 <Icon name="material-symbols:arrow-forward-rounded" /></a>}
 					<a class="portfolio-button portfolio-button-secondary" href={url("/posts/")}>博客</a>
