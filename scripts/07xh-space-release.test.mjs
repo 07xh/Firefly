@@ -40,7 +40,7 @@ test("site uses a single coherent rocket mark and a light spaceship illustration
   assert.match(mark, /07xh Space 飞船标识/);
   assert.match(craft, /轻盈飞船/);
   assert.match(craft, /<path/);
-  assert.match(home, /src=\{url\("\/brand\/07xh-ship\.svg"\)\}/);
+  assert.match(home, /src=\{url\("\/brand\/07xh-ship-refined\.svg"\)\}/);
   assert.match(layout, /src=\{url\("\/brand\/07xh-mark\.svg"\)\}/);
   assert.match(layout, /styles\/space-airy\.css/);
   assert.match(css, /--pf-accent: #2b61df/);
