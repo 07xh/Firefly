@@ -132,18 +132,22 @@ test("public utility pages all use the 07xh Space layout, not legacy MainGrid", 
 	}
 });
 
-test("gallery keeps original album records, photo lightbox and protected content", async () => {
-	const [index, detail] = await Promise.all([
+test("gallery keeps photo behavior while excluding inherited demo albums from public routes", async () => {
+	const [index, detail, galleryConfig] = await Promise.all([
 		source("src/pages/gallery/index.astro"),
 		source("src/pages/gallery/[album].astro"),
+		source("src/config/galleryConfig.ts"),
 	]);
-	assert.match(index, /galleryConfig\.albums\.map/);
+	assert.match(index, /getPublicGalleryAlbums\(\)\.map/);
 	assert.match(index, /scanAlbumPhotos\(album\.id\)/);
 	assert.match(index, /data-album/);
-	assert.match(index, /demoIds\.has/);
-	assert.match(detail, /getStaticPaths\(\)/);
+	assert.doesNotMatch(index, /demoIds\.has|原主题示例/);
+	assert.match(detail, /getPublicGalleryAlbums\(\)\.map/);
+	assert.match(detail, /getPublicGalleryAlbums\(\)\.find/);
 	assert.match(detail, /<EncryptedContent password=/);
 	assert.match(detail, /<PhotoCard src=/);
+	assert.match(galleryConfig, /new Set\(\["firefly-2026", "encrypted-test"\]\)/);
+	assert.match(galleryConfig, /!legacyThemeAlbumIds\.has\(id\)/);
 });
 
 test("bookmarks and friends preserve real configured links and search by actual data", async () => {
@@ -176,4 +180,38 @@ test("guestbook does not pretend comments work and theme donor payment examples 
 	assert.match(config, /showButtonInPost: false/);
 	assert.match(config, /sponsors: \[\]/);
 	assert.doesNotMatch(config, /enabled: true/);
+});
+
+test("theme author defaults are not exposed as this site's friends or bookmarks", async () => {
+	const [friends, bookmarks, friendText, aboutFallback] = await Promise.all([
+		source("src/config/friendsConfig.ts"),
+		source("src/config/booknavConfig.ts"),
+		source("src/content/spec/friends.mdx"),
+		source("src/content/spec/about.md"),
+	]);
+	for (const name of ["夏夜流萤", "Firefly Docs", "Astro"]) {
+		assert.match(friends, new RegExp(`title: "${name}"[\\s\\S]*?enabled: false`));
+	}
+	for (const name of ["Firefly", "Firefly Docs", "夏夜流萤"]) {
+		assert.match(bookmarks, new RegExp(`title: "${name}"[\\s\\S]*?enabled: false`));
+	}
+	assert.match(bookmarks, /title: "MDN Web Docs"/);
+	assert.match(bookmarks, /title: "GitHub"/);
+	assert.doesNotMatch(friendText, /cuteleaf\.cn|xiaye@msn\.com|weavatar\.com/i);
+	assert.doesNotMatch(aboutFallback, /夏叶|CuteLeaf|firefly\.cuteleaf\.cn/i);
+});
+
+test("portfolio footer shows real utility sections but hides demo-only galleries and friends", async () => {
+	const [layout, gallery, friends] = await Promise.all([
+		source("src/layouts/PortfolioLayout.astro"),
+		source("src/config/galleryConfig.ts"),
+		source("src/config/friendsConfig.ts"),
+	]);
+	assert.match(layout, /hasPublicAlbums =\s+siteConfig\.pages\.gallery && getPublicGalleryAlbums\(\)\.length > 0/);
+	assert.match(layout, /hasPublicFriends =\s+siteConfig\.pages\.friends && getEnabledFriends\(\)\.length > 0/);
+	assert.match(layout, /siteConfig\.pages\.booknav && <a href=/);
+	assert.match(layout, /hasPublicAlbums && <a href=/);
+	assert.match(layout, /hasPublicFriends && <a href=/);
+	assert.match(gallery, /getPublicGalleryAlbums\(\)/);
+	assert.match(friends, /getEnabledFriends/);
 });

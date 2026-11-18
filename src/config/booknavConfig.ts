@@ -22,6 +22,7 @@ export const booknavPageConfig: BooknavPageConfig = {
 };
 
 // 书签导航配置
+// 原主题作者的 Firefly / Docs / 博客链接保留为停用示例；其余通用开发工具正常展示。
 // 每个数组项是一个分类组，分类组内的 items 是该分类下的书签
 export const booknavConfig: BooknavGroup[] = [
 	{
@@ -80,6 +81,7 @@ export const booknavConfig: BooknavGroup[] = [
 				desc: "清晰美观的 Astro 个人博客主题模板",
 				icon: "/favicon/firefly-32.png",
 				weight: 10,
+				enabled: false, // 原主题示例，保留配置参考但不公开
 			},
 		],
 	},
@@ -144,12 +146,14 @@ export const booknavConfig: BooknavGroup[] = [
 				desc: "Firefly 主题模板文档",
 				icon: "https://docs-firefly.cuteleaf.cn/logo.png",
 				weight: 10,
+				enabled: false, // 原主题示例，保留配置参考但不公开
 			},
 			{
 				title: "夏夜流萤",
 				url: "https://blog.cuteleaf.cn",
 				desc: "飞萤之火自无梦的长夜亮起",
 				weight: 9,
+				enabled: false, // 原主题示例，保留配置参考但不公开
 			},
 		],
 	},

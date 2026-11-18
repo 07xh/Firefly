@@ -276,20 +276,6 @@
 /* Gallery: preserve existing album cover, password and Fancybox behaviors. */
 .space-gallery-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
 .space-gallery-slot { position: relative; min-width: 0; }
-.space-gallery-demo-label {
-	position: absolute;
-	top: 12px;
-	left: 12px;
-	z-index: 10;
-	padding: 5px 8px;
-	border: 1px solid var(--pf-border);
-	border-radius: 8px;
-	background: var(--pf-surface);
-	color: var(--pf-accent);
-	font-size: 11px;
-	font-weight: 730;
-	box-shadow: 0 3px 10px rgba(25,50,90,.1);
-}
 .space-gallery-slot .album-card {
 	height: 100%;
 	min-width: 0;
@@ -310,7 +296,6 @@
 .space-gallery-detail-heading { margin-bottom: 22px; }
 .space-gallery-detail-heading h1 { margin: 10px 0 0; font-size: clamp(30px, 4vw, 48px); font-weight: 780; letter-spacing: -.04em; line-height: 1.25; }
 .space-gallery-detail-heading p { margin: 11px 0 0; max-width: 760px; color: var(--pf-muted); line-height: 1.75; font-size: 14px; }
-.space-gallery-demo-chip { display: inline-block; padding: 5px 9px; border-radius: 8px; background: var(--pf-tint); color: var(--pf-accent); font-size: 11px; font-weight: 720; }
 .space-gallery-detail-meta, .space-gallery-detail-tags { display: flex; flex-wrap: wrap; gap: 9px 17px; margin-top: 15px; color: var(--pf-muted); font-size: 12px; }
 .space-gallery-detail-meta span { display: inline-flex; align-items: center; gap: 5px; }
 .space-gallery-detail-meta svg { width: 16px; height: 16px; color: var(--pf-accent); }
