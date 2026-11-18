@@ -124,6 +124,16 @@
       "formatter": {
         "enabled": false
       }
+    },
+    {
+      "includes": [
+        "src/pages/index.astro",
+        "src/pages/api/space-projects.ts",
+        "src/scripts/space-experience.ts"
+      ],
+      "formatter": {
+        "enabled": false
+      }
     }
   ]
 }
