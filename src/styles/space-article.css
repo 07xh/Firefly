@@ -1,0 +1,397 @@
+/* 07xh Space / article reading experience
+   Scoped to the public post detail route. Keep Markdown, MDX, media, and editor behavior intact. */
+.portfolio-reading {
+	--reader-font-size: 17px;
+	--primary: var(--pf-accent);
+	--line-color: var(--pf-border);
+	--line-divider: var(--pf-border);
+	width: min(100%, 1130px);
+	margin-inline: auto;
+	padding-block: clamp(15px, 2.5vw, 30px) clamp(70px, 8vw, 108px);
+	color: var(--pf-text);
+}
+
+/* Lightweight reading controls: discoverable without a second floating sidebar. */
+.portfolio-article-topbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 12px;
+	position: sticky;
+	top: 97px;
+	z-index: 32;
+	min-height: 66px;
+	margin-bottom: 23px;
+	padding: 8px 12px 8px 5px;
+	border: 1px solid var(--pf-border);
+	border-radius: 17px;
+	background: color-mix(in srgb, var(--pf-surface) 95%, transparent);
+	backdrop-filter: blur(18px);
+	-webkit-backdrop-filter: blur(18px);
+	box-shadow: 0 9px 29px rgba(47, 83, 153, .055);
+}
+.portfolio-article-topbar .portfolio-back {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	flex: none;
+	margin: 0;
+	padding: 10px 11px;
+	min-height: 42px;
+	border-radius: 11px;
+	color: var(--pf-muted);
+	font-weight: 680;
+	font-size: 13px;
+	text-decoration: none;
+	transition: background .2s ease, color .2s ease;
+}
+.portfolio-article-topbar .portfolio-back:hover {
+	background: var(--pf-tint);
+	color: var(--pf-accent);
+	text-decoration: none;
+}
+.portfolio-article-topbar .portfolio-back svg { width: 19px; height: 19px; flex: none; }
+.portfolio-reader-tools {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+	min-width: 0;
+}
+.portfolio-reader-button,
+.portfolio-reader-font {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-height: 40px;
+	padding: 0 12px;
+	gap: 7px;
+	border: 1px solid var(--pf-border);
+	border-radius: 11px;
+	background: var(--pf-surface);
+	color: var(--pf-muted);
+	font-size: 13px;
+	font-weight: 650;
+	white-space: nowrap;
+}
+.portfolio-reader-button {
+	cursor: pointer;
+	transition: color .2s ease, background .2s ease, border-color .2s ease;
+}
+.portfolio-reader-button:hover,
+.portfolio-reader-button[aria-expanded="true"] {
+	color: var(--pf-accent);
+	background: var(--pf-tint);
+	border-color: color-mix(in srgb, var(--pf-accent) 25%, var(--pf-border));
+}
+.portfolio-reader-button svg { width: 17px; height: 17px; flex: none; }
+.portfolio-reader-font { padding: 3px; gap: 2px; }
+.portfolio-reader-font button {
+	display: inline-grid;
+	place-items: center;
+	min-width: 36px;
+	min-height: 33px;
+	border-radius: 8px;
+	font-weight: 760;
+	font-size: 13px;
+	transition: background .18s ease, color .18s ease;
+}
+.portfolio-reader-font button:hover:not(:disabled) { background: var(--pf-tint); color: var(--pf-accent); }
+.portfolio-reader-font button:disabled { opacity: .35; cursor: not-allowed; }
+.portfolio-reader-font output {
+	display: inline-grid;
+	place-items: center;
+	min-width: 30px;
+	color: var(--pf-text);
+	font-size: 12px;
+	font-weight: 720;
+	font-variant-numeric: tabular-nums;
+}
+.portfolio-reader-button:focus-visible,
+.portfolio-reader-font button:focus-visible,
+.portfolio-article-topbar .portfolio-back:focus-visible {
+	outline: 2px solid var(--pf-accent);
+	outline-offset: 2px;
+}
+
+/* A reading column that remains comfortable on wide screens. */
+.portfolio-reading .portfolio-reading-grid {
+	display: grid;
+	grid-template-columns: minmax(0, 775px) minmax(205px, 240px);
+	gap: clamp(20px, 2.8vw, 39px);
+	align-items: start;
+	justify-content: center;
+}
+.portfolio-reading .portfolio-reading-grid > article { min-width: 0; }
+.portfolio-reading .portfolio-reading-grid > article > .flex {
+	border: 1px solid var(--pf-border);
+	border-radius: 20px;
+	box-shadow: 0 12px 38px rgba(48, 85, 150, .055);
+}
+.portfolio-reading #post-container {
+	background: var(--pf-surface);
+	color: var(--pf-text);
+	border-radius: inherit;
+}
+.portfolio-reading #post-container h1[data-pagefind-meta="title"] {
+	font-size: clamp(27px, 3vw, 38px);
+	font-weight: 790;
+	line-height: 1.35;
+	letter-spacing: -.035em;
+	overflow-wrap: anywhere;
+}
+.portfolio-reading #post-container h1[data-pagefind-meta="title"]::before { display: none; }
+.portfolio-reading #post-container .post-meta-root:not(.post-meta-cover) {
+	gap: 7px 18px;
+	margin-bottom: 20px;
+	color: var(--pf-muted);
+}
+.portfolio-reading #post-container .post-meta-root:not(.post-meta-cover) .meta-icon {
+	color: var(--pf-muted);
+	opacity: .85;
+}
+.portfolio-reading #post-container .post-meta-root:not(.post-meta-cover) a {
+	color: var(--pf-muted);
+	text-decoration: none;
+}
+.portfolio-reading #post-container .post-meta-root:not(.post-meta-cover) a:hover {
+	color: var(--pf-accent);
+}
+
+/* Typography that prioritizes tutorials, equations, diagrams and code. */
+.portfolio-reading .markdown-content.custom-md {
+	min-width: 0;
+	max-width: 100%;
+	color: var(--pf-text);
+	font-size: var(--reader-font-size, 17px);
+	line-height: 1.88;
+	letter-spacing: .004em;
+}
+.portfolio-reading .markdown-content :is(p, ul, ol) { margin-block: .8em 1.05em; }
+.portfolio-reading .markdown-content :is(h2, h3, h4, h5, h6) {
+	color: var(--pf-text);
+	letter-spacing: -.02em;
+	overflow-wrap: anywhere;
+	scroll-margin-top: 190px;
+}
+.portfolio-reading .markdown-content h2 {
+	margin: 2.4em 0 .85em;
+	padding-bottom: .42em;
+	border-bottom: 1px solid var(--pf-border);
+	font-size: 1.52em;
+	font-weight: 760;
+	line-height: 1.45;
+}
+.portfolio-reading .markdown-content h3 {
+	margin: 1.9em 0 .65em;
+	font-size: 1.26em;
+	font-weight: 740;
+	line-height: 1.5;
+}
+.portfolio-reading .markdown-content h4 {
+	margin: 1.6em 0 .6em;
+	font-size: 1.12em;
+	font-weight: 700;
+}
+.portfolio-reading .markdown-content :is(h2, h3, h4):first-child { margin-top: .4em; }
+.portfolio-reading .markdown-content :is(p, li) { overflow-wrap: break-word; }
+.portfolio-reading .markdown-content a:not(.no-styling) {
+	color: var(--pf-accent);
+	text-decoration-color: color-mix(in srgb, var(--pf-accent) 40%, transparent);
+	text-underline-offset: 4px;
+}
+.portfolio-reading .markdown-content :not(pre) > code {
+	padding: .12em .38em;
+	border: 1px solid color-mix(in srgb, var(--pf-accent) 12%, var(--pf-border));
+	border-radius: 5px;
+	overflow-wrap: anywhere;
+	font-size: .88em;
+}
+.portfolio-reading .markdown-content .expressive-code {
+	min-width: 0;
+	max-width: 100%;
+	margin-block: 1.3em;
+}
+.portfolio-reading .markdown-content .expressive-code pre,
+.portfolio-reading .markdown-content pre {
+	max-width: 100%;
+	overflow-x: auto;
+	-webkit-overflow-scrolling: touch;
+	overscroll-behavior-inline: contain;
+}
+.portfolio-reading .markdown-content :is(img, svg, video) { max-width: 100%; }
+.portfolio-reading .markdown-content figure { max-width: 100%; }
+.portfolio-reading .markdown-content figcaption {
+	margin-top: 8px;
+	color: var(--pf-muted);
+	font-size: .83em;
+	text-align: center;
+}
+.portfolio-reading .markdown-content blockquote {
+	margin-block: 1.4em;
+	padding: 9px 17px;
+	border-left: 3px solid var(--pf-accent);
+	border-radius: 0 10px 10px 0;
+	background: var(--pf-tint);
+}
+.portfolio-reading .markdown-content blockquote::before { display: none; }
+.portfolio-reading .markdown-content .horizontal-scroll-container {
+	max-width: 100%;
+	overflow-x: auto;
+	border: 1px solid var(--pf-border);
+	border-radius: 12px;
+	-webkit-overflow-scrolling: touch;
+}
+.portfolio-reading .markdown-content table { max-width: none; }
+.portfolio-reading .markdown-content :is(th, td) {
+	min-width: 100px;
+	vertical-align: top;
+}
+.portfolio-reading .markdown-content hr {
+	margin-block: 2.1em;
+	border-color: var(--pf-border);
+}
+
+/* Clear, quiet table of contents with current-section highlighting. */
+.portfolio-reading .portfolio-reading-toc {
+	position: sticky;
+	top: 184px;
+	align-self: start;
+	min-width: 0;
+	max-height: calc(100svh - 199px);
+	padding: 0;
+	overflow: hidden;
+	border: 1px solid var(--pf-border);
+	border-radius: 17px;
+	background: color-mix(in srgb, var(--pf-surface) 93%, transparent);
+	box-shadow: 0 10px 30px rgba(48, 85, 150, .045);
+}
+.portfolio-reading-toc details { min-width: 0; }
+.portfolio-reading-toc summary {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	min-height: 55px;
+	padding: 14px 16px;
+	color: var(--pf-text);
+	cursor: pointer;
+	font-size: 14px;
+	font-weight: 760;
+	list-style: none;
+}
+.portfolio-reading-toc summary::-webkit-details-marker { display: none; }
+.portfolio-reading-toc summary small {
+	font-size: 11px;
+	font-weight: 600;
+	color: var(--pf-muted);
+	white-space: nowrap;
+}
+.portfolio-reading-toc details[open] summary { border-bottom: 1px solid var(--pf-border); }
+.portfolio-reading-toc summary:hover { color: var(--pf-accent); }
+.portfolio-reading-toc nav {
+	max-height: calc(100svh - 260px);
+	padding: 9px;
+	overflow-y: auto;
+	scrollbar-width: thin;
+	scrollbar-color: var(--pf-border) transparent;
+}
+.portfolio-reading-toc ul {
+	display: grid;
+	gap: 2px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	list-style: none;
+}
+.portfolio-reading-toc li { min-width: 0; }
+.portfolio-reading-toc li[data-depth="3"] { padding-left: 9px; }
+.portfolio-reading-toc li[data-depth="4"] { padding-left: 18px; }
+.portfolio-reading-toc a {
+	display: block;
+	padding: 9px 11px;
+	border-radius: 9px;
+	color: var(--pf-muted);
+	font-size: 12px;
+	font-weight: 570;
+	line-height: 1.5;
+	text-decoration: none;
+	transition: background .15s ease, color .15s ease;
+	overflow-wrap: anywhere;
+}
+.portfolio-reading-toc a:hover { color: var(--pf-accent); background: var(--pf-tint); text-decoration: none; }
+.portfolio-reading-toc a[aria-current="location"] {
+	color: var(--pf-accent);
+	background: var(--pf-tint);
+	font-weight: 730;
+}
+.portfolio-reading-toc [id], .portfolio-reading [id] { scroll-margin-top: 185px; }
+
+@media (max-width: 1000px) {
+	.portfolio-reading .portfolio-reading-grid {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 14px;
+	}
+	.portfolio-reading .portfolio-reading-toc {
+		position: static;
+		top: auto;
+		grid-row: 1;
+		max-height: none;
+		overflow: visible;
+	}
+	.portfolio-reading-toc nav { max-height: min(360px, 46svh); }
+}
+@media (max-width: 780px) {
+	.portfolio-reading {
+		--reader-font-size: 16px;
+		padding-top: 20px;
+	}
+	.portfolio-article-topbar {
+		position: relative;
+		top: auto;
+		flex-wrap: wrap;
+		gap: 8px;
+		margin-bottom: 16px;
+		padding: 8px;
+		border-radius: 15px;
+	}
+	.portfolio-article-topbar .portfolio-back { padding-inline: 8px; }
+	.portfolio-reader-tools { flex-wrap: wrap; gap: 6px; }
+	.portfolio-reading .markdown-content.custom-md { line-height: 1.82; }
+	.portfolio-reading .markdown-content :is(h2, h3, h4) { scroll-margin-top: 86px; }
+	.portfolio-reading-toc [id], .portfolio-reading [id] { scroll-margin-top: 85px; }
+	.portfolio-reading .portfolio-reading-grid > article > .flex { border-radius: 17px; }
+	.portfolio-reading #post-container h1[data-pagefind-meta="title"] {
+		font-size: clamp(25px, 5.1vw, 33px);
+		line-height: 1.38;
+	}
+}
+@media (max-width: 540px) {
+	.portfolio-article-topbar { align-items: stretch; }
+	.portfolio-article-topbar .portfolio-back { min-height: 38px; }
+	.portfolio-reader-tools {
+		width: 100%;
+		justify-content: space-between;
+	}
+	.portfolio-reader-button { min-height: 40px; padding-inline: 10px; }
+	.portfolio-reader-font { min-height: 40px; }
+	.portfolio-reader-copy { margin-left: auto; }
+	.portfolio-reading #post-container { padding-inline: 19px !important; }
+	.portfolio-reading #post-container > .-mx-6 {
+		margin-inline: -19px !important;
+	}
+	.portfolio-reading #post-container .markdown-content.custom-md { font-size: var(--reader-font-size, 16px); }
+	.portfolio-reading .markdown-content h2 { font-size: 1.38em; margin-top: 2em; }
+	.portfolio-reading .markdown-content h3 { font-size: 1.18em; }
+	.portfolio-reading .markdown-content :is(th, td) { min-width: 88px; }
+}
+@media (max-width: 360px) {
+	.portfolio-reader-button { padding-inline: 8px; gap: 5px; }
+	.portfolio-reader-font button { min-width: 31px; }
+	.portfolio-reader-font output { min-width: 25px; }
+}
+@media (prefers-reduced-motion: reduce) {
+	.portfolio-reader-button,
+	.portfolio-reader-font button,
+	.portfolio-reading-toc a { transition: none; }
+}

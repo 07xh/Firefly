@@ -1,0 +1,172 @@
+---
+import { Icon } from "astro-icon/components";
+
+interface Props {
+	hasToc?: boolean;
+}
+
+const { hasToc = false } = Astro.props;
+---
+
+<article-reading-tools class="portfolio-reader-tools" aria-label="阅读工具">
+	{hasToc && (
+		<button type="button" class="portfolio-reader-button" data-reader-toc aria-expanded="false" aria-controls="portfolio-article-toc" title="展开或收起目录">
+			<Icon name="material-symbols:format-list-bulleted-rounded" aria-hidden="true" />
+			<span>目录</span>
+		</button>
+	)}
+	<div class="portfolio-reader-font" role="group" aria-label="调整正文字号">
+		<button type="button" data-reader-decrease aria-label="减小正文字号" title="减小正文字号">A−</button>
+		<output data-reader-size aria-label="当前正文字号">17</output>
+		<button type="button" data-reader-increase aria-label="增大正文字号" title="增大正文字号">A+</button>
+	</div>
+	<button type="button" class="portfolio-reader-button portfolio-reader-copy" data-reader-copy title="复制文章链接">
+		<Icon name="material-symbols:link-rounded" aria-hidden="true" />
+		<span data-reader-copy-label>复制链接</span>
+	</button>
+</article-reading-tools>
+
+<script>
+	class ArticleReadingTools extends HTMLElement {
+		private root: HTMLElement | null = null;
+		private toc: HTMLDetailsElement | null = null;
+		private fontSize = 17;
+		private manualToc = false;
+		private compact = false;
+		private scheduled = 0;
+		private copyTimer = 0;
+
+		connectedCallback() {
+			this.root = this.closest<HTMLElement>(".portfolio-reading");
+			this.toc = this.root?.querySelector<HTMLDetailsElement>("[data-reader-toc-details]") ?? null;
+			this.compact = window.matchMedia("(max-width: 1000px)").matches;
+			this.fontSize = window.matchMedia("(max-width: 780px)").matches ? 16 : 17;
+			if (this.toc) {
+				this.toc.open = !this.compact;
+				this.toc.addEventListener("toggle", this.syncToc);
+				this.toc.querySelector("summary")?.addEventListener("click", this.markManualToc);
+			}
+			try {
+				const saved = Number(window.localStorage.getItem("07xh-reader-font-size"));
+				if (Number.isInteger(saved) && saved >= 15 && saved <= 22) this.fontSize = saved;
+			} catch {
+				// Reading controls work without persistent browser storage.
+			}
+			this.applyFontSize();
+			this.syncToc();
+			this.addEventListener("click", this.handleClick);
+			window.addEventListener("scroll", this.scheduleActive, { passive: true });
+			window.addEventListener("resize", this.handleResize, { passive: true });
+			window.addEventListener("hashchange", this.scheduleActive);
+			this.scheduleActive();
+		}
+
+		disconnectedCallback() {
+			this.removeEventListener("click", this.handleClick);
+			window.removeEventListener("scroll", this.scheduleActive);
+			window.removeEventListener("resize", this.handleResize);
+			window.removeEventListener("hashchange", this.scheduleActive);
+			this.toc?.removeEventListener("toggle", this.syncToc);
+			this.toc?.querySelector("summary")?.removeEventListener("click", this.markManualToc);
+			window.cancelAnimationFrame(this.scheduled);
+			window.clearTimeout(this.copyTimer);
+		}
+
+		private markManualToc = () => {
+			this.manualToc = true;
+		};
+
+		private syncToc = () => {
+			this.querySelector<HTMLButtonElement>("[data-reader-toc]")
+				?.setAttribute("aria-expanded", String(Boolean(this.toc?.open)));
+		};
+
+		private handleResize = () => {
+			const compact = window.matchMedia("(max-width: 1000px)").matches;
+			if (compact !== this.compact) {
+				this.compact = compact;
+				if (!this.manualToc && this.toc) this.toc.open = !compact;
+			}
+			this.scheduleActive();
+		};
+
+		private applyFontSize() {
+			this.root?.style.setProperty("--reader-font-size", `${this.fontSize}px`);
+			const display = this.querySelector<HTMLOutputElement>("[data-reader-size]");
+			if (display) display.textContent = String(this.fontSize);
+			const down = this.querySelector<HTMLButtonElement>("[data-reader-decrease]");
+			const up = this.querySelector<HTMLButtonElement>("[data-reader-increase]");
+			if (down) down.disabled = this.fontSize <= 15;
+			if (up) up.disabled = this.fontSize >= 22;
+		}
+
+		private changeFont(step: number) {
+			this.fontSize = Math.min(22, Math.max(15, this.fontSize + step));
+			this.applyFontSize();
+			try {
+				window.localStorage.setItem("07xh-reader-font-size", String(this.fontSize));
+			} catch {
+				// Optional preference persistence.
+			}
+		}
+
+		private handleClick = (event: MouseEvent) => {
+			if (!(event.target instanceof Element)) return;
+			if (event.target.closest("[data-reader-decrease]")) {
+				this.changeFont(-1);
+			} else if (event.target.closest("[data-reader-increase]")) {
+				this.changeFont(1);
+			} else if (event.target.closest("[data-reader-toc]")) {
+				if (!this.toc) return;
+				this.manualToc = true;
+				this.toc.open = !this.toc.open;
+				this.syncToc();
+				if (this.toc.open && this.compact) {
+					this.toc.scrollIntoView({
+						behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+						block: "start",
+					});
+				}
+			} else if (event.target.closest("[data-reader-copy]")) {
+				void this.copyLink();
+			}
+		};
+
+		private async copyLink() {
+			const label = this.querySelector<HTMLElement>("[data-reader-copy-label]");
+			try {
+				if (!navigator.clipboard?.writeText) throw new Error("Clipboard unavailable");
+				await navigator.clipboard.writeText(window.location.href);
+				if (label) label.textContent = "已复制";
+				window.clearTimeout(this.copyTimer);
+				this.copyTimer = window.setTimeout(() => { if (label) label.textContent = "复制链接"; }, 1800);
+			} catch {
+				window.prompt("复制文章链接", window.location.href);
+			}
+		}
+
+		private scheduleActive = () => {
+			if (this.scheduled) return;
+			this.scheduled = window.requestAnimationFrame(() => {
+				this.scheduled = 0;
+				const headings = this.root?.querySelectorAll<HTMLElement>(
+					".markdown-content h2[id], .markdown-content h3[id], .markdown-content h4[id]",
+				);
+				if (!headings?.length || !this.toc) return;
+				let active = headings[0].id;
+				for (const heading of headings) {
+					if (heading.getBoundingClientRect().top > 165) break;
+					active = heading.id;
+				}
+				for (const link of this.toc.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')) {
+					if (link.getAttribute("href") === `#${active}`) link.setAttribute("aria-current", "location");
+					else link.removeAttribute("aria-current");
+				}
+			});
+		};
+	}
+
+	if (!customElements.get("article-reading-tools")) {
+		customElements.define("article-reading-tools", ArticleReadingTools);
+	}
+</script>
