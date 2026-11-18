@@ -16,7 +16,7 @@
 <ellipse cx="732" cy="318" rx="116" ry="82" fill="url(#glow)" opacity=".48"/>
 <path d="M694 279C780 265 844 272 900 250V396C805 349 756 336 694 323Z" fill="url(#trail)"/>
 <g filter="url(#shadow)">
-<path d="M550 263L627 151C640 178 654 177 665 193L681 275 654 307 577 311Z" fill="url(#fin)" stroke="#C3D7F7" stroke-width="2"/>
+<path d="M550 263L616 189C640 178 654 177 665 193L681 275 654 307 577 311Z" fill="url(#fin)" stroke="#C3D7F7" stroke-width="2"/>
 <path d="M635 194L649 193 663 258" stroke="#AAC9FA" stroke-width="6" stroke-linecap="round" opacity=".8"/>
 <path d="M654 266L702 263C729 267 741 284 747 299L720 326 679 331 640 300Z" fill="#9CC0F5"/>
 <path d="M658 279C674 271 701 268 717 282L736 302 718 326 682 325Z" fill="#3672D1"/>
