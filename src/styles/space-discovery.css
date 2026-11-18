@@ -1,5 +1,6 @@
 /* 07xh Space: shared reading-discovery surfaces, scoped to article, search and topic pages. */
 .space-content-page {
+	display: block;
 	width: min(100%, 1080px);
 	margin: 0 auto;
 	padding: clamp(28px, 4vw, 56px) 0 clamp(64px, 8vw, 112px);
