@@ -9,7 +9,9 @@ import License from "@components/misc/License.astro";
 import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import PortfolioLayout from "@layouts/PortfolioLayout.astro";
+import ArticleReadingTools from "@/components/portfolio/ArticleReadingTools.astro";
 import "@/styles/banner-post.css";
+import "@/styles/space-article.css";
 import {
 	getRelatedPosts,
 	getSeriesPosts,
@@ -236,7 +238,13 @@ const readingHeadings = headings.filter(
     set:html={JSON.stringify(jsonLd)}
   />
   <div class="portfolio-reading">
-    <a class="portfolio-back" href={url("/posts/")}><Icon name="material-symbols:arrow-back-rounded" /> 技术文章</a>
+    <header class="portfolio-article-topbar">
+      <a class="portfolio-back" href={url("/posts/")}>
+        <Icon name="material-symbols:arrow-back-rounded" aria-hidden="true" />
+        <span>全部文章</span>
+      </a>
+      <ArticleReadingTools hasToc={!entry.data.password && readingHeadings.length > 0} />
+    </header>
     <div class="portfolio-reading-grid">
       <article>
   <div
@@ -731,13 +739,18 @@ const readingHeadings = headings.filter(
   {entry.data.comment && !entry.data.password && <Comment post={entry} />}
       </article>
       {!entry.data.password && readingHeadings.length > 0 && (
-        <aside class="portfolio-reading-toc">
-          <details open>
-            <summary>目录</summary>
-            <nav aria-label="文章目录">
+        <aside class="portfolio-reading-toc" id="portfolio-article-toc" aria-label="文章目录">
+          <details data-reader-toc-details>
+            <summary>
+              <span>本文目录</span>
+              <small>{readingHeadings.length} 节</small>
+            </summary>
+            <nav aria-label="文章章节">
               <ul>
                 {readingHeadings.map(({ slug, text, depth }) => (
-                  <li data-depth={depth}><a href={`#${slug}`}>{text}</a></li>
+                  <li data-depth={depth}>
+                    <a href={`#${slug}`}>{text}</a>
+                  </li>
                 ))}
               </ul>
             </nav>
