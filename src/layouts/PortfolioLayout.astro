@@ -23,10 +23,30 @@ interface Props {
 const pathname = Astro.url.pathname.replace(/\/$/, "") || "/";
 const isHome = pathname === "/";
 const links = [
-	{ label: "首页", path: "/", icon: "material-symbols:home-rounded", enabled: true },
-	{ label: "项目", path: "/projects/", icon: "material-symbols:dashboard-rounded", enabled: siteConfig.pages.projects },
-	{ label: "博客", path: "/posts/", icon: "material-symbols:article-rounded", enabled: true },
-	{ label: "知识库", path: "/topics/", icon: "material-symbols:book-rounded", enabled: true },
+	{
+		label: "首页",
+		path: "/",
+		icon: "material-symbols:home-rounded",
+		enabled: true,
+	},
+	{
+		label: "项目",
+		path: "/projects/",
+		icon: "material-symbols:dashboard-rounded",
+		enabled: siteConfig.pages.projects,
+	},
+	{
+		label: "博客",
+		path: "/posts/",
+		icon: "material-symbols:article-rounded",
+		enabled: true,
+	},
+	{
+		label: "知识库",
+		path: "/topics/",
+		icon: "material-symbols:book-rounded",
+		enabled: true,
+	},
 	{
 		label: "关于",
 		path: "/about/",
