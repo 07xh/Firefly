@@ -21,9 +21,9 @@ html.dark .portfolio--project-scene {
 	display: grid;
 	grid-template-columns: minmax(0, 0.88fr) minmax(0, 1.12fr);
 	align-items: center;
-	gap: clamp(24px, 4.4vw, 78px);
+	gap: clamp(20px, 3.1vw, 56px);
 	min-height: calc(100svh - 94px);
-	padding: clamp(28px, 4vw, 58px) clamp(42px, 4.3vw, 78px) 80px;
+	padding: clamp(20px, 2.6vw, 40px) clamp(36px, 4.3vw, 76px) 68px;
 }
 
 .space-project-hero::before {
@@ -172,7 +172,7 @@ html.dark .portfolio--project-scene {
 	flex-direction: column;
 	min-width: 0;
 	width: 100%;
-	height: clamp(390px, 63svh, 670px);
+	height: clamp(430px, 70svh, 720px);
 	margin: 0;
 	overflow: hidden;
 	border: 1px solid color-mix(in srgb, var(--pf-border) 75%, #a3bbeb);
@@ -229,7 +229,7 @@ html.dark .portfolio--project-scene {
 	place-items: center;
 	flex: 1;
 	min-height: 0;
-	padding: clamp(18px, 2.6vw, 38px);
+	padding: clamp(14px, 2vw, 28px);
 }
 
 .space-project-image-wrap {
@@ -247,7 +247,7 @@ html.dark .portfolio--project-scene {
 	align-items: center;
 	justify-content: center;
 	width: 100%;
-	height: auto;
+	height: 100%;
 	min-height: 0;
 	border: none;
 	border-radius: 0;
@@ -259,12 +259,12 @@ html.dark .portfolio--project-scene {
 	display: block;
 	width: 100% !important;
 	max-width: 100% !important;
-	height: auto !important;
-	max-height: min(55svh, 580px) !important;
+	height: 100% !important;
+	max-height: 100% !important;
 	object-fit: contain !important;
-	border: 1px solid color-mix(in srgb, var(--pf-border) 68%, transparent);
-	border-radius: 16px;
-	box-shadow: 0 19px 40px rgba(32, 67, 131, .15);
+	border: 0;
+	border-radius: 12px;
+	box-shadow: none;
 }
 
 .space-project-image-expand {
@@ -285,6 +285,70 @@ html.dark .portfolio--project-scene {
 }
 
 .space-project-image-expand:hover { transform: translateY(-2px); background: var(--pf-tint); }
+
+
+/* Only actual supplied screenshots are shown. The phone view shares the same stage. */
+.space-project-image-space {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
+	min-height: 0;
+}
+.space-project-image-space[hidden] { display: none !important; }
+.space-project-image-space .portfolio-project-screenshot { height: 100%; }
+.space-project-phone-image {
+	display: block;
+	width: auto;
+	height: 100%;
+	max-width: 100%;
+	max-height: 100%;
+	object-fit: contain;
+	filter: drop-shadow(0 12px 21px rgba(38, 75, 141, .14));
+}
+.space-project-stage:has([data-project-preview]) .space-project-stage-body { padding-bottom: 66px; }
+.space-project-preview-controls {
+	position: absolute;
+	z-index: 3;
+	left: 50%;
+	bottom: 11px;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px;
+	border: 1px solid rgba(153, 178, 224, .55);
+	border-radius: 999px;
+	background: color-mix(in srgb, var(--pf-surface) 90%, transparent);
+	box-shadow: 0 5px 17px rgba(40, 75, 135, .13);
+	backdrop-filter: blur(12px);
+	transform: translateX(-50%);
+}
+.space-project-preview-controls button {
+	min-width: 62px;
+	min-height: 35px;
+	padding: 6px 14px;
+	border-radius: 999px;
+	color: var(--pf-muted);
+	font-size: 12px;
+	font-weight: 700;
+	transition: color .2s ease, background-color .2s ease;
+}
+.space-project-preview-controls button[aria-pressed="true"] {
+	background: var(--pf-accent);
+	color: #fff;
+}
+.space-project-preview-controls button:not([aria-pressed="true"]):hover {
+	background: var(--pf-tint);
+	color: var(--pf-accent);
+}
+.space-project-navigation-hint {
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+}
+.space-project-navigation-hint svg { width: 19px; height: 19px; }
 
 .space-project-placeholder {
 	position: relative;
@@ -482,7 +546,7 @@ html.dark .space-project-placeholder::after { border-color: rgba(152, 189, 255, 
 	}
 	.space-project-hero-bottom { left: clamp(28px, 4vw, 46px); right: clamp(28px, 4vw, 46px); }
 	.space-project-copy h1 { font-size: clamp(48px, 6vw, 78px); }
-	.space-project-stage { height: clamp(350px, 58svh, 600px); }
+	.space-project-stage { height: clamp(380px, 62svh, 630px); }
 }
 
 @media (max-width: 760px) {
@@ -500,9 +564,9 @@ html.dark .space-project-placeholder::after { border-color: rgba(152, 189, 255, 
 	.space-project-actions { margin-top: 25px; }
 	.space-project-actions .portfolio-button { min-height: 46px; padding-inline: 13px; font-size: 12px; }
 	.space-project-scroll-cue { margin-top: 23px; }
-	.space-project-stage { height: clamp(310px, 46svh, 480px); border-radius: 22px; }
+	.space-project-stage { height: clamp(355px, 49svh, 520px); border-radius: 22px; }
 	.space-project-stage-body { padding: 18px; }
-	.space-project-image-wrap .portfolio-project-screenshot img { max-height: min(36svh, 385px) !important; }
+	.space-project-image-wrap .portfolio-project-screenshot img { max-height: 100% !important; }
 	.space-project-hero-bottom { left: 26px; right: 26px; bottom: 25px; }
 	.space-project-switch { padding-inline: 5px; }
 	.space-project-arrow { width: 41px; height: 49px; border-radius: 13px; }
@@ -515,7 +579,7 @@ html.dark .space-project-placeholder::after { border-color: rgba(152, 189, 255, 
 	.space-project-hero { padding: 30px 20px 76px; gap: 20px; }
 	.space-project-copy h1 { font-size: clamp(42px, 11.5vw, 56px); }
 	.space-project-description { font-size: 16px; }
-	.space-project-stage { height: 310px; }
+	.space-project-stage { height: clamp(330px, 48svh, 430px); }
 	.space-project-hero-bottom { left: 20px; right: 20px; }
 	.space-project-stage-kind { display: none; }
 	.space-project-stage-top { grid-template-columns: 1fr auto; }
