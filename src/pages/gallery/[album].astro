@@ -47,8 +47,8 @@ const demo = albumMeta.id === "firefly-2026" || albumMeta.id === "encrypted-test
 				)}
 				<span><Icon name="material-symbols:photo-library-outline-rounded" aria-hidden="true" />{photos.length} {i18n(I18nKey.galleryPhotos)}</span>
 			</div>
-			{albumMeta.tags?.length > 0 && (
-				<div class="space-gallery-detail-tags">{albumMeta.tags.map((tag) => <span>#{tag}</span>)}</div>
+			{(albumMeta.tags || []).length > 0 && (
+				<div class="space-gallery-detail-tags">{(albumMeta.tags || []).map((tag) => <span>#{tag}</span>)}</div>
 			)}
 		</header>
 		{cover && (
