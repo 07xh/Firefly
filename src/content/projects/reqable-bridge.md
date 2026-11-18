@@ -15,4 +15,4 @@ link:
 
 ## 接收记录
 
-让 Windows 和 Android 接入同一个热点，手机接收已经完成的 HTTP 会话并保存为 HAR。
+让 Windows 和 Android 接入同一个热点，手机接收已完成的 HTTP 会话，在本地保存记录。
