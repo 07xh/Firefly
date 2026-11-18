@@ -54,3 +54,15 @@ test("navigation and links remain real and independent", () => {
   assert.match(layout, /data-theme-toggle/);
   assert.match(layout, /data-menu-toggle/);
 });
+
+test("hero art is bounded at desktop, tablet and mobile sizes", async () => {
+  const style = await readFile(new URL("src/styles/space-airy.css", root), "utf8");
+  const ship = await readFile(new URL("public/brand/07xh-ship.svg", root), "utf8");
+  assert.match(style, /width:min\(100%,570px\); max-width:570px/);
+  assert.match(style, /\.space-home-art img \{\s*display:block; width:100%; max-width:100%/);
+  assert.doesNotMatch(style, /width:120%;/);
+  assert.doesNotMatch(style, /width:min\(111%/);
+  assert.match(style, /space-home-hero::after \{ display:none; \}/);
+  assert.match(ship, /比例修正版/);
+  assert.match(ship, /rx="296" ry="104"/);
+});
