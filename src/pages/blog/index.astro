@@ -1,0 +1,22 @@
+---
+import MainGridLayout from "@/layouts/MainGridLayout.astro";
+import PostPage from "@/components/layout/PostPage.astro";
+import { getSortedPosts } from "@/utils/content-utils";
+
+export const prerender = true;
+const posts = await getSortedPosts();
+const page = { data: posts };
+---
+<MainGridLayout title="博客" description="07xh Space 的技术文章、学习笔记与开发记录。">
+  <section class="card-base rounded-xl px-6 py-7 md:px-9 md:py-9 mb-4">
+    <div class="text-xs uppercase tracking-[.18em] opacity-60 mb-3">07XH / WRITING</div>
+    <h1 class="!text-3xl md:!text-4xl font-bold mb-3">博客与文章</h1>
+    <p class="text-base opacity-70 leading-relaxed mb-4">知识、实践和开发过程的完整记录。项目展示请返回个人空间，文章仍保留原有链接和阅读功能。</p>
+    <div class="flex gap-3 flex-wrap">
+      <a href="/" class="btn-regular">返回个人空间 ↗</a>
+      <a href="/archive/" class="btn-regular">按时间归档 ↗</a>
+      <a href="/series/" class="btn-regular">知识专题 ↗</a>
+    </div>
+  </section>
+  <PostPage page={page} />
+</MainGridLayout>
