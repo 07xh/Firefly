@@ -3,8 +3,9 @@ import { Icon } from "astro-icon/components";
 import PostRows from "@/components/portfolio/PostRows.astro";
 import { portfolioTopics } from "@/config/portfolioConfig";
 import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
+import "@/styles/space-discovery.css";
 import { getSortedPostsList } from "@/utils/content-utils";
-import { url } from "@/utils/url-utils";
+import { getPostUrlBySlug, url } from "@/utils/url-utils";
 
 export const prerender = true;
 
@@ -25,13 +26,34 @@ posts.sort(
 			(b.data.seriesOrder ?? Number.POSITIVE_INFINITY) ||
 		a.data.published.getTime() - b.data.published.getTime(),
 );
+const first = posts[0];
 ---
 
 <PortfolioLayout title={topic.title} description={topic.description}>
-	<a class="portfolio-back" href={url("/topics/")}><Icon name="material-symbols:arrow-back-rounded" /> 知识专题</a>
-	<header class="portfolio-page-intro portfolio-page-intro-from-back">
-		<h1>{topic.title}</h1>
-		<p>{topic.description}</p>
-	</header>
-	<PostRows posts={posts} />
+	<section class="space-content-page space-topic-detail">
+		<a class="space-topic-back" href={url("/topics/")}>
+			<Icon name="material-symbols:arrow-back-rounded" aria-hidden="true" />
+			返回知识专题
+		</a>
+		<header class="space-topic-detail-hero">
+			<span class="space-topic-detail-count">{posts.length} 篇文章 · 按章节顺序</span>
+			<h1>{topic.title}</h1>
+			<p>{topic.description}</p>
+			{first && (
+				<a href={getPostUrlBySlug(first.id)} class="space-topic-start">
+					从第一篇开始
+					<Icon name="material-symbols:arrow-forward-rounded" aria-hidden="true" />
+				</a>
+			)}
+		</header>
+		<div class="space-topic-chapter-heading">
+			<h2>章节目录</h2>
+			<span>点击标题进入正文</span>
+		</div>
+		{posts.length > 0 ? (
+			<PostRows posts={posts} showSequence />
+		) : (
+			<p class="space-content-empty">目前还没有已发布的章节。</p>
+		)}
+	</section>
 </PortfolioLayout>
