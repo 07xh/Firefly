@@ -28,6 +28,7 @@ const { Content } = await render(entry);
 const { title, subtitle, description, link, status, tags } = entry.data;
 const statusLabel = getProjectStatusMeta(status || "").label;
 const zoomImage = await resolveProjectImage(entry.data.image, entry.filePath);
+const hasPhonePreview = entry.id.startsWith("dorm-os");
 ---
 
 <project-page class="portfolio-project-page space-showcase-page">
@@ -103,12 +104,28 @@ const zoomImage = await resolveProjectImage(entry.data.image, entry.filePath);
 				</div>
 				<div class="space-project-stage-body">
 					{entry.data.image ? (
-						<div class="space-project-image-wrap">
-							<ProjectVisual project={entry} priority />
-							{zoomImage && (
-								<a class="space-project-image-expand" href={zoomImage} data-fancybox="project-cover" data-type="image" aria-label={"放大查看" + title + "截图"}>
-									<Icon name="material-symbols:open-in-full-rounded" aria-hidden="true" />
-								</a>
+						<div class="space-project-image-wrap" data-project-preview>
+							<div class="space-project-image-space" data-preview-pane="main">
+								<ProjectVisual project={entry} priority />
+								{zoomImage && (
+									<a class="space-project-image-expand" href={zoomImage} data-fancybox="project-cover" data-type="image" aria-label={"放大查看" + title + "截图"}>
+										<Icon name="material-symbols:open-in-full-rounded" aria-hidden="true" />
+									</a>
+								)}
+							</div>
+							{hasPhonePreview && (
+								<div class="space-project-image-space" data-preview-pane="phone" hidden>
+									<img class="space-project-phone-image" src={url("/project-media/dorm-os-home.webp")} alt="校序手机端首页界面截图" loading="lazy" decoding="async" width="1080" height="1920" />
+									<a class="space-project-image-expand" href={url("/project-media/dorm-os-home.webp")} data-fancybox="project-cover" data-type="image" aria-label="放大查看校序手机界面">
+										<Icon name="material-symbols:open-in-full-rounded" aria-hidden="true" />
+									</a>
+								</div>
+							)}
+							{hasPhonePreview && (
+								<div class="space-project-preview-controls" role="group" aria-label="切换校序界面截图">
+									<button type="button" data-preview-target="main" aria-pressed="true">平板</button>
+									<button type="button" data-preview-target="phone" aria-pressed="false">手机</button>
+								</div>
 							)}
 						</div>
 					) : (
@@ -122,7 +139,7 @@ const zoomImage = await resolveProjectImage(entry.data.image, entry.filePath);
 				</div>
 			</figure>
 			<div class="space-project-hero-bottom" aria-label="项目浏览方式">
-				<span>← → 切换项目</span>
+				<span class="space-project-navigation-hint"><Icon name="material-symbols:keyboard-arrow-left-rounded" aria-hidden="true" /> 左右切换项目 <Icon name="material-symbols:keyboard-arrow-right-rounded" aria-hidden="true" /></span>
 				<a href={url("/projects/all/")}>查看全部项目 <Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" /></a>
 			</div>
 		</header>
@@ -147,6 +164,7 @@ const zoomImage = await resolveProjectImage(entry.data.image, entry.filePath);
 
 		connectedCallback() {
 			this.addEventListener("pointerdown", this.start);
+			this.addEventListener("click", this.onPreviewClick);
 			this.addEventListener("pointerup", this.end);
 			this.addEventListener("pointercancel", this.cancel);
 			this.addEventListener("wheel", this.onWheel, { passive: false });
@@ -156,6 +174,7 @@ const zoomImage = await resolveProjectImage(entry.data.image, entry.filePath);
 
 		disconnectedCallback() {
 			this.removeEventListener("pointerdown", this.start);
+			this.removeEventListener("click", this.onPreviewClick);
 			this.removeEventListener("pointerup", this.end);
 			this.removeEventListener("pointercancel", this.cancel);
 			this.removeEventListener("wheel", this.onWheel);
@@ -164,6 +183,20 @@ const zoomImage = await resolveProjectImage(entry.data.image, entry.filePath);
 		}
 
 		private readonly interactive = "a,button,input,select,textarea,summary,[contenteditable],[role=dialog],pre,table";
+
+		private readonly onPreviewClick = (event: MouseEvent) => {
+			if (!(event.target instanceof Element)) return;
+			const button = event.target.closest<HTMLButtonElement>("[data-preview-target]");
+			const gallery = button?.closest<HTMLElement>("[data-project-preview]");
+			if (!button || !gallery) return;
+			const selection = button.dataset.previewTarget;
+			gallery.querySelectorAll<HTMLElement>("[data-preview-pane]").forEach((pane) => {
+				pane.hidden = pane.dataset.previewPane !== selection;
+			});
+			gallery.querySelectorAll<HTMLButtonElement>("[data-preview-target]").forEach((item) => {
+				item.setAttribute("aria-pressed", String(item === button));
+			});
+		};
 		private canMove(event: Event) {
 			return !(event.target instanceof Element && event.target.closest(this.interactive));
 		}
