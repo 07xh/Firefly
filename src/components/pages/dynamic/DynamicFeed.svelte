@@ -180,7 +180,6 @@ function createItem(entry: DynamicData) {
 					day: "2-digit",
 					hour: "2-digit",
 					minute: "2-digit",
-					second: "2-digit",
 				},
 			).format(date);
 			time.textContent += ` ${formatTimezoneOffset(timezone, date)}`;
