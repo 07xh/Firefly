@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 570" width="900" height="570" fill="none" role="img" aria-labelledby="t d">
-<title id="t">07xh Space 轻盈飞船</title><desc id="d">简洁的白蓝色飞船正向画面左下方航行，右侧发出淡蓝推进光。</desc>
+<title id="t">07xh Space 轻盈飞船（比例修正版）</title><desc id="d">轻盈的蓝白色飞船向左飞行，尾翼更短，发动机和机翼比例协调，背景轨道简化。</desc>
 <defs>
 <linearGradient id="hull" x1="260" y1="252" x2="590" y2="409" gradientUnits="userSpaceOnUse"><stop stop-color="#FFFFFF"/><stop offset=".55" stop-color="#F5FAFF"/><stop offset="1" stop-color="#C9DAF8"/></linearGradient>
 <linearGradient id="belly" x1="179" y1="351" x2="690" y2="390" gradientUnits="userSpaceOnUse"><stop stop-color="#E3F0FF"/><stop offset=".5" stop-color="#95BDF3"/><stop offset="1" stop-color="#4684DC"/></linearGradient>
@@ -10,27 +10,27 @@
 <radialGradient id="glow"><stop stop-color="#94DFFF" stop-opacity=".57"/><stop offset="1" stop-color="#94DFFF" stop-opacity="0"/></radialGradient>
 <filter id="shadow" x="120" y="105" width="710" height="390" filterUnits="userSpaceOnUse"><feDropShadow dx="0" dy="16" stdDeviation="16" flood-color="#4266B5" flood-opacity=".19"/></filter>
 </defs>
-<ellipse cx="506" cy="314" rx="330" ry="126" transform="rotate(-13 506 314)" stroke="#FFFFFF" stroke-opacity=".82" stroke-width="2.5"/>
+<ellipse cx="506" cy="314" rx="296" ry="104" transform="rotate(-13 506 314)" stroke="#FFFFFF" stroke-opacity=".52" stroke-width="2.5"/>
 <path d="M778 168L782 181 795 185 782 189 778 202 774 189 761 185 774 181Z" fill="#FFFFFF"/>
 <path d="M199 395L201 401 207 403 201 405 199 411 197 405 191 403 197 401Z" fill="#FFFFFF" fill-opacity=".76"/>
-<ellipse cx="732" cy="318" rx="152" ry="100" fill="url(#glow)" opacity=".7"/>
-<path d="M694 279C780 265 844 272 900 250V396C805 358 756 346 694 332Z" fill="url(#trail)"/>
+<ellipse cx="732" cy="318" rx="116" ry="82" fill="url(#glow)" opacity=".48"/>
+<path d="M694 279C780 265 844 272 900 250V396C805 349 756 336 694 323Z" fill="url(#trail)"/>
 <g filter="url(#shadow)">
-<path d="M550 263L627 151C640 131 661 131 669 149L698 268 659 312 577 315Z" fill="url(#fin)" stroke="#C3D7F7" stroke-width="2"/>
-<path d="M634 156L651 152 674 251" stroke="#AAC9FA" stroke-width="6" stroke-linecap="round" opacity=".8"/>
-<path d="M651 263L718 252C745 262 756 282 765 298L733 340 678 349 637 300Z" fill="#9CC0F5"/>
-<path d="M655 280C675 267 705 267 723 280L743 304 718 331 682 329Z" fill="#3672D1"/>
-<ellipse cx="730" cy="306" rx="28" ry="33" fill="#356DBE" stroke="#9CCBFF" stroke-width="6"/>
-<ellipse cx="732" cy="306" rx="18" ry="23" fill="#A3ECFF" stroke="#E8FFFF" stroke-width="4.5"/>
-<ellipse cx="732" cy="306" rx="9" ry="12" fill="#F5FFFF"/>
+<path d="M550 263L627 151C640 178 654 177 665 193L681 275 654 307 577 311Z" fill="url(#fin)" stroke="#C3D7F7" stroke-width="2"/>
+<path d="M635 194L649 193 663 258" stroke="#AAC9FA" stroke-width="6" stroke-linecap="round" opacity=".8"/>
+<path d="M654 266L702 263C729 267 741 284 747 299L720 326 679 331 640 300Z" fill="#9CC0F5"/>
+<path d="M658 279C674 271 701 268 717 282L736 302 718 326 682 325Z" fill="#3672D1"/>
+<ellipse cx="730" cy="306" rx="22" ry="27" fill="#356DBE" stroke="#9CCBFF" stroke-width="6"/>
+<ellipse cx="732" cy="306" rx="14" ry="18" fill="#A3ECFF" stroke="#E8FFFF" stroke-width="4.5"/>
+<ellipse cx="732" cy="306" rx="7" ry="9" fill="#F5FFFF"/>
 <path d="M174 352C228 314 296 282 382 263 479 240 578 241 647 257 685 266 706 282 726 299 693 330 648 350 582 368L405 406C299 414 209 386 174 352Z" fill="url(#hull)" stroke="#BCD2F3" stroke-width="2.2"/>
 <path d="M174 353C236 379 316 401 415 393L586 369C644 357 695 328 726 299 714 326 668 358 588 385L410 411C299 420 210 389 174 353Z" fill="url(#belly)" opacity=".69"/>
 <path d="M186 348C235 318 300 289 379 271" stroke="#FFFFFF" stroke-width="4.5" stroke-linecap="round" opacity=".93"/>
 <path d="M335 290C375 258 432 250 482 260 514 267 538 289 546 310 511 325 404 337 338 321 326 317 326 304 335 290Z" fill="url(#canopy)" stroke="#CEEAFF" stroke-width="6"/>
 <path d="M359 286C392 264 440 264 469 271" stroke="#E3FAFF" stroke-width="6" stroke-linecap="round" opacity=".69"/>
-<path d="M433 340L565 435Q582 445 598 438L695 413C676 397 643 362 625 333L546 321Z" fill="url(#wing)" stroke="#B9D0F4" stroke-width="3"/>
-<path d="M450 347L565 428" stroke="#FFFFFF" stroke-opacity=".74" stroke-width="4.5" stroke-linecap="round"/>
-<path d="M578 437L685 412" stroke="#578CD7" stroke-width="4.5" stroke-linecap="round" opacity=".6"/>
+<path d="M455 339L542 390Q561 402 578 396L654 377C633 367 615 349 600 332L535 322Z" fill="url(#wing)" stroke="#B9D0F4" stroke-width="3"/>
+<path d="M469 347L547 385" stroke="#FFFFFF" stroke-opacity=".74" stroke-width="4.5" stroke-linecap="round"/>
+<path d="M577 393L648 378" stroke="#578CD7" stroke-width="4.5" stroke-linecap="round" opacity=".6"/>
 <path d="M231 354C265 363 300 375 344 376" stroke="#7CB8F7" stroke-opacity=".65" stroke-width="3.4" stroke-linecap="round"/>
 <text x="573" y="345" font-family="Arial,sans-serif" font-weight="750" font-size="29" fill="#3E7BD5" transform="rotate(-7 573 345)">07</text>
 </g>
