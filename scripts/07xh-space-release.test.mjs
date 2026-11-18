@@ -130,3 +130,44 @@ test("site artwork and its responsive rules remain available", async () => {
 	assert.match(css, /@media \(max-width:720px\)/);
 	assert.match(layout, /styles\/space-project-showcase\.css/);
 });
+
+test("featured projects show concrete, verified or explicitly unverified functions", async () => {
+	const names = [
+		"dorm-os", "engineering-drawing-study", "studyflow", "momoflow",
+		"wordflow", "reqable-bridge", "kingo-assistant", "zhidao-assistant",
+	];
+	const docs = await Promise.all(names.map(name => source("src/content/projects/" + name + ".md")));
+	for (let i = 0; i < names.length; i++) {
+		const content = docs[i];
+		assert.match(content, /^highlights:\s*$/m, names[i] + " needs structured capabilities");
+		assert.equal((content.match(/^\s+- title:/gm) || []).length, 3, names[i] + " needs three concrete capabilities");
+		assert.equal((content.match(/^\s+state: "(implemented|verifying|planned)"/gm) || []).length, 3, names[i] + " needs a state per capability");
+		assert.match(content, /^## .+$/m, names[i] + " needs a real detail section");
+		assert.ok(content.length > 900, names[i] + " description should cover use cases, not one tagline");
+	}
+	assert.match(docs[0], /数据连接/);
+	assert.match(docs[1], /三面投影/);
+	assert.match(docs[2], /课程与章节/);
+	assert.match(docs[3], /官方记录/);
+	assert.match(docs[4], /TXT、CSV/);
+	assert.match(docs[5], /HTTP 会话/);
+	assert.match(docs[6], /0\/4/);
+	assert.match(docs[7], /课程总览/);
+});
+test("project highlights are typed and displayed on the hero and searchable in directory", async () => {
+	const [schema, showcase, listing, css] = await Promise.all([
+		source("src/content.config.ts"),
+		source("src/components/portfolio/ProjectShowcase.astro"),
+		source("src/pages/projects/all.astro"),
+		source("src/styles/space-project-showcase.css"),
+	]);
+	assert.match(schema, /highlights: z\.array\(z\.object/);
+	assert.match(schema, /"implemented", "verifying", "planned"/);
+	assert.match(showcase, /它可以做什么/);
+	assert.match(showcase, /highlights\.map/);
+	assert.match(showcase, /highlightStates\[state\]/);
+	assert.match(listing, /project\.data\.highlights\.slice\(0, 2\)/);
+	assert.match(listing, /project\.data\.highlights\.flatMap/);
+	assert.match(css, /space-project-capabilities/);
+	assert.match(css, /max-width:760px/);
+});

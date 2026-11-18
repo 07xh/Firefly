@@ -630,3 +630,11 @@ html.dark .space-project-capability-state.is-planned { color:#b7c0cf; background
  .space-project-capability-text { gap:2px; }
  .space-project-capability-state { font-size:10px; }
 }
+
+/* The all-projects directory is searchable by actual capabilities, not only project names. */
+.portfolio-project-card-highlights {
+ display:flex; flex-wrap:wrap; gap:6px 13px; list-style:none;
+ padding:0; margin:13px 0 0; color:var(--pf-muted); font-size:12px;
+}
+.portfolio-project-card-highlights li { display:inline-flex; align-items:center; gap:5px; line-height:1.5; }
+.portfolio-project-card-highlights svg { width:15px; height:15px; color:var(--pf-accent); flex:none; }
