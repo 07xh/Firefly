@@ -20,6 +20,8 @@ export const friendsPageConfig: FriendsPageConfig = {
 	randomizeSort: false,
 };
 
+// 以下是原主题附带的示例友链，暂保留作结构参考，但全部设为不公开。
+// 只有验证为本站真实友链的新条目才应设置 enabled: true。
 // 友链配置
 export const friendsConfig: FriendLink[] = [
 	{
@@ -30,7 +32,7 @@ export const friendsConfig: FriendLink[] = [
 		siteurl: "https://blog.cuteleaf.cn",
 		tags: ["Blog"],
 		weight: 10, // 权重，数字越大排序越靠前
-		enabled: true, // 是否启用
+		enabled: false, // 是否启用
 	},
 	{
 		title: "Firefly Docs",
@@ -39,7 +41,7 @@ export const friendsConfig: FriendLink[] = [
 		siteurl: "https://docs-firefly.cuteleaf.cn",
 		tags: ["Docs"],
 		weight: 9,
-		enabled: true,
+		enabled: false,
 	},
 	{
 		title: "Astro",
@@ -48,7 +50,7 @@ export const friendsConfig: FriendLink[] = [
 		siteurl: "https://github.com/withastro/astro",
 		tags: ["Framework"],
 		weight: 8,
-		enabled: true,
+		enabled: false,
 	},
 ];
 
