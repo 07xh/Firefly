@@ -11,9 +11,11 @@ import { url } from "@/utils/url-utils";
 if (!siteConfig.pages.sponsor) return Astro.redirect("/404/");
 
 const title = sponsorConfig.title || i18n(I18nKey.sponsorTitle);
-const description = sponsorConfig.description || i18n(I18nKey.sponsorDescription);
+const description =
+	sponsorConfig.description || i18n(I18nKey.sponsorDescription);
 const methods = sponsorConfig.methods.filter((method) => method.enabled);
-const commentsEnabled = commentConfig.type !== "none" && sponsorConfig.showComment !== false;
+const commentsEnabled =
+	commentConfig.type !== "none" && sponsorConfig.showComment !== false;
 const sponsors = sponsorConfig.sponsors || [];
 ---
 
