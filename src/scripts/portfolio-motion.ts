@@ -72,9 +72,7 @@ if (root) {
 			".portfolio-live-repo-list a",
 		].join(",");
 
-		const nodes = [
-			...root.querySelectorAll<HTMLElement>(selector),
-		];
+		const nodes = [...root.querySelectorAll<HTMLElement>(selector)];
 		const observer = new IntersectionObserver(
 			(entries) => {
 				for (const entry of entries) {
