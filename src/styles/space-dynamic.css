@@ -6,7 +6,7 @@
 	--radius-large: 16px;
 	width: min(100%, 900px);
 	margin-inline: auto;
-	padding: clamp(30px, 5vw, 76px) 0 clamp(64px, 8vw, 112px);
+	padding: clamp(26px, 4vw, 54px) 0 clamp(64px, 8vw, 112px);
 }
 .space-dynamic-header { margin-bottom: clamp(22px, 3vw, 36px); }
 .space-dynamic-heading {
@@ -14,28 +14,20 @@
 	align-items: flex-end;
 	justify-content: space-between;
 	gap: 18px;
-	margin-bottom: 28px;
+	margin-bottom: 22px;
 }
-.space-dynamic-eyebrow {
-	margin: 0 0 13px;
-	color: var(--pf-accent);
-	font-size: 12px;
-	font-weight: 750;
-	letter-spacing: .13em;
-}
-.space-dynamic-eyebrow span { color: var(--pf-muted); margin-inline: 5px; }
 .space-dynamic-heading h1 {
 	margin: 0;
 	color: var(--pf-text);
-	font-size: clamp(38px, 4.8vw, 62px);
+	font-size: clamp(36px, 4vw, 52px);
 	font-weight: 820;
 	line-height: 1.1;
 	letter-spacing: -.055em;
 }
 .space-dynamic-intro {
-	margin: 15px 0 0;
+	margin: 10px 0 0;
 	color: var(--pf-muted);
-	font-size: clamp(14px, 1.4vw, 17px);
+	font-size: clamp(14px, 1.15vw, 16px);
 	line-height: 1.7;
 }
 .space-dynamic .page-count {
@@ -57,9 +49,9 @@
 	display: grid;
 	grid-template-columns: minmax(0, 1fr) auto;
 	gap: 10px;
-	padding: 9px;
+	padding: 7px;
 	border: 1px solid var(--pf-border);
-	border-radius: 18px;
+	border-radius: 15px;
 	background: color-mix(in srgb, var(--pf-surface) 90%, transparent);
 	box-shadow: 0 10px 30px rgba(48,79,139,.05);
 }
@@ -99,19 +91,46 @@
 .space-dynamic .page-year-select svg:first-child { left: 12px; width: 18px; height: 18px; }
 .space-dynamic .page-year-select svg:last-child { right: 9px; width: 19px; height: 19px; }
 .space-dynamic .page-year-select select option { background: var(--pf-surface); color: var(--pf-text); }
-.space-dynamic .page-feed { gap: 18px; }
+.space-dynamic .page-feed {
+	position: relative;
+	gap: 16px;
+	padding-left: 34px;
+}
+.space-dynamic .page-feed::before {
+	content: "";
+	position: absolute;
+	top: 28px;
+	bottom: 28px;
+	left: 11px;
+	width: 1px;
+	background: color-mix(in srgb, var(--pf-accent) 22%, var(--pf-border));
+	pointer-events: none;
+}
 .space-dynamic .page-entry {
-	padding: clamp(20px, 3.3vw, 32px);
+	position: relative;
+	padding: clamp(20px, 2.4vw, 28px);
 	border: 1px solid var(--pf-border);
-	border-radius: 23px;
-	background: color-mix(in srgb, var(--pf-surface) 95%, transparent);
-	box-shadow: 0 12px 34px rgba(49,83,151,.055);
+	border-radius: 19px;
+	background: color-mix(in srgb, var(--pf-surface) 96%, transparent);
+	box-shadow: 0 9px 27px rgba(49,83,151,.045);
 	transition: border-color .22s ease, box-shadow .22s ease;
 	scroll-margin-top: 118px;
 }
+.space-dynamic .page-entry::before {
+	content: "";
+	position: absolute;
+	top: 31px;
+	left: -30px;
+	width: 13px;
+	height: 13px;
+	border: 3px solid var(--pf-accent);
+	border-radius: 50%;
+	background: var(--pf-surface);
+	box-shadow: 0 0 0 5px var(--pf-bg);
+}
 .space-dynamic .page-entry:hover {
 	border-color: color-mix(in srgb, var(--pf-accent) 24%, var(--pf-border));
-	box-shadow: 0 16px 40px rgba(49,83,151,.085);
+	box-shadow: 0 11px 30px rgba(49,83,151,.085);
 }
 .space-dynamic .page-entry-header { gap: 12px; }
 .space-dynamic .page-avatar {
@@ -119,7 +138,10 @@
 	height: 44px;
 	flex-basis: 44px;
 	border: 1px solid var(--pf-border);
+	border-radius: 13px;
+	background: var(--pf-tint);
 }
+.space-dynamic .page-avatar img { object-fit: contain; padding: 5px; }
 .space-dynamic .page-author { color: var(--pf-text); }
 .space-dynamic .page-author:hover { color: var(--pf-accent); }
 .space-dynamic .page-identity strong { font-size: 15px; font-weight: 740; }
@@ -206,7 +228,10 @@ html.dark .space-dynamic .page-search input {
 	.space-dynamic-intro { max-width: 340px; font-size: 14px; }
 	.space-dynamic .page-count { padding-top: 31px; }
 	.space-dynamic .page-count strong { font-size: 21px; }
-	.space-dynamic .page-entry { border-radius: 19px; padding: 18px; }
+	.space-dynamic .page-feed { padding-left: 0; }
+	.space-dynamic .page-feed::before,
+	.space-dynamic .page-entry::before { display: none; }
+	.space-dynamic .page-entry { border-radius: 18px; padding: 18px; }
 	.space-dynamic .page-content,
 	.space-dynamic .page-gallery,
 	.space-dynamic .page-inline-comments { margin-left: 0; }
