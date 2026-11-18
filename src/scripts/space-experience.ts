@@ -20,6 +20,7 @@ type SceneCopy = {
   visual: string;
   glow: string;
   image?: string;
+  imageAlt?: string;
 };
 
 const copies: Record<string, SceneCopy> = {
@@ -30,6 +31,7 @@ const copies: Record<string, SceneCopy> = {
     points: [["校园学习", "课表、任务与校园信息的统一组织"], ["跨平台架构", "Android 界面与 Cloudflare 服务端协作"], ["数据连接", "学习通、教务和第二课堂接入持续验证"], ["验证优先", "真实账号、实际设备与服务端状态分别验收"]],
     accent: "#a5eee0", visual: "#275e59", glow: "#367a6d",
     image: "https://raw.githubusercontent.com/07xh/dorm-os/main/apps/xiaoxu-android/docs/ui-verify/268/home-393dp-imported.webp",
+    imageAlt: "校序 Android 首页真实界面验收截图（393dp）",
   },
   "engineering-drawing-study": {
     title: "绘序 · DraftAI", category: "ENGINEERING / GEOMETRY", status: "持续开发 · 题型闭环验证中",
@@ -37,6 +39,8 @@ const copies: Record<string, SceneCopy> = {
     story: "重点研究图形条件确认、几何约束求解、投影对应以及从数学结果生成逐笔作图步骤。复杂题型的能力必须依据可复核的数学和真题证据确认。",
     points: [["几何求解", "从已确认条件构建可验证的几何结果"], ["投影关联", "理解二维投影与三维结构的对应关系"], ["逐笔作图", "研究具有依赖关系的动态作图步骤"], ["学习导向", "提供可解释、可检查的作图过程"]],
     accent: "#bfd7ff", visual: "#344c81", glow: "#455dab",
+    image: "https://raw.githubusercontent.com/07xh/engineering-drawing-study/main/favicon.svg",
+    imageAlt: "绘序 DraftAI 项目标识",
   },
   StudyFlow: {
     title: "学序 · StudyFlow", category: "WINDOWS / LEARNING", status: "持续开发 · 平台验收中",
@@ -44,6 +48,8 @@ const copies: Record<string, SceneCopy> = {
     story: "StudyFlow 将知到、长江雨课堂、学习通和 U 校园接入统一导航与 UI，同时保留各平台原有业务模块和执行边界。界面明确区分本机播放器位置、任务进程状态与服务器已核验进度；尚未通过真实账号验收的平台不会被标记为已完成接入。",
     points: [["统一桌面架构", "React、Tauri 2 与 Python sidecar 协作"], ["多平台适配", "知到、雨课堂、学习通与 U 校园独立接入"], ["原版能力保留", "通过独立进程承载原平台业务模块"], ["进度可信", "本机事件与服务端确认分层展示"]],
     accent: "#e0caff", visual: "#534272", glow: "#73569a",
+    image: "https://raw.githubusercontent.com/07xh/StudyFlow/main/packaging/icon.svg",
+    imageAlt: "学序 StudyFlow 应用图标",
   },
   MomoFlow: {
     title: "MomoFlow", category: "ANDROID / LEARNING", status: "v0.5.5 · 前台反馈实验版",
@@ -202,8 +208,9 @@ function createScene(repo: PublicProject, idx: number) {
   if (copy.image) {
     const image = el("img");
     image.src = copy.image;
-    image.alt = titleText + " 仓库中的公开界面截图";
+    image.alt = copy.imageAlt || titleText + " 项目视觉标识";
     image.loading = "lazy";
+    image.decoding = "async";
     image.referrerPolicy = "no-referrer";
     image.addEventListener("error", () => {
       visual.classList.remove("has-photo");
