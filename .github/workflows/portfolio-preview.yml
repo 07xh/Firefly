@@ -1,0 +1,52 @@
+name: Deploy isolated portfolio preview
+
+on:
+  push:
+    branches: [preview/portfolio-pr-123]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portfolio-preview-pr-123
+  cancel-in-progress: false
+
+jobs:
+  preview:
+    if: github.repository == '07xh/Firefly' && github.ref == 'refs/heads/preview/portfolio-pr-123'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - uses: actions/setup-node@cdca7365b2dadb8aad0a33bc7601856ffabcc48e
+        with:
+          node-version: "22"
+      - uses: pnpm/action-setup@a7487c7e89a18df4991f7f222e4898a00d66ddda
+        with:
+          version: 11.22.0
+          run_install: false
+      - run: pnpm install --frozen-lockfile
+      - name: Build Astro Worker
+        run: pnpm run build
+        env:
+          CF_WORKERS: "1"
+      - name: Prepare isolated, read-only preview
+        run: node scripts/prepare-portfolio-preview.mjs
+      - name: Deploy preview to workers.dev
+        run: pnpm exec wrangler deploy --config dist/server/wrangler.portfolio-preview.json
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      - name: Verify public pages, live GitHub data and preview isolation
+        env:
+          PREVIEW_URL: https://firefly-pr-123.3267597860.workers.dev
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --retry 5 --retry-all-errors --max-time 20 "$PREVIEW_URL/" -o /tmp/portfolio-home.html
+          grep -q '小慌的个人站' /tmp/portfolio-home.html
+          curl --fail --silent --show-error --max-time 20 "$PREVIEW_URL/projects/engineering-drawing-study/" -o /tmp/portfolio-project.html
+          grep -q 'id="project-details"' /tmp/portfolio-project.html
+          curl --fail --silent --show-error --retry 3 --max-time 20 "$PREVIEW_URL/api/portfolio/repositories.json" -o /tmp/portfolio-repositories.json
+          node -e 'const r=require("/tmp/portfolio-repositories.json"); if(!r.repositories?.some(x=>x.name==="engineering-drawing-study")) process.exit(1); console.log(r.repositories.length, "public repositories")'
+          test "$(curl --silent --show-error --max-time 20 --output /dev/null --write-out '%{http_code}' "$PREVIEW_URL/api/admin/articles/")" = 404
+          curl --fail --silent --show-error --head --max-time 20 "$PREVIEW_URL/" | grep -qi '^x-robots-tag: noindex'
+          printf '[Firefly portfolio preview](%s)\n' "$PREVIEW_URL" >> "$GITHUB_STEP_SUMMARY"
