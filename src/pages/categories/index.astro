@@ -1,72 +1,58 @@
 ---
 import { Icon } from "astro-icon/components";
+import TaxonomySearch from "@/components/portfolio/TaxonomySearch.astro";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
-import { getCategoryList } from "@/utils/content-utils";
+import "@/styles/space-taxonomy.css";
+import { getSortedPostsList } from "@/utils/content-utils";
+import { getCategoryUrl, url } from "@/utils/url-utils";
 
-const categories = await getCategoryList();
-const totalPosts = categories.reduce((sum, cat) => sum + cat.count, 0);
+export const prerender = true;
+
+const posts = await getSortedPostsList();
+const counts = new Map<string, number>();
+for (const { data } of posts) {
+	const category = data.category?.trim() || "";
+	counts.set(category, (counts.get(category) ?? 0) + 1);
+}
+const categories = [...counts.entries()]
+	.map(([category, count]) => ({
+		name: category || i18n(I18nKey.uncategorized),
+		url: getCategoryUrl(category || null),
+		count,
+	}))
+	.sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
 ---
 
-<PortfolioLayout title={i18n(I18nKey.categories)}>
-  <div class="portfolio-existing-page">
-    <h1 class="sr-only">{i18n(I18nKey.categories)}</h1>
-    <!-- 页面标题 -->
-    <div class="card-base px-8 py-6 mb-4">
-        <div class="text-2xl font-bold text-(--primary) mb-2">
-            {i18n(I18nKey.categories)}
-        </div>
-        <p class="text-30 text-sm">
-            {i18n(I18nKey.allCategories)} · {totalPosts} {i18n(I18nKey.postsCount)}
-        </p>
-    </div>
-
-    <!-- 分类卡片列表 -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-        {
-            categories.map((category, index) => (
-                <a
-                    href={category.url}
-                    class="card-base p-6 flex items-center gap-4 group onload-animation"
-                    style={`animation-delay: calc(var(--content-delay) + ${index * 50}ms);`}
-                >
-                    <div class="shrink-0 w-14 h-14 rounded-full bg-(--primary)/10 group-hover:bg-(--primary)/20 flex items-center justify-center transition-colors">
-                        <Icon
-                            name="material-symbols:folder-open"
-                            class="text-3xl text-(--primary)"
-                        />
-                    </div>
-                    <div class="flex-1 min-w-0">
-                        <h2 class="text-lg font-bold text-90 truncate group-hover:text-(--primary) transition-colors" title={category.name}>
-                            {category.name}
-                        </h2>
-                        <p class="text-sm text-30 mt-1 group-hover:text-(--primary)/60 transition-colors">
-                            {category.count} {i18n(I18nKey.postsCount)}
-                        </p>
-                    </div>
-                    <div class="shrink-0">
-                        <Icon
-                            name="material-symbols:chevron-right-rounded"
-                            class="text-2xl text-30 group-hover:text-(--primary) transition-colors "
-                        />
-                    </div>
-                </a>
-            ))
-        }
-    </div>
-
-    <!-- 空状态 -->
-    {
-        categories.length === 0 && (
-            <div class="card-base px-8 py-12 text-center">
-                <Icon
-                    name="material-symbols:folder-off"
-                    class="text-5xl text-30 mx-auto mb-4"
-                />
-                <p class="text-30">{i18n(I18nKey.noData)}</p>
-            </div>
-        )
-    }
-  </div>
+<PortfolioLayout title={i18n(I18nKey.categories)} description="按分类查找已发布的文章。">
+	<taxonomy-directory class="space-library-page" data-unit="个分类">
+		<header class="space-library-heading">
+			<div>
+				<h1>文章分类</h1>
+				<p>按主题快速找到需要的文章。</p>
+			</div>
+			<a href={url("/posts/")} class="space-library-secondary-link">
+				全部文章 <Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" />
+			</a>
+		</header>
+		<TaxonomySearch placeholder="搜索分类" count={categories.length} unit="个分类" />
+		<div class="space-taxonomy-grid">
+			{categories.map(({ name, url: categoryUrl, count }) => (
+				<a class="space-taxonomy-card" href={categoryUrl} data-taxonomy-item data-search-text={name.toLocaleLowerCase()}>
+					<span class="space-taxonomy-card-icon" aria-hidden="true">
+						<Icon name="material-symbols:folder-open-rounded" />
+					</span>
+					<span class="space-taxonomy-card-main">
+						<strong>{name}</strong>
+						<span>{count} 篇文章</span>
+					</span>
+					<Icon name="material-symbols:arrow-forward-rounded" class="space-taxonomy-card-arrow" aria-hidden="true" />
+				</a>
+			))}
+		</div>
+		<div class="space-taxonomy-empty" data-taxonomy-empty hidden>
+			<p>没有找到匹配的分类。</p>
+		</div>
+	</taxonomy-directory>
 </PortfolioLayout>

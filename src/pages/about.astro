@@ -1,6 +1,7 @@
 ---
 // biome-ignore-all assist/source/organizeImports: Keep Astro frontmatter imports stable for this page.
 import { getEntry, render } from "astro:content";
+import { Icon } from "astro-icon/components";
 import { profileConfig } from "@/config/profileConfig";
 import { siteConfig } from "@/config/siteConfig";
 import siteSettings from "@/data/settings.json";
@@ -9,6 +10,8 @@ import { i18n } from "@/i18n/translation";
 import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
 import { getAuthorAvatarUrl } from "@/utils/schema-image";
 import { buildProfilePage } from "@/utils/schema-utils";
+import { url } from "@/utils/url-utils";
+import "@/styles/space-taxonomy.css";
 import Markdown from "@components/common/Markdown.astro";
 import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
@@ -78,44 +81,61 @@ const jsonLd = buildProfilePage({
 	description: profileConfig.bio,
 });
 ---
-<PortfolioLayout title={i18n(I18nKey.about)} description={i18n(I18nKey.about)}>
+<PortfolioLayout title={i18n(I18nKey.about)} description={siteSettings.bio || i18n(I18nKey.about)}>
 	<script
 		is:inline
 		slot="head"
 		type="application/ld+json"
 		set:html={JSON.stringify(jsonLd)}
 	/>
-	<header class="portfolio-page-intro"><h1>{i18n(I18nKey.about)}</h1></header>
-	<div class="portfolio-about">
-			<Markdown class="mt-2">
+	<div class="space-about-page">
+		<header class="space-about-hero">
+			<div class="space-about-copy">
+				<span class="space-about-label">07xh Space · 关于</span>
+				<h1>{siteSettings.nickname || profileConfig.name}</h1>
+				<p>{siteSettings.bio || profileConfig.bio}</p>
+				<nav class="space-about-links" aria-label="了解这个网站">
+					<a class="space-about-primary-link" href={url("/projects/")}>
+						看我的项目 <Icon name="material-symbols:arrow-forward-rounded" aria-hidden="true" />
+					</a>
+					<a href={url("/posts/")}>技术文章</a>
+					<a href={url("/topics/")}>学习专题</a>
+				</nav>
+			</div>
+			<div class="space-about-brand" aria-hidden="true">
+				<img src={url("/brand/07xh-mark.svg")} alt="" width="200" height="200" />
+			</div>
+		</header>
+		<section class="space-about-content" aria-labelledby="space-about-content-heading">
+			<div class="space-about-section-heading">
+				<h2 id="space-about-content-heading">更多关于我</h2>
+				<span>学习与开发记录</span>
+			</div>
+			<Markdown class="space-about-markdown">
 				{aboutContentHtml ? <div set:html={aboutContentHtml} /> : <Content />}
 			</Markdown>
-			{Boolean(siteSettings.showNavAbout) &&
-				siteSettings.showAboutDonation &&
-					(donationQrCodeUrl || siteConfig.pages.sponsor) && (
-						<div class="mt-6 rounded-xl border border-(--line) bg-(--card-bg) p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-							<div class="flex items-center gap-4">
-								{donationQrCodeUrl && (
-									<img
-										src={donationQrCodeUrl}
-										alt="打赏二维码"
-										loading="lazy"
-										class="h-28 w-28 rounded-lg border border-black/10 object-contain bg-white p-1 dark:border-white/15"
-									/>
-								)}
-								<div>
-									<h2 class="text-lg font-bold">喜欢这里的内容？</h2>
-									<p class="mt-1 text-sm opacity-75">
-										如果本站对你有所帮助，欢迎支持后续维护与创作。
-									</p>
-								</div>
-							</div>
-							{siteConfig.pages.sponsor && (
-								<a href="/sponsor/" class="btn-regular whitespace-nowrap">
-									♥ 支持作者
-								</a>
-							)}
-						</div>
+		</section>
+		{Boolean(siteSettings.showNavAbout) &&
+			siteSettings.showAboutDonation &&
+			(donationQrCodeUrl || siteConfig.pages.sponsor) && (
+				<section class="space-about-support" aria-label="支持作者">
+					<div>
+						<h2>支持网站维护</h2>
+						<p>如果这些内容对你有帮助，可以通过这里支持后续更新。</p>
+					</div>
+					{donationQrCodeUrl && (
+						<img
+							src={donationQrCodeUrl}
+							alt="打赏二维码"
+							loading="lazy"
+							width="112"
+							height="112"
+						/>
 					)}
+					{siteConfig.pages.sponsor && (
+						<a href={url("/sponsor/")}>查看支持方式</a>
+					)}
+				</section>
+			)}
 	</div>
 </PortfolioLayout>
