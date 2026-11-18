@@ -4,23 +4,21 @@ subtitle: "StudyFlow"
 published: 2026-11-17
 order: 190
 status: "测试版"
-description: "统一 Windows 桌面上的课程、账号与学习进度入口。"
+description: "在 Windows 上看知到、雨课堂、学习通和 U 校园的课程。"
 repository: "07xh/studyflow"
 tags: ["Windows", "React", "Tauri", "Python"]
 link:
+  - label: "下载 Windows 测试版"
+    value: "https://github.com/07xh/StudyFlow/releases/tag/v0.1.1-rc.42"
   - label: "GitHub"
     icon: "fa7-brands:github"
     value: "https://github.com/07xh/studyflow"
 ---
 
-## 统一桌面入口
+## 课程和章节
 
-为不同学习平台提供统一导航、账号管理、课程和章节视图。平台之间保留各自的会话与诊断。
+从左侧切换平台，在各自页面登录、查看课程和章节。
 
-## 进度核验
+## 进度
 
-界面分别展示本地运行记录与已核验的服务端状态。各平台支持情况见仓库的接入说明。
-
-## 技术实现
-
-React 和 Tauri 2 提供前端与原生应用壳，Python sidecar 承载平台模块。
+本机播放进度和平台回传的完成状态分开显示。

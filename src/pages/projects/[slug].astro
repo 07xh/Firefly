@@ -5,11 +5,9 @@ import Markdown from "@/components/common/Markdown.astro";
 import ProjectVisual from "@/components/portfolio/ProjectVisual.astro";
 import { siteConfig } from "@/config";
 import { featuredProjectIds } from "@/config/portfolioConfig";
-import githubData from "@/constants/github-card-data.json";
 import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
 import { getSortedProjects } from "@/utils/content-utils";
 import {
-	getProjectStatusMeta,
 	resolveProjectImage,
 	resolveProjectImageAbsolute,
 } from "@/utils/projects-utils";
@@ -39,7 +37,6 @@ export async function getStaticPaths() {
 			props: {
 				entry,
 				position: index + 1,
-				total: ordered.length,
 				previous: index > 0 ? ordered[index - 1] : null,
 				next: index >= 0 ? (ordered[index + 1] ?? null) : null,
 			},
@@ -49,84 +46,54 @@ export async function getStaticPaths() {
 
 if (!siteConfig.pages.projects) return Astro.redirect(url("/404/"));
 
-const { entry, previous, next, position, total } = Astro.props;
-const { Content, headings } = await render(entry);
-const { title, subtitle, description, tags, status, link, repository } =
-	entry.data;
+const { entry, previous, next, position } = Astro.props;
+const { Content } = await render(entry);
+const { title, description, link } = entry.data;
 const cover = await resolveProjectImageAbsolute(
 	entry.data.image,
 	entry.filePath,
 );
 const zoomImage = await resolveProjectImage(entry.data.image, entry.filePath);
-interface RepositoryMetadata {
-	language?: string | null;
-	license?: string | null;
-	stars?: number;
-	pushedAt?: string;
-	checkedAt?: string;
-	release?: { tag: string; url: string; prerelease: boolean } | null;
-}
-const github = (githubData as Record<string, RepositoryMetadata>)[
-	repository.toLowerCase()
-];
-const sections = headings.filter(({ depth }) => depth === 2);
 ---
 
 <PortfolioLayout title={title} description={description || title} lang={entry.data.lang || undefined} setOGTypeArticle={true} postCoverImage={cover}>
 	<project-page class="portfolio-project-page">
 	<nav class="portfolio-project-switch" aria-label="项目切换">
 		{previous ? <a href={url(`/projects/${previous.slug}/`)} data-previous rel="prev" aria-label={`上一个项目：${previous.title}`}><Icon name="material-symbols:arrow-back-rounded" /> <span>{previous.title}</span></a> : position === 1 ? <a href={url("/")} data-previous rel="prev" aria-label="返回 07xh Space"><Icon name="material-symbols:arrow-back-rounded" /> <span>07xh Space</span></a> : <span></span>}
-		<a href={url("/projects/")} class="portfolio-project-position">全部项目 {position > 0 && <small>{position} / {total}</small>}</a>
+		<a href={url("/projects/")} class="portfolio-project-position">全部项目</a>
 		{next ? <a href={url(`/projects/${next.slug}/`)} data-next rel="next" aria-label={`下一个项目：${next.title}`}><span>{next.title}</span> <Icon name="material-symbols:arrow-forward-rounded" /></a> : <span></span>}
 	</nav>
 	<header class="portfolio-detail-hero">
 		<div class="portfolio-detail-heading">
-			{status && <p class="portfolio-label">{getProjectStatusMeta(status).label}</p>}
 			<h1 data-pagefind-meta="title">{title}</h1>
-			{subtitle && <p class="portfolio-detail-subtitle">{subtitle}</p>}
-			<p>{description}</p>
+			{description && <p>{description}</p>}
 			{link.length > 0 && (
 				<div class="portfolio-actions">
 					{link.map(({ label, value }, index) => (
-						<a href={value} class:list={["portfolio-button", index === 0 ? "portfolio-button-solid" : "portfolio-button-secondary"]}>
-							{label === "GitHub" && <Icon name="fa7-brands:github" />}
-							{label} <Icon name="material-symbols:arrow-outward-rounded" />
+						<a id={index === 0 ? "project-repository" : undefined} href={value} class:list={["portfolio-button", index === 0 ? "portfolio-button-solid" : "portfolio-button-secondary"]}>
+							{label === "GitHub" && <Icon name="fa7-brands:github" aria-hidden="true" />}
+							{label}
+							<Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" />
 						</a>
 					))}
 				</div>
 			)}
-			{sections.length > 0 && <a class="portfolio-text-link portfolio-detail-more" href="#project-details">向下看项目详情 <Icon name="material-symbols:arrow-downward-rounded" /></a>}
 		</div>
-		<ProjectVisual project={entry} priority />
+		{entry.data.image && (
+			<figure class="portfolio-detail-preview">
+				<ProjectVisual project={entry} priority />
+				{zoomImage && (
+					<a class="portfolio-screenshot-expand" href={zoomImage} data-fancybox="project-cover" data-type="image" aria-label={`查看${title}截图原图`}>
+						<Icon name="material-symbols:open-in-full-rounded" aria-hidden="true" />
+					</a>
+				)}
+			</figure>
+		)}
 	</header>
-	{(sections.length > 0 || repository) && (
-		<nav class="portfolio-detail-nav" aria-label="项目页章节">
-			{sections.map(({ slug, text }) => <a href={`#${slug}`}>{text}</a>)}
-			{repository && <a href="#project-repository">仓库与版本</a>}
-			{zoomImage && <a href={zoomImage} data-fancybox="project-cover" data-type="image">查看大图</a>}
-		</nav>
-	)}
 	<div class="portfolio-detail-body" id="project-details">
 		<div data-pagefind-body>
 			<Markdown class="markdown-content"><Content /></Markdown>
 		</div>
-		{(repository || tags.length > 0) && (
-			<aside class="portfolio-repo" id="project-repository">
-				<h2>{repository ? "仓库与版本" : "技术栈"}</h2>
-				{repository && <a class="portfolio-text-link" href={`https://github.com/${repository}`}>{repository} <Icon name="material-symbols:arrow-outward-rounded" /></a>}
-				{tags.length > 0 && <ul class="portfolio-tags" aria-label="技术栈">{tags.map((tag) => <li>{tag}</li>)}</ul>}
-				{github && (
-					<dl>
-						{github.language && <div><dt>主要语言</dt><dd>{github.language}</dd></div>}
-						{github.license && github.license !== "NOASSERTION" && <div><dt>许可证</dt><dd>{github.license}</dd></div>}
-						{github.stars !== undefined && <div><dt>Stars</dt><dd>{github.stars.toLocaleString("zh-CN")}</dd></div>}
-						{github.pushedAt && <div><dt>最近推送</dt><dd><time datetime={github.pushedAt}>{github.pushedAt.slice(0, 10)}</time></dd></div>}
-						{github.release && <div><dt>{github.release.prerelease ? "预发布" : "最近发布"}</dt><dd><a href={github.release.url}>{github.release.tag} <Icon name="material-symbols:arrow-outward-rounded" /></a></dd></div>}
-					</dl>
-				)}
-				{github?.checkedAt && <p class="portfolio-sync">仓库数据同步于 <time datetime={github.checkedAt}>{github.checkedAt.slice(0, 10)}</time></p>}
-			</aside>
-		)}
 	</div>
 	</project-page>
 </PortfolioLayout>

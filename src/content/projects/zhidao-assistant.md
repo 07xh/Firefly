@@ -4,19 +4,17 @@ subtitle: "Windows 学习工具"
 published: 2026-11-14
 order: 140
 status: "测试版"
-description: "面向知到的独立 Windows 客户端，提供课程总览与只读核验。"
+description: "在 Windows 上看知到课程和章节进度。"
 repository: "07xh/zhidao-assistant"
 tags: ["Windows", "WPF", "Python"]
 link:
+  - label: "下载 Windows 测试版"
+    value: "https://github.com/07xh/zhidao-assistant/releases/tag/v5.2.9-beta.2"
   - label: "GitHub"
     icon: "fa7-brands:github"
     value: "https://github.com/07xh/zhidao-assistant"
 ---
 
-## 课程与状态
+## 课程总览
 
-在桌面上查看课程与最近核验情况，区分历史缓存和服务端回读。
-
-## 版本状态
-
-仓库提供 Windows x64 测试版。真实账号与课程进度以本人核验为准。
+查看课程列表和章节状态。历史缓存和服务器最近一次确认的结果分开显示。

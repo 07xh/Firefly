@@ -46,14 +46,14 @@ const { featured } = Astro.props;
 			try {
 				const response = await fetch(this.dataset.source ?? "", { signal: AbortSignal.timeout(25000) });
 				if (!response.ok) throw new Error("Repository request failed");
-				const { repositories, checkedAt } = await response.json();
+				const { repositories } = await response.json();
 				const featured = new Set<string>(JSON.parse(this.dataset.featured ?? "[]"));
 				const publicNames = new Set<string>((repositories as Repository[]).map(({ name }) => name.toLowerCase()));
 				this.dispatchEvent(new CustomEvent("portfolio-repositories", { detail: publicNames, bubbles: true }));
 				this.repositories = (repositories as Repository[]).filter(({ name }) => !featured.has(name.toLowerCase()))
 					.sort((a, b) => Number(a.archived) - Number(b.archived) || (b.pushedAt ?? "").localeCompare(a.pushedAt ?? "") || a.name.localeCompare(b.name));
 				this.querySelector("[data-repo-filter]")?.toggleAttribute("hidden", this.repositories.length === 0);
-				if (message) message.textContent = `公开仓库 · 更新于 ${new Date(checkedAt).toLocaleString("zh-CN", { timeZone: "Asia/Shanghai" })}`;
+				if (message) message.textContent = "";
 				this.renderList();
 			} catch {
 				if (message) message.textContent = "暂时无法读取公开仓库，可以在 GitHub 查看。";
