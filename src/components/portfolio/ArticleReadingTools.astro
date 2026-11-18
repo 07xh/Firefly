@@ -40,6 +40,7 @@ const { hasToc = false } = Astro.props;
 			this.root = this.closest<HTMLElement>(".portfolio-reading");
 			this.toc = this.root?.querySelector<HTMLDetailsElement>("[data-reader-toc-details]") ?? null;
 			this.compact = window.matchMedia("(max-width: 1000px)").matches;
+			this.fontSize = window.matchMedia("(max-width: 780px)").matches ? 16 : 17;
 			if (this.toc) {
 				this.toc.open = !this.compact;
 				this.toc.addEventListener("toggle", this.syncToc);
