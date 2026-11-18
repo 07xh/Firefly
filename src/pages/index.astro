@@ -1,0 +1,111 @@
+---
+import "@/styles/space.css";
+
+export const prerender = false;
+const title = "07xh Space · 个人数字空间";
+const description = "小慌的个人数字空间。横向探索真实公开项目，纵向阅读完整的设计、功能与开发过程。";
+---
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <meta name="theme-color" content="#101c27" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <link rel="canonical" href="https://0701000.xyz/" />
+    <link rel="icon" type="image/png" href="/favicon/firefly-32.png" />
+    <title>{title}</title>
+  </head>
+  <body>
+    <div class="space-app" id="space-app">
+      <a href="#main" class="skip-link">跳到正文</a>
+      <header class="space-header">
+        <a href="/" class="space-brand" aria-label="07xh Space 首页">
+          <span class="brand-symbol">07</span><span>07xh<span class="brand-light"> Space</span></span>
+        </a>
+        <nav class="space-top-nav" aria-label="网站主导航">
+          <a href="/" aria-current="page">空间</a>
+          <button type="button" data-open-index>项目索引</button>
+          <a href="/blog/">博客</a>
+          <a href="/series/">知识专题</a>
+          <a href="/about/">关于</a>
+        </nav>
+        <div class="space-header-actions">
+          <a class="space-github-link" href="https://github.com/07xh" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span></a>
+          <button type="button" class="space-index-button" data-open-index aria-label="打开项目导航">☰</button>
+        </div>
+      </header>
+
+      <main class="space-stage" id="main">
+        <div class="space-rail" id="space-rail" aria-live="off">
+          <article class="space-scene is-current scene-home" data-project="home" aria-label="07xh Space 网站介绍">
+            <div class="space-scroll">
+              <section class="space-hero home-hero" aria-labelledby="home-heading">
+                <div class="hero-copy">
+                  <span class="hero-eyebrow"><span class="eyebrow-dot"></span> PERSONAL SPACE / 07XH</span>
+                  <h1 id="home-heading">在好奇中探索。<br /><em>在实践中创造。</em></h1>
+                  <p class="hero-lead">你好，这里是小慌的个人数字空间。用来展示真实的软件作品、整理知识、记录尝试，也分享那些从想法一步步变成现实的过程。</p>
+                  <div class="hero-ctas">
+                    <button type="button" class="space-button primary" data-next>探索下一个项目 <span aria-hidden="true">↗</span></button>
+                    <a class="space-button muted" href="/blog/">阅读博客 <span aria-hidden="true">↗</span></a>
+                  </div>
+                  <p class="hero-hint"><span aria-hidden="true">↔</span> 左右切换不同项目 <span class="hint-divider">·</span> <span aria-hidden="true">↕</span> 上下浏览当前内容</p>
+                </div>
+                <div class="home-art" aria-hidden="true">
+                  <div class="art-orbit art-orbit-one"></div>
+                  <div class="art-orbit art-orbit-two"></div>
+                  <div class="art-center"><span>07<span>xh</span></span><small>LEARN / BUILD / SHARE</small></div>
+                  <span class="art-chip chip-one">PROJECTS</span>
+                  <span class="art-chip chip-two">WRITING</span>
+                  <span class="art-chip chip-three">KNOWLEDGE</span>
+                  <div class="art-spark">✳</div>
+                </div>
+              </section>
+              <section class="space-section home-intro" aria-labelledby="home-site">
+                <div class="section-kicker">01 / THE SPACE</div>
+                <div class="section-main">
+                  <h2 id="home-site">不只是博客，<br />而是持续生长的个人空间。</h2>
+                  <p>这里把软件开发、技术探索、学习笔记和长期实践放在一起。每个公开作品都有属于自己的完整界面；你可以横向切换作品，再纵向深入了解它的背景、功能和进展。</p>
+                  <div class="home-pillars" aria-label="网站包含的内容"><span>真实作品</span><span>技术研究</span><span>知识体系</span><span>开发记录</span></div>
+                </div>
+              </section>
+              <section class="space-section home-intro home-outro" aria-labelledby="home-explore">
+                <div class="section-kicker">02 / EXPLORE</div>
+                <div class="section-main">
+                  <h2 id="home-explore">从这里，继续探索。</h2>
+                  <p>左右切换即可进入不同项目的专属展示面。博客和知识专题保留独立入口，专注内容阅读和体系化整理。</p>
+                  <div class="home-bottom-actions">
+                    <button type="button" class="space-button primary" data-next>向右探索作品 <span aria-hidden="true">→</span></button>
+                    <a class="space-button muted" href="/series/">查看知识专题 <span aria-hidden="true">↗</span></a>
+                  </div>
+                </div>
+              </section>
+              <footer class="scene-footer"><span>© 07xh Space</span><span>真实、持续、可验证的个人实践</span></footer>
+            </div>
+          </article>
+        </div>
+      </main>
+
+      <aside class="space-control" aria-label="项目切换">
+        <button class="step-button" type="button" data-prev aria-label="上一个项目" disabled>←</button>
+        <span class="control-count"><span id="space-current">01</span><span class="control-slash">/</span><span id="space-total">01</span></span>
+        <button class="step-button" type="button" data-next aria-label="下一个项目" disabled>→</button>
+      </aside>
+      <div class="scene-name" id="scene-name" aria-live="polite">07xh Space · 个人空间</div>
+      <div class="loading-status" id="space-loading" role="status">正在读取 GitHub 公开项目…</div>
+
+      <dialog class="space-index-dialog" id="space-index" aria-label="项目索引">
+        <div class="index-sheet">
+          <div class="index-header"><div><small>07XH / PUBLIC PROJECTS</small><h2>项目索引</h2></div><button type="button" id="close-index" aria-label="关闭项目索引">×</button></div>
+          <p>选择项目会切换到它的专属展示界面；返回后仍保留之前的纵向阅读位置。</p>
+          <div class="index-projects" id="index-projects"><button type="button" data-go-project="home"><span>01</span><strong>07xh Space</strong><small>网站介绍</small></button></div>
+          <div class="index-footer"><a href="/blog/">博客 ↗</a><a href="/series/">知识专题 ↗</a><a href="https://github.com/07xh" target="_blank" rel="noopener noreferrer">GitHub ↗</a></div>
+        </div>
+      </dialog>
+    </div>
+    <script>import "../scripts/space-experience";</script>
+  </body>
+</html>
