@@ -67,7 +67,7 @@ export const siteConfig: SiteConfig = {
 
 	// 站点描述
 	description:
-		"07xh Space 是小慌的个人数字空间，展示公开软件作品、技术实践、学习专题与开发记录。",
+		"07xh Space：这里放着我做的软件，也有平时写下的 Python、工程制图和开发笔记。",
 	// 站点关键词
 	keywords: [
 		"xiaohuang",
