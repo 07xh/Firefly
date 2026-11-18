@@ -15,6 +15,16 @@ const getDynamicNavBarConfig = (): NavBarConfig => {
 
 	// 主页
 	links.push(LinkPresets.Home);
+	links.push({
+		name: "博客",
+		url: "/blog/",
+		icon: "material-symbols:article",
+	});
+	links.push({
+		name: "知识专题",
+		url: "/series/",
+		icon: "material-symbols:layers",
+	});
 
 	// 文章及其子菜单
 	links.push({
@@ -146,7 +156,7 @@ export const navBarSearchConfig: NavBarSearchConfig = {
 // ============================================================================
 export const LinkPresets: Record<string, NavBarLink> = {
 	Home: {
-		name: "主页",
+		name: "个人空间",
 		url: "/",
 		icon: "material-symbols:home",
 	},
