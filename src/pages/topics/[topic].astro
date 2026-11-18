@@ -9,13 +9,22 @@ import { url } from "@/utils/url-utils";
 export const prerender = true;
 
 export function getStaticPaths() {
-	return portfolioTopics.map((topic) => ({ params: { topic: topic.id }, props: { topic } }));
+	return portfolioTopics.map((topic) => ({
+		params: { topic: topic.id },
+		props: { topic },
+	}));
 }
 
 const { topic } = Astro.props;
-const posts = (await getSortedPostsList()).filter(({ data }) => data.series === topic.series);
-posts.sort((a, b) => (a.data.seriesOrder ?? Infinity) - (b.data.seriesOrder ?? Infinity)
-	|| a.data.published.getTime() - b.data.published.getTime());
+const posts = (await getSortedPostsList()).filter(
+	({ data }) => data.series === topic.series,
+);
+posts.sort(
+	(a, b) =>
+		(a.data.seriesOrder ?? Number.POSITIVE_INFINITY) -
+			(b.data.seriesOrder ?? Number.POSITIVE_INFINITY) ||
+		a.data.published.getTime() - b.data.published.getTime(),
+);
 ---
 
 <PortfolioLayout title={topic.title} description={topic.description}>

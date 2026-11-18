@@ -1,8 +1,12 @@
 ---
+import type { CollectionEntry } from "astro:content";
 import { Icon } from "astro-icon/components";
 import CoverImage from "@/components/common/CoverImage.astro";
-import { getFileDirFromPath, removeFileExtension, url } from "@/utils/url-utils";
-import type { CollectionEntry } from "astro:content";
+import {
+	getFileDirFromPath,
+	removeFileExtension,
+	url,
+} from "@/utils/url-utils";
 
 interface Props {
 	project: CollectionEntry<"projects">;
@@ -16,10 +20,14 @@ const images = {
 	loading: priority ? ("eager" as const) : ("lazy" as const),
 	fetchpriority: priority ? ("high" as const) : ("auto" as const),
 };
-const icon = id === "studyflow" ? "material-symbols:terminal-rounded"
-	: id === "momoflow" || id === "wordflow" ? "material-symbols:translate-rounded"
-	: id === "reqable-bridge" ? "material-symbols:lan-outline-rounded"
-	: "material-symbols:code-rounded";
+const icon =
+	id === "studyflow"
+		? "material-symbols:terminal-rounded"
+		: id === "momoflow" || id === "wordflow"
+			? "material-symbols:translate-rounded"
+			: id === "reqable-bridge"
+				? "material-symbols:lan-outline-rounded"
+				: "material-symbols:code-rounded";
 ---
 
 <div class="project-visual" data-project={id}>

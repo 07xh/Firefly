@@ -11,8 +11,12 @@ export const prerender = true;
 
 if (!siteConfig.pages.projects) return Astro.redirect(url("/404/"));
 
-const projects = (await getSortedProjects()).filter(({ id }) => removeFileExtension(id) !== "example-project");
-const statuses = [...new Set(projects.map(({ data }) => data.status).filter(Boolean))];
+const projects = (await getSortedProjects()).filter(
+	({ id }) => removeFileExtension(id) !== "example-project",
+);
+const statuses = [
+	...new Set(projects.map(({ data }) => data.status).filter(Boolean)),
+];
 ---
 
 <PortfolioLayout title="项目作品" description="小慌的个人软件作品、实现说明与 GitHub 仓库。">

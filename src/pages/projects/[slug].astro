@@ -7,7 +7,11 @@ import { siteConfig } from "@/config";
 import githubData from "@/constants/github-card-data.json";
 import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
 import { getSortedProjects } from "@/utils/content-utils";
-import { getProjectStatusMeta, resolveProjectImage, resolveProjectImageAbsolute } from "@/utils/projects-utils";
+import {
+	getProjectStatusMeta,
+	resolveProjectImage,
+	resolveProjectImageAbsolute,
+} from "@/utils/projects-utils";
 import { removeFileExtension, url } from "@/utils/url-utils";
 
 export const prerender = true;
@@ -24,8 +28,12 @@ if (!siteConfig.pages.projects) return Astro.redirect(url("/404/"));
 
 const { entry } = Astro.props;
 const { Content, headings } = await render(entry);
-const { title, subtitle, description, tags, status, link, repository } = entry.data;
-const cover = await resolveProjectImageAbsolute(entry.data.image, entry.filePath);
+const { title, subtitle, description, tags, status, link, repository } =
+	entry.data;
+const cover = await resolveProjectImageAbsolute(
+	entry.data.image,
+	entry.filePath,
+);
 const zoomImage = await resolveProjectImage(entry.data.image, entry.filePath);
 interface RepositoryMetadata {
 	language?: string | null;
@@ -35,7 +43,9 @@ interface RepositoryMetadata {
 	checkedAt?: string;
 	release?: { tag: string; url: string; prerelease: boolean } | null;
 }
-const github = (githubData as Record<string, RepositoryMetadata>)[repository.toLowerCase()];
+const github = (githubData as Record<string, RepositoryMetadata>)[
+	repository.toLowerCase()
+];
 const sections = headings.filter(({ depth }) => depth === 2);
 ---
 

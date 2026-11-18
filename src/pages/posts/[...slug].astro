@@ -193,7 +193,9 @@ const jsonLd = {
 
 const relatedPosts = await getRelatedPosts(entry, 5);
 const seriesData = await getSeriesPosts(entry);
-const readingHeadings = headings.filter(({ depth }) => depth >= 2 && depth <= 4);
+const readingHeadings = headings.filter(
+	({ depth }) => depth >= 2 && depth <= 4,
+);
 ---
 
 <PortfolioLayout

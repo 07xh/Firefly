@@ -25,11 +25,17 @@ const links = [
 	{ label: "项目作品", path: "/projects/", enabled: siteConfig.pages.projects },
 	{ label: "技术文章", path: "/posts/", enabled: true },
 	{ label: "知识专题", path: "/topics/", enabled: true },
-	{ label: "关于", path: "/about/", enabled: siteSettings.showAbout && siteSettings.showNavAbout },
+	{
+		label: "关于",
+		path: "/about/",
+		enabled: siteSettings.showAbout && siteSettings.showNavAbout,
+	},
 ].filter(({ enabled }) => enabled);
 const isActive = (path: string) => {
 	const target = url(path).replace(/\/$/, "") || "/";
-	return pathname === target || (target !== "/" && pathname.startsWith(target + "/"));
+	return (
+		pathname === target || (target !== "/" && pathname.startsWith(target + "/"))
+	);
 };
 ---
 

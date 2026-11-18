@@ -1,5 +1,5 @@
-import type { MiddlewareHandler } from "astro";
 import { defineMiddleware } from "astro:middleware";
+import type { MiddlewareHandler } from "astro";
 import {
 	getSessionToken,
 	type SessionKV,

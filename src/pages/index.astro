@@ -10,15 +10,27 @@ import { removeFileExtension, url } from "@/utils/url-utils";
 
 export const prerender = true;
 
-const [projects, posts] = await Promise.all([getSortedProjects(), getSortedPostsList()]);
+const [projects, posts] = await Promise.all([
+	getSortedProjects(),
+	getSortedPostsList(),
+]);
 const featured = siteConfig.pages.projects
 	? featuredProjectIds.flatMap((id) => {
-		const project = projects.find((entry) => removeFileExtension(entry.id) === id);
-		return project ? [project] : [];
-	})
+			const project = projects.find(
+				(entry) => removeFileExtension(entry.id) === id,
+			);
+			return project ? [project] : [];
+		})
 	: [];
-const otherProjects = projects.filter(({ data, id }) => data.repository && !featuredProjectIds.includes(removeFileExtension(id))).slice(0, 3);
-const latestPosts = [...posts].sort((a, b) => b.data.published.getTime() - a.data.published.getTime()).slice(0, 4);
+const otherProjects = projects
+	.filter(
+		({ data, id }) =>
+			data.repository && !featuredProjectIds.includes(removeFileExtension(id)),
+	)
+	.slice(0, 3);
+const latestPosts = [...posts]
+	.sort((a, b) => b.data.published.getTime() - a.data.published.getTime())
+	.slice(0, 4);
 ---
 
 <PortfolioLayout>

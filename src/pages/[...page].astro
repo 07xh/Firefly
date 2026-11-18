@@ -14,7 +14,9 @@ export const getStaticPaths = (async ({ paginate }) => {
 	const allBlogPosts = await getSortedPosts();
 	// 使用配置中的文章数量
 	const pageSize = siteConfig.pagination.postsPerPage;
-	return paginate(allBlogPosts, { pageSize }).filter(({ props }) => props.page.currentPage > 1);
+	return paginate(allBlogPosts, { pageSize }).filter(
+		({ props }) => props.page.currentPage > 1,
+	);
 }) satisfies GetStaticPaths;
 // https://github.com/withastro/astro/issues/6507#issuecomment-1489916992
 

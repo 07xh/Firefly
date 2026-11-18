@@ -8,7 +8,11 @@ import { getCategoryUrl, url } from "@/utils/url-utils";
 export const prerender = true;
 
 const posts = await getSortedPostsList();
-const categories = [...new Set(posts.flatMap(({ data }) => data.category ? [data.category] : []))];
+const categories = [
+	...new Set(
+		posts.flatMap(({ data }) => (data.category ? [data.category] : [])),
+	),
+];
 ---
 
 <PortfolioLayout title="技术文章" description="浏览 Python、工程制图及其他技术笔记。">
