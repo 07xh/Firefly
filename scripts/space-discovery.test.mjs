@@ -62,3 +62,54 @@ test("discovery theme is scoped, responsive and has visible focus states", async
 	assert.match(css, /@media \(max-width: 630px\)/);
 	assert.match(css, /focus-visible/);
 });
+
+test("archive keeps legacy deep links and filters only published source posts", async () => {
+	const [route, panel] = await Promise.all([
+		source("src/pages/archive.astro"),
+		source("src/components/controls/ArchivePanel.astro"),
+	]);
+	assert.match(route, /space-library-page/);
+	assert.match(panel, /getSortedPostsList\(\)/);
+	assert.match(panel, /params\.getAll\("tag"\)/);
+	assert.match(panel, /params\.getAll\("category"\)/);
+	assert.match(panel, /params\.get\("uncategorized"\)/);
+	assert.match(panel, /matchesTags && matchesCategories && matchesUncategorized && matchesQuery/);
+	assert.match(panel, /<details/);
+	assert.match(panel, /getPostUrlBySlug\(id\)/);
+});
+
+test("category and tag links preserve archive filter URLs and published counts", async () => {
+	const [categories, tags, search] = await Promise.all([
+		source("src/pages/categories/index.astro"),
+		source("src/pages/tags/index.astro"),
+		source("src/components/portfolio/TaxonomySearch.astro"),
+	]);
+	for (const page of [categories, tags]) {
+		assert.match(page, /getSortedPostsList\(\)/);
+		assert.match(page, /<TaxonomySearch/);
+		assert.match(page, /data-taxonomy-item/);
+	}
+	assert.match(categories, /getCategoryUrl\(category \|\| null\)/);
+	assert.match(tags, /getTagUrl\(name\)/);
+	assert.match(search, /data-taxonomy-search/);
+	assert.match(search, /item\.hidden = !matches/);
+});
+
+test("series disclosure and about page preserve real published content and editable copy", async () => {
+	const [series, about, css] = await Promise.all([
+		source("src/pages/series/index.astro"),
+		source("src/pages/about.astro"),
+		source("src/styles/space-taxonomy.css"),
+	]);
+	assert.match(series, /getSeriesList\(\)/);
+	assert.match(series, /<details/);
+	assert.match(series, /getPostUrlBySlug\(post\.id\)/);
+	assert.doesNotMatch(series, /window\.__seriesAccordionInit/);
+	assert.match(about, /siteSettings\.aboutContent/);
+	assert.match(about, /sanitizeHtml/);
+	assert.match(about, /<Content\s*\/>/);
+	assert.match(about, /siteSettings\.showAboutDonation/);
+	assert.match(about, /application\/ld\+json/);
+	assert.match(css, /\.space-about-page/);
+	assert.match(css, /@media \(max-width: 550px\)/);
+});
