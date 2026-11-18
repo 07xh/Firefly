@@ -1,4 +1,12 @@
 /* 07xh Space project scenes: one project per screen, native vertical reading below. */
+/* The landing and every individual project share the same calm background. */
+.portfolio--project-scene {
+	background: radial-gradient(ellipse 52% 58% at 78% 37%, rgba(160, 193, 249, .22), transparent 78%), linear-gradient(115deg, #fbfcff, #f2f6ff 53%, #eaf1ff);
+}
+html.dark .portfolio--project-scene {
+	background: radial-gradient(ellipse 52% 58% at 78% 37%, rgba(68, 101, 163, .20), transparent 78%), linear-gradient(115deg, #111c32, #172a4a);
+}
+
 .space-showcase-page {
 	--space-project-ink: #173262;
 	--space-project-muted: #62789f;
@@ -249,7 +257,7 @@
 
 .space-project-image-wrap .portfolio-project-screenshot img {
 	display: block;
-	width: auto !important;
+	width: 100% !important;
 	max-width: 100% !important;
 	height: auto !important;
 	max-height: min(55svh, 580px) !important;

@@ -82,6 +82,20 @@ test("project scenes are shared, with cycling arrows and native vertical details
 	assert.match(css, /@media \(max-width: 760px\)/);
 });
 
+test("single project-first navigation replaces duplicate home and projects tabs", async () => {
+	const [layout, css] = await Promise.all([
+		source("src/layouts/PortfolioLayout.astro"),
+		source("src/styles/space-project-showcase.css"),
+	]);
+	assert.match(layout, /label: "项目",\s*path: "\/"/);
+	assert.doesNotMatch(layout, /label: "首页"/);
+	assert.match(layout, /pathname === "\/projects"/);
+	assert.match(layout, /pathname !== "\/projects\/all"/);
+	assert.match(layout, /portfolio--project-scene/);
+	assert.match(css, /\.portfolio--project-scene/);
+	assert.match(css, /\.space-project-image-wrap \.portfolio-project-screenshot img \{\s*display: block;\s*width: 100% !important;/);
+});
+
 test("site artwork and its responsive rules remain available", async () => {
 	const [mark, craft, css, layout] = await Promise.all([
 		source("public/brand/07xh-mark.svg"),
