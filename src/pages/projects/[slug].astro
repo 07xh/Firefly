@@ -43,7 +43,10 @@ export async function getStaticPaths() {
 				entry,
 				position: index + 1,
 				total: ordered.length,
-				previous: ordered.length > 1 ? ordered[(index - 1 + ordered.length) % ordered.length] : null,
+				previous:
+					ordered.length > 1
+						? ordered[(index - 1 + ordered.length) % ordered.length]
+						: null,
 				next: ordered.length > 1 ? ordered[(index + 1) % ordered.length] : null,
 			},
 		};
