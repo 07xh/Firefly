@@ -16,10 +16,5 @@ jobs:
         uses: biomejs/setup-biome@f382a98e582959e6aaac8e5f8b17b31749018780 # v2.5.0
         with:
           version: 2.5.15
-      - name: Print expected Svelte format (temporary PR diagnostic)
-        run: |
-          echo '===BEGIN_SVELTE_FORMAT===' 
-          biome format --config-path=biome.json src/components/pages/AdvancedSearch.svelte
-          echo '===END_SVELTE_FORMAT===' 
       - name: Run Biome
         run: biome ci --config-path=biome.json ./src --reporter=summary
