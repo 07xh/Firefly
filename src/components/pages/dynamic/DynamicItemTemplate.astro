@@ -6,6 +6,7 @@ import ImageWrapper from "@/components/common/ImageWrapper.astro";
 import DynamicGallery from "@/components/pages/dynamic/DynamicGallery.astro";
 import DynamicInlineComments from "@/components/pages/dynamic/DynamicInlineComments.astro";
 import { dynamicConfig, profileConfig } from "@/config";
+import siteSettings from "@/data/settings.json";
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import { url } from "@/utils/url-utils";
@@ -15,6 +16,9 @@ const profileLabel = i18n(I18nKey.dynamicProfile).replace(
 	profileConfig.name,
 );
 const profileUrl = url(dynamicConfig.profileUrl || "/about/");
+const dynamicAvatar = siteSettings.avatar.trim()
+	? profileConfig.avatar
+	: "/brand/07xh-mark.svg";
 ---
 
 <template data-dynamic-item-template>
@@ -23,7 +27,7 @@ const profileUrl = url(dynamicConfig.profileUrl || "/about/");
 			<header class="page-entry-header">
 				<a href={profileUrl} class="page-avatar" aria-label={profileLabel}>
 					<ImageWrapper
-						src={profileConfig.avatar || ""}
+						src={dynamicAvatar}
 						alt={profileConfig.name}
 						widths={[96]}
 						sizes="48px"
