@@ -90,3 +90,13 @@ test("homepage exposes the curated project archive separately from the live proj
   assert.match(homepage, /href="\/projects\/">项目档案/);
   assert.match(homepage, /index-footer"><a href="\/projects\/">项目档案/);
 });
+
+test("blog and project archive pages cross-link the main content areas", async () => {
+  const [blogPage, projectPage] = await Promise.all([
+    readFile(new URL("src/pages/blog/index.astro", root), "utf8"),
+    readFile(new URL("src/pages/projects/index.astro", root), "utf8"),
+  ]);
+  assert.match(blogPage, /href="\/projects\/">项目档案/);
+  assert.match(projectPage, /首页的项目索引/);
+  assert.match(projectPage, /href="\/">返回 07xh Space/);
+});

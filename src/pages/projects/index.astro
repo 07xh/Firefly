@@ -60,6 +60,10 @@ const statusFilters = PROJECT_STATUS_KEYS.map((key) => {
 				<strong>{projectMeta.length}</strong>
 				<span>{title}</span>
 			</div>
+			<div class="flex items-center justify-between gap-3 flex-wrap" style="grid-column: 1 / -1">
+				<p class="text-sm opacity-70">这里整理精选项目的技术路线、已实现能力与明确限制；首页的项目索引则用于浏览 GitHub 实时公开仓库。</p>
+				<a href="/" class="btn-regular whitespace-nowrap">返回 07xh Space ↗</a>
+			</div>
 		<!-- 搜索 + 状态筛选（标题面板内，整行；搜索与筛选分两行） -->
 		<project-filter style="grid-column: 1 / -1">
 			<div class="relative mb-3">
