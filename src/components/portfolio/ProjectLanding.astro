@@ -1,0 +1,24 @@
+---
+import ProjectShowcase from "@/components/portfolio/ProjectShowcase.astro";
+import { siteConfig } from "@/config";
+import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
+import { getPortfolioScenes } from "@/utils/portfolio-scenes";
+import { resolveProjectImageAbsolute } from "@/utils/projects-utils";
+import { url } from "@/utils/url-utils";
+
+const scenes = await getPortfolioScenes();
+const first = scenes[0];
+const cover = first
+	? await resolveProjectImageAbsolute(first.entry.data.image, first.entry.filePath)
+	: "";
+---
+
+{siteConfig.pages.projects && first ? (
+	<PortfolioLayout title={first.entry.data.title} description={first.entry.data.description} setOGTypeArticle={true} postCoverImage={cover}>
+		<ProjectShowcase entry={first.entry} position={first.position} total={first.total} previous={first.previous} next={first.next} />
+	</PortfolioLayout>
+) : (
+	<PortfolioLayout title="项目">
+		<p>当前暂无可展示的项目。<a href={url("/projects/all/")}>查看全部项目</a></p>
+	</PortfolioLayout>
+)}

@@ -2,7 +2,7 @@
 
 个人网站，用来展示正在做的软件项目，也记录开发过程和学习笔记。
 
-**[访问网站](https://0701000.xyz/)** · [项目](https://0701000.xyz/projects/) · [博客](https://0701000.xyz/posts/) · [GitHub](https://github.com/07xh)
+**[访问网站](https://0701000.xyz/)** · [项目](https://0701000.xyz/projects/all/) · [博客](https://0701000.xyz/posts/) · [GitHub](https://github.com/07xh)
 
 ## 网站内容
 
@@ -22,7 +22,7 @@
 | **MomoFlow** | 在 Android 通知中查看待复习单词的实验项目 | [查看](https://0701000.xyz/projects/momoflow/) |
 | **绘序 · DraftAI** | 工程制图辅助学习，展示投影、圆弧及辅助线的作图过程 | [查看](https://0701000.xyz/projects/engineering-drawing-study/) |
 
-更多项目及其 GitHub 仓库见 [项目列表](https://0701000.xyz/projects/)。部分项目仍在开发或测试，实际可用功能、构建与发布状态以对应仓库为准。
+更多项目及其 GitHub 仓库见 [项目列表](https://0701000.xyz/projects/all/)。部分项目仍在开发或测试，实际可用功能、构建与发布状态以对应仓库为准。
 
 ## 技术实现
 
