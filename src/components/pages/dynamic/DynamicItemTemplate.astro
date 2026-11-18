@@ -49,9 +49,15 @@ const profileUrl = url(dynamicConfig.profileUrl || "/about/");
 	<Icon name="material-symbols:push-pin" class="size-3" />
 	{i18n(I18nKey.pinned)}
 </span>
-				<span class="page-entry-decoration" aria-hidden="true">
-					<Icon name="material-symbols:format-quote-rounded" />
-				</span>
+				<a
+					class="page-permalink"
+					href={url("/dynamic/")}
+					data-dynamic-permalink
+					aria-label={i18n(I18nKey.dynamicPermalink)}
+					title={i18n(I18nKey.dynamicPermalink)}
+				>
+					<Icon name="material-symbols:link-rounded" aria-hidden="true" />
+				</a>
 			</header>
 
 			<div class="page-content custom-md" data-dynamic-content></div>
