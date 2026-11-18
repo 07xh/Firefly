@@ -96,6 +96,25 @@ test("single project-first navigation replaces duplicate home and projects tabs"
 	assert.match(css, /\.space-project-image-wrap \.portfolio-project-screenshot img \{\s*display: block;\s*width: 100% !important;/);
 });
 
+test("showcase switches authentic project screenshots without distorting images", async () => {
+	const [page, css] = await Promise.all([
+		source("src/components/portfolio/ProjectShowcase.astro"),
+		source("src/styles/space-project-showcase.css"),
+	]);
+	assert.match(page, /hasPhonePreview/);
+	assert.match(page, /dorm-os-home\.webp/);
+	assert.match(page, /data-preview-pane="main"/);
+	assert.match(page, /data-preview-pane="phone" hidden/);
+	assert.match(page, /data-preview-target="main" aria-pressed="true"/);
+	assert.match(page, /data-preview-target="phone" aria-pressed="false"/);
+	assert.match(page, /onPreviewClick/);
+	assert.match(page, /pane\.hidden = pane\.dataset\.previewPane !== selection/);
+	assert.match(css, /\.space-project-image-space\[hidden\] \{ display: none !important; \}/);
+	assert.match(css, /\.space-project-phone-image \{/);
+	assert.match(css, /object-fit: contain/);
+	assert.match(css, /\.space-project-preview-controls button\[aria-pressed="true"\]/);
+});
+
 test("site artwork and its responsive rules remain available", async () => {
 	const [mark, craft, css, layout] = await Promise.all([
 		source("public/brand/07xh-mark.svg"),
