@@ -8,6 +8,7 @@ import { i18n } from "@/i18n/translation";
 import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
 import "@/styles/pages/common.css";
 import "@/styles/pages/dynamic.css";
+import "@/styles/space-dynamic.css";
 import { url } from "@/utils/url-utils";
 
 if (!siteConfig.pages.dynamic) {
@@ -30,47 +31,36 @@ const memos = dynamicConfig.memos;
 ---
 
 <PortfolioLayout title={title} description={description}>
-  <div class="portfolio-existing-page">
-    <h1 class="sr-only">{title}</h1>
-	<section class="page-shell" aria-labelledby="dynamic-page-title">
-		<div>
-			<header class="page-header card-base">
-				<div class="page-heading">
-					<div class="page-icon" aria-hidden="true">
-						<Icon name="material-symbols:forum-rounded" />
-					</div>
-					<div>
-						<h2 id="dynamic-page-title">{title}</h2>
-						{description && <p>{description}</p>}
-					</div>
+	<section class="page-shell space-dynamic" aria-labelledby="dynamic-page-title">
+		<header class="space-dynamic-header">
+			<div class="space-dynamic-heading">
+				<div>
+					<p class="space-dynamic-eyebrow">07xh SPACE <span aria-hidden="true">/</span> UPDATES</p>
+					<h1 id="dynamic-page-title">{title}</h1>
+					<p class="space-dynamic-intro">开发进度、学习记录，还有一些随手记下的事情。</p>
 				</div>
-				<div
-					class="page-count"
-					aria-label={i18n(I18nKey.dynamic)}
-				>
-					<Icon name="material-symbols:dynamic-feed-rounded" />
-					<strong data-dynamic-page-count>0</strong>
-					<span>{i18n(I18nKey.dynamic)}</span>
+				<div class="page-count" aria-label="动态总数">
+					<strong data-dynamic-page-count>—</strong>
+					<span>条记录</span>
 				</div>
-				<div class="page-filter">
-					<label class="page-search">
-						<Icon name="material-symbols:search-rounded" />
-						<input
-							type="search"
-							data-dynamic-search
-							placeholder={i18n(I18nKey.dynamicSearch)}
-						/>
-					</label>
-					<label class="page-year-select">
-						<Icon name="material-symbols:calendar-month-rounded" />
-						<select data-year-select aria-label={i18n(I18nKey.year)}>
-							<option value="all">{i18n(I18nKey.dynamicAllYears)}</option>
-						</select>
-						<Icon name="material-symbols:arrow-drop-down-rounded" />
-					</label>
-				</div>
-			</header>
-
+			</div>
+			<div class="page-filter" role="search" aria-label="筛选动态">
+				<label class="page-search">
+					<Icon name="material-symbols:search-rounded" aria-hidden="true" />
+					<span class="sr-only">搜索动态</span>
+					<input type="search" data-dynamic-search placeholder={i18n(I18nKey.dynamicSearch)} />
+				</label>
+				<label class="page-year-select">
+					<Icon name="material-symbols:calendar-month-rounded" aria-hidden="true" />
+					<span class="sr-only">{i18n(I18nKey.year)}</span>
+					<select data-year-select aria-label={i18n(I18nKey.year)}>
+						<option value="all">{i18n(I18nKey.dynamicAllYears)}</option>
+					</select>
+					<Icon name="material-symbols:keyboard-arrow-down-rounded" aria-hidden="true" />
+				</label>
+			</div>
+		</header>
+		<div class="space-dynamic-feed-wrap">
 			<DynamicFeed
 				client:load
 				source={dataUrl}
@@ -83,9 +73,7 @@ const memos = dynamicConfig.memos;
 				timezone={siteConfig.timezone || "UTC"}
 				{memos}
 			/>
-
-			<DynamicItemTemplate />
 		</div>
+		<DynamicItemTemplate />
 	</section>
-  </div>
 </PortfolioLayout>
