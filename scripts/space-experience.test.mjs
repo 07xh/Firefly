@@ -64,3 +64,22 @@ test("site navigation separates the main destinations and identifies the owner's
   assert.match(navigation, /https:\/\/github\.com\/07xh/);
   assert.match(navigation, /Firefly 模板源码/);
 });
+
+test("project archive hides its documentation template and includes the real featured projects", async () => {
+  const example = await readFile(new URL("src/content/projects/example-project.md", root), "utf8");
+  assert.match(example, /draft: true/);
+  const projectFiles = [
+    "dorm-os.md", "draftai.md", "studyflow.md", "momoflow.md",
+    "wordflow.md", "reqable-bridge.md", "kingo-assistant.md",
+    "zhidao-assistant.md", "firefly.md",
+  ];
+  const docs = await Promise.all(projectFiles.map((name) =>
+    readFile(new URL("src/content/projects/" + name, root), "utf8")
+  ));
+  assert.equal(docs.length, 9);
+  assert.ok(docs.every((doc) => /title:/.test(doc) && /description:/.test(doc)));
+  const site = docs.find((doc) => doc.includes("07xh Space · 个人数字空间"));
+  assert.ok(site);
+  assert.match(site, /上游模板/);
+  assert.match(site, /尚未合并到主分支/);
+});
