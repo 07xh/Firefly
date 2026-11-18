@@ -1,0 +1,63 @@
+name: Inspect current portfolio production
+
+on:
+  push:
+    branches: [preview/portfolio-production-readonly]
+    paths: [.github/workflows/portfolio-production-readonly.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  production-readonly:
+    if: github.repository == '07xh/Firefly' && github.ref == 'refs/heads/preview/portfolio-production-readonly'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read current Worker deployment and binding names
+        shell: bash
+        env:
+          CF_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CF_ACCOUNT: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          BUILDS_PAUSED: ${{ vars.FIREFLY_CLOUDFLARE_BUILDS_STOPPED == 'true' }}
+          AUTO_DEPLOY: ${{ vars.ENABLE_FIREFLY_GHA_DEPLOY == 'true' }}
+        run: |
+          node --input-type=module <<'NODE'
+          const api = 'https://api.cloudflare.com/client/v4';
+          const account = '/accounts/' + encodeURIComponent(process.env.CF_ACCOUNT);
+          const script = account + '/workers/scripts/firefly';
+
+          async function read(endpoint) {
+            const reply = await fetch(api + endpoint, {
+              headers: { Authorization: 'Bearer ' + process.env.CF_TOKEN },
+            });
+            const payload = await reply.json();
+            return { status: reply.status, data: payload.success ? payload.result : null };
+          }
+
+          const [deployments, settings, domains] = await Promise.all([
+            read(script + '/deployments'),
+            read(script + '/settings'),
+            read(account + '/workers/domains?hostname=0701000.xyz'),
+          ]);
+          const current = (deployments.data?.deployments ?? deployments.data)?.[0];
+          const bindings = settings.data?.bindings?.map(({ name, type }) => ({ name, type })) ?? [];
+          let routing = domains.data?.find(({ hostname }) => hostname === '0701000.xyz')?.service;
+          if (!routing) {
+            const zones = await read('/zones?name=0701000.xyz');
+            const zone = zones.data?.find(({ name }) => name === '0701000.xyz');
+            if (zone) {
+              const routes = await read('/zones/' + encodeURIComponent(zone.id) + '/workers/routes');
+              routing = routes.data?.find(({ pattern }) => pattern === '0701000.xyz/*')?.script;
+            }
+          }
+          console.log(JSON.stringify({
+            worker: 'firefly',
+            active: current?.versions?.map(({ version_id, percentage }) => ({ version_id, percentage })),
+            bindings,
+            productionDomainWorker: routing ?? null,
+            githubOnlyBuilds: process.env.BUILDS_PAUSED,
+            autoDeploy: process.env.AUTO_DEPLOY,
+            readStatuses: [deployments.status, settings.status, domains.status],
+          }));
+          if (!current?.versions?.length || !Array.isArray(settings.data?.bindings)) process.exitCode = 1;
+          NODE
