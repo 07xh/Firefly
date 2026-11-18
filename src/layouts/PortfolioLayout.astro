@@ -5,6 +5,7 @@ import siteSettings from "@/data/settings.json";
 import { url } from "@/utils/url-utils";
 import Layout from "./Layout.astro";
 import "@/styles/portfolio.css";
+import "@/styles/space-airy.css";
 import "@/styles/expressive-code.css";
 
 interface Props {
@@ -20,14 +21,36 @@ interface Props {
 }
 
 const pathname = Astro.url.pathname.replace(/\/$/, "") || "/";
+const isHome = pathname === "/";
 const links = [
-	{ label: "首页", path: "/", enabled: true },
-	{ label: "项目", path: "/projects/", enabled: siteConfig.pages.projects },
-	{ label: "博客", path: "/posts/", enabled: true },
-	{ label: "知识专题", path: "/topics/", enabled: true },
+	{
+		label: "首页",
+		path: "/",
+		icon: "material-symbols:home-rounded",
+		enabled: true,
+	},
+	{
+		label: "项目",
+		path: "/projects/",
+		icon: "material-symbols:dashboard-rounded",
+		enabled: siteConfig.pages.projects,
+	},
+	{
+		label: "博客",
+		path: "/posts/",
+		icon: "material-symbols:article-rounded",
+		enabled: true,
+	},
+	{
+		label: "知识库",
+		path: "/topics/",
+		icon: "material-symbols:book-rounded",
+		enabled: true,
+	},
 	{
 		label: "关于",
 		path: "/about/",
+		icon: "material-symbols:person-rounded",
 		enabled: siteSettings.showAbout && siteSettings.showNavAbout,
 	},
 ].filter(({ enabled }) => enabled);
@@ -41,17 +64,17 @@ const isActive = (path: string) => {
 
 <Layout {...Astro.props}>
 	<slot slot="head" name="head" />
-	<div class="portfolio" data-no-swup id="portfolio">
+	<div class:list={["portfolio", { "portfolio--space-home": isHome }]} data-no-swup id="portfolio">
 		<a class="portfolio-skip" href="#portfolio-main">跳到主要内容</a>
 		<header class="portfolio-header">
 			<portfolio-nav class="portfolio-wrap portfolio-header-inner">
 				<a class="portfolio-brand" href={url("/")}>
-					<span class="portfolio-brand-mark" aria-hidden="true"><Icon name="material-symbols:code" /></span>
-					<span>{siteConfig.title}</span>
+					<span class="portfolio-brand-mark" aria-hidden="true"><img src={url("/brand/07xh-mark.svg")} alt="" width="46" height="46" /></span>
+					<span class="portfolio-brand-copy"><strong>{siteConfig.title}</strong><small>小慌的个人数字空间</small></span>
 				</a>
 				<nav id="portfolio-nav-links" class="portfolio-nav-links" aria-label="主导航">
-					{links.map(({ path, label }) => (
-						<a href={url(path)} aria-current={isActive(path) ? "page" : undefined}>{label}</a>
+					{links.map(({ path, label, icon }) => (
+						<a href={url(path)} aria-current={isActive(path) ? "page" : undefined}><Icon name={icon} aria-hidden="true" />{label}</a>
 					))}
 				</nav>
 				<div class="portfolio-header-actions">
