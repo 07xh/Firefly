@@ -14,7 +14,9 @@ test("website identity and branding stay 07xh Space", async () => {
 		source("src/data/settings.json"),
 	]);
 	assert.match(site, /title: "07xh Space"/);
-	assert.match(site, /07xh Space 是小慌的个人数字空间/);
+	assert.match(site, /这里放着我做的软件/);
+	assert.doesNotMatch(site, /技术实践、学习专题与开发记录/);
+	assert.equal(JSON.parse(settings).bannerSubtitle, "软件项目和学习笔记");
 	assert.doesNotMatch(site, /title: "Firefly Blog"/);
 	assert.match(site, /\/brand\/07xh-mark\.svg/);
 	assert.equal(JSON.parse(settings).bannerTitle, "07xh Space");
