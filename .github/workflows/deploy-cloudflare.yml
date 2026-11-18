@@ -262,6 +262,11 @@ jobs:
             return "AI provider API correctly requires an admin session";
           });
           NODE
+      - name: Verify deployed project entry and navigation routes
+        run: node scripts/verify-space-routes.mjs https://firefly.3267597860.workers.dev
+      - name: Verify custom-domain project routes (diagnostic)
+        continue-on-error: true
+        run: node scripts/verify-space-routes.mjs https://0701000.xyz
       - name: Check custom domain binding (non-blocking diagnostic)
         shell: bash
         run: |
