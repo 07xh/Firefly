@@ -25,7 +25,8 @@ if (!albumMeta) return Astro.redirect("/404/");
 const photos = scanAlbumPhotos(albumMeta.id);
 const cover = getAlbumCover(albumMeta, photos);
 const columnWidth = galleryConfig.columnWidth || 240;
-const demo = albumMeta.id === "firefly-2026" || albumMeta.id === "encrypted-test";
+const demo =
+	albumMeta.id === "firefly-2026" || albumMeta.id === "encrypted-test";
 ---
 
 <PortfolioLayout title={albumMeta.name} description={albumMeta.description || ""}>
