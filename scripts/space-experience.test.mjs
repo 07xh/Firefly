@@ -83,3 +83,10 @@ test("project archive hides its documentation template and includes the real fea
   assert.match(site, /上游模板/);
   assert.match(site, /尚未合并到主分支/);
 });
+
+test("homepage exposes the curated project archive separately from the live project index", async () => {
+  const homepage = await readFile(new URL("src/pages/index.astro", root), "utf8");
+  assert.match(homepage, /data-open-index>项目索引/);
+  assert.match(homepage, /href="\/projects\/">项目档案/);
+  assert.match(homepage, /index-footer"><a href="\/projects\/">项目档案/);
+});
