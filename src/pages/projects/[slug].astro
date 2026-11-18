@@ -8,6 +8,7 @@ import { featuredProjectIds } from "@/config/portfolioConfig";
 import PortfolioLayout from "@/layouts/PortfolioLayout.astro";
 import { getSortedProjects } from "@/utils/content-utils";
 import {
+	getProjectStatusMeta,
 	resolveProjectImage,
 	resolveProjectImageAbsolute,
 } from "@/utils/projects-utils";
@@ -16,7 +17,11 @@ import { removeFileExtension, url } from "@/utils/url-utils";
 export const prerender = true;
 
 export async function getStaticPaths() {
-	const projects = await getSortedProjects();
+	const projects = (await getSortedProjects()).filter(
+		({ id, data }) =>
+			data.repository &&
+			!["example-project", "firefly"].includes(removeFileExtension(id)),
+	);
 	const pages = projects
 		.filter(({ data }) => data.repository)
 		.map(({ id, data }) => ({
@@ -37,8 +42,9 @@ export async function getStaticPaths() {
 			props: {
 				entry,
 				position: index + 1,
-				previous: index > 0 ? ordered[index - 1] : null,
-				next: index >= 0 ? (ordered[index + 1] ?? null) : null,
+				total: ordered.length,
+				previous: ordered.length > 1 ? ordered[(index - 1 + ordered.length) % ordered.length] : null,
+				next: ordered.length > 1 ? ordered[(index + 1) % ordered.length] : null,
 			},
 		};
 	});
@@ -46,9 +52,10 @@ export async function getStaticPaths() {
 
 if (!siteConfig.pages.projects) return Astro.redirect(url("/404/"));
 
-const { entry, previous, next, position } = Astro.props;
+const { entry, previous, next, position, total } = Astro.props;
 const { Content } = await render(entry);
-const { title, description, link } = entry.data;
+const { title, subtitle, description, link, status, tags } = entry.data;
+const statusLabel = getProjectStatusMeta(status || "").label;
 const cover = await resolveProjectImageAbsolute(
 	entry.data.image,
 	entry.filePath,
@@ -57,44 +64,112 @@ const zoomImage = await resolveProjectImage(entry.data.image, entry.filePath);
 ---
 
 <PortfolioLayout title={title} description={description || title} lang={entry.data.lang || undefined} setOGTypeArticle={true} postCoverImage={cover}>
-	<project-page class="portfolio-project-page">
-	<nav class="portfolio-project-switch" aria-label="项目切换">
-		{previous ? <a href={url(`/projects/${previous.slug}/`)} data-previous rel="prev" aria-label={`上一个项目：${previous.title}`}><Icon name="material-symbols:arrow-back-rounded" /> <span>{previous.title}</span></a> : position === 1 ? <a href={url("/")} data-previous rel="prev" aria-label="返回 07xh Space"><Icon name="material-symbols:arrow-back-rounded" /> <span>07xh Space</span></a> : <span></span>}
-		<a href={url("/projects/")} class="portfolio-project-position">全部项目</a>
-		{next ? <a href={url(`/projects/${next.slug}/`)} data-next rel="next" aria-label={`下一个项目：${next.title}`}><span>{next.title}</span> <Icon name="material-symbols:arrow-forward-rounded" /></a> : <span></span>}
-	</nav>
-	<header class="portfolio-detail-hero">
-		<div class="portfolio-detail-heading">
-			<h1 data-pagefind-meta="title">{title}</h1>
-			{description && <p>{description}</p>}
-			{link.length > 0 && (
-				<div class="portfolio-actions">
-					{link.map(({ label, value }, index) => (
-						<a id={index === 0 ? "project-repository" : undefined} href={value} class:list={["portfolio-button", index === 0 ? "portfolio-button-solid" : "portfolio-button-secondary"]}>
-							{label === "GitHub" && <Icon name="fa7-brands:github" aria-hidden="true" />}
-							{label}
-							<Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" />
-						</a>
-					))}
-				</div>
+	<project-page class="portfolio-project-page space-showcase-page">
+		<nav class="space-project-switch" aria-label="切换展示项目">
+			{previous && (
+				<a
+					class="space-project-arrow space-project-arrow-previous"
+					href={url("/projects/" + previous.slug + "/")}
+					data-previous
+					rel="prev"
+					aria-label={"上一个项目：" + previous.title}
+					title={"上一个项目：" + previous.title}
+				>
+					<Icon name="material-symbols:arrow-back-rounded" aria-hidden="true" />
+					<span class="space-project-arrow-label">{previous.title}</span>
+				</a>
 			)}
-		</div>
-		{entry.data.image && (
-			<figure class="portfolio-detail-preview">
-				<ProjectVisual project={entry} priority />
-				{zoomImage && (
-					<a class="portfolio-screenshot-expand" href={zoomImage} data-fancybox="project-cover" data-type="image" aria-label={`查看${title}截图原图`}>
-						<Icon name="material-symbols:open-in-full-rounded" aria-hidden="true" />
-					</a>
+			{next && (
+				<a
+					class="space-project-arrow space-project-arrow-next"
+					href={url("/projects/" + next.slug + "/")}
+					data-next
+					rel="next"
+					aria-label={"下一个项目：" + next.title}
+					title={"下一个项目：" + next.title}
+				>
+					<span class="space-project-arrow-label">{next.title}</span>
+					<Icon name="material-symbols:arrow-forward-rounded" aria-hidden="true" />
+				</a>
+			)}
+		</nav>
+
+		<header class="space-project-hero" aria-labelledby="project-title">
+			<div class="space-project-copy">
+				<div class="space-project-overline">
+					<span class="space-project-counter">{String(position).padStart(2, "0")} <span aria-hidden="true">/</span> {String(total).padStart(2, "0")}</span>
+					<span class="space-project-overline-divider" aria-hidden="true"></span>
+					<span>作品展示</span>
+				</div>
+				{subtitle && <p class="space-project-subtitle">{subtitle}</p>}
+				<h1 id="project-title" data-pagefind-meta="title">{title}</h1>
+				{description && <p class="space-project-description">{description}</p>}
+				<div class="space-project-meta" aria-label="项目状态与技术方向">
+					{statusLabel && <span class="space-project-status"><span aria-hidden="true"></span>{statusLabel}</span>}
+					{tags.slice(0, 3).map((tag) => <span class="space-project-tag">{tag}</span>)}
+				</div>
+				{link.length > 0 && (
+					<div class="portfolio-actions space-project-actions">
+						{link.map(({ label, value }, index) => (
+							<a
+								id={label === "GitHub" ? "project-repository" : undefined}
+								href={value}
+								class:list={["portfolio-button", index === 0 ? "portfolio-button-solid" : "portfolio-button-secondary"]}
+							>
+								{label === "GitHub" && <Icon name="fa7-brands:github" aria-hidden="true" />}
+								<span>{label}</span>
+								<Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" />
+							</a>
+						))}
+					</div>
 				)}
+				<a class="space-project-scroll-cue" href="#project-details">
+					<Icon name="material-symbols:arrow-downward-rounded" aria-hidden="true" />
+					向下阅读项目详情
+				</a>
+			</div>
+
+			<figure class:list={["space-project-stage", { "space-project-stage-empty": !entry.data.image }]}>
+				<div class="space-project-stage-top">
+					<span class="space-project-window-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+					<span class="space-project-stage-name">{subtitle || title}</span>
+					<span class="space-project-stage-kind">{entry.data.image ? "界面预览" : "项目展示"}</span>
+				</div>
+				<div class="space-project-stage-body">
+					{entry.data.image ? (
+						<div class="space-project-image-wrap">
+							<ProjectVisual project={entry} priority />
+							{zoomImage && (
+								<a class="space-project-image-expand" href={zoomImage} data-fancybox="project-cover" data-type="image" aria-label={"放大查看" + title + "截图"}>
+									<Icon name="material-symbols:open-in-full-rounded" aria-hidden="true" />
+								</a>
+							)}
+						</div>
+					) : (
+						<div class="space-project-placeholder" aria-label="该项目暂未提供界面截图">
+							<span class="space-project-placeholder-index">07xh / PROJECT</span>
+							<strong>{title}</strong>
+							<span class="space-project-placeholder-subtitle">{subtitle || "软件项目"}</span>
+							<span class="space-project-placeholder-note">界面截图待补充</span>
+						</div>
+					)}
+				</div>
 			</figure>
-		)}
-	</header>
-	<div class="portfolio-detail-body" id="project-details">
-		<div data-pagefind-body>
-			<Markdown class="markdown-content"><Content /></Markdown>
-		</div>
-	</div>
+			<div class="space-project-hero-bottom" aria-label="项目浏览方式">
+				<span>← → 切换项目</span>
+				<a href={url("/projects/")}>查看全部项目 <Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" /></a>
+			</div>
+		</header>
+
+		<section class="portfolio-detail-body space-project-details" id="project-details" aria-label={title + "项目详情"}>
+			<div class="space-project-details-heading">
+				<span>项目详情</span>
+				<h2>{title}</h2>
+			</div>
+			<div data-pagefind-body>
+				<Markdown class="markdown-content"><Content /></Markdown>
+			</div>
+		</section>
 	</project-page>
 </PortfolioLayout>
 
