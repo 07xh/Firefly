@@ -25,8 +25,13 @@ interface Props {
 
 const { entry, previous, next, position, total } = Astro.props;
 const { Content } = await render(entry);
-const { title, subtitle, description, link, status, tags, highlights } = entry.data;
-const highlightStates = { implemented: "已有功能", verifying: "验证中", planned: "规划中" } as const;
+const { title, subtitle, description, link, status, tags, highlights } =
+	entry.data;
+const highlightStates = {
+	implemented: "已有功能",
+	verifying: "验证中",
+	planned: "规划中",
+} as const;
 const statusLabel = getProjectStatusMeta(status || "").label;
 const zoomImage = await resolveProjectImage(entry.data.image, entry.filePath);
 const hasPhonePreview = entry.id.startsWith("dorm-os");
@@ -78,9 +83,16 @@ const hasPhonePreview = entry.id.startsWith("dorm-os");
 						<ul class="space-project-capabilities-list">
 							{highlights.map(({ title: featureTitle, detail, state }) => (
 								<li class="space-project-capability">
-									<span class="space-project-capability-icon" aria-hidden="true"><Icon name="material-symbols:check-circle-outline-rounded" /></span>
-									<span class="space-project-capability-text"><strong>{featureTitle}</strong><span>{detail}</span></span>
-									<span class:list={["space-project-capability-state", "is-" + state]}>{highlightStates[state]}</span>
+									<span class="space-project-capability-icon" aria-hidden="true">
+										<Icon name="material-symbols:check-circle-outline-rounded" />
+									</span>
+									<span class="space-project-capability-text">
+										<strong>{featureTitle}</strong>
+										<span>{detail}</span>
+									</span>
+									<span class:list={["space-project-capability-state", "is-" + state]}>
+										{highlightStates[state]}
+									</span>
 								</li>
 							))}
 						</ul>

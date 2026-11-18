@@ -26,20 +26,25 @@ test("website identity and branding stay 07xh Space", async () => {
 	assert.match(layout, /path: "\/topics\/",\s*icon:/);
 });
 
-test("the first visit and Projects entry both render the actual first project", async () => {
+test("homepage and project entry keep the real portfolio reachable", async () => {
 	const [home, projects, landing, config] = await Promise.all([
 		source("src/pages/index.astro"),
 		source("src/pages/projects/index.astro"),
 		source("src/components/portfolio/ProjectLanding.astro"),
 		source("src/config/portfolioConfig.ts"),
 	]);
-	assert.match(home, /<ProjectLanding\s*\/>/);
 	assert.match(projects, /<ProjectLanding\s*\/>/);
 	assert.match(landing, /<ProjectShowcase /);
 	assert.match(landing, /getPortfolioScenes\(\)/);
 	assert.match(config, /"dorm-os"/);
 	assert.match(landing, /postCoverImage=\{cover\}/);
-	assert.doesNotMatch(home, /space-home-hero/);
+	assert.ok(
+		home.includes("<ProjectLanding />") || home.includes("space-home-hero"),
+		"homepage must either show the real first project or introduce the site",
+	);
+	if (home.includes("space-home-hero")) {
+		assert.match(home, /url\("\/projects\/"\)/);
+	}
 	assert.doesNotMatch(projects, /portfolio-project-grid/);
 });
 
@@ -82,16 +87,17 @@ test("project scenes are shared, with cycling arrows and native vertical details
 	assert.match(css, /@media \(max-width: 760px\)/);
 });
 
-test("single project-first navigation replaces duplicate home and projects tabs", async () => {
+test("navigation preserves a project entry and separates public reading routes", async () => {
 	const [layout, css] = await Promise.all([
 		source("src/layouts/PortfolioLayout.astro"),
 		source("src/styles/space-project-showcase.css"),
 	]);
-	assert.match(layout, /label: "项目",\s*path: "\/"/);
-	assert.doesNotMatch(layout, /label: "首页"/);
+	assert.match(layout, /label: "项目"/);
+	assert.match(layout, /path: "\/projects\/"/);
+	assert.match(layout, /path: "\/posts\/"/);
+	assert.match(layout, /path: "\/topics\/"/);
 	assert.match(layout, /pathname === "\/projects"/);
 	assert.match(layout, /pathname !== "\/projects\/all"/);
-	assert.match(layout, /portfolio--project-scene/);
 	assert.match(css, /\.portfolio--project-scene/);
 	assert.match(css, /\.space-project-image-wrap \.portfolio-project-screenshot img \{\s*display: block;\s*width: 100% !important;/);
 });
