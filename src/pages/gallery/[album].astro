@@ -22,9 +22,7 @@ export function getStaticPaths() {
 }
 
 const { album: albumId } = Astro.params;
-const albumMeta = getPublicGalleryAlbums().find(
-	(item) => item.id === albumId,
-);
+const albumMeta = getPublicGalleryAlbums().find((item) => item.id === albumId);
 if (!albumMeta) return Astro.redirect("/404/");
 const photos = scanAlbumPhotos(albumMeta.id);
 const cover = getAlbumCover(albumMeta, photos);
