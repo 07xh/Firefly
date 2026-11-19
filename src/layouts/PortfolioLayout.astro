@@ -121,7 +121,7 @@ const isActive = (path: string) => {
 				{siteConfig.pages.booknav && <a href={url("/booknav/")}>书签</a>}
 				{hasPublicAlbums && <a href={url("/gallery/")}>相册</a>}
 				{hasPublicFriends && <a href={url("/friends/")}>友链</a>}
-				<a href={url("/rss.xml")}>RSS</a>
+				<a href={url("/rss/")}>RSS 订阅</a>
 				<a href="https://github.com/07xh/Firefly">站点源码 <Icon name="material-symbols:arrow-outward-rounded" /></a>
 			</nav>
 		</footer>
@@ -135,16 +135,20 @@ const isActive = (path: string) => {
 	class PortfolioNav extends HTMLElement {
 		connectedCallback() {
 			this.addEventListener("click", this.onClick);
-			this.addEventListener("keydown", this.onKeydown);
+			document.addEventListener("pointerdown", this.onDocumentPointerDown);
+			document.addEventListener("keydown", this.onDocumentKeydown);
+			window.addEventListener("resize", this.onResize, { passive: true });
 		}
 
 		disconnectedCallback() {
 			this.removeEventListener("click", this.onClick);
-			this.removeEventListener("keydown", this.onKeydown);
+			document.removeEventListener("pointerdown", this.onDocumentPointerDown);
+			document.removeEventListener("keydown", this.onDocumentKeydown);
+			window.removeEventListener("resize", this.onResize);
 		}
 
 		private setMenu(open: boolean) {
-			const toggle = this.querySelector("[data-menu-toggle]");
+			const toggle = this.querySelector<HTMLButtonElement>("[data-menu-toggle]");
 			this.toggleAttribute("data-open", open);
 			toggle?.setAttribute("aria-expanded", String(open));
 			toggle?.setAttribute("aria-label", open ? "收起导航" : "展开导航");
@@ -152,16 +156,35 @@ const isActive = (path: string) => {
 
 		private onClick = (event: MouseEvent) => {
 			if (!(event.target instanceof Element)) return;
-			if (event.target.closest("[data-menu-toggle]")) this.setMenu(!this.hasAttribute("data-open"));
+			if (event.target.closest("[data-menu-toggle]")) {
+				this.setMenu(!this.hasAttribute("data-open"));
+				return;
+			}
 			if (event.target.closest("[data-theme-toggle]")) {
 				setTheme(document.documentElement.classList.contains("dark") ? "light" : "dark");
+				this.setMenu(false);
+				return;
+			}
+			if (event.target.closest(".portfolio-nav-links a")) this.setMenu(false);
+		};
+
+		private onDocumentPointerDown = (event: PointerEvent) => {
+			if (!this.hasAttribute("data-open")) return;
+			if (event.target instanceof Node && !this.contains(event.target)) {
+				this.setMenu(false);
 			}
 		};
 
-		private onKeydown = (event: KeyboardEvent) => {
+		private onDocumentKeydown = (event: KeyboardEvent) => {
 			if (event.key !== "Escape" || !this.hasAttribute("data-open")) return;
 			this.setMenu(false);
 			this.querySelector<HTMLButtonElement>("[data-menu-toggle]")?.focus();
+		};
+
+		private onResize = () => {
+			if (window.innerWidth > 1140 && this.hasAttribute("data-open")) {
+				this.setMenu(false);
+			}
 		};
 	}
 
