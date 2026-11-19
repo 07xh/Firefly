@@ -78,6 +78,21 @@ const hasPhonePreview = entry.id.startsWith("dorm-os");
 				{subtitle && <p class="space-project-subtitle">{subtitle}</p>}
 				<h1 id="project-title" data-pagefind-meta="title">{title}</h1>
 				{description && <p class="space-project-description">{description}</p>}
+				{link.length > 0 && (
+					<div class="portfolio-actions space-project-actions">
+						{link.map(({ label, value }, index) => (
+							<a
+								id={label === "GitHub" ? "project-repository" : undefined}
+								href={value}
+								class:list={["portfolio-button", index === 0 ? "portfolio-button-solid" : "portfolio-button-secondary"]}
+							>
+								{label === "GitHub" && <Icon name="fa7-brands:github" aria-hidden="true" />}
+								<span>{label}</span>
+								<Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" />
+							</a>
+						))}
+					</div>
+				)}
 				{highlights.length > 0 && (
 					<div class="space-project-capabilities" aria-label={title + "的核心功能"}>
 						<p class="space-project-capabilities-heading">它可以做什么</p>
@@ -113,21 +128,7 @@ const hasPhonePreview = entry.id.startsWith("dorm-os");
 					{statusLabel && <span class="space-project-status"><span aria-hidden="true"></span>{statusLabel}</span>}
 					{tags.slice(0, 3).map((tag) => <span class="space-project-tag">{tag}</span>)}
 				</div>
-				{link.length > 0 && (
-					<div class="portfolio-actions space-project-actions">
-						{link.map(({ label, value }, index) => (
-							<a
-								id={label === "GitHub" ? "project-repository" : undefined}
-								href={value}
-								class:list={["portfolio-button", index === 0 ? "portfolio-button-solid" : "portfolio-button-secondary"]}
-							>
-								{label === "GitHub" && <Icon name="fa7-brands:github" aria-hidden="true" />}
-								<span>{label}</span>
-								<Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" />
-							</a>
-						))}
-					</div>
-				)}
+
 				<a class="space-project-scroll-cue" href="#project-details">
 					<Icon name="material-symbols:arrow-downward-rounded" aria-hidden="true" />
 					向下阅读项目详情
