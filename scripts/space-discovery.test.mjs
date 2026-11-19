@@ -215,3 +215,53 @@ test("portfolio footer shows real utility sections but hides demo-only galleries
 	assert.match(gallery, /getPublicGalleryAlbums\(\)/);
 	assert.match(friends, /getEnabledFriends/);
 });
+
+test("profile falls back to this site's owner, not the inherited theme author", async () => {
+	const config = await source("src/config/profileConfig.ts");
+	assert.match(config, /https:\/\/github\.com\/07xh/);
+	assert.match(config, /siteSettings\.showEmail && email/);
+	assert.match(config, /avatar: siteSettings\.avatar\.trim\(\) \|\| "\/brand\/07xh-mark\.svg"/);
+	assert.match(config, /name: siteSettings\.nickname\.trim\(\) \|\| "07xh"/);
+	assert.doesNotMatch(config, /cuteleaf|xiaye@msn\.com|XiaYe/i);
+});
+
+test("RSS and Atom reading pages use the same real published-post data and keep feed endpoints", async () => {
+	const [rss, atom, component, rssXml, atomXml, css] = await Promise.all([
+		source("src/pages/rss.astro"),
+		source("src/pages/atom.astro"),
+		source("src/components/portfolio/FeedLanding.astro"),
+		source("src/pages/rss.xml.ts"),
+		source("src/pages/atom.xml.ts"),
+		source("src/styles/space-feed.css"),
+	]);
+	for (const route of [rss, atom]) {
+		assert.match(route, /<PortfolioLayout/);
+		assert.match(route, /<FeedLanding format=/);
+		assert.doesNotMatch(route, /MainGridLayout|cloneNode/);
+	}
+	assert.match(component, /getSortedPostsList\(\)/);
+	assert.match(component, /getPostUrlBySlug\(id\)/);
+	assert.match(component, /"\/rss\.xml"/);
+	assert.match(component, /"\/atom\.xml"/);
+	assert.match(component, /navigator\.clipboard\?\.writeText/);
+	assert.match(component, /data-feed-status/);
+	assert.match(rssXml, /context\.site \?\? siteConfig\.site_url/);
+	assert.doesNotMatch(rssXml, /firefly\.cuteleaf\.cn/);
+	assert.match(atomXml, /generator: "07xh Space"/);
+	assert.match(css, /@media \(max-width: 620px\)/);
+});
+
+test("mobile header menu closes on outside click, Escape, navigation and resize", async () => {
+	const [layout, css] = await Promise.all([
+		source("src/layouts/PortfolioLayout.astro"),
+		source("src/styles/space-airy.css"),
+	]);
+	assert.match(layout, /document\.addEventListener\("pointerdown", this\.onDocumentPointerDown\)/);
+	assert.match(layout, /document\.addEventListener\("keydown", this\.onDocumentKeydown\)/);
+	assert.match(layout, /event\.target\.closest\("\.portfolio-nav-links a"\)/);
+	assert.match(layout, /window\.innerWidth > 1140/);
+	assert.match(layout, /aria-expanded/);
+	assert.match(layout, /href=\{url\("\/rss\/"\)\}/);
+	assert.match(css, /portfolio-nav\[data-open\] \.portfolio-nav-links/);
+	assert.match(css, /max-height: min\(72svh, 520px\)/);
+});
