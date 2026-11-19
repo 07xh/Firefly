@@ -1,0 +1,114 @@
+---
+import { Icon } from "astro-icon/components";
+import { siteConfig } from "@/config";
+import { getSortedPostsList } from "@/utils/content-utils";
+import { formatDateToYYYYMMDD } from "@/utils/date-utils";
+import { getPostUrlBySlug, url } from "@/utils/url-utils";
+
+interface Props {
+	format: "rss" | "atom";
+}
+
+const { format } = Astro.props;
+const title = format === "rss" ? "RSS 订阅" : "Atom 订阅";
+const formatName = format === "rss" ? "RSS" : "Atom";
+const otherFormat = format === "rss" ? "Atom" : "RSS";
+const otherPath = format === "rss" ? "/atom/" : "/rss/";
+const feedPath = format === "rss" ? "/rss.xml" : "/atom.xml";
+const feedUrl = new URL(
+	url(feedPath),
+	Astro.site ?? siteConfig.site_url,
+).toString();
+const posts = (await getSortedPostsList()).slice(0, 6);
+---
+
+<article class="space-feed-page">
+	<header class="space-feed-intro">
+		<span class="space-feed-eyebrow"><Icon name="material-symbols:rss-feed-rounded" aria-hidden="true" /> 持续更新</span>
+		<h1>{title}</h1>
+		<p>把订阅地址添加到阅读器，就能在一处查看这里新发布的文章。不需要登录或注册。</p>
+	</header>
+
+	<feed-copy class="space-feed-address">
+		<div class="space-feed-address-heading">
+			<div>
+				<h2>{formatName} 订阅地址</h2>
+				<p>复制链接，粘贴到支持 {formatName} 的阅读器中。</p>
+			</div>
+			<a href={url(otherPath)} class="space-feed-other">{otherFormat} 格式 <Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" /></a>
+		</div>
+		<div class="space-feed-address-row">
+			<code data-feed-url>{feedUrl}</code>
+			<button type="button" data-feed-copy data-url={feedUrl}>
+				<Icon name="material-symbols:content-copy-outline-rounded" aria-hidden="true" />
+				<span>复制地址</span>
+			</button>
+		</div>
+		<p class="space-feed-status" data-feed-status role="status" aria-live="polite"></p>
+		<a class="space-feed-open" href={url(feedPath)} target="_blank" rel="noopener noreferrer">
+			查看原始订阅文件 <Icon name="material-symbols:arrow-outward-rounded" aria-hidden="true" />
+		</a>
+	</feed-copy>
+
+	<section class="space-feed-latest" aria-labelledby="space-feed-latest-title">
+		<div class="space-feed-section-heading">
+			<h2 id="space-feed-latest-title">最近发布</h2>
+			<a href={url("/posts/")}>全部文章 <Icon name="material-symbols:arrow-forward-rounded" aria-hidden="true" /></a>
+		</div>
+		{posts.length ? (
+			<ol class="space-feed-posts">
+				{posts.map(({ id, data }) => (
+					<li>
+						<a href={getPostUrlBySlug(id)}>
+							<span class="space-feed-post-main">
+								<strong>{data.title}</strong>
+								{data.description && <small>{data.description}</small>}
+							</span>
+							<time datetime={data.published.toISOString()}>{formatDateToYYYYMMDD(data.published)}</time>
+							<Icon name="material-symbols:arrow-forward-rounded" aria-hidden="true" />
+						</a>
+					</li>
+				))}
+			</ol>
+		) : (
+			<p class="space-feed-empty">暂时没有已发布的文章。</p>
+		)}
+	</section>
+</article>
+
+<script>
+	class FeedCopy extends HTMLElement {
+		connectedCallback() {
+			this.addEventListener("click", this.onClick);
+		}
+
+		disconnectedCallback() {
+			this.removeEventListener("click", this.onClick);
+		}
+
+		private onClick = async (event: MouseEvent) => {
+			if (!(event.target instanceof Element)) return;
+			const button = event.target.closest<HTMLButtonElement>("[data-feed-copy]");
+			if (!button) return;
+			const address = button.dataset.url;
+			if (!address) return;
+
+			const message = this.querySelector<HTMLElement>("[data-feed-status]");
+			try {
+				if (!navigator.clipboard?.writeText) throw new Error("clipboard unavailable");
+				await navigator.clipboard.writeText(address);
+				if (message) message.textContent = "已复制，可以粘贴到阅读器。";
+			} catch {
+				const code = this.querySelector<HTMLElement>("[data-feed-url]");
+				if (code) {
+					const range = document.createRange();
+					range.selectNodeContents(code);
+					window.getSelection()?.removeAllRanges();
+					window.getSelection()?.addRange(range);
+				}
+				if (message) message.textContent = "无法自动复制，已选中地址，请手动复制。";
+			}
+		};
+	}
+	if (!customElements.get("feed-copy")) customElements.define("feed-copy", FeedCopy);
+</script>
