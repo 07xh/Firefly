@@ -2,7 +2,6 @@ import { getSortedPosts } from "@utils/content-utils";
 import { buildAtomFeed, renderFeedEntries } from "@utils/feed-utils";
 import type { APIContext } from "astro";
 import { profileConfig, siteConfig } from "@/config";
-import pkg from "../../package.json";
 
 export const prerender = true;
 
@@ -17,7 +16,7 @@ export async function GET(context: APIContext): Promise<Response> {
 		subtitle: siteConfig.subtitle || siteConfig.description || "",
 		entries,
 		authorName: profileConfig.name,
-		generator: `Firefly v${pkg.version}`,
+		generator: "07xh Space",
 		includeContent,
 	});
 	return new Response(xml, {
