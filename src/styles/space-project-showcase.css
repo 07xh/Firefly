@@ -23,7 +23,7 @@ html.dark .portfolio--project-scene {
 	align-items: center;
 	gap: clamp(20px, 3.1vw, 56px);
 	min-height: calc(100svh - 94px);
-	padding: clamp(20px, 2.6vw, 40px) clamp(36px, 4.3vw, 76px) 68px;
+	padding: 24px clamp(36px, 4.3vw, 76px) 64px;
 }
 
 .space-project-hero::before {
@@ -31,7 +31,7 @@ html.dark .portfolio--project-scene {
 	position: absolute;
 	z-index: -1;
 	top: 5%;
-	right: -8%;
+	right: 0;
 	width: min(66vw, 830px);
 	height: 85%;
 	border-radius: 50%;
@@ -41,7 +41,7 @@ html.dark .portfolio--project-scene {
 
 .space-project-copy {
 	min-width: 0;
-	padding-block: 16px;
+	padding-block: 0;
 	animation: space-showcase-arrive .65s cubic-bezier(.16, 1, .3, 1) both;
 }
 
@@ -49,7 +49,7 @@ html.dark .portfolio--project-scene {
 	display: flex;
 	align-items: center;
 	gap: 13px;
-	margin: 0 0 clamp(18px, 3vw, 34px);
+	margin: 0 0 20px;
 	color: var(--pf-muted);
 	font-size: 12px;
 	font-weight: 650;
@@ -88,7 +88,7 @@ html.dark .portfolio--project-scene {
 	max-width: 100%;
 	margin: 0;
 	color: var(--pf-text);
-	font-size: clamp(54px, 6.6vw, 102px);
+	font-size: clamp(48px, 5.5vw, 80px);
 	font-weight: 830;
 	line-height: 1.12;
 	letter-spacing: -.06em;
@@ -98,10 +98,10 @@ html.dark .portfolio--project-scene {
 
 .space-project-description {
 	max-width: 35rem;
-	margin: clamp(18px, 2.7vw, 29px) 0 0;
+	margin: 16px 0 0;
 	color: var(--space-project-muted);
-	font-size: clamp(18px, 1.7vw, 23px);
-	line-height: 1.75;
+	font-size: clamp(16px, 1.3vw, 19px);
+	line-height: 1.7;
 	text-wrap: pretty;
 }
 
@@ -143,7 +143,7 @@ html.dark .portfolio--project-scene {
 }
 
 .space-project-actions {
-	margin-top: clamp(24px, 3.2vw, 40px);
+	margin-top: 20px;
 	gap: 12px;
 }
 
@@ -156,7 +156,7 @@ html.dark .portfolio--project-scene {
 	display: inline-flex;
 	align-items: center;
 	gap: 9px;
-	margin-top: clamp(27px, 4vw, 53px);
+	margin-top: 20px;
 	color: var(--pf-muted);
 	font-size: 13px;
 	font-weight: 620;
@@ -172,7 +172,7 @@ html.dark .portfolio--project-scene {
 	flex-direction: column;
 	min-width: 0;
 	width: 100%;
-	height: clamp(430px, 70svh, 720px);
+	height: clamp(380px, 62svh, 620px);
 	margin: 0;
 	overflow: hidden;
 	border: 1px solid color-mix(in srgb, var(--pf-border) 75%, #a3bbeb);
@@ -185,7 +185,7 @@ html.dark .portfolio--project-scene {
 .space-project-stage::before {
 	content: "";
 	position: absolute;
-	inset: 50px -9% -29%;
+	inset: 50px 0 0;
 	border-radius: 50%;
 	background: radial-gradient(ellipse, rgba(106, 157, 239, .16), transparent 68%);
 	pointer-events: none;
@@ -549,7 +549,7 @@ html.dark .space-project-placeholder::after { border-color: rgba(152, 189, 255, 
 	.space-project-stage { height: clamp(380px, 62svh, 630px); }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 900px) {
 	.space-project-hero {
 		grid-template-columns: minmax(0, 1fr);
 		gap: 24px;
@@ -568,10 +568,46 @@ html.dark .space-project-placeholder::after { border-color: rgba(152, 189, 255, 
 	.space-project-stage-body { padding: 18px; }
 	.space-project-image-wrap .portfolio-project-screenshot img { max-height: 100% !important; }
 	.space-project-hero-bottom { left: 26px; right: 26px; bottom: 25px; }
-	.space-project-switch { padding-inline: 5px; }
-	.space-project-arrow { width: 41px; height: 49px; border-radius: 13px; }
+	/* In-flow navigation cannot cover capabilities, screenshots or article text. */
+	.space-project-switch {
+		position: relative;
+		inset: auto;
+		transform: none;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+		gap: 12px;
+		padding: 20px 20px 0;
+	}
+	.space-project-arrow {
+		width: auto;
+		min-width: 0;
+		min-height: 44px;
+		height: auto;
+		gap: 7px;
+		padding: 10px;
+		border-radius: 13px;
+		box-shadow: none;
+	}
+	.space-project-arrow-previous { grid-column: 1; }
+	.space-project-arrow-next { grid-column: 2; }
 	.space-project-arrow svg { width: 23px; height: 23px; }
-	.space-project-arrow-label { display: none; }
+	.space-project-arrow-label {
+		position: static;
+		min-width: 0;
+		max-width: none;
+		padding: 0;
+		border: 0;
+		background: none;
+		box-shadow: none;
+		font-size: 12px;
+		line-height: 1.4;
+		overflow-wrap: anywhere;
+		opacity: 1;
+		transform: none;
+	}
+	.space-project-arrow:hover .space-project-arrow-label,
+	.space-project-arrow:focus-visible .space-project-arrow-label { transform: none; }
+	.space-project-arrow svg { flex-shrink: 0; }
 	.space-showcase-page .space-project-details { padding-inline: 20px; }
 }
 
@@ -584,8 +620,7 @@ html.dark .space-project-placeholder::after { border-color: rgba(152, 189, 255, 
 	.space-project-stage-kind { display: none; }
 	.space-project-stage-top { grid-template-columns: 1fr auto; }
 	.space-project-placeholder strong { font-size: clamp(34px, 9vw, 44px); }
-	.space-project-arrow { width: 36px; height: 46px; }
-	.space-project-switch { padding-inline: 2px; }
+	.space-project-switch { padding-inline: 20px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -617,14 +652,13 @@ html.dark .space-project-capability-state { color:#bfd0ff; background:#2b3e62; }
 html.dark .space-project-capability-state.is-verifying { color:#f6d898; background:#443822; }
 html.dark .space-project-capability-state.is-planned { color:#b7c0cf; background:#333b50; }
 .space-project-capabilities + .space-project-meta { margin-top:16px; }
-.space-project-capabilities + .space-project-meta + .space-project-actions { margin-top:18px; }
 .space-project-capabilities ~ .space-project-scroll-cue { margin-top:23px; }
 @media (max-width:1080px) {
  .space-project-capability { grid-template-columns:18px minmax(0,1fr) auto; padding:8px 10px; gap:8px; }
  .space-project-capability-text strong { font-size:13px; }
  .space-project-capability-text > span { font-size:11px; }
 }
-@media (max-width:760px) {
+@media (max-width:900px) {
  .space-project-capabilities { margin-top:19px; }
  .space-project-capability { min-height:44px; }
  .space-project-capability-text { gap:2px; }

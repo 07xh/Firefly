@@ -84,7 +84,7 @@ test("project scenes are shared, with cycling arrows and native vertical details
 	assert.match(css, /\.space-project-switch\s*\{\s*position: fixed;/);
 	assert.match(css, /inset: 50% 0 auto/);
 	assert.match(css, /grid-template-columns: minmax\(0, 0\.88fr\) minmax\(0, 1\.12fr\)/);
-	assert.match(css, /@media \(max-width: 760px\)/);
+	assert.match(css, /@media \(max-width: 900px\)/);
 });
 
 test("navigation preserves a project entry and separates public reading routes", async () => {
@@ -175,5 +175,5 @@ test("project highlights are typed and displayed on the hero and searchable in d
 	assert.match(listing, /project\.data\.highlights\.slice\(0, 2\)/);
 	assert.match(listing, /project\.data\.highlights\.flatMap/);
 	assert.match(css, /space-project-capabilities/);
-	assert.match(css, /max-width:760px/);
+	assert.match(css, /max-width:900px/);
 });
