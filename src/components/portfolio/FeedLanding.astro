@@ -15,7 +15,10 @@ const formatName = format === "rss" ? "RSS" : "Atom";
 const otherFormat = format === "rss" ? "Atom" : "RSS";
 const otherPath = format === "rss" ? "/atom/" : "/rss/";
 const feedPath = format === "rss" ? "/rss.xml" : "/atom.xml";
-const feedUrl = new URL(url(feedPath), Astro.site ?? siteConfig.site_url).toString();
+const feedUrl = new URL(
+	url(feedPath),
+	Astro.site ?? siteConfig.site_url,
+).toString();
 const posts = (await getSortedPostsList()).slice(0, 6);
 ---
 
