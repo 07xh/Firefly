@@ -4,7 +4,6 @@ import { formatDateI18nWithTime } from "@utils/date-utils";
 import { renderFeedEntries } from "@utils/feed-utils";
 import type { APIContext } from "astro";
 import { siteConfig } from "@/config";
-import pkg from "../../package.json";
 
 export const prerender = true;
 
@@ -22,11 +21,8 @@ export async function GET(context: APIContext): Promise<Response> {
 	return rss({
 		title: siteConfig.title,
 		description: siteConfig.subtitle || "No description",
-		site: context.site ?? "https://firefly.cuteleaf.cn",
-		customData: `<templateTheme>Firefly</templateTheme>
-		<templateThemeVersion>${pkg.version}</templateThemeVersion>
-		<templateThemeUrl>https://github.com/CuteLeaf/Firefly</templateThemeUrl>
-		<lastBuildDate>${formatDateI18nWithTime(new Date())}</lastBuildDate>`,
+		site: context.site ?? siteConfig.site_url,
+		customData: `<lastBuildDate>${formatDateI18nWithTime(new Date())}</lastBuildDate>`,
 		items: feedItems,
 	});
 }
