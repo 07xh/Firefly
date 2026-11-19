@@ -381,3 +381,12 @@ html.dark .space-home-hero::after { border-color:#ffffff2a; background:linear-gr
   portfolio-nav[data-open] .portfolio-nav-links { display: grid; }
   .portfolio-nav-links a { min-height: 46px; height: auto; padding: 10px 14px; font-size: 14px; }
 }
+
+/* Keep the compact navigation usable on shorter phones and tablets. */
+@media (max-width: 1140px) {
+	portfolio-nav[data-open] .portfolio-nav-links {
+		max-height: min(72svh, 520px);
+		overflow-y: auto;
+		overscroll-behavior: contain;
+	}
+}
